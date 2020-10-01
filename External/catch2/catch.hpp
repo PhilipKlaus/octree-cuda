@@ -3657,7 +3657,7 @@ namespace Matchers {
             EqualsMatcher(std::vector<T, AllocComp> const &comparator) : m_comparator( comparator ) {}
 
             bool match(std::vector<T, AllocMatch> const &v) const override {
-                // !TBD: This currently works if all elements can be compared using !=
+                // !TBD: This currently works if all pointCount can be compared using !=
                 // - a more general approach would be via a compare template that defaults
                 // to using !=. but could be specialised for, e.g. std::vector<T, Alloc> etc
                 // - then just call that directly

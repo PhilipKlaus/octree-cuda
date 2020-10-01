@@ -2,8 +2,7 @@
 // Created by KlausP on 30.09.2020.
 //
 
-#ifndef OCTREECUDA_TYPES_H
-#define OCTREECUDA_TYPES_H
+#pragma once
 
 struct Point
 {
@@ -12,4 +11,7 @@ struct Point
     double z;
 };
 
-#endif //OCTREECUDA_TYPES_H
+struct Vector3
+{
+    double x, y, z;
+};

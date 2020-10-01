@@ -14,7 +14,8 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 set(SOURCES
         src/main.cpp
         src/tools.cu
-        src/types.h)
+        src/chunking.cu
+        )
         
 add_executable(OctreeCuda ${SOURCES})
 

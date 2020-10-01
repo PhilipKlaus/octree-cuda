@@ -34,9 +34,23 @@ unique_ptr<CudaArray<Point>> generate_point_cloud_cuboid(unsigned int sideLength
     dim3 block(BLOCK_SIZE_MAX, 1, 1);
     dim3 grid(static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
 
-    cout << "Launching kernle with threads per block: " << block.x << ", blocks: " << blocks << ", gridX: "
+    cout << "Launching kernel with threads per block: " << block.x << ", blocks: " << blocks << ", gridX: "
     << gridX << ", gridX: " << gridY << endl;
 
-    kernel_point_cloud_cuboid <<<  grid, block >>> (data->rawPointer(), pointAmount, sideLength);
+    kernel_point_cloud_cuboid <<<  grid, block >>> (data->devicePointer(), pointAmount, sideLength);
     return data;
+}
+
+void createThreadPerPointKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
+
+    auto blocks = ceil(pointCount / BLOCK_SIZE_MAX);
+    auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);
+    auto gridY = ceil(blocks / gridX);
+
+
+    block = dim3(BLOCK_SIZE_MAX, 1, 1);
+    grid = dim3 (static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
+
+    cout << "Launching kernel with threads per block: " << block.x << ", blocks: " << blocks << ", gridX: "
+         << gridX << ", gridX: " << gridY << endl;
 }

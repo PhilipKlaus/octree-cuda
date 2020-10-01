@@ -1,18 +1,22 @@
 #include <iostream>
-#include <memory>
 
 #include "tools.cuh"
+#include "chunking.cuh"
 
 using namespace std;
 
-constexpr unsigned int CELL_COUNT = 10;
+constexpr unsigned int GRID_SIZE = 128;
 
 int main() {
 
-    auto data = generate_point_cloud_cuboid(2);
-    auto host = data->toHost();
+    // Create equally spaced point cloud cuboid
+    unsigned int elementsPerCuboidSide = 128;
+    unique_ptr<CudaArray<Point>> data = generate_point_cloud_cuboid(elementsPerCuboidSide);
 
-    for(int i = 0; i < 2 * 2 * 2; ++i) {
-        cout << "x: " << host[i].x << ", y: " << host[i].y << ", " << host[i].z << endl;
-    }
+    // Perform chunking _> build the global octree hierarchy
+    Vector3 posOffset = {0.5, 0.5 , 0.5};
+    Vector3 size = {127, 127, 127};
+    Vector3 minimum = {0.5, 0.5, 0.5};
+
+    auto countingGrid = initialPointCounting(move(data), GRID_SIZE, posOffset, size, minimum);
 }
