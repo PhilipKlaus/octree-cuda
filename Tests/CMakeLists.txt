@@ -3,9 +3,15 @@ project(Tests)
 set(TEST_SOURCES
         ../src/tools.cu
         ../src/chunking.cu
-        )
+        ../src/pointcloud.cpp
 
-add_executable(test-OctreeCuda main.cpp test_chunking.cpp ${TEST_SOURCES})
+        test_tools.cpp)
+
+add_executable(test-OctreeCuda
+        main.cpp
+        test_chunking.cpp
+        test_tools.cpp
+        ${TEST_SOURCES})
 target_include_directories(test-OctreeCuda PRIVATE ${PROJECT_SOURCE_DIR}/External/)
 
 set_target_properties(test-OctreeCuda PROPERTIES

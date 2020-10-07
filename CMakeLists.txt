@@ -15,6 +15,7 @@ set(SOURCES
         src/main.cpp
         src/tools.cu
         src/chunking.cu
+        src/pointcloud.cpp
         )
         
 add_executable(OctreeCuda ${SOURCES})
