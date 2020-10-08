@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 
 #include "tools.cuh"
 #include "pointcloud.h"
@@ -10,32 +11,89 @@ constexpr unsigned int GRID_SIZE = 128;
 int main() {
 
     // Create equally spaced point cloud cuboid
-    unsigned int elementsPerCuboidSide = 128;
-    unique_ptr<CudaArray<Vector3>> cuboid = generate_point_cloud_cuboid(elementsPerCuboidSide);
+    //unsigned int elementsPerCuboidSide = 128;
+    //unique_ptr<CudaArray<Vector3>> cuboid = generate_point_cloud_cuboid(elementsPerCuboidSide);
 
-    auto cloud = make_unique<PointCloud>(move(cuboid));
+    uint32_t pointAmount = 1612868;//327323;
+    ifstream ifs("doom_vertices.ply", ios::binary|ios::ate);
+    ifstream::pos_type pos = ifs.tellg();
+    int length = pos;
+    auto *pChars = new uint8_t[length];
+    ifs.seekg(0, ios::beg);
+    ifs.read(reinterpret_cast<char *>(pChars), length);
+    ifs.close();
 
+    Vector3 minimum {INFINITY, INFINITY, INFINITY};
+    Vector3 maximum {-INFINITY, -INFINITY, -INFINITY};
+    auto *points = reinterpret_cast<Vector3*>(pChars);
+    for(int i = 0; i < pointAmount; ++i) {
+        minimum.x = fmin(minimum.x, points[i].x);
+        minimum.y = fmin(minimum.y, points[i].y);
+        minimum.z = fmin(minimum.z, points[i].z);
+        maximum.x = fmax(maximum.x, points[i].x);
+        maximum.y = fmax(maximum.y, points[i].y);
+        maximum.z = fmax(maximum.z, points[i].z);
+    }
+
+    cout << "min: x: " << minimum.x << ", y: " << minimum.y << ", z: " << minimum.z << endl;
+    cout << "max: x: " << maximum.x << ", y: " << maximum.y << ", z: " << maximum.z << endl;
+    cout << "width: " << maximum.x - minimum.x << endl;
+    cout << "height: " << maximum.y - minimum.y << endl;
+    cout << "depth: " << maximum.z - minimum.z << endl;
+
+    auto data = make_unique<CudaArray<Vector3>>(pointAmount);
+    data->toGPU(pChars);
+
+    auto cloud = make_unique<PointCloud>(move(data));
     BoundingBox boundingBox{
-            Vector3 {0.5, 0.5, 0.5},
-            Vector3 {127.5, 127.5, 127.5}
+            minimum,
+            maximum
     };
     PointCloudMetadata metadata {
-            500 * 500 * 500,
+            pointAmount,
             boundingBox,
-            {0.5, 0.5, 0.5}
+            minimum
     };
     cloud->initialPointCounting(7, metadata);
-    cloud->performCellMerging();
-    cloud->distributePoints();
-    cloud->exportGlobalTree();
-    /*auto host = cloud->getCountingGrid();
-    auto treeData = cloud->getTreeData();
 
-    for(int i = 0; i < pow(8, 3); ++i) {
-        uint32_t index = host[4][i].treeIndex;
-        for(int u = 0; u < host[4][i].count; ++u) {
-            cout << "x: " << treeData[index + u].x << " y: " << treeData[index + u].y << " z: " << treeData[index + u].z << endl;
-        }
+    auto grid = cloud->getCountingGrid();
+    cloud->performCellMerging(300000);
+    uint32_t sum = 0;
+    for(int i = 0; i < pow(128,3); ++i) {
+        sum += grid[0][i].count;
     }
-*/
+    cout << "sum: " << sum << endl;
+
+    grid = cloud->getCountingGrid();
+    uint32_t level = 0;
+    sum = 0;
+    for(int gridSize = 128; gridSize > 1; gridSize >>= 1) {
+        for(uint32_t i = 0; i < pow(gridSize, 3); ++i)
+        {
+            if(grid[level][i].isFinished)
+                sum += grid[level][i].count;
+        }
+
+        ++level;
+    }
+    cout << "sum: " << sum << endl;
+    cloud->distributePoints();
+
+    grid = cloud->getCountingGrid();
+    level = 0;
+    sum = 0;
+    for(int gridSize = 128; gridSize > 1; gridSize >>= 1) {
+        for(uint32_t i = 0; i < pow(gridSize, 3); ++i)
+        {
+            if(grid[level][i].isFinished)
+                sum += grid[level][i].count;
+        }
+
+        ++level;
+    }
+    cout << "sum: " << sum << endl;
+    cloud->exportGlobalTree();
+
+    delete[] pChars;
+
 }

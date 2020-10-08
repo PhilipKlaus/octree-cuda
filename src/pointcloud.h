@@ -30,7 +30,7 @@ class PointCloud {
 public:
     explicit PointCloud(unique_ptr<CudaArray<Vector3>> data) : itsData(move(data)) {}
     void initialPointCounting(uint32_t initialDepth, PointCloudMetadata metadata);
-    void performCellMerging();
+    void performCellMerging(uint32_t threshold);
     void exportToPly(const std::string& file_name);
     void distributePoints();
     void exportGlobalTree();
@@ -46,6 +46,7 @@ private:
     unique_ptr<CudaArray<Vector3>> itsTreeData;
     std::vector<unique_ptr<CudaArray<Chunk>>> itsGrid;
     unique_ptr<CudaArray<uint32_t>> itsCounter;
+    uint32_t itsThreshold;
 
 };
 

@@ -13,7 +13,7 @@ using namespace std;
 
 struct Vector3
 {
-    double x, y, z;
+    float x, y, z;
 };
 
 struct BoundingBox {
@@ -60,6 +60,10 @@ public:
         unique_ptr<dataType[]> host (new dataType[itsElements]);
         cudaMemcpy(host.get(), itsData, sizeof(dataType) * itsElements, cudaMemcpyDeviceToHost);
         return host;
+    }
+
+    void toGPU(uint8_t *host) {
+        cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice);
     }
 
     uint32_t pointCount() {

@@ -44,7 +44,7 @@ unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(unsigned int sideLeng
 
 void createThreadPerPointKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
 
-    auto blocks = ceil(static_cast<double>(pointCount) / BLOCK_SIZE_MAX);
+    auto blocks = ceil(static_cast<float>(pointCount) / BLOCK_SIZE_MAX);
     auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);
     auto gridY = ceil(blocks / gridX);
 
