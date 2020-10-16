@@ -1,6 +1,6 @@
 #include "catch2/catch.hpp"
-#include "../src/tools.cuh"
-#include "../src/pointcloud.h"
+#include "tools.cuh"
+#include "pointcloud.h"
 
 
 TEST_CASE ("Test initial point counting and merging ", "[counting + merging]") {
