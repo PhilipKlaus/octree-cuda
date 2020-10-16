@@ -4,7 +4,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/chunking/initialPointCounting.cu
         src/chunking/cellMerging.cu
         src/chunking/pointDistribution.cu
-        src/chunking/pointcloud.cpp
+        src/pointcloud.cpp
         src/tools.cu
         )
 

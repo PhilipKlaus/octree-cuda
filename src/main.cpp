@@ -1,14 +1,13 @@
+// Standard library
 #include <iostream>
 #include <fstream>
 
-
+// Local dependencies
 #include "pointcloud.h"
-
 
 
 using namespace std;
 
-constexpr unsigned int GRID_SIZE = 128;
 
 int main() {
 
