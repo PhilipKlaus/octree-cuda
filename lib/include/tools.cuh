@@ -21,6 +21,6 @@ static inline unsigned int divUp (const int64_t a, const int64_t b)
     return static_cast<unsigned int> ((a % b != 0) ? (a / b + 1) : (a / b));
 }
 
-void createThreadPerPointKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
+void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 unique_ptr<CudaArray<Vector3>> exportToPly(unique_ptr<CudaArray<Vector3>> pointCloud, std::string file_name);
 #endif

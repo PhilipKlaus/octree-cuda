@@ -1,6 +1,7 @@
 project(OctreeLib)
 
 add_library( ${PROJECT_NAME} STATIC
+        src/initialPointCounting.cu
         src/chunking.cu
         src/pointcloud.cpp
         src/tools.cu
