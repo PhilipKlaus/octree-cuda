@@ -8,27 +8,13 @@
 #include "types.h"
 #include <vector>
 
-#include <iostream>
-struct Chunk {
-    uint32_t count;
-    Chunk *dst;
-    bool isFinished;
-    uint32_t indexCount;
-    Vector3 *points;
-    uint32_t treeIndex;
-
-    ~Chunk() {
-        if(points != nullptr) {
-            cudaFree(points);
-            //std::cout << "hello" << std::endl;
-        }
-    }
-};
-
 class PointCloud {
 
 public:
-    explicit PointCloud(unique_ptr<CudaArray<Vector3>> data) : itsData(move(data)) {}
+    explicit PointCloud(unique_ptr<CudaArray<Vector3>> data)
+    : itsData(move(data)) {
+        itsTreeData = make_unique<CudaArray<Vector3>>(itsData->pointCount());
+    }
     void initialPointCounting(uint32_t initialDepth, PointCloudMetadata metadata);
     void performCellMerging(uint32_t threshold);
     void exportToPly(const std::string& file_name);

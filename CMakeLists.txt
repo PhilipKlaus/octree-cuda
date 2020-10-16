@@ -10,6 +10,12 @@ include_directories("${CUDA_INCLUDE_DIRS}")
 include_directories(SYSTEM "${PROJECT_SOURCE_DIR}/External")
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
+add_subdirectory(External/spdlog)
+if(NOT TARGET spdlog)
+    # Stand-alone build
+    find_package(spdlog REQUIRED)
+endif()
+
 
 set(SOURCES
         src/main.cpp
@@ -19,6 +25,8 @@ set(SOURCES
         )
         
 add_executable(OctreeCuda ${SOURCES})
+
+target_link_libraries(OctreeCuda PRIVATE spdlog::spdlog_header_only)
 
 target_include_directories(OctreeCuda PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src ${CMAKE_CURRENT_SOURCE_DIR}/include)
 

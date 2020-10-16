@@ -11,7 +11,6 @@
 void PointCloud::exportToPly(const std::string& file_name) {
     std::ofstream ply;
     ply.open (file_name, std::ios::binary);
-    std::cout << itsData->pointCount() << std::endl;
     ply << "ply\n"
            "format binary_little_endian 1.0\n"
            "comment Created by AIT Austrian Institute of Technology\n"
@@ -56,11 +55,10 @@ void PointCloud::exportGlobalTree() {
         for(uint32_t i = 0; i < pow(gridSize, 3); ++i) {
 
             if(host[level][i].isFinished && host[level][i].count > 0) {
-                assert(host[level][i].count < itsThreshold || level == itsInitialDepth);
                 uint32_t  treeIndex = host[level][i].treeIndex;
 
                 std::ofstream ply;
-                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + ".ply"), std::ios::binary);
+                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[level][i].count) + ".ply"), std::ios::binary);
 
                 ply << "ply\n"
                        "format binary_little_endian 1.0\n"

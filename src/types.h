@@ -2,18 +2,28 @@
 // Created by KlausP on 30.09.2020.
 //
 
-#pragma once
+#ifndef OCTREECUDA_TYPES
+#define OCTREECUDA_TYPES
 
 #include <memory>
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include <iostream>
+#include "spdlog/spdlog.h"
 
 using namespace std;
 
 struct Vector3
 {
     float x, y, z;
+};
+
+struct Chunk {
+    uint32_t count;
+    Chunk *dst;
+    bool isFinished;
+    uint32_t indexCount;
+    uint32_t treeIndex;
 };
 
 struct BoundingBox {
@@ -41,15 +51,14 @@ class CudaArray {
 public:
 
     CudaArray(unsigned int elements) : itsElements(elements) {
-        cudaMalloc((void**)&itsData, itsElements * sizeof(dataType));
-        cout << "Reserved memory on GPU" << " for " << elements << " pointCount ["
-             << sizeof(dataType) * elements << " bytes] " << endl;
+        auto memoryToReserve = itsElements * sizeof(dataType);
+        cudaMalloc((void**)&itsData, memoryToReserve);
+        spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
     }
 
     ~CudaArray() {
         cudaFree(itsData);
-        cout << "Freed memory on GPU" << " from " << itsElements << " pointCount ["
-             << sizeof(dataType) * itsElements << " bytes] " << endl;
+        spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
 
     dataType* devicePointer() {
@@ -73,3 +82,5 @@ public:
     unsigned int itsElements;
     dataType *itsData;
 };
+
+#endif

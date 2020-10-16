@@ -12,7 +12,8 @@ add_executable(test-OctreeCuda
         test_chunking.cpp
         test_tools.cpp
         ${TEST_SOURCES})
-target_include_directories(test-OctreeCuda PRIVATE ${PROJECT_SOURCE_DIR}/External/)
+# target_include_directories(test-OctreeCuda PRIVATE ${PROJECT_SOURCE_DIR}/External/)
+target_link_libraries(test-OctreeCuda PRIVATE spdlog::spdlog_header_only)
 
 set_target_properties(test-OctreeCuda PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON

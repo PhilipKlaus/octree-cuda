@@ -51,7 +51,7 @@ void PointCloud::initialPointCounting(uint32_t initialDepth, PointCloudMetadata 
                     itsGridSize);
 }
 
-__global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, Vector3 *treeData, uint32_t *counter, uint32_t newCellAmount, uint32_t newGridSize, uint32_t oldGridSize, uint32_t threshold) {
+__global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, uint32_t *counter, uint32_t newCellAmount, uint32_t newGridSize, uint32_t oldGridSize, uint32_t threshold) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -101,14 +101,14 @@ __global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, Vector3 *tree
     outputGrid[index].count = !isFinalized ? sum : 0;
     outputGrid[index].isFinished = isFinalized;
 
-    chunk_0_0_0->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? nullptr : (outputGrid + index);
-    chunk_0_0_1->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_0_1_0->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_0_1_1->dst = isFinalized /*&& chunk_0_0_0->count > 0*/? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_1_0_0->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_1_0_1->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_1_1_0->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
-    chunk_1_1_1->dst = isFinalized /*&& chunk_0_0_0->count > 0*/ ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_0_0_0->dst = isFinalized ? nullptr : (outputGrid + index);
+    chunk_0_0_1->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_0_1_0->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_0_1_1->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_1_0_0->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_1_0_1->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_1_1_0->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
+    chunk_1_1_1->dst = isFinalized ? chunk_0_0_0->dst : (outputGrid + index);
 
     chunk_0_0_0->isFinished = isFinalized;
     chunk_0_0_1->isFinished = chunk_0_0_0->isFinished;
@@ -121,28 +121,20 @@ __global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, Vector3 *tree
 
     if(isFinalized) {
         uint32_t i = atomicAdd(counter, sum);
-        //chunk_0_0_0->points = chunk_0_0_0->count > 0 ? (treeData + i) : nullptr;
         chunk_0_0_0->treeIndex = i;
         i += chunk_0_0_0->count;
-        //chunk_0_0_1->points = chunk_0_0_1->count > 0 ? (treeData + i) : nullptr;
         chunk_0_0_1->treeIndex = i;
         i += chunk_0_0_1->count;
-        //chunk_0_1_0->points = chunk_0_1_0->count > 0 ? (treeData + i) : nullptr;
         chunk_0_1_0->treeIndex = i;
         i += chunk_0_1_0->count;
-        //chunk_0_1_1->points = chunk_0_1_1->count > 0 ? (treeData + i) : nullptr;
         chunk_0_1_1->treeIndex = i;
         i += chunk_0_1_1->count;
-        //chunk_1_0_0->points = chunk_1_0_0->count > 0 ? (treeData + i) : nullptr;
         chunk_1_0_0->treeIndex = i;
         i += chunk_1_0_0->count;
-        //chunk_1_0_1->points = chunk_1_0_1->count > 0 ? (treeData + i) : nullptr;
         chunk_1_0_1->treeIndex = i;
         i += chunk_1_0_1->count;
-        //chunk_1_1_0->points = chunk_1_1_0->count > 0 ? (treeData + i) : nullptr;
         chunk_1_1_0->treeIndex = i;
         i += chunk_1_1_0->count;
-        //chunk_1_1_1->points = chunk_1_1_1->count > 0 ? (treeData + i) : nullptr;
         chunk_1_1_1->treeIndex = i;
     }
 }
@@ -160,11 +152,10 @@ void PointCloud::performCellMerging(uint32_t threshold) {
 
         dim3 grid, block;
         createThreadPerPointKernel(block, grid, newCellAmount);
-        kernelMerging <<<  grid, block >>> (newChunks->devicePointer(), itsGrid[i]->devicePointer(), itsTreeData->devicePointer(), itsCounter->devicePointer(), newCellAmount, gridSize>>1, gridSize, threshold);
+        kernelMerging <<<  grid, block >>> (newChunks->devicePointer(), itsGrid[i]->devicePointer(), itsCounter->devicePointer(), newCellAmount, gridSize>>1, gridSize, threshold);
 
         itsGrid.push_back(move(newChunks));
 
-        cout << "actualGridsize: " << gridSize << " newCellAmount: " << newCellAmount << endl;
         ++i;
     }
 }
@@ -174,8 +165,7 @@ __global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeDat
     if(index >= pointCount) {
         return;
     }
-    //treeData[index] = Vector3 {123.f, 123.f, 123.f};
-    //return;
+
     Vector3 point = cloud[index];
 
     // Copied from OctreeConverter
@@ -203,7 +193,6 @@ __global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeDat
     }
 
     uint32_t i = atomicAdd(&(dst->indexCount), 1);
-    //dst->points[i] = cloud[index];
     treeData[dst->treeIndex + i] = cloud[index];
 }
 
@@ -222,83 +211,3 @@ void PointCloud::distributePoints() {
             itsMetadata.boundingBox.minimum,
             itsGridSize);
 }
-
-/*
-__global__ void kernelBoundingBox(Vector3 *cloud, Vector3* globalMin, Vector3* globalMax, uint32_t pointCount) {
-
-    __shared__ Vector3 localMin[BLOCK_SIZE_MAX];
-    __shared__ Vector3 localMax[BLOCK_SIZE_MAX];
-
-    int globalIndex = blockIdx.x * blockDim.x + threadIdx.x;
-    int localIndex = threadIdx.x;
-    int pointsInBlock = pointCount - blockIdx.x * blockDim.x;
-
-    int stride = ceil(pointsInBlock / 2.);
-
-    if(threadIdx.x + stride > pointsInBlock) {
-        return;
-    }
-
-    Vector3 first = cloud[localIndex];
-    Vector3 second = threadIdx.x + stride < pointsInBlock ? cloud[localIndex + stride] : cloud[localIndex];
-
-    localMin[localIndex] = Vector3{
-        fmin(first.x, second.x),
-        fmin(first.y, second.y),
-        fmin(first.z, second.z),
-    };
-
-    localMax[localIndex] = Vector3{
-            fmax(first.x, second.x),
-            fmax(first.y, second.y),
-            fmax(first.z, second.z),
-    };
-
-    __syncthreads();
-
-    for(uint32_t i = stride >> 1; i > 0; i >>= 1) {
-        if(localIndex < i) {
-            localMin[localIndex] = Vector3{
-                    fmin(localMin[localIndex].x, cloud[localIndex + i].x),
-                    fmin(localMin[localIndex].y, cloud[localIndex + i].y),
-                    fmin(localMin[localIndex].z, cloud[localIndex + i].z),
-            };
-
-            localMax[localIndex] = Vector3{
-                    fmax(localMax[localIndex].x, cloud[localIndex + i].x),
-                    fmax(localMax[localIndex].y, cloud[localIndex + i].y),
-                    fmax(localMax[localIndex].z, cloud[localIndex + i].z),
-            };
-        }
-        __syncthreads();
-    }
-
-    if (localIndex == 0) {
-        globalMin[blockIdx.x] = localMin[0];
-        globalMax[blockIdx.x] = localMax[0];
-    }
-}
-
-BoundingBox PointCloud::calculateBoundingBox() {
-
-    auto threadAmount = static_cast<uint32_t >(ceil(itsData->pointCount() / 2.));
-
-    dim3 grid, block;
-    createThreadPerPointKernel(block, grid, threadAmount);
-
-    auto globalMin = make_unique<CudaArray<Vector3>>(grid.x * grid.y); // 1 min entry per block
-    auto globalMax = make_unique<CudaArray<Vector3>>(grid.x * grid.y); // 1 max entry per block
-
-    kernelBoundingBox <<<  grid, block >>> (itsData->devicePointer(), globalMin->devicePointer(), globalMax->devicePointer(), itsData->pointCount());
-
-    auto hostMin = globalMin->toHost();
-    auto hostMax = globalMax->toHost();
-
-    cout << grid.x * grid.y << endl;
-    for(int i = 0; i < grid.x * grid.y; ++i) {
-        //cout << "min: " << hostMin[i].x << " " << hostMin[i].y << " " << hostMin[i].z << endl;
-       //cout << "max: " << hostMax[i].x << " " << hostMax[i].y << " " << hostMax[i].z << endl;
-    }
-    return BoundingBox();
-}
-*/

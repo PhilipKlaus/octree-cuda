@@ -1,11 +1,18 @@
 #include "tools.cuh"
 #include <memory>
 #include <fstream>
-#include "stdio.h"
 #include "types.h"
 
 using namespace std;
 
+
+void printKernelDimensions(dim3 block, dim3 grid) {
+    spdlog::debug(
+            "Launching kernel with dimensions: "
+            "block [{}, {}, {}] | grid[{}, {}, {}]",
+            block.x, block.y, block.z, grid.x, grid.y, grid.z
+    );
+}
 
 __global__ void kernel_point_cloud_cuboid(Vector3 *out, unsigned int n, unsigned int side) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -34,9 +41,7 @@ unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(unsigned int sideLeng
 
     dim3 block(BLOCK_SIZE_MAX, 1, 1);
     dim3 grid(static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
-
-    cout << "Launching kernel with threads per block: " << block.x << ", blocks: " << blocks << ", gridX: "
-    << gridX << ", gridX: " << gridY << endl;
+    printKernelDimensions(block, grid);
 
     kernel_point_cloud_cuboid <<<  grid, block >>> (data->devicePointer(), pointAmount, sideLength);
     return data;
@@ -51,8 +56,5 @@ void createThreadPerPointKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
 
     block = dim3(BLOCK_SIZE_MAX, 1, 1);
     grid = dim3 (static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
-
-    cout << "Launching kernel with threads per block: " << block.x << ", blocks: " << blocks << ", gridX: "
-         << gridX << ", gridY: " << gridY << endl;
+    printKernelDimensions(block, grid);
 }
-
