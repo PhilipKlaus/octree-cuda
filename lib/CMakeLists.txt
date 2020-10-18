@@ -6,7 +6,8 @@ add_library( ${PROJECT_NAME} STATIC
         src/chunking/pointDistribution.cu
         src/pointcloud.cpp
         src/tools.cu
-        )
+        src/tools.cuh
+        src/defines.cuh)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 

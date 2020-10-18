@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "tools.cuh"
+#include "../lib/src/tools.cuh"
 
 
 TEST_CASE ("Test generation of equally sampled point cloud cuboid", "[cuboid]") {

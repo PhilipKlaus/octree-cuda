@@ -42,16 +42,13 @@ int main() {
     data->toGPU(pChars);
 
     auto cloud = make_unique<PointCloud>(move(data));
-    BoundingBox boundingBox{
-            minimum,
-            maximum
-    };
-    PointCloudMetadata metadata {
-            pointAmount,
-            boundingBox,
-            minimum
-    };
-    cloud->initialPointCounting(7, metadata);
+    cloud->getMetadata().pointAmount = pointAmount;
+    cloud->getMetadata().boundingBox.minimum = minimum;
+    cloud->getMetadata().boundingBox.maximum = maximum;
+    cloud->getMetadata().cloudOffset = minimum;
+    cloud->getMetadata().scale = {1.f, 1.f, 1.f};
+
+    cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();
     cloud->exportGlobalTree();

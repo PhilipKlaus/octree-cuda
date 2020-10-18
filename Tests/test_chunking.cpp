@@ -1,5 +1,5 @@
 #include "catch2/catch.hpp"
-#include "tools.cuh"
+#include "../lib/src/tools.cuh"
 #include "pointcloud.h"
 
 

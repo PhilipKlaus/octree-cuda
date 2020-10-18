@@ -29,20 +29,13 @@ struct Chunk {
 struct BoundingBox {
     Vector3 minimum;
     Vector3 maximum;
-
-    Vector3 size() const {
-        return {
-            maximum.x - minimum.x,
-            maximum.y - minimum.y,
-            maximum.z - minimum.z
-        };
-    }
 };
 
 struct PointCloudMetadata {
     uint32_t pointAmount;
     BoundingBox boundingBox;
     Vector3 cloudOffset;
+    Vector3 scale;
 };
 
 template <typename dataType>

@@ -1,5 +1,5 @@
 #include "pointcloud.h"
-#include "tools.cuh"
+#include "../tools.cuh"
 
 __global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, uint32_t *counter, uint32_t newCellAmount, uint32_t newGridSize, uint32_t oldGridSize, uint32_t threshold) {
 
@@ -101,7 +101,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
         auto newChunks = make_unique<CudaArray<Chunk>>(newCellAmount);
 
         dim3 grid, block;
-        create1DKernel(block, grid, newCellAmount);
+        tools::create1DKernel(block, grid, newCellAmount);
 
         cudaEvent_t start, stop;
         cudaEventCreate(&start);

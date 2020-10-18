@@ -1,34 +1,20 @@
 #include "pointcloud.h"
-#include "tools.cuh"
+#include "../tools.cuh"
 
-__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, uint32_t pointCount, Vector3 posOffset, Vector3 size, Vector3 minimum, uint16_t gridSize) {
+
+__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint16_t gridSize) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
-    if(index >= pointCount) {
+    if(index >= metadata.pointAmount) {
         return;
     }
     Vector3 point = cloud[index];
 
-    // Copied from OctreeConverter
-    float dGridSize = gridSize;
-    auto X = int32_t((point.x - posOffset.x) / 1);
-    auto Y = int32_t((point.y - posOffset.y) / 1);
-    auto Z = int32_t((point.z - posOffset.z) / 1);
-
-    float ux = (float(X) * 1 + posOffset.x - minimum.x) / size.x;
-    float uy = (float(Y) * 1 + posOffset.y - minimum.y) / size.y;
-    float uz = (float(Z) * 1 + posOffset.z - minimum.z) / size.z;
-
-    uint64_t ix = int64_t( fmin (dGridSize * ux, dGridSize - 1.0f));
-    uint64_t iy = int64_t( fmin (dGridSize * uy, dGridSize - 1.0f));
-    uint64_t iz = int64_t( fmin (dGridSize * uz, dGridSize - 1.0f));
-
-    uint64_t gridIndex = ix + iy * gridSize + iz * gridSize * gridSize;
+    auto gridIndex = tools::calculateGridIndex(point, metadata, gridSize);
 
     atomicAdd(&(grid + gridIndex)->count, 1);
 }
 
-void PointCloud::initialPointCounting(uint32_t initialDepth, PointCloudMetadata metadata) {
-    itsMetadata = metadata;
+void PointCloud::initialPointCounting(uint32_t initialDepth) {
 
     itsInitialDepth = initialDepth;
     itsGridSize = pow(2, initialDepth);
@@ -39,7 +25,7 @@ void PointCloud::initialPointCounting(uint32_t initialDepth, PointCloudMetadata 
     cudaMemset (itsGrid[0]->devicePointer(), 0, cellAmount * sizeof(uint32_t));
 
     dim3 grid, block;
-    create1DKernel(block, grid, itsData->pointCount());
+    tools::create1DKernel(block, grid, itsData->pointCount());
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
@@ -49,10 +35,7 @@ void PointCloud::initialPointCounting(uint32_t initialDepth, PointCloudMetadata 
     kernelCounting <<<  grid, block >>> (
             itsGrid[0]->devicePointer(),
                     itsData->devicePointer(),
-                    itsData->pointCount(),
-                    metadata.cloudOffset,
-                    metadata.boundingBox.size(),
-                    metadata.boundingBox.minimum,
+                    itsMetadata,
                     itsGridSize);
     cudaEventRecord(stop);
 
