@@ -7,7 +7,7 @@
 
 
 TEST_CASE ("Test generation of equally sampled point cloud cuboid", "[cuboid]") {
-auto data = generate_point_cloud_cuboid(2);
+auto data = tools::generate_point_cloud_cuboid(2);
 auto host = data->toHost();
 
 // ----------------------

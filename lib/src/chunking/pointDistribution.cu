@@ -34,10 +34,10 @@ void PointCloud::distributePoints() {
     cudaEventRecord(start);
     kernelDistributing <<<  grid, block >>> (
             itsGrid[0]->devicePointer(),
-                    itsData->devicePointer(),
-                    itsTreeData->devicePointer(),
-                    itsMetadata,
-                    itsGridSize);
+            itsData->devicePointer(),
+            itsTreeData->devicePointer(),
+            itsMetadata,
+            itsGridSize);
     cudaEventRecord(stop);
 
     cudaEventSynchronize(stop);
