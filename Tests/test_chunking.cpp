@@ -21,44 +21,60 @@ TEST_CASE ("Test initial point counting and merging ", "[counting + merging]") {
 
     // Test if each point fall exactly in one cell
     auto host = cloud->getCountingGrid();
+    uint64_t cellOffset = 0;
+
     for(int i = 0; i < pow(128, 3); ++i) {
-        REQUIRE(host[0][i].count == 1);
-        REQUIRE(host[0][i].isFinished == false);
-        REQUIRE(host[0][i].dst != nullptr);
+        REQUIRE(host[i].count == 1);
+        REQUIRE(host[i].isFinished == false);
+        REQUIRE(host[i].dst != nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(128, 3));
+
     for(int i = 0; i < pow(64, 3); ++i) {
-        REQUIRE(host[1][i].count == 8);
-        REQUIRE(host[1][i].isFinished == false);
-        REQUIRE(host[1][i].dst != nullptr);
+        REQUIRE(host[cellOffset + i].count == 8);
+        REQUIRE(host[cellOffset + i].isFinished == false);
+        REQUIRE(host[cellOffset + i].dst != nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(64, 3));
+
     for(int i = 0; i < pow(32, 3); ++i) {
-        REQUIRE(host[2][i].count == 64);
-        REQUIRE(host[2][i].isFinished == false);
-        REQUIRE(host[2][i].dst != nullptr);
+        REQUIRE(host[cellOffset + i].count == 64);
+        REQUIRE(host[cellOffset + i].isFinished == false);
+        REQUIRE(host[cellOffset + i].dst != nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(32, 3));
+
     for(int i = 0; i < pow(16, 3); ++i) {
-        REQUIRE(host[3][i].count == 512);
-        REQUIRE(host[3][i].isFinished == false);
-        REQUIRE(host[3][i].dst != nullptr);
+        REQUIRE(host[cellOffset + i].count == 512);
+        REQUIRE(host[cellOffset + i].isFinished == false);
+        REQUIRE(host[cellOffset + i].dst != nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(16, 3));
+
     for(int i = 0; i < pow(8, 3); ++i) {
-        REQUIRE(host[4][i].count == 4096);
-        REQUIRE(host[4][i].isFinished == true);
-        REQUIRE(host[4][i].dst == nullptr);
+        REQUIRE(host[cellOffset + i].count == 4096);
+        REQUIRE(host[cellOffset + i].isFinished == true);
+        REQUIRE(host[cellOffset + i].dst == nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(8, 3));
+
     for(int i = 0; i < pow(4, 3); ++i) {
-        REQUIRE(host[5][i].count == 0);
-        REQUIRE(host[5][i].isFinished == true);
-        REQUIRE(host[5][i].dst == nullptr);
+        REQUIRE(host[cellOffset + i].count == 0);
+        REQUIRE(host[cellOffset + i].isFinished == true);
+        REQUIRE(host[cellOffset + i].dst == nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(4, 3));
+
     for(int i = 0; i < pow(2, 3); ++i) {
-        REQUIRE(host[6][i].count == 0);
-        REQUIRE(host[6][i].isFinished == true);
-        REQUIRE(host[6][i].dst == nullptr);
+        REQUIRE(host[cellOffset + i].count == 0);
+        REQUIRE(host[cellOffset + i].isFinished == true);
+        REQUIRE(host[cellOffset + i].dst == nullptr);
     }
+    cellOffset += static_cast<uint64_t >(pow(2, 3));
+
     for(int i = 0; i < pow(1, 3); ++i) {
-        REQUIRE(host[7][i].count == 0);
-        REQUIRE(host[7][i].isFinished == true);
-        REQUIRE(host[7][i].dst == nullptr);
+        REQUIRE(host[cellOffset + i].count == 0);
+        REQUIRE(host[cellOffset + i].isFinished == true);
+        REQUIRE(host[cellOffset + i].dst == nullptr);
     }
 }

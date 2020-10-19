@@ -3,7 +3,7 @@
 #include "defines.cuh"
 
 
-__global__ void kernel_point_cloud_cuboid(Vector3 *out, unsigned int n, unsigned int side) {
+__global__ void kernel_point_cloud_cuboid(Vector3 *out, uint64_t n, uint64_t side) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= n) {
         return;
@@ -57,9 +57,9 @@ namespace tools {
         return ix + iy * gridSize + iz * gridSize * gridSize;
     }
 
-    void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
+    void create1DKernel(dim3 &block, dim3 &grid, uint64_t pointCount) {
 
-        auto blocks = ceil(static_cast<float>(pointCount) / BLOCK_SIZE_MAX);
+        auto blocks = ceil(static_cast<double>(pointCount) / BLOCK_SIZE_MAX);
         auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);
         auto gridY = ceil(blocks / gridX);
 
@@ -69,7 +69,7 @@ namespace tools {
         printKernelDimensions(block, grid);
     }
 
-    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(unsigned int sideLength) {
+    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint64_t sideLength) {
 
         auto pointAmount = sideLength * sideLength * sideLength;
         auto data = std::make_unique<CudaArray<Vector3>>(pointAmount);
@@ -79,7 +79,7 @@ namespace tools {
         auto gridY = ceil(blocks / gridX);
 
         dim3 block(BLOCK_SIZE_MAX, 1, 1);
-        dim3 grid(static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
+        dim3 grid(static_cast<uint64_t>(gridX), static_cast<uint64_t>(gridY), 1);
         printKernelDimensions(block, grid);
 
         kernel_point_cloud_cuboid <<<  grid, block >>> (data->devicePointer(), pointAmount, sideLength);

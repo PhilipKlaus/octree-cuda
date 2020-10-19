@@ -19,11 +19,11 @@ struct Vector3
 };
 
 struct Chunk {
-    uint32_t count;
+    uint64_t count;
     Chunk *dst;
     bool isFinished;
-    uint32_t indexCount;
-    uint32_t treeIndex;
+    uint64_t indexCount;
+    uint64_t treeIndex;
 };
 
 struct BoundingBox {
@@ -32,7 +32,7 @@ struct BoundingBox {
 };
 
 struct PointCloudMetadata {
-    uint32_t pointAmount;
+    uint64_t pointAmount;
     BoundingBox boundingBox;
     Vector3 cloudOffset;
     Vector3 scale;
@@ -43,7 +43,7 @@ class CudaArray {
 
 public:
 
-    CudaArray(unsigned int elements) : itsElements(elements) {
+    CudaArray(uint64_t elements) : itsElements(elements) {
         auto memoryToReserve = itsElements * sizeof(dataType);
         cudaMalloc((void**)&itsData, memoryToReserve);
         spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
@@ -68,11 +68,11 @@ public:
         cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice);
     }
 
-    uint32_t pointCount() {
+    uint64_t pointCount() {
         return itsElements;
     }
 
-    unsigned int itsElements;
+    uint64_t itsElements;
     dataType *itsData;
 };
 

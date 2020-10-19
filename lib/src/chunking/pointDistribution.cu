@@ -3,7 +3,7 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeData, PointCloudMetadata metadata, uint16_t gridSize) {
+__global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeData, PointCloudMetadata metadata, uint64_t gridSize) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= metadata.pointAmount) {
         return;
@@ -20,7 +20,7 @@ __global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeDat
         isFinished = dst->isFinished;
     }
 
-    uint32_t i = atomicAdd(&(dst->indexCount), 1);
+    uint64_t i = atomicAdd(&(dst->indexCount), 1);
     treeData[dst->treeIndex + i] = cloud[index];
 }
 
@@ -32,11 +32,11 @@ void PointCloud::distributePoints() {
     tools::KernelTimer timer;
     timer.start();
     kernelDistributing <<<  grid, block >>> (
-            itsGrid[0]->devicePointer(),
+            itsGrid->devicePointer(),
             itsData->devicePointer(),
             itsTreeData->devicePointer(),
             itsMetadata,
-            itsGridSize);
+            itsGridBaseSideLength);
     timer.stop();
 
     spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());

@@ -33,12 +33,8 @@ void PointCloud::exportToPly(const std::string& file_name) {
     ply.close ();
 }
 
-vector<unique_ptr<Chunk[]>> PointCloud::getCountingGrid() {
-    vector<unique_ptr<Chunk[]>> output;
-    for(int i = 0; i < itsGrid.size(); ++i) {
-        output.push_back(itsGrid[i]->toHost());
-    }
-    return output;
+unique_ptr<Chunk[]> PointCloud::getCountingGrid() {
+    return itsGrid->toHost();
 }
 
 unique_ptr<Vector3[]> PointCloud::getTreeData() {
@@ -49,28 +45,29 @@ void PointCloud::exportGlobalTree() {
     auto host = getCountingGrid();
     auto treeData = getTreeData();
 
-    uint32_t level = 0;
-    for(int gridSize = itsGridSize; gridSize > 0; gridSize >>= 1) {
+    uint64_t cellOffset = 0;
+    uint64_t level = 0;
+    for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
 
-        for(uint32_t i = 0; i < pow(gridSize, 3); ++i) {
+        for(uint64_t i = 0; i < pow(gridSize, 3); ++i) {
 
-            if(host[level][i].isFinished && host[level][i].count > 0) {
-                uint32_t  treeIndex = host[level][i].treeIndex;
+            if(host[cellOffset + i].isFinished && host[cellOffset + i].count > 0) {
+                uint64_t treeIndex = host[cellOffset + i].treeIndex;
 
                 std::ofstream ply;
-                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[level][i].count) + ".ply"), std::ios::binary);
+                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[cellOffset + i].count) + ".ply"), std::ios::binary);
 
                 ply << "ply\n"
                        "format binary_little_endian 1.0\n"
                        "comment Created by AIT Austrian Institute of Technology\n"
                        "element vertex "
-                    << host[level][i].count
+                    << host[cellOffset + i].count
                     << "\n"
                        "property float x\n"
                        "property float y\n"
                        "property float z\n"
                        "end_header\n";
-                for (uint32_t u = 0; u < host[level][i].count; ++u)
+                for (uint64_t u = 0; u < host[cellOffset + i].count; ++u)
                 {
                     ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].x)), sizeof (float));
                     ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].y)), sizeof (float));
@@ -80,5 +77,6 @@ void PointCloud::exportGlobalTree() {
             }
         }
         ++level;
+        cellOffset += static_cast<uint64_t >(pow(gridSize, 3));
     }
 }

@@ -17,10 +17,10 @@ int main() {
     spdlog::set_level(spdlog::level::info);
 #endif
 
-    uint32_t pointAmount = 1612868;//327323;
+    uint64_t pointAmount = 1612868;//327323;
     ifstream ifs("doom_vertices.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
-    int length = pos;
+    std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
     ifs.seekg(0, ios::beg);
     ifs.read(reinterpret_cast<char *>(pChars), length);
@@ -52,6 +52,23 @@ int main() {
     cloud->performCellMerging(30000);
     cloud->distributePoints();
     cloud->exportGlobalTree();
+
+    // Assert that input amount == output amount
+    auto grid = cloud->getCountingGrid();
+    uint64_t cellOffset = 0;
+    uint64_t level = 0;
+    uint64_t sum = 0;
+    for(uint64_t gridSize = static_cast<uint64_t>(pow(2, 7)); gridSize > 1; gridSize >>= 1) {
+        for(uint64_t i = 0; i < pow(gridSize, 3); ++i)
+        {
+            if(grid[cellOffset + i].isFinished)
+                sum += grid[cellOffset + i].count;
+        }
+
+        ++level;
+        cellOffset += static_cast<uint64_t >(pow(gridSize, 3));
+    }
+    cout << "sum: " << sum << endl;
 
     delete[] pChars;
 
