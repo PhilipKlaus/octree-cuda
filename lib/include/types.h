@@ -19,7 +19,7 @@ struct Vector3
 };
 
 struct Chunk {
-    uint64_t count;
+    uint64_t pointCount;
     Chunk *dst;
     bool isFinished;
     uint64_t indexCount;

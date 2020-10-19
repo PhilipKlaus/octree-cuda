@@ -51,23 +51,23 @@ void PointCloud::exportGlobalTree() {
 
         for(uint64_t i = 0; i < pow(gridSize, 3); ++i) {
 
-            if(host[cellOffset + i].isFinished && host[cellOffset + i].count > 0) {
+            if(host[cellOffset + i].isFinished && host[cellOffset + i].pointCount > 0) {
                 uint64_t treeIndex = host[cellOffset + i].treeIndex;
 
                 std::ofstream ply;
-                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[cellOffset + i].count) + ".ply"), std::ios::binary);
+                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[cellOffset + i].pointCount) + ".ply"), std::ios::binary);
 
                 ply << "ply\n"
                        "format binary_little_endian 1.0\n"
                        "comment Created by AIT Austrian Institute of Technology\n"
                        "element vertex "
-                    << host[cellOffset + i].count
+                    << host[cellOffset + i].pointCount
                     << "\n"
                        "property float x\n"
                        "property float y\n"
                        "property float z\n"
                        "end_header\n";
-                for (uint64_t u = 0; u < host[cellOffset + i].count; ++u)
+                for (uint64_t u = 0; u < host[cellOffset + i].pointCount; ++u)
                 {
                     ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].x)), sizeof (float));
                     ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].y)), sizeof (float));

@@ -38,14 +38,14 @@ __global__ void kernelMerging(
     Chunk *chunk_1_1_1 = (chunk_1_1_0 + 1);
 
     auto sum =
-            chunk_0_0_0->count +
-            chunk_0_0_1->count +
-            chunk_0_1_0->count +
-            chunk_0_1_1->count +
-            chunk_1_0_0->count +
-            chunk_1_0_1->count +
-            chunk_1_1_0->count +
-            chunk_1_1_1->count;
+            chunk_0_0_0->pointCount +
+            chunk_0_0_1->pointCount +
+            chunk_0_1_0->pointCount +
+            chunk_0_1_1->pointCount +
+            chunk_1_0_0->pointCount +
+            chunk_1_0_1->pointCount +
+            chunk_1_1_0->pointCount +
+            chunk_1_1_1->pointCount;
 
     bool containsFinalizedCells = chunk_0_0_0->isFinished ||
                                   chunk_0_0_1->isFinished ||
@@ -59,7 +59,7 @@ __global__ void kernelMerging(
     bool isFinalized = (sum >= threshold) || containsFinalizedCells;
 
 
-    grid[cellOffsetNew + index].count = !isFinalized ? sum : 0;
+    grid[cellOffsetNew + index].pointCount = !isFinalized ? sum : 0;
     grid[cellOffsetNew + index].isFinished = isFinalized;
 
     chunk_0_0_0->dst = isFinalized ? nullptr : (grid + cellOffsetNew + index);
@@ -83,19 +83,19 @@ __global__ void kernelMerging(
     if(isFinalized) {
         uint64_t i = atomicAdd(globalChunkCounter, sum);
         chunk_0_0_0->treeIndex = i;
-        i += chunk_0_0_0->count;
+        i += chunk_0_0_0->pointCount;
         chunk_0_0_1->treeIndex = i;
-        i += chunk_0_0_1->count;
+        i += chunk_0_0_1->pointCount;
         chunk_0_1_0->treeIndex = i;
-        i += chunk_0_1_0->count;
+        i += chunk_0_1_0->pointCount;
         chunk_0_1_1->treeIndex = i;
-        i += chunk_0_1_1->count;
+        i += chunk_0_1_1->pointCount;
         chunk_1_0_0->treeIndex = i;
-        i += chunk_1_0_0->count;
+        i += chunk_1_0_0->pointCount;
         chunk_1_0_1->treeIndex = i;
-        i += chunk_1_0_1->count;
+        i += chunk_1_0_1->pointCount;
         chunk_1_1_0->treeIndex = i;
-        i += chunk_1_1_0->count;
+        i += chunk_1_1_0->pointCount;
         chunk_1_1_1->treeIndex = i;
     }
 }

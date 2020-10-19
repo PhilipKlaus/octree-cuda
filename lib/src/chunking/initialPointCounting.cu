@@ -12,7 +12,7 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
 
     auto gridIndex = tools::calculateGridIndex(point, metadata, gridSize);
 
-    atomicAdd(&(grid + gridIndex)->count, 1);
+    atomicAdd(&(grid + gridIndex)->pointCount, 1);
 }
 
 void PointCloud::initialPointCounting(uint64_t initialDepth) {
