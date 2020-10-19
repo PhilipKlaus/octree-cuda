@@ -1,5 +1,7 @@
 #include "pointcloud.h"
 #include "../tools.cuh"
+#include "../timing.cuh"
+
 
 __global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeData, PointCloudMetadata metadata, uint16_t gridSize) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -27,21 +29,15 @@ void PointCloud::distributePoints() {
     dim3 grid, block;
     tools::create1DKernel(block, grid, itsData->pointCount());
 
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    cudaEventRecord(start);
+    tools::KernelTimer timer;
+    timer.start();
     kernelDistributing <<<  grid, block >>> (
             itsGrid[0]->devicePointer(),
             itsData->devicePointer(),
             itsTreeData->devicePointer(),
             itsMetadata,
             itsGridSize);
-    cudaEventRecord(stop);
+    timer.stop();
 
-    cudaEventSynchronize(stop);
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    spdlog::info("'distributePoints' took {:f} [ms]", milliseconds);
+    spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
 }

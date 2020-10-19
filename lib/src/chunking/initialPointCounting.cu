@@ -1,5 +1,6 @@
 #include "pointcloud.h"
 #include "../tools.cuh"
+#include "../timing.cuh"
 
 
 __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint16_t gridSize) {
@@ -27,20 +28,14 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
     dim3 grid, block;
     tools::create1DKernel(block, grid, itsData->pointCount());
 
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    cudaEventRecord(start);
+    tools::KernelTimer timer;
+    timer.start();
     kernelCounting <<<  grid, block >>> (
             itsGrid[0]->devicePointer(),
                     itsData->devicePointer(),
                     itsMetadata,
                     itsGridSize);
-    cudaEventRecord(stop);
+    timer.stop();
 
-    cudaEventSynchronize(stop);
-    float milliseconds = 0;
-    cudaEventElapsedTime(&milliseconds, start, stop);
-    spdlog::info("'initialPointCounting' took {:f} [ms]", milliseconds);
+    spdlog::info("'initialPointCounting' took {:f} [ms]", timer.getMilliseconds());
 }

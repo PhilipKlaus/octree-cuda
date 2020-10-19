@@ -1,5 +1,7 @@
 #include "pointcloud.h"
 #include "../tools.cuh"
+#include "../timing.cuh"
+
 
 __global__ void kernelMerging(Chunk *outputGrid, Chunk *inputGrid, uint32_t *counter, uint32_t newCellAmount, uint32_t newGridSize, uint32_t oldGridSize, uint32_t threshold) {
 
@@ -103,22 +105,14 @@ void PointCloud::performCellMerging(uint32_t threshold) {
         dim3 grid, block;
         tools::create1DKernel(block, grid, newCellAmount);
 
-        cudaEvent_t start, stop;
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
-
-        cudaEventRecord(start);
+        tools::KernelTimer timer;
+        timer.start();
         kernelMerging <<<  grid, block >>> (newChunks->devicePointer(), itsGrid[i]->devicePointer(), itsCounter->devicePointer(), newCellAmount, gridSize>>1, gridSize, threshold);
-        cudaEventRecord(stop);
-
-        cudaEventSynchronize(stop);
-
-        float milliseconds = 0;
-        cudaEventElapsedTime(&milliseconds, start, stop);
-        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, milliseconds);
+        timer.stop();
 
         itsGrid.push_back(move(newChunks));
-
         ++i;
+
+        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
 }
