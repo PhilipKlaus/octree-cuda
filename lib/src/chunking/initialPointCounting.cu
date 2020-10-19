@@ -22,7 +22,7 @@ void PointCloud::initialPointCounting(uint64_t initialDepth) {
     for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
         itsCellAmount += static_cast<uint64_t>(pow(gridSize, 3));
     }
-    spdlog::info("'itsCellAmount' {}", itsCellAmount);
+    spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
 
     // Create and initialize the complete grid
     itsGrid = make_unique<CudaArray<Chunk>>(itsCellAmount);

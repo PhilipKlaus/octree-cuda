@@ -3,7 +3,16 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelMerging(Chunk *grid, uint64_t *counter, uint64_t newCellAmount, uint64_t newGridSize, uint64_t oldGridSize, uint64_t threshold, uint64_t cellOffsetNew, uint64_t cellOffsetOld) {
+__global__ void kernelMerging(
+        Chunk *grid,
+        uint64_t *globalChunkCounter,
+        uint64_t newCellAmount,
+        uint64_t newGridSize,
+        uint64_t oldGridSize,
+        uint64_t threshold,
+        uint64_t cellOffsetNew,
+        uint64_t cellOffsetOld
+        ) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -54,13 +63,13 @@ __global__ void kernelMerging(Chunk *grid, uint64_t *counter, uint64_t newCellAm
     grid[cellOffsetNew + index].isFinished = isFinalized;
 
     chunk_0_0_0->dst = isFinalized ? nullptr : (grid + cellOffsetNew + index);
-    chunk_0_0_1->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_0_1_0->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_0_1_1->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_1_0_0->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_1_0_1->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_1_1_0->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
-    chunk_1_1_1->dst = isFinalized ? chunk_0_0_0->dst : (grid + cellOffsetNew + index);
+    chunk_0_0_1->dst = chunk_0_0_0->dst;
+    chunk_0_1_0->dst = chunk_0_0_0->dst;
+    chunk_0_1_1->dst = chunk_0_0_0->dst;
+    chunk_1_0_0->dst = chunk_0_0_0->dst;
+    chunk_1_0_1->dst = chunk_0_0_0->dst;
+    chunk_1_1_0->dst = chunk_0_0_0->dst;
+    chunk_1_1_1->dst = chunk_0_0_0->dst;
 
     chunk_0_0_0->isFinished = isFinalized;
     chunk_0_0_1->isFinished = chunk_0_0_0->isFinished;
@@ -72,7 +81,7 @@ __global__ void kernelMerging(Chunk *grid, uint64_t *counter, uint64_t newCellAm
     chunk_1_1_1->isFinished = chunk_0_0_0->isFinished;
 
     if(isFinalized) {
-        uint64_t i = atomicAdd(counter, sum);
+        uint64_t i = atomicAdd(globalChunkCounter, sum);
         chunk_0_0_0->treeIndex = i;
         i += chunk_0_0_0->count;
         chunk_0_0_1->treeIndex = i;
@@ -96,7 +105,6 @@ void PointCloud::performCellMerging(uint64_t threshold) {
     auto counter = make_unique<CudaArray<uint64_t>>(1);
     cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint64_t));
 
-    int i = 0;
     uint64_t cellOffsetNew = 0;
     uint64_t cellOffsetOld = 0;
     for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
@@ -109,11 +117,18 @@ void PointCloud::performCellMerging(uint64_t threshold) {
 
         tools::KernelTimer timer;
         timer.start();
-        kernelMerging <<<  grid, block >>> (itsGrid->devicePointer(), counter->devicePointer(), newCellAmount, gridSize>>1, gridSize, threshold, cellOffsetNew, cellOffsetOld);
+        kernelMerging <<<  grid, block >>> (
+                itsGrid->devicePointer(),
+                counter->devicePointer(),
+                newCellAmount,
+                gridSize>>1,
+                gridSize,
+                threshold,
+                cellOffsetNew,
+                cellOffsetOld);
         timer.stop();
 
         cellOffsetOld = cellOffsetNew;
-        ++i;
         spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
 }

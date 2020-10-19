@@ -3,7 +3,14 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeData, PointCloudMetadata metadata, uint64_t gridSize) {
+__global__ void kernelDistributing(
+        Chunk *grid,
+        Vector3 *cloud,
+        Vector3 *treeData,
+        PointCloudMetadata metadata,
+        uint64_t gridSize
+        ) {
+
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= metadata.pointAmount) {
         return;
