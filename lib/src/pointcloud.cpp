@@ -50,7 +50,7 @@ void PointCloud::exportGlobalTree() {
     auto treeData = getTreeData();
 
     uint32_t level = 0;
-    for(int gridSize = itsGridSize; gridSize > 1; gridSize >>= 1) {
+    for(int gridSize = itsGridSize; gridSize > 0; gridSize >>= 1) {
 
         for(uint32_t i = 0; i < pow(gridSize, 3); ++i) {
 
