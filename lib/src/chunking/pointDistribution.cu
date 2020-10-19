@@ -6,7 +6,7 @@
 __global__ void kernelDistributing(
         Chunk *grid,
         Vector3 *cloud,
-        Vector3 *treeData,
+        uint64_t *treeData,
         PointCloudMetadata metadata,
         uint64_t gridSize
         ) {
@@ -28,7 +28,7 @@ __global__ void kernelDistributing(
     }
 
     uint64_t i = atomicAdd(&(dst->indexCount), 1);
-    treeData[dst->treeIndex + i] = cloud[index];
+    treeData[dst->treeIndex + i] = index;
 }
 
 void PointCloud::distributePoints() {

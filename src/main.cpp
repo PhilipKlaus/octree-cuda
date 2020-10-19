@@ -62,13 +62,13 @@ int main() {
         for(uint64_t i = 0; i < pow(gridSize, 3); ++i)
         {
             if(grid[cellOffset + i].isFinished)
-                sum += grid[cellOffset + i].count;
+                sum += grid[cellOffset + i].pointCount;
         }
 
         ++level;
         cellOffset += static_cast<uint64_t >(pow(gridSize, 3));
     }
-    cout << "sum: " << sum << endl;
+    assert(sum == pointAmount);
 
     delete[] pChars;
 

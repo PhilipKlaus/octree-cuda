@@ -13,8 +13,9 @@ class PointCloud {
 public:
     explicit PointCloud(unique_ptr<CudaArray<Vector3>> data)
     : itsData(move(data)), itsCellAmount(0) {
-        itsTreeData = make_unique<CudaArray<Vector3>>(itsData->pointCount());
+        itsTreeData = make_unique<CudaArray<uint64_t>>(itsData->pointCount());
     }
+
     void initialPointCounting(uint64_t initialDepth);
     void performCellMerging(uint64_t threshold);
     void exportToPly(const std::string& file_name);
@@ -23,7 +24,7 @@ public:
     PointCloudMetadata& getMetadata() { return itsMetadata; }
 
     unique_ptr<Chunk[]> getCountingGrid();
-    unique_ptr<Vector3[]> getTreeData();
+    unique_ptr<uint64_t[]> getTreeData();
 
 private:
     // Point cloud data
@@ -35,7 +36,7 @@ private:
     uint64_t itsGridBaseSideLength;
     unique_ptr<CudaArray<Chunk>> itsGrid;
 
-    unique_ptr<CudaArray<Vector3>> itsTreeData;
+    unique_ptr<CudaArray<uint64_t>> itsTreeData;
 };
 
 #endif //OCTREECUDA_POINTCLOUD_H

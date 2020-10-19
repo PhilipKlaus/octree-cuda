@@ -101,7 +101,7 @@ __global__ void kernelMerging(
 }
 
 void PointCloud::performCellMerging(uint64_t threshold) {
-    itsTreeData = make_unique<CudaArray<Vector3>>(itsData->pointCount());
+    itsTreeData = make_unique<CudaArray<uint64_t>>(itsData->pointCount());
     auto counter = make_unique<CudaArray<uint64_t>>(1);
     cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint64_t));
 
