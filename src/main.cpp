@@ -17,7 +17,7 @@ int main() {
     spdlog::set_level(spdlog::level::info);
 #endif
     EventWatcher& watcher = EventWatcher::getInstance();
-    watcher.reservedMemoryEvent(0);
+    watcher.reservedMemoryEvent(0, "Program start");
 
     uint64_t pointAmount = 1612868;//327323;
     ifstream ifs("doom_vertices.ply", ios::binary|ios::ate);
@@ -40,7 +40,7 @@ int main() {
         maximum.z = fmax(maximum.z, points[i].z);
     }
 
-    auto data = make_unique<CudaArray<Vector3>>(pointAmount);
+    auto data = make_unique<CudaArray<Vector3>>(pointAmount, "pointcloud");
     data->toGPU(pChars);
 
     auto cloud = make_unique<PointCloud>(move(data));

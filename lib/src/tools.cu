@@ -72,7 +72,7 @@ namespace tools {
     unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint64_t sideLength) {
 
         auto pointAmount = sideLength * sideLength * sideLength;
-        auto data = std::make_unique<CudaArray<Vector3>>(pointAmount);
+        auto data = std::make_unique<CudaArray<Vector3>>(pointAmount, "cuboid");
 
         auto blocks = ceil(pointAmount / 1024.f);
         auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);

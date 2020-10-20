@@ -13,7 +13,7 @@ class PointCloud {
 public:
     explicit PointCloud(unique_ptr<CudaArray<Vector3>> data)
     : itsData(move(data)), itsCellAmount(0) {
-        itsTreeData = make_unique<CudaArray<uint64_t>>(itsData->pointCount());
+        itsTreeData = make_unique<CudaArray<uint64_t>>(itsData->pointCount(), "LUT");
     }
 
     void initialPointCounting(uint64_t initialDepth);

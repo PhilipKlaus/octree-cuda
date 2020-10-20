@@ -10,6 +10,8 @@
 
 using namespace std::chrono;
 
+constexpr double GB = 1000000000.0;
+
 const std::string htmlPart1 =
                     "<html>\n"
                     "    <head>\n"
@@ -66,35 +68,34 @@ public:
     }
 
     ~EventWatcher() {
+        std::string data;
+        std::string labels;
+
+        for(auto i = 0; i < itsTimestamps.size(); ++i) {
+            data += std::to_string(itsMemoryFootprints[i]);
+            labels += ("\"" + itsEventLabels[i] + "\"");
+            if(i < itsTimestamps.size() - 1) {
+                data += ",";
+                labels += ",";
+            }
+        }
+
         std::ofstream htmlData;
         htmlData.open (std::string("memory_footprint.html"), std::ios::out);
         htmlData << htmlPart1;
-        htmlData << R"lit({labels: ["0","1","2","3","4","5","6","7","8","9","10"], datasets: [{label: "Memory footprint", backgroundColor: "rgb(255, 99, 132)", borderColor: "rgb(255, 99, 132)",)lit";
-        htmlData << "data: [";
-        for(auto i = 0; i < itsTimestamps.size(); ++i) {
-            htmlData << itsMemoryFootprints[i];
-            if(i < itsTimestamps.size() - 1) {
-                htmlData << ",";
-            }
-        }
-        htmlData << "]}]}, ";
+        htmlData << "{labels: [" << labels << "], datasets: [{label: \"Memory footprint\", backgroundColor: \"rgb(255, 99, 132)\", borderColor: \"rgb(255, 99, 132)\",";
+        htmlData << "data: [" << data << "]}]},";
         htmlData << htmlPart2;
     }
 
-    void reservedMemoryEvent(uint64_t memoryFootprint) {
-        memoryConsumption += (memoryFootprint / 1000000000.0);
-        itsMemoryFootprints.push_back(memoryConsumption);
-        auto current = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(current - itsStart);
-        itsTimestamps.push_back(duration.count());
+    void reservedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
+        memoryConsumption += (memoryFootprint / GB);
+        recordEvent(name);
     }
 
-    void freedMemoryEvent(uint64_t memoryFootprint) {
-        memoryConsumption -= (memoryFootprint / 1000000000.0);
-        itsMemoryFootprints.push_back(memoryConsumption);
-        auto current = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(current - itsStart);
-        itsTimestamps.push_back(duration.count());
+    void freedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
+        memoryConsumption -= (memoryFootprint / GB);
+        recordEvent("Deleted " + name);
     }
 
 private:
@@ -103,12 +104,19 @@ private:
         memoryConsumption = 0;
     }
 
+    void recordEvent(const std::string& name) {
+        itsEventLabels.push_back(name);
+        itsMemoryFootprints.push_back(memoryConsumption);
+        auto current = high_resolution_clock::now();
+        auto duration = duration_cast<milliseconds>(current - itsStart);
+        itsTimestamps.push_back(duration.count());
+    }
+
 public:
     EventWatcher(EventWatcher const&)  = delete;
     void operator=(EventWatcher const&) = delete;
 
 private:
-    uint64_t step = 0;
     double memoryConsumption;
     std::vector<double> itsMemoryFootprints;
     std::vector<uint64_t> itsTimestamps;

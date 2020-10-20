@@ -44,16 +44,18 @@ class CudaArray {
 
 public:
 
-    CudaArray(uint64_t elements) : itsElements(elements) {
+    CudaArray(uint64_t elements, const std::string& name) :
+    itsElements(elements),
+    itsName(name) {
         auto memoryToReserve = itsElements * sizeof(dataType);
         itsMemory = memoryToReserve;
-        itsWatcher.reservedMemoryEvent(memoryToReserve);
+        itsWatcher.reservedMemoryEvent(memoryToReserve, itsName);
         cudaMalloc((void**)&itsData, memoryToReserve);
         spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
     }
 
     ~CudaArray() {
-        itsWatcher.freedMemoryEvent(itsMemory);
+        itsWatcher.freedMemoryEvent(itsMemory, itsName);
         cudaFree(itsData);
         spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
@@ -76,6 +78,7 @@ public:
         return itsElements;
     }
 private:
+    std::string itsName;
     uint64_t itsMemory;
     uint64_t itsElements;
     dataType *itsData;
