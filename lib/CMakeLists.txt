@@ -8,7 +8,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/tools.cu
         src/tools.cuh
         src/defines.cuh
-        src/timing.cuh)
+        src/timing.cuh include/eventWatcher.h)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 

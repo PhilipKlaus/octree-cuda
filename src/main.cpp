@@ -4,7 +4,7 @@
 
 // Local dependencies
 #include "pointcloud.h"
-
+#include "eventWatcher.h"
 
 using namespace std;
 
@@ -16,6 +16,8 @@ int main() {
 #else
     spdlog::set_level(spdlog::level::info);
 #endif
+    EventWatcher& watcher = EventWatcher::getInstance();
+    watcher.reservedMemoryEvent(0);
 
     uint64_t pointAmount = 1612868;//327323;
     ifstream ifs("doom_vertices.ply", ios::binary|ios::ate);

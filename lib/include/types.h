@@ -10,6 +10,7 @@
 #include <cuda.h>
 #include <iostream>
 #include "spdlog/spdlog.h"
+#include "eventWatcher.h"
 
 using namespace std;
 
@@ -45,11 +46,14 @@ public:
 
     CudaArray(uint64_t elements) : itsElements(elements) {
         auto memoryToReserve = itsElements * sizeof(dataType);
+        itsMemory = memoryToReserve;
+        itsWatcher.reservedMemoryEvent(memoryToReserve);
         cudaMalloc((void**)&itsData, memoryToReserve);
         spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
     }
 
     ~CudaArray() {
+        itsWatcher.freedMemoryEvent(itsMemory);
         cudaFree(itsData);
         spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
@@ -71,9 +75,11 @@ public:
     uint64_t pointCount() {
         return itsElements;
     }
-
+private:
+    uint64_t itsMemory;
     uint64_t itsElements;
     dataType *itsData;
+    EventWatcher& itsWatcher = EventWatcher::getInstance();
 };
 
 #endif
