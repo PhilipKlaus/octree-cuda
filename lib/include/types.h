@@ -77,6 +77,7 @@ public:
     uint64_t pointCount() {
         return itsElements;
     }
+
 private:
     std::string itsName;
     uint64_t itsMemory;

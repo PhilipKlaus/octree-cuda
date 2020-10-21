@@ -5,65 +5,25 @@
 #ifndef OCTREECUDA_EVENTWATCHER_H
 #define OCTREECUDA_EVENTWATCHER_H
 
+// Standard library
 #include <fstream>
+
+// Local dependencies
 #include "spdlog/spdlog.h"
+
 
 using namespace std::chrono;
 
+
 constexpr double GB = 1000000000.0;
 
-const std::string htmlPart1 =
-                    "<html>\n"
-                    "    <head>\n"
-                    "        <script src=\"https://cdn.jsdelivr.net/npm/chart.js@2.8.0\"></script>\n"
-                    "        <style>\n"
-                    "            html, body {\n"
-                    "            margin: 0;\n"
-                    "            height: 100%;\n"
-                    "            }\n"
-                    "            canvas {\n"
-                    "            width: 100%;\n"
-                    "            height: 100%;\n"
-                    "            display: block;\n"
-                    "            }\n"
-                    "        </style>\n"
-                    "    </head>\n"
-                    "    <body>\n"
-                    "        <canvas id=\"myChart\"></canvas>\n"
-                    "        <script>\n"
-                    "            var ctx = document.getElementById('myChart').getContext('2d');\n"
-                    "            var chart = new Chart(ctx, {\n"
-                    "                // The type of chart we want to create\n"
-                    "                type: 'line',\n"
-                    "\n"
-                    "                // The data for our dataset\n"
-                    "                data:";
-const std::string htmlPart2 =
-                    "                // Configuration options go here\n"
-                    "                options: {\n"
-                    "                    scales: {\n"
-                    "                        yAxes: [{\n"
-                    "                            ticks: {\n"
-                    "                                beginAtZero: true\n"
-                    "                            },\n"
-                    "                            scaleLabel: {\n"
-                    "                               display: true,"
-                    "                               labelString: 'Memory usage [GB]'"
-                    "                            }"
-                    "                        }]\n"
-                    "                    }\n"
-                    "                },\n"
-                    "\n"
-                    "            });\n"
-                    "        </script>\n"
-                    "    </body>\n"
-                    "</html>";
 
 class EventWatcher {
+
 public:
     static EventWatcher& getInstance()
     {
-        static EventWatcher    instance;
+        static EventWatcher instance;
         return instance;
     }
 
@@ -71,10 +31,10 @@ public:
         std::string data;
         std::string labels;
 
-        for(auto i = 0; i < itsTimestamps.size(); ++i) {
+        for(auto i = 0; i < itsMemoryFootprints.size(); ++i) {
             data += std::to_string(itsMemoryFootprints[i]);
             labels += ("\"" + itsEventLabels[i] + "\"");
-            if(i < itsTimestamps.size() - 1) {
+            if(i < itsMemoryFootprints.size() - 1) {
                 data += ",";
                 labels += ",";
             }
@@ -82,10 +42,12 @@ public:
 
         std::ofstream htmlData;
         htmlData.open (std::string("memory_footprint.html"), std::ios::out);
-        htmlData << htmlPart1;
-        htmlData << "{labels: [" << labels << "], datasets: [{label: \"Memory footprint\", backgroundColor: \"rgb(255, 99, 132)\", borderColor: \"rgb(255, 99, 132)\",";
+        htmlData << itsHtmlPart1;
+        htmlData << "{labels: [" << labels << "], datasets: [{label: \"Memory footprint\", backgroundColor: "
+                                              "\"rgb(255, 99, 132)\", borderColor: \"rgb(255, 99, 132)\",";
         htmlData << "data: [" << data << "]}]},";
-        htmlData << htmlPart2;
+        htmlData << itsHtmlPart2;
+        htmlData.close();
     }
 
     void reservedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
@@ -99,17 +61,14 @@ public:
     }
 
 private:
+
     EventWatcher() {
-        itsStart = high_resolution_clock::now();
         memoryConsumption = 0;
     }
 
     void recordEvent(const std::string& name) {
         itsEventLabels.push_back(name);
         itsMemoryFootprints.push_back(memoryConsumption);
-        auto current = high_resolution_clock::now();
-        auto duration = duration_cast<milliseconds>(current - itsStart);
-        itsTimestamps.push_back(duration.count());
     }
 
 public:
@@ -119,9 +78,56 @@ public:
 private:
     double memoryConsumption;
     std::vector<double> itsMemoryFootprints;
-    std::vector<uint64_t> itsTimestamps;
     std::vector<std::string> itsEventLabels;
     time_point<steady_clock> itsStart;
+
+    const std::string itsHtmlPart1 =
+            "<html>\n"
+            "    <head>\n"
+            "        <script src=\"https://cdn.jsdelivr.net/npm/chart.js@2.8.0\"></script>\n"
+            "        <style>\n"
+            "            html, body {\n"
+            "            margin: 0;\n"
+            "            height: 100%;\n"
+            "            }\n"
+            "            canvas {\n"
+            "            width: 100%;\n"
+            "            height: 100%;\n"
+            "            display: block;\n"
+            "            }\n"
+            "        </style>\n"
+            "    </head>\n"
+            "    <body>\n"
+            "        <canvas id=\"myChart\"></canvas>\n"
+            "        <script>\n"
+            "            var ctx = document.getElementById('myChart').getContext('2d');\n"
+            "            var chart = new Chart(ctx, {\n"
+            "                // The type of chart we want to create\n"
+            "                type: 'line',\n"
+            "\n"
+            "                // The data for our dataset\n"
+            "                data:";
+
+    const std::string itsHtmlPart2 =
+            "                // Configuration options go here\n"
+            "                options: {\n"
+            "                    scales: {\n"
+            "                        yAxes: [{\n"
+            "                            ticks: {\n"
+            "                                beginAtZero: true\n"
+            "                            },\n"
+            "                            scaleLabel: {\n"
+            "                               display: true,"
+            "                               labelString: 'Memory usage [GB]'"
+            "                            }"
+            "                        }]\n"
+            "                    }\n"
+            "                },\n"
+            "\n"
+            "            });\n"
+            "        </script>\n"
+            "    </body>\n"
+            "</html>";
 };
 
 #endif //OCTREECUDA_EVENTWATCHER_H
