@@ -24,7 +24,8 @@ struct Chunk {
     uint64_t parentChunkIndex;  // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
     bool isFinished;            // Is this chunk finished (= not mergeable anymore)
     uint64_t indexCount;        // A counter necessary to determine POINT INDICES within the CHUNK in the global LUT
-    uint64_t treeIndex;         // Determines the CHUNK INDEX in the global LUT -> for storing point INDECES
+    uint64_t treeIndex;         // Determines the CHUNK INDEX in the global LUT -> for storing point INDICES
+    uint64_t childrenChunks[8]; // The CHUNK INDICES of the children chunks in the GRID
 };
 
 struct BoundingBox {

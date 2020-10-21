@@ -28,7 +28,8 @@ __global__ void kernelMerging(
 
     auto oldXY = oldGridSize * oldGridSize;
 
-    Chunk *ptr = grid + cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    uint64_t childrenChunkIndex = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    Chunk *ptr = grid + childrenChunkIndex;
     Chunk *chunk_0_0_0 = ptr;
     Chunk *chunk_0_0_1 = (chunk_0_0_0 + 1);
     Chunk *chunk_0_1_0 = (chunk_0_0_0 + oldGridSize);
@@ -59,10 +60,22 @@ __global__ void kernelMerging(
 
     bool isFinalized = (sum >= threshold) || containsFinalizedCells;
 
-
+    // Update new (higher-level) chunk
     grid[cellOffsetNew + index].pointCount = !isFinalized ? sum : 0;
     grid[cellOffsetNew + index].isFinished = isFinalized;
 
+    /*grid[cellOffsetNew + index].pointCount = sum;
+    grid[cellOffsetNew + index].isFinished = isFinalized;
+    grid[cellOffsetNew + index].childrenChunks[0] = childrenChunkIndex;
+    grid[cellOffsetNew + index].childrenChunks[1] = childrenChunkIndex + 1;
+    grid[cellOffsetNew + index].childrenChunks[2] = childrenChunkIndex + oldGridSize;
+    grid[cellOffsetNew + index].childrenChunks[3] = grid[cellOffsetNew + index].childrenChunks[2] + 1;
+    grid[cellOffsetNew + index].childrenChunks[4] = childrenChunkIndex + oldXY;
+    grid[cellOffsetNew + index].childrenChunks[5] = grid[cellOffsetNew + index].childrenChunks[4] + 1;
+    grid[cellOffsetNew + index].childrenChunks[6] = grid[cellOffsetNew + index].childrenChunks[4] + oldGridSize;
+    grid[cellOffsetNew + index].childrenChunks[7] = grid[cellOffsetNew + index].childrenChunks[6] + 1;*/
+
+    // Update old (8 lower-level) chunks
     chunk_0_0_0->parentChunkIndex = isFinalized ? INVALID_INDEX : cellOffsetNew + index;
     chunk_0_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
     chunk_0_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
