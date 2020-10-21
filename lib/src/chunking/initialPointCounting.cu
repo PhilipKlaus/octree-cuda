@@ -16,6 +16,7 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
 }
 
 void PointCloud::initialPointCounting(uint64_t initialDepth) {
+    spdlog::info("SIZEOF: {}", sizeof(Chunk));
 
     // Precalculate parameters
     itsGridBaseSideLength = static_cast<uint64_t >(pow(2, initialDepth));

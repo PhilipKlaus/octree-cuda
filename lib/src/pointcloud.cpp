@@ -27,7 +27,7 @@ void PointCloud::exportGlobalTree() {
         for(uint64_t i = 0; i < pow(gridSize, 3); ++i) {
 
             if(grid[cellOffset + i].isFinished && grid[cellOffset + i].pointCount > 0) {
-                uint64_t treeIndex = grid[cellOffset + i].treeIndex;
+                uint64_t treeIndex = grid[cellOffset + i].chunkDataIndex;
 
                 std::ofstream ply;
                 ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(grid[cellOffset + i].pointCount) + ".ply"), std::ios::binary);

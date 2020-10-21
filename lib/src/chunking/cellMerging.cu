@@ -28,16 +28,23 @@ __global__ void kernelMerging(
 
     auto oldXY = oldGridSize * oldGridSize;
 
-    uint64_t childrenChunkIndex = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
-    Chunk *ptr = grid + childrenChunkIndex;
-    Chunk *chunk_0_0_0 = ptr;
-    Chunk *chunk_0_0_1 = (chunk_0_0_0 + 1);
-    Chunk *chunk_0_1_0 = (chunk_0_0_0 + oldGridSize);
-    Chunk *chunk_0_1_1 = (chunk_0_1_0 + 1);
-    Chunk *chunk_1_0_0 = (ptr + oldXY);
-    Chunk *chunk_1_0_1 = (chunk_1_0_0 + 1);
-    Chunk *chunk_1_1_0 = (chunk_1_0_0 + oldGridSize);
-    Chunk *chunk_1_1_1 = (chunk_1_1_0 + 1);
+    uint64_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    uint64_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
+    uint64_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
+    uint64_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
+    uint64_t chunk_1_0_0_index = chunk_0_0_0_index + oldXY;
+    uint64_t chunk_1_0_1_index = chunk_1_0_0_index + 1;
+    uint64_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
+    uint64_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
+
+    Chunk *chunk_0_0_0 = grid + chunk_0_0_0_index;
+    Chunk *chunk_0_0_1 = grid + chunk_0_0_1_index;
+    Chunk *chunk_0_1_0 = grid + chunk_0_1_0_index;
+    Chunk *chunk_0_1_1 = grid + chunk_0_1_1_index;
+    Chunk *chunk_1_0_0 = grid + chunk_1_0_0_index;
+    Chunk *chunk_1_0_1 = grid + chunk_1_0_1_index;
+    Chunk *chunk_1_1_0 = grid + chunk_1_1_0_index;
+    Chunk *chunk_1_1_1 = grid + chunk_1_1_1_index;
 
     auto sum =
             chunk_0_0_0->pointCount +
@@ -61,22 +68,21 @@ __global__ void kernelMerging(
     bool isFinalized = (sum >= threshold) || containsFinalizedCells;
 
     // Update new (higher-level) chunk
-    grid[cellOffsetNew + index].pointCount = !isFinalized ? sum : 0;
-    grid[cellOffsetNew + index].isFinished = isFinalized;
+    uint64_t newIndex = cellOffsetNew + index;
+    grid[newIndex].pointCount = !isFinalized ? sum : 0;
+    grid[newIndex].isFinished = isFinalized;
 
-    /*grid[cellOffsetNew + index].pointCount = sum;
-    grid[cellOffsetNew + index].isFinished = isFinalized;
-    grid[cellOffsetNew + index].childrenChunks[0] = childrenChunkIndex;
-    grid[cellOffsetNew + index].childrenChunks[1] = childrenChunkIndex + 1;
-    grid[cellOffsetNew + index].childrenChunks[2] = childrenChunkIndex + oldGridSize;
-    grid[cellOffsetNew + index].childrenChunks[3] = grid[cellOffsetNew + index].childrenChunks[2] + 1;
-    grid[cellOffsetNew + index].childrenChunks[4] = childrenChunkIndex + oldXY;
-    grid[cellOffsetNew + index].childrenChunks[5] = grid[cellOffsetNew + index].childrenChunks[4] + 1;
-    grid[cellOffsetNew + index].childrenChunks[6] = grid[cellOffsetNew + index].childrenChunks[4] + oldGridSize;
-    grid[cellOffsetNew + index].childrenChunks[7] = grid[cellOffsetNew + index].childrenChunks[6] + 1;*/
+    grid[newIndex].childrenChunks[0] = chunk_0_0_0_index;
+    grid[newIndex].childrenChunks[1] = chunk_0_0_1_index;
+    grid[newIndex].childrenChunks[2] = chunk_0_1_0_index;
+    grid[newIndex].childrenChunks[3] = chunk_0_1_1_index;
+    grid[newIndex].childrenChunks[4] = chunk_1_0_0_index;
+    grid[newIndex].childrenChunks[5] = chunk_1_0_1_index;
+    grid[newIndex].childrenChunks[6] = chunk_1_1_0_index;
+    grid[newIndex].childrenChunks[7] = chunk_1_1_1_index;
 
     // Update old (8 lower-level) chunks
-    chunk_0_0_0->parentChunkIndex = isFinalized ? INVALID_INDEX : cellOffsetNew + index;
+    chunk_0_0_0->parentChunkIndex = isFinalized ? INVALID_INDEX : newIndex;
     chunk_0_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
     chunk_0_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
     chunk_0_1_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
@@ -96,21 +102,21 @@ __global__ void kernelMerging(
 
     if(isFinalized) {
         uint64_t i = atomicAdd(globalChunkCounter, sum);
-        chunk_0_0_0->treeIndex = i;
+        chunk_0_0_0->chunkDataIndex = i;
         i += chunk_0_0_0->pointCount;
-        chunk_0_0_1->treeIndex = i;
+        chunk_0_0_1->chunkDataIndex = i;
         i += chunk_0_0_1->pointCount;
-        chunk_0_1_0->treeIndex = i;
+        chunk_0_1_0->chunkDataIndex = i;
         i += chunk_0_1_0->pointCount;
-        chunk_0_1_1->treeIndex = i;
+        chunk_0_1_1->chunkDataIndex = i;
         i += chunk_0_1_1->pointCount;
-        chunk_1_0_0->treeIndex = i;
+        chunk_1_0_0->chunkDataIndex = i;
         i += chunk_1_0_0->pointCount;
-        chunk_1_0_1->treeIndex = i;
+        chunk_1_0_1->chunkDataIndex = i;
         i += chunk_1_0_1->pointCount;
-        chunk_1_1_0->treeIndex = i;
+        chunk_1_1_0->chunkDataIndex = i;
         i += chunk_1_1_0->pointCount;
-        chunk_1_1_1->treeIndex = i;
+        chunk_1_1_1->chunkDataIndex = i;
     }
 }
 
