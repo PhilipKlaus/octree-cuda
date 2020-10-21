@@ -6,7 +6,7 @@
 __global__ void kernelDistributing(
         Chunk *grid,
         Vector3 *cloud,
-        uint64_t *treeData,
+        Vector3 *treeData,
         PointCloudMetadata metadata,
         uint64_t gridSize
         ) {
@@ -28,23 +28,23 @@ __global__ void kernelDistributing(
     }
 
     uint64_t i = atomicAdd(&(grid[dst].indexCount), 1);
-    treeData[grid[dst].treeIndex + i] = index;
+    treeData[grid[dst].treeIndex + i] = cloud[index];
 }
 
 void PointCloud::distributePoints() {
 
     dim3 grid, block;
-    tools::create1DKernel(block, grid, itsData->pointCount());
+    tools::create1DKernel(block, grid, itsCloudData->pointCount());
 
     tools::KernelTimer timer;
     timer.start();
     kernelDistributing <<<  grid, block >>> (
             itsGrid->devicePointer(),
-            itsData->devicePointer(),
-            itsTreeData->devicePointer(),
+            itsCloudData->devicePointer(),
+            itsChunkData->devicePointer(),
             itsMetadata,
             itsGridBaseSideLength);
     timer.stop();
-
+    itsCloudData.reset();
     spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
 }

@@ -12,14 +12,13 @@ unique_ptr<Chunk[]> PointCloud::getCountingGrid() {
     return itsGrid->toHost();
 }
 
-unique_ptr<uint64_t[]> PointCloud::getTreeData() {
-    return itsTreeData->toHost();
+unique_ptr<Vector3[]> PointCloud::getTreeData() {
+    return itsChunkData->toHost();
 }
 
 void PointCloud::exportGlobalTree() {
     auto grid = getCountingGrid();
     auto treeData = getTreeData();
-    auto host = itsData->toHost();
 
     uint64_t cellOffset = 0;
     uint64_t level = 0;
@@ -45,9 +44,9 @@ void PointCloud::exportGlobalTree() {
                        "end_header\n";
                 for (uint64_t u = 0; u < grid[cellOffset + i].pointCount; ++u)
                 {
-                    ply.write (reinterpret_cast<const char*> (&(host[treeData[treeIndex + u]].x)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(host[treeData[treeIndex + u]].y)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(host[treeData[treeIndex + u]].z)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].x)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].y)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].z)), sizeof (float));
                 }
                 ply.close ();
             }

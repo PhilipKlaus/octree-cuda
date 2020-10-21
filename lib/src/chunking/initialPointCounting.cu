@@ -30,14 +30,14 @@ void PointCloud::initialPointCounting(uint64_t initialDepth) {
 
     // Calculate kernel dimensions
     dim3 grid, block;
-    tools::create1DKernel(block, grid, itsData->pointCount());
+    tools::create1DKernel(block, grid, itsCloudData->pointCount());
 
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
     kernelCounting <<<  grid, block >>> (
             itsGrid->devicePointer(),
-            itsData->devicePointer(),
+            itsCloudData->devicePointer(),
             itsMetadata,
             itsGridBaseSideLength);
     timer.stop();

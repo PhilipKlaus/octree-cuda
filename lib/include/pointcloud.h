@@ -13,12 +13,12 @@ class PointCloud {
 
 public:
     explicit PointCloud(unique_ptr<CudaArray<Vector3>> data):
-    itsData(move(data)),
-    itsCellAmount(0),
-    itsGridBaseSideLength(0),
-    itsMetadata({})
+            itsCloudData(move(data)),
+            itsCellAmount(0),
+            itsGridBaseSideLength(0),
+            itsMetadata({})
     {
-        itsTreeData = make_unique<CudaArray<uint64_t>>(itsData->pointCount(), "LUT");
+        itsChunkData = make_unique<CudaArray<Vector3>>(itsCloudData->pointCount(), "Chunk Data");
     }
 
     void initialPointCounting(uint64_t initialDepth);
@@ -28,19 +28,20 @@ public:
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
     unique_ptr<Chunk[]> getCountingGrid();
-    unique_ptr<uint64_t[]> getTreeData();
+    unique_ptr<Vector3[]> getTreeData();
 
 private:
-    // Point cloud data
-    unique_ptr<CudaArray<Vector3>> itsData;
-    PointCloudMetadata itsMetadata;
+    // Data blocks
+    unique_ptr<CudaArray<Vector3>> itsCloudData;    // The point cloud data
+    unique_ptr<CudaArray<Vector3>> itsChunkData;    // The point cloud data grouped by chunk
+    unique_ptr<CudaArray<Chunk>> itsGrid;           // The hierarchical grid structure
+
+    PointCloudMetadata itsMetadata;                 // Cloud metadata
 
     // Grid / Octree
-    uint64_t itsCellAmount; // Overall cell amount of the complete hierarchy pyramid
-    uint64_t itsGridBaseSideLength;
-    unique_ptr<CudaArray<Chunk>> itsGrid;
+    uint64_t itsCellAmount;                         // Overall cell amount of the hierarchical grid
+    uint64_t itsGridBaseSideLength;                 // The side length of the lowest grid in the hierarchy (e.g. 128)
 
-    unique_ptr<CudaArray<uint64_t>> itsTreeData;
 };
 
 #endif //OCTREECUDA_POINTCLOUD_H
