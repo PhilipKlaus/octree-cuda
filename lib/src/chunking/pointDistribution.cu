@@ -19,16 +19,16 @@ __global__ void kernelDistributing(
 
     auto gridIndex = tools::calculateGridIndex(point, metadata, gridSize);
 
-    Chunk *dst = (grid + gridIndex);
-    bool isFinished = dst->isFinished;
+    uint64_t dst = gridIndex;
+    bool isFinished = grid[dst].isFinished;
 
     while(!isFinished) {
-        dst = dst->dst;
-        isFinished = dst->isFinished;
+        dst = grid[dst].parentChunkIndex;
+        isFinished = grid[dst].isFinished;
     }
 
-    uint64_t i = atomicAdd(&(dst->indexCount), 1);
-    treeData[dst->treeIndex + i] = index;
+    uint64_t i = atomicAdd(&(grid[dst].indexCount), 1);
+    treeData[grid[dst].treeIndex + i] = index;
 }
 
 void PointCloud::distributePoints() {

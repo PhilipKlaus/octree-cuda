@@ -1,6 +1,7 @@
 #include "pointcloud.h"
 #include "../tools.cuh"
 #include "../timing.cuh"
+#include "../defines.cuh"
 
 
 __global__ void kernelMerging(
@@ -62,14 +63,14 @@ __global__ void kernelMerging(
     grid[cellOffsetNew + index].pointCount = !isFinalized ? sum : 0;
     grid[cellOffsetNew + index].isFinished = isFinalized;
 
-    chunk_0_0_0->dst = isFinalized ? nullptr : (grid + cellOffsetNew + index);
-    chunk_0_0_1->dst = chunk_0_0_0->dst;
-    chunk_0_1_0->dst = chunk_0_0_0->dst;
-    chunk_0_1_1->dst = chunk_0_0_0->dst;
-    chunk_1_0_0->dst = chunk_0_0_0->dst;
-    chunk_1_0_1->dst = chunk_0_0_0->dst;
-    chunk_1_1_0->dst = chunk_0_0_0->dst;
-    chunk_1_1_1->dst = chunk_0_0_0->dst;
+    chunk_0_0_0->parentChunkIndex = isFinalized ? INVALID_INDEX : cellOffsetNew + index;
+    chunk_0_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_0_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_0_1_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_1_0_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_1_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_1_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_1_1_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
 
     chunk_0_0_0->isFinished = isFinalized;
     chunk_0_0_1->isFinished = chunk_0_0_0->isFinished;
