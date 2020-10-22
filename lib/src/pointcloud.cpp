@@ -7,7 +7,7 @@
 #include <string>
 
 unique_ptr<Chunk[]> PointCloud::getOctree() {
-    return itsGrid->toHost();
+    return itsOctree->toHost();
 }
 
 unique_ptr<Vector3[]> PointCloud::getChunkData() {

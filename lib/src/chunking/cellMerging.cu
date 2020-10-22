@@ -150,7 +150,7 @@ void PointCloud::performCellMerging(uint64_t threshold) {
         tools::KernelTimer timer;
         timer.start();
         kernelMerging <<<  grid, block >>> (
-                itsGrid->devicePointer(),
+                itsOctree->devicePointer(),
                 counter->devicePointer(),
                 newCellAmount,
                 gridSize>>1,

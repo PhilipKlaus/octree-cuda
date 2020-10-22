@@ -45,7 +45,7 @@ void PointCloud::distributePoints() {
     tools::KernelTimer timer;
     timer.start();
     kernelDistributing <<<  grid, block >>> (
-            itsGrid->devicePointer(),
+            itsOctree->devicePointer(),
             itsCloudData->devicePointer(),
             itsChunkData->devicePointer(),
             tmpIndexRegister->devicePointer(),

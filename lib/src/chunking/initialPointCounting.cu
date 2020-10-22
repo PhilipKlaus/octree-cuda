@@ -26,8 +26,8 @@ void PointCloud::initialPointCounting(uint64_t initialDepth) {
     spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
 
     // Create and initialize the complete grid
-    itsGrid = make_unique<CudaArray<Chunk>>(itsCellAmount, "grid");
-    cudaMemset (itsGrid->devicePointer(), 0, itsCellAmount * sizeof(Chunk));
+    itsOctree = make_unique<CudaArray<Chunk>>(itsCellAmount, "grid");
+    cudaMemset (itsOctree->devicePointer(), 0, itsCellAmount * sizeof(Chunk));
 
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -37,7 +37,7 @@ void PointCloud::initialPointCounting(uint64_t initialDepth) {
     tools::KernelTimer timer;
     timer.start();
     kernelCounting <<<  grid, block >>> (
-            itsGrid->devicePointer(),
+            itsOctree->devicePointer(),
             itsCloudData->devicePointer(),
             itsMetadata,
             itsGridBaseSideLength);

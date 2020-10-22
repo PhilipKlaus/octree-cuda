@@ -36,7 +36,7 @@ private:
     // Data blocks
     unique_ptr<CudaArray<Vector3>> itsCloudData;    // The point cloud data
     unique_ptr<CudaArray<Vector3>> itsChunkData;    // The point cloud data grouped by chunk
-    unique_ptr<CudaArray<Chunk>> itsGrid;           // The hierarchical grid structure
+    unique_ptr<CudaArray<Chunk>> itsOctree;           // The hierarchical grid structure
 
     PointCloudMetadata itsMetadata;                 // Cloud metadata
 
