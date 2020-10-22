@@ -46,15 +46,24 @@ __global__ void kernelMerging(
     Chunk *chunk_1_1_0 = grid + chunk_1_1_0_index;
     Chunk *chunk_1_1_1 = grid + chunk_1_1_1_index;
 
+    uint64_t chunk_0_0_0_count = chunk_0_0_0->pointCount;
+    uint64_t chunk_0_0_1_count = chunk_0_0_1->pointCount;
+    uint64_t chunk_0_1_0_count = chunk_0_1_0->pointCount;
+    uint64_t chunk_0_1_1_count = chunk_0_1_1->pointCount;
+    uint64_t chunk_1_0_0_count = chunk_1_0_0->pointCount;
+    uint64_t chunk_1_0_1_count = chunk_1_0_1->pointCount;
+    uint64_t chunk_1_1_0_count = chunk_1_1_0->pointCount;
+    uint64_t chunk_1_1_1_count = chunk_1_1_1->pointCount;
+
     auto sum =
-            chunk_0_0_0->pointCount +
-            chunk_0_0_1->pointCount +
-            chunk_0_1_0->pointCount +
-            chunk_0_1_1->pointCount +
-            chunk_1_0_0->pointCount +
-            chunk_1_0_1->pointCount +
-            chunk_1_1_0->pointCount +
-            chunk_1_1_1->pointCount;
+            chunk_0_0_0_count +
+            chunk_0_0_1_count +
+            chunk_0_1_0_count +
+            chunk_0_1_1_count +
+            chunk_1_0_0_count +
+            chunk_1_0_1_count +
+            chunk_1_1_0_count +
+            chunk_1_1_1_count;
 
     bool containsFinalizedCells = chunk_0_0_0->isFinished ||
                                   chunk_0_0_1->isFinished ||
@@ -82,50 +91,54 @@ __global__ void kernelMerging(
     grid[newIndex].childrenChunks[7] = chunk_1_1_1_index;
 
     // Update old (8 lower-level) chunks
-    chunk_0_0_0->parentChunkIndex = isFinalized ? INVALID_INDEX : newIndex;
-    chunk_0_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_0_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_0_1_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_1_0_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_1_0_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_1_1_0->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
-    chunk_1_1_1->parentChunkIndex = chunk_0_0_0->parentChunkIndex;
+    chunk_0_0_0->parentChunkIndex = newIndex;
+    chunk_0_0_1->parentChunkIndex = newIndex;
+    chunk_0_1_0->parentChunkIndex = newIndex;
+    chunk_0_1_1->parentChunkIndex = newIndex;
+    chunk_1_0_0->parentChunkIndex = newIndex;
+    chunk_1_0_1->parentChunkIndex = newIndex;
+    chunk_1_1_0->parentChunkIndex = newIndex;
+    chunk_1_1_1->parentChunkIndex = newIndex;
 
     chunk_0_0_0->isFinished = isFinalized;
-    chunk_0_0_1->isFinished = chunk_0_0_0->isFinished;
-    chunk_0_1_0->isFinished = chunk_0_0_0->isFinished;
-    chunk_0_1_1->isFinished = chunk_0_0_0->isFinished;
-    chunk_1_0_0->isFinished = chunk_0_0_0->isFinished;
-    chunk_1_0_1->isFinished = chunk_0_0_0->isFinished;
-    chunk_1_1_0->isFinished = chunk_0_0_0->isFinished;
-    chunk_1_1_1->isFinished = chunk_0_0_0->isFinished;
+    chunk_0_0_1->isFinished = isFinalized;
+    chunk_0_1_0->isFinished = isFinalized;
+    chunk_0_1_1->isFinished = isFinalized;
+    chunk_1_0_0->isFinished = isFinalized;
+    chunk_1_0_1->isFinished = isFinalized;
+    chunk_1_1_0->isFinished = isFinalized;
+    chunk_1_1_1->isFinished = isFinalized;
 
-    if(isFinalized) {
+    if(isFinalized && sum > 0) {
         uint64_t i = atomicAdd(globalChunkCounter, sum);
         chunk_0_0_0->chunkDataIndex = i;
-        i += chunk_0_0_0->pointCount;
+        i += chunk_0_0_0_count;
         chunk_0_0_1->chunkDataIndex = i;
-        i += chunk_0_0_1->pointCount;
+        i += chunk_0_0_1_count;
         chunk_0_1_0->chunkDataIndex = i;
-        i += chunk_0_1_0->pointCount;
+        i += chunk_0_1_0_count;
         chunk_0_1_1->chunkDataIndex = i;
-        i += chunk_0_1_1->pointCount;
+        i += chunk_0_1_1_count;
         chunk_1_0_0->chunkDataIndex = i;
-        i += chunk_1_0_0->pointCount;
+        i += chunk_1_0_0_count;
         chunk_1_0_1->chunkDataIndex = i;
-        i += chunk_1_0_1->pointCount;
+        i += chunk_1_0_1_count;
         chunk_1_1_0->chunkDataIndex = i;
-        i += chunk_1_1_0->pointCount;
+        i += chunk_1_1_0_count;
         chunk_1_1_1->chunkDataIndex = i;
     }
 }
 
 void PointCloud::performCellMerging(uint64_t threshold) {
+
+    // Create a temporary counter register for assigning indices for chunks within the 'itsChunkData' register
     auto counter = make_unique<CudaArray<uint64_t>>(1, "globalChunkCounter");
     cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint64_t));
 
     uint64_t cellOffsetNew = 0;
     uint64_t cellOffsetOld = 0;
+
+    // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint64_t>(pow(gridSize, 3) / 8);
 

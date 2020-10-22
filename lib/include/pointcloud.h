@@ -27,8 +27,8 @@ public:
     void exportGlobalTree();
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
-    unique_ptr<Chunk[]> getCountingGrid();
-    unique_ptr<Vector3[]> getTreeData();
+    unique_ptr<Chunk[]> getOctree();
+    unique_ptr<Vector3[]> getChunkData();
 
 private:
     // Data blocks

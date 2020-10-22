@@ -8,50 +8,50 @@
 #include <string>
 #include <assert.h>
 
-unique_ptr<Chunk[]> PointCloud::getCountingGrid() {
+unique_ptr<Chunk[]> PointCloud::getOctree() {
     return itsGrid->toHost();
 }
 
-unique_ptr<Vector3[]> PointCloud::getTreeData() {
+unique_ptr<Vector3[]> PointCloud::getChunkData() {
     return itsChunkData->toHost();
 }
 
-void PointCloud::exportGlobalTree() {
-    auto grid = getCountingGrid();
-    auto treeData = getTreeData();
+void exportTreeNode(Chunk *tree, Vector3 *chunkData, uint64_t level, uint64_t index) {
+    if(tree[index].isFinished && tree[index].pointCount > 0) {
+        std::ofstream ply;
+        ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(index) + "_" + std::to_string(tree[index].pointCount) + ".ply"), std::ios::binary);
 
-    uint64_t cellOffset = 0;
-    uint64_t level = 0;
-    for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
-
-        for(uint64_t i = 0; i < pow(gridSize, 3); ++i) {
-
-            if(grid[cellOffset + i].isFinished && grid[cellOffset + i].pointCount > 0) {
-                uint64_t treeIndex = grid[cellOffset + i].chunkDataIndex;
-
-                std::ofstream ply;
-                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(grid[cellOffset + i].pointCount) + ".ply"), std::ios::binary);
-
-                ply << "ply\n"
-                       "format binary_little_endian 1.0\n"
-                       "comment Created by AIT Austrian Institute of Technology\n"
-                       "element vertex "
-                    << grid[cellOffset + i].pointCount
-                    << "\n"
-                       "property float x\n"
-                       "property float y\n"
-                       "property float z\n"
-                       "end_header\n";
-                for (uint64_t u = 0; u < grid[cellOffset + i].pointCount; ++u)
-                {
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].x)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].y)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].z)), sizeof (float));
-                }
-                ply.close ();
+        ply << "ply\n"
+               "format binary_little_endian 1.0\n"
+               "comment Created by AIT Austrian Institute of Technology\n"
+               "element vertex "
+            << tree[index].pointCount
+            << "\n"
+               "property float x\n"
+               "property float y\n"
+               "property float z\n"
+               "end_header\n";
+        for (uint64_t u = 0; u < tree[index].pointCount; ++u)
+        {
+            ply.write (reinterpret_cast<const char*> (&(chunkData[tree[index].chunkDataIndex + u].x)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(chunkData[tree[index].chunkDataIndex + u].y)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(chunkData[tree[index].chunkDataIndex + u].z)), sizeof (float));
+        }
+        ply.close ();
+    }
+    else {
+        if (level > 0) {
+            for(unsigned long long childrenChunk : tree[index].childrenChunks) {
+                exportTreeNode(tree, chunkData, level - 1, childrenChunk);
             }
         }
-        ++level;
-        cellOffset += static_cast<uint64_t >(pow(gridSize, 3));
     }
+}
+
+void PointCloud::exportGlobalTree() {
+    auto octree = getOctree();
+    auto chunkData = getChunkData();
+    uint64_t topLevelIndex = itsCellAmount - 1;
+
+    exportTreeNode(octree.get(), chunkData.get(), 7, topLevelIndex);
 }

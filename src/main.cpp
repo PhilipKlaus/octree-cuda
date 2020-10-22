@@ -56,7 +56,7 @@ int main() {
     cloud->exportGlobalTree();
 
     // Assert that input amount == output amount
-    auto grid = cloud->getCountingGrid();
+    auto grid = cloud->getOctree();
     uint64_t cellOffset = 0;
     uint64_t level = 0;
     uint64_t sum = 0;

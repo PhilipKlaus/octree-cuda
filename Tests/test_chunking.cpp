@@ -21,7 +21,7 @@ TEST_CASE ("Test initial point counting and merging ", "[counting + merging]") {
     cloud->performCellMerging(10000);
 
     // Test if each point fall exactly in one cell
-    auto host = cloud->getCountingGrid();
+    auto host = cloud->getOctree();
     uint64_t cellOffset = 0;
 
     for(int i = 0; i < pow(128, 3); ++i) {
@@ -55,21 +55,21 @@ TEST_CASE ("Test initial point counting and merging ", "[counting + merging]") {
     for(int i = 0; i < pow(8, 3); ++i) {
         REQUIRE(host[cellOffset + i].pointCount == 4096);
         REQUIRE(host[cellOffset + i].isFinished == true);
-        REQUIRE(host[cellOffset + i].parentChunkIndex == INVALID_INDEX);
+        REQUIRE(host[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
     cellOffset += static_cast<uint64_t >(pow(8, 3));
 
     for(int i = 0; i < pow(4, 3); ++i) {
         REQUIRE(host[cellOffset + i].pointCount == 0);
         REQUIRE(host[cellOffset + i].isFinished == true);
-        REQUIRE(host[cellOffset + i].parentChunkIndex == INVALID_INDEX);
+        REQUIRE(host[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
     cellOffset += static_cast<uint64_t >(pow(4, 3));
 
     for(int i = 0; i < pow(2, 3); ++i) {
         REQUIRE(host[cellOffset + i].pointCount == 0);
         REQUIRE(host[cellOffset + i].isFinished == true);
-        REQUIRE(host[cellOffset + i].parentChunkIndex == INVALID_INDEX);
+        REQUIRE(host[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
     cellOffset += static_cast<uint64_t >(pow(2, 3));
 
