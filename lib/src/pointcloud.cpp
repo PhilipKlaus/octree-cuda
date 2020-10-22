@@ -4,9 +4,7 @@
 
 #include <fstream>
 #include "pointcloud.h"
-#include <iostream>
 #include <string>
-#include <assert.h>
 
 unique_ptr<Chunk[]> PointCloud::getOctree() {
     return itsGrid->toHost();
@@ -16,7 +14,7 @@ unique_ptr<Vector3[]> PointCloud::getChunkData() {
     return itsChunkData->toHost();
 }
 
-void exportTreeNode(Chunk *tree, Vector3 *chunkData, uint64_t level, uint64_t index) {
+void PointCloud::exportTreeNode(Chunk *tree, Vector3 *chunkData, uint64_t level, uint64_t index) {
     if(tree[index].isFinished && tree[index].pointCount > 0) {
         std::ofstream ply;
         ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(index) + "_" + std::to_string(tree[index].pointCount) + ".ply"), std::ios::binary);

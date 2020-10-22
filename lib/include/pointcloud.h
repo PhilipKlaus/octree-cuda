@@ -30,6 +30,8 @@ public:
     unique_ptr<Chunk[]> getOctree();
     unique_ptr<Vector3[]> getChunkData();
 
+    void exportTreeNode(Chunk *tree, Vector3 *chunkData, uint64_t level, uint64_t index);
+
 private:
     // Data blocks
     unique_ptr<CudaArray<Vector3>> itsCloudData;    // The point cloud data
