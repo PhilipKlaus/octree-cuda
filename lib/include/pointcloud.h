@@ -2,10 +2,10 @@
 // Created by KlausP on 05.10.2020.
 //
 
-#ifndef OCTREECUDA_POINTCLOUD_H
-#define OCTREECUDA_POINTCLOUD_H
+#ifndef POINT_CLOUD_H
+#define POINT_CLOUD_H
 
-// Local dependencies
+
 #include "types.h"
 
 
@@ -21,29 +21,36 @@ public:
         itsChunkData = make_unique<CudaArray<Vector3>>(itsCloudData->pointCount(), "Chunk Data");
     }
 
+    // Avoid object copy
+    PointCloud(const PointCloud&) = delete;
+    void operator=(const PointCloud&) = delete;
+
     void initialPointCounting(uint64_t initialDepth);
     void performCellMerging(uint64_t threshold);
     void distributePoints();
-    void exportGlobalTree();
+    void exportOctree();
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
     unique_ptr<Chunk[]> getOctree();
     unique_ptr<Vector3[]> getChunkData();
 
-    void exportTreeNode(Chunk *tree, Vector3 *chunkData, uint64_t level, uint64_t index);
 
 private:
-    // Data blocks
+
+    void exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index);
+
+
+private:
+    // Point cloud
     unique_ptr<CudaArray<Vector3>> itsCloudData;    // The point cloud data
-    unique_ptr<CudaArray<Vector3>> itsChunkData;    // The point cloud data grouped by chunk
-    unique_ptr<CudaArray<Chunk>> itsOctree;           // The hierarchical grid structure
+    PointCloudMetadata itsMetadata;                 // Point cloud metadata
 
-    PointCloudMetadata itsMetadata;                 // Cloud metadata
-
-    // Grid / Octree
-    uint64_t itsCellAmount;                         // Overall cell amount of the hierarchical grid
-    uint64_t itsGridBaseSideLength;                 // The side length of the lowest grid in the hierarchy (e.g. 128)
+    // Octree
+    unique_ptr<CudaArray<Chunk>> itsOctree;         // The actual hierarchical octree data structure
+    unique_ptr<CudaArray<Vector3>> itsChunkData;    // Holding actual point cloud data for the octree
+    uint64_t itsCellAmount;                         // Overall initial cell amount of the octree
+    uint64_t itsGridBaseSideLength;                 // The side length of the lowest grid in the octree (e.g. 128)
 
 };
 
-#endif //OCTREECUDA_POINTCLOUD_H
+#endif //POINT_CLOUD_H

@@ -53,7 +53,7 @@ int main() {
     cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();
-    cloud->exportGlobalTree();
+    cloud->exportOctree();
 
     // Assert that input amount == output amount
     auto grid = cloud->getOctree();
