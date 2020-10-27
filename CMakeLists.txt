@@ -38,7 +38,6 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_RESOLVE_DEVICE_SYMBOLS ON)
         
 target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
-
 include(CTest)
 option(BUILD_TESTS "build automated tests" ON)
 if (BUILD_TESTS)

@@ -3,7 +3,7 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint16_t gridSize) {
+__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint64_t gridSize) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= metadata.pointAmount) {
         return;
@@ -12,29 +12,34 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
 
     auto gridIndex = tools::calculateGridIndex(point, metadata, gridSize);
 
-    atomicAdd(&(grid + gridIndex)->count, 1);
+    atomicAdd(&(grid + gridIndex)->pointCount, 1);
 }
 
-void PointCloud::initialPointCounting(uint32_t initialDepth) {
+void PointCloud::initialPointCounting(uint64_t initialDepth) {
 
-    itsInitialDepth = initialDepth;
-    itsGridSize = pow(2, initialDepth);
-    auto cellAmount = static_cast<uint32_t>(pow(itsGridSize, 3));
+    // Precalculate parameters
+    itsGridBaseSideLength = static_cast<uint64_t >(pow(2, initialDepth));
+    for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
+        itsCellAmount += static_cast<uint64_t>(pow(gridSize, 3));
+    }
+    spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
 
-    // Create the counting grid
-    itsGrid.push_back(make_unique<CudaArray<Chunk>>(cellAmount));
-    cudaMemset (itsGrid[0]->devicePointer(), 0, cellAmount * sizeof(uint32_t));
+    // Create and initialize the complete grid
+    itsOctree = make_unique<CudaArray<Chunk>>(itsCellAmount, "grid");
+    cudaMemset (itsOctree->devicePointer(), 0, itsCellAmount * sizeof(Chunk));
 
+    // Calculate kernel dimensions
     dim3 grid, block;
-    tools::create1DKernel(block, grid, itsData->pointCount());
+    tools::create1DKernel(block, grid, itsCloudData->pointCount());
 
+    // Initial point counting
     tools::KernelTimer timer;
     timer.start();
     kernelCounting <<<  grid, block >>> (
-            itsGrid[0]->devicePointer(),
-                    itsData->devicePointer(),
-                    itsMetadata,
-                    itsGridSize);
+            itsOctree->devicePointer(),
+            itsCloudData->devicePointer(),
+            itsMetadata,
+            itsGridBaseSideLength);
     timer.stop();
 
     spdlog::info("'initialPointCounting' took {:f} [ms]", timer.getMilliseconds());

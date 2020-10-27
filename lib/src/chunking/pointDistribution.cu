@@ -3,7 +3,15 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeData, PointCloudMetadata metadata, uint16_t gridSize) {
+__global__ void kernelDistributing(
+        Chunk *grid,
+        Vector3 *cloud,
+        Vector3 *treeData,
+        uint64_t *tmpIndexRegister,
+        PointCloudMetadata metadata,
+        uint64_t gridSize
+        ) {
+
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= metadata.pointAmount) {
         return;
@@ -12,32 +20,41 @@ __global__ void kernelDistributing(Chunk *grid, Vector3 *cloud, Vector3 *treeDat
 
     auto gridIndex = tools::calculateGridIndex(point, metadata, gridSize);
 
-    Chunk *dst = (grid + gridIndex);
-    bool isFinished = dst->isFinished;
+    uint64_t dstIndex = gridIndex;
+    bool isFinished = grid[dstIndex].isFinished;
 
     while(!isFinished) {
-        dst = dst->dst;
-        isFinished = dst->isFinished;
+        dstIndex = grid[dstIndex].parentChunkIndex;
+        isFinished = grid[dstIndex].isFinished;
     }
 
-    uint32_t i = atomicAdd(&(dst->indexCount), 1);
-    treeData[dst->treeIndex + i] = cloud[index];
+    uint64_t i = atomicAdd(&tmpIndexRegister[dstIndex], 1);
+    treeData[grid[dstIndex].chunkDataIndex + i] = point;
 }
 
 void PointCloud::distributePoints() {
 
-    dim3 grid, block;
-    tools::create1DKernel(block, grid, itsData->pointCount());
+    // Create temporary indexRegister for assigning an index for each point within its chunk area
+    auto tmpIndexRegister = make_unique<CudaArray<uint64_t>>(itsCellAmount, "tmpIndexRegister");
 
+    // Calculate kernel dimensions
+    dim3 grid, block;
+    tools::create1DKernel(block, grid, itsCloudData->pointCount());
+
+    // Call distribution kernel
     tools::KernelTimer timer;
     timer.start();
     kernelDistributing <<<  grid, block >>> (
-            itsGrid[0]->devicePointer(),
-            itsData->devicePointer(),
-            itsTreeData->devicePointer(),
+            itsOctree->devicePointer(),
+            itsCloudData->devicePointer(),
+            itsChunkData->devicePointer(),
+            tmpIndexRegister->devicePointer(),
             itsMetadata,
-            itsGridSize);
+            itsGridBaseSideLength);
     timer.stop();
+
+    // Manually delete the original point cloud data on GPU -> it is not needed anymore
+    itsCloudData.reset();
 
     spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
 }

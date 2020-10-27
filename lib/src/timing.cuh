@@ -1,7 +1,9 @@
 #ifndef OCTREE_TIMING
 #define OCTREE_TIMING
 
+
 #include <cuda.h>
+
 
 namespace tools {
 

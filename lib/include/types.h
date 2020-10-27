@@ -10,6 +10,7 @@
 #include <cuda.h>
 #include <iostream>
 #include "spdlog/spdlog.h"
+#include "eventWatcher.h"
 
 using namespace std;
 
@@ -19,11 +20,11 @@ struct Vector3
 };
 
 struct Chunk {
-    uint32_t count;
-    Chunk *dst;
-    bool isFinished;
-    uint32_t indexCount;
-    uint32_t treeIndex;
+    uint64_t pointCount;        // How many points does this chunk have
+    uint64_t parentChunkIndex;  // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
+    bool isFinished;            // Is this chunk finished (= not mergeable anymore)
+    uint64_t chunkDataIndex;    // Determines the INDEX in the chunk data array -> for storing point data
+    uint64_t childrenChunks[8]; // The INDICES of the children chunks in the GRID
 };
 
 struct BoundingBox {
@@ -32,7 +33,7 @@ struct BoundingBox {
 };
 
 struct PointCloudMetadata {
-    uint32_t pointAmount;
+    uint64_t pointAmount;
     BoundingBox boundingBox;
     Vector3 cloudOffset;
     Vector3 scale;
@@ -43,13 +44,18 @@ class CudaArray {
 
 public:
 
-    CudaArray(unsigned int elements) : itsElements(elements) {
+    CudaArray(uint64_t elements, const std::string& name) :
+    itsElements(elements),
+    itsName(name) {
         auto memoryToReserve = itsElements * sizeof(dataType);
+        itsMemory = memoryToReserve;
+        itsWatcher.reservedMemoryEvent(memoryToReserve, itsName);
         cudaMalloc((void**)&itsData, memoryToReserve);
         spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
     }
 
     ~CudaArray() {
+        itsWatcher.freedMemoryEvent(itsMemory, itsName);
         cudaFree(itsData);
         spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
@@ -68,12 +74,16 @@ public:
         cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice);
     }
 
-    uint32_t pointCount() {
+    uint64_t pointCount() {
         return itsElements;
     }
 
-    unsigned int itsElements;
+private:
+    std::string itsName;
+    uint64_t itsMemory;
+    uint64_t itsElements;
     dataType *itsData;
+    EventWatcher& itsWatcher = EventWatcher::getInstance();
 };
 
 #endif

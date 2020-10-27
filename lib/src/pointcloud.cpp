@@ -4,81 +4,64 @@
 
 #include <fstream>
 #include "pointcloud.h"
-#include <iostream>
 #include <string>
-#include <assert.h>
 
-void PointCloud::exportToPly(const std::string& file_name) {
-    std::ofstream ply;
-    ply.open (file_name, std::ios::binary);
-    ply << "ply\n"
-           "format binary_little_endian 1.0\n"
-           "comment Created by AIT Austrian Institute of Technology\n"
-           "element vertex "
-        << itsData->pointCount()
-        << "\n"
-           "property float x\n"
-           "property float y\n"
-           "property float z\n"
-           "end_header\n";
+unique_ptr<Chunk[]> PointCloud::getOctree() {
+    return itsOctree->toHost();
+}
 
-    unique_ptr<Vector3[]> host = itsData->toHost();
-    for (auto i = 0u; i < itsData->pointCount(); ++i)
-    {
-        // write vertex coordinates
-        ply.write (reinterpret_cast<const char*> (&(host[i].x)), sizeof (float));
-        ply.write (reinterpret_cast<const char*> (&(host[i].y)), sizeof (float));
-        ply.write (reinterpret_cast<const char*> (&(host[i].z)), sizeof (float));
+unique_ptr<Vector3[]> PointCloud::getChunkData() {
+    return itsChunkData->toHost();
+}
+
+uint64_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index) {
+    uint64_t count = 0;
+
+    if(octree[index].isFinished && octree[index].pointCount > 0) {
+        count = octree[index].pointCount;
+        std::ofstream ply;
+        ply.open (
+                "tree_" + std::to_string(level) +
+                "_" +
+                std::to_string(index) +
+                "_" +
+                std::to_string(octree[index].pointCount) +
+                ".ply",
+                std::ios::binary
+                );
+
+        ply << "ply\n"
+               "format binary_little_endian 1.0\n"
+               "comment Created by AIT Austrian Institute of Technology\n"
+               "element vertex "
+            << octree[index].pointCount
+            << "\n"
+               "property float x\n"
+               "property float y\n"
+               "property float z\n"
+               "end_header\n";
+        for (uint64_t u = 0; u < octree[index].pointCount; ++u)
+        {
+            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].x)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].y)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].z)), sizeof (float));
+        }
+        ply.close ();
     }
-    ply.close ();
-}
-
-vector<unique_ptr<Chunk[]>> PointCloud::getCountingGrid() {
-    vector<unique_ptr<Chunk[]>> output;
-    for(int i = 0; i < itsGrid.size(); ++i) {
-        output.push_back(itsGrid[i]->toHost());
-    }
-    return output;
-}
-
-unique_ptr<Vector3[]> PointCloud::getTreeData() {
-    return itsTreeData->toHost();
-}
-
-void PointCloud::exportGlobalTree() {
-    auto host = getCountingGrid();
-    auto treeData = getTreeData();
-
-    uint32_t level = 0;
-    for(int gridSize = itsGridSize; gridSize > 0; gridSize >>= 1) {
-
-        for(uint32_t i = 0; i < pow(gridSize, 3); ++i) {
-
-            if(host[level][i].isFinished && host[level][i].count > 0) {
-                uint32_t  treeIndex = host[level][i].treeIndex;
-
-                std::ofstream ply;
-                ply.open (std::string("tree_" + std::to_string(level) + "_" + std::to_string(i) + "_" + std::to_string(host[level][i].count) + ".ply"), std::ios::binary);
-
-                ply << "ply\n"
-                       "format binary_little_endian 1.0\n"
-                       "comment Created by AIT Austrian Institute of Technology\n"
-                       "element vertex "
-                    << host[level][i].count
-                    << "\n"
-                       "property float x\n"
-                       "property float y\n"
-                       "property float z\n"
-                       "end_header\n";
-                for (uint32_t u = 0; u < host[level][i].count; ++u)
-                {
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].x)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].y)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(treeData[treeIndex + u].z)), sizeof (float));
-                }
-                ply.close ();
+    else {
+        if (level > 0) {
+            for(unsigned long long childrenChunk : octree[index].childrenChunks) {
+                count += exportTreeNode(octree, chunkData, level - 1, childrenChunk);
             }
         }
-        ++level;
     }
+    return count;
+}
+
+void PointCloud::exportOctree() {
+    auto octree = getOctree();
+    auto chunkData = getChunkData();
+    uint64_t topLevelIndex = itsCellAmount - 1;
+    uint64_t exportedPoints = exportTreeNode(octree, chunkData, 7, topLevelIndex); // ToDo: Remove hard-coded level
+    assert(exportedPoints == itsMetadata.pointAmount);
 }
