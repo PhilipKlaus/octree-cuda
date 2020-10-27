@@ -20,11 +20,11 @@ struct Vector3
 };
 
 struct Chunk {
-    uint64_t pointCount;        // How many points does this chunk have
-    uint64_t parentChunkIndex;  // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
+    uint32_t pointCount;        // How many points does this chunk have
+    uint32_t parentChunkIndex;  // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
     bool isFinished;            // Is this chunk finished (= not mergeable anymore)
-    uint64_t chunkDataIndex;    // Determines the INDEX in the chunk data array -> for storing point data
-    uint64_t childrenChunks[8]; // The INDICES of the children chunks in the GRID
+    uint32_t chunkDataIndex;    // Determines the INDEX in the chunk data array -> for storing point data
+    uint32_t childrenChunks[8]; // The INDICES of the children chunks in the GRID
 };
 
 struct BoundingBox {
@@ -33,7 +33,7 @@ struct BoundingBox {
 };
 
 struct PointCloudMetadata {
-    uint64_t pointAmount;
+    uint32_t pointAmount;
     BoundingBox boundingBox;
     Vector3 cloudOffset;
     Vector3 scale;
@@ -44,7 +44,7 @@ class CudaArray {
 
 public:
 
-    CudaArray(uint64_t elements, const std::string& name) :
+    CudaArray(uint32_t elements, const std::string& name) :
     itsElements(elements),
     itsName(name) {
         auto memoryToReserve = itsElements * sizeof(dataType);
@@ -74,14 +74,14 @@ public:
         cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice);
     }
 
-    uint64_t pointCount() {
+    uint32_t pointCount() {
         return itsElements;
     }
 
 private:
     std::string itsName;
     uint64_t itsMemory;
-    uint64_t itsElements;
+    uint32_t itsElements;
     dataType *itsData;
     EventWatcher& itsWatcher = EventWatcher::getInstance();
 };

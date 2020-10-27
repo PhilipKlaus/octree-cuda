@@ -6,13 +6,13 @@
 
 __global__ void kernelMerging(
         Chunk *grid,
-        uint64_t *globalChunkCounter,
-        uint64_t newCellAmount,
-        uint64_t newGridSize,
-        uint64_t oldGridSize,
-        uint64_t threshold,
-        uint64_t cellOffsetNew,
-        uint64_t cellOffsetOld
+        uint32_t *globalChunkCounter,
+        uint32_t newCellAmount,
+        uint32_t newGridSize,
+        uint32_t oldGridSize,
+        uint32_t threshold,
+        uint32_t cellOffsetNew,
+        uint32_t cellOffsetOld
         ) {
 
     int index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -28,14 +28,14 @@ __global__ void kernelMerging(
 
     auto oldXY = oldGridSize * oldGridSize;
 
-    uint64_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
-    uint64_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
-    uint64_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
-    uint64_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
-    uint64_t chunk_1_0_0_index = chunk_0_0_0_index + oldXY;
-    uint64_t chunk_1_0_1_index = chunk_1_0_0_index + 1;
-    uint64_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
-    uint64_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
+    uint32_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
+    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
+    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
+    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + oldXY;
+    uint32_t chunk_1_0_1_index = chunk_1_0_0_index + 1;
+    uint32_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
+    uint32_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
 
     Chunk *chunk_0_0_0 = grid + chunk_0_0_0_index;
     Chunk *chunk_0_0_1 = grid + chunk_0_0_1_index;
@@ -46,14 +46,14 @@ __global__ void kernelMerging(
     Chunk *chunk_1_1_0 = grid + chunk_1_1_0_index;
     Chunk *chunk_1_1_1 = grid + chunk_1_1_1_index;
 
-    uint64_t chunk_0_0_0_count = chunk_0_0_0->pointCount;
-    uint64_t chunk_0_0_1_count = chunk_0_0_1->pointCount;
-    uint64_t chunk_0_1_0_count = chunk_0_1_0->pointCount;
-    uint64_t chunk_0_1_1_count = chunk_0_1_1->pointCount;
-    uint64_t chunk_1_0_0_count = chunk_1_0_0->pointCount;
-    uint64_t chunk_1_0_1_count = chunk_1_0_1->pointCount;
-    uint64_t chunk_1_1_0_count = chunk_1_1_0->pointCount;
-    uint64_t chunk_1_1_1_count = chunk_1_1_1->pointCount;
+    uint32_t chunk_0_0_0_count = chunk_0_0_0->pointCount;
+    uint32_t chunk_0_0_1_count = chunk_0_0_1->pointCount;
+    uint32_t chunk_0_1_0_count = chunk_0_1_0->pointCount;
+    uint32_t chunk_0_1_1_count = chunk_0_1_1->pointCount;
+    uint32_t chunk_1_0_0_count = chunk_1_0_0->pointCount;
+    uint32_t chunk_1_0_1_count = chunk_1_0_1->pointCount;
+    uint32_t chunk_1_1_0_count = chunk_1_1_0->pointCount;
+    uint32_t chunk_1_1_1_count = chunk_1_1_1->pointCount;
 
     auto sum =
             chunk_0_0_0_count +
@@ -77,7 +77,7 @@ __global__ void kernelMerging(
     bool isFinalized = (sum >= threshold) || containsFinalizedCells;
 
     // Update new (higher-level) chunk
-    uint64_t newIndex = cellOffsetNew + index;
+    uint32_t newIndex = cellOffsetNew + index;
     grid[newIndex].pointCount = !isFinalized ? sum : 0;
     grid[newIndex].isFinished = isFinalized;
 
@@ -110,7 +110,7 @@ __global__ void kernelMerging(
     chunk_1_1_1->isFinished = isFinalized;
 
     if(isFinalized && sum > 0) {
-        uint64_t i = atomicAdd(globalChunkCounter, sum);
+        uint32_t i = atomicAdd(globalChunkCounter, sum);
         chunk_0_0_0->chunkDataIndex = i;
         i += chunk_0_0_0_count;
         chunk_0_0_1->chunkDataIndex = i;
@@ -129,20 +129,20 @@ __global__ void kernelMerging(
     }
 }
 
-void PointCloud::performCellMerging(uint64_t threshold) {
+void PointCloud::performCellMerging(uint32_t threshold) {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsChunkData' register
-    auto counter = make_unique<CudaArray<uint64_t>>(1, "globalChunkCounter");
-    cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint64_t));
+    auto counter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
+    cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint32_t));
 
-    uint64_t cellOffsetNew = 0;
-    uint64_t cellOffsetOld = 0;
+    uint32_t cellOffsetNew = 0;
+    uint32_t cellOffsetOld = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
-        auto newCellAmount = static_cast<uint64_t>(pow(gridSize, 3) / 8);
+    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
+        auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
 
-        cellOffsetNew += static_cast<uint64_t >(pow(gridSize, 3));
+        cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
 
         dim3 grid, block;
         tools::create1DKernel(block, grid, newCellAmount);

@@ -25,8 +25,8 @@ public:
     PointCloud(const PointCloud&) = delete;
     void operator=(const PointCloud&) = delete;
 
-    void initialPointCounting(uint64_t initialDepth);
-    void performCellMerging(uint64_t threshold);
+    void initialPointCounting(uint32_t initialDepth);
+    void performCellMerging(uint32_t threshold);
     void distributePoints();
     void exportOctree();
 
@@ -37,7 +37,7 @@ public:
 
 private:
 
-    uint64_t exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index);
+    uint32_t exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index);
 
 
 private:
@@ -48,8 +48,8 @@ private:
     // Octree
     unique_ptr<CudaArray<Chunk>> itsOctree;         // The actual hierarchical octree data structure
     unique_ptr<CudaArray<Vector3>> itsChunkData;    // Holding actual point cloud data for the octree
-    uint64_t itsCellAmount;                         // Overall initial cell amount of the octree
-    uint64_t itsGridBaseSideLength;                 // The side length of the lowest grid in the octree (e.g. 128)
+    uint32_t itsCellAmount;                         // Overall initial cell amount of the octree
+    uint32_t itsGridBaseSideLength;                 // The side length of the lowest grid in the octree (e.g. 128)
 
 };
 

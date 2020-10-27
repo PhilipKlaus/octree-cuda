@@ -3,7 +3,7 @@
 #include "../timing.cuh"
 
 
-__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint64_t gridSize) {
+__global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata metadata, uint32_t gridSize) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= metadata.pointAmount) {
         return;
@@ -15,12 +15,12 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
     atomicAdd(&(grid + gridIndex)->pointCount, 1);
 }
 
-void PointCloud::initialPointCounting(uint64_t initialDepth) {
+void PointCloud::initialPointCounting(uint32_t initialDepth) {
 
     // Precalculate parameters
-    itsGridBaseSideLength = static_cast<uint64_t >(pow(2, initialDepth));
-    for(uint64_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
-        itsCellAmount += static_cast<uint64_t>(pow(gridSize, 3));
+    itsGridBaseSideLength = static_cast<uint32_t >(pow(2, initialDepth));
+    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
+        itsCellAmount += static_cast<uint32_t>(pow(gridSize, 3));
     }
     spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
 

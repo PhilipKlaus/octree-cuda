@@ -3,7 +3,7 @@
 #include "defines.cuh"
 
 
-__global__ void kernel_point_cloud_cuboid(Vector3 *out, uint64_t n, uint64_t side) {
+__global__ void kernel_point_cloud_cuboid(Vector3 *out, uint32_t n, uint32_t side) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= n) {
         return;
@@ -30,7 +30,7 @@ namespace tools {
         };
     }
 
-    __device__ uint64_t calculateGridIndex(const Vector3 &point, PointCloudMetadata const &metadata, uint16_t gridSize) {
+    __device__ uint32_t calculateGridIndex(const Vector3 &point, PointCloudMetadata const &metadata, uint16_t gridSize) {
 
         // See OctreeConverter : chunker_countsort_laszip.cpp :131
 
@@ -50,14 +50,14 @@ namespace tools {
                 (static_cast<float>(Z) * metadata.scale.z + metadata.cloudOffset.z - metadata.boundingBox.minimum.z)
                 / size.z;
 
-        uint64_t ix = static_cast<int64_t>( fmin (dGridSize * ux, dGridSize - 1.0f));
-        uint64_t iy = static_cast<int64_t>( fmin (dGridSize * uy, dGridSize - 1.0f));
-        uint64_t iz = static_cast<int64_t>( fmin (dGridSize * uz, dGridSize - 1.0f));
+        uint32_t ix = static_cast<int64_t>( fmin (dGridSize * ux, dGridSize - 1.0f));
+        uint32_t iy = static_cast<int64_t>( fmin (dGridSize * uy, dGridSize - 1.0f));
+        uint32_t iz = static_cast<int64_t>( fmin (dGridSize * uz, dGridSize - 1.0f));
 
         return ix + iy * gridSize + iz * gridSize * gridSize;
     }
 
-    void create1DKernel(dim3 &block, dim3 &grid, uint64_t pointCount) {
+    void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
 
         auto blocks = ceil(static_cast<double>(pointCount) / BLOCK_SIZE_MAX);
         auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);
@@ -69,7 +69,7 @@ namespace tools {
         printKernelDimensions(block, grid);
     }
 
-    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint64_t sideLength) {
+    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint32_t sideLength) {
 
         auto pointAmount = sideLength * sideLength * sideLength;
         auto data = std::make_unique<CudaArray<Vector3>>(pointAmount, "cuboid");
@@ -79,7 +79,7 @@ namespace tools {
         auto gridY = ceil(blocks / gridX);
 
         dim3 block(BLOCK_SIZE_MAX, 1, 1);
-        dim3 grid(static_cast<uint64_t>(gridX), static_cast<uint64_t>(gridY), 1);
+        dim3 grid(static_cast<uint32_t>(gridX), static_cast<uint32_t>(gridY), 1);
         printKernelDimensions(block, grid);
 
         kernel_point_cloud_cuboid <<<  grid, block >>> (data->devicePointer(), pointAmount, sideLength);

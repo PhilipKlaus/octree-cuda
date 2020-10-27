@@ -14,8 +14,8 @@ unique_ptr<Vector3[]> PointCloud::getChunkData() {
     return itsChunkData->toHost();
 }
 
-uint64_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index) {
-    uint64_t count = 0;
+uint32_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index) {
+    uint32_t count = 0;
 
     if(octree[index].isFinished && octree[index].pointCount > 0) {
         count = octree[index].pointCount;
@@ -40,7 +40,7 @@ uint64_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const uni
                "property float y\n"
                "property float z\n"
                "end_header\n";
-        for (uint64_t u = 0; u < octree[index].pointCount; ++u)
+        for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
             ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].x)), sizeof (float));
             ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].y)), sizeof (float));
@@ -61,7 +61,7 @@ uint64_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const uni
 void PointCloud::exportOctree() {
     auto octree = getOctree();
     auto chunkData = getChunkData();
-    uint64_t topLevelIndex = itsCellAmount - 1;
-    uint64_t exportedPoints = exportTreeNode(octree, chunkData, 7, topLevelIndex); // ToDo: Remove hard-coded level
+    uint32_t topLevelIndex = itsCellAmount - 1;
+    uint32_t exportedPoints = exportTreeNode(octree, chunkData, 7, topLevelIndex); // ToDo: Remove hard-coded level
     assert(exportedPoints == itsMetadata.pointAmount);
 }

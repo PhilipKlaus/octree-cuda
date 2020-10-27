@@ -12,15 +12,15 @@
 #include "pointcloud.h"
 
 
-uint64_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index) {
-    uint64_t count = 0;
+uint32_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index) {
+    uint32_t count = 0;
 
-    uint64_t previousChunks = 0;
-    for(auto i = 7; i > (7 - level); --i) {
-        previousChunks += pow(pow(2, i), 3);
+    uint32_t previousChunks = 0;
+    for(uint32_t i = 7; i > (7 - level); --i) {
+        previousChunks += static_cast<uint32_t>(pow(pow(2, i), 3));
     }
 
-    auto newGridSize = static_cast<uint64_t>(pow(2, 7-level));
+    auto newGridSize = static_cast<uint32_t>(pow(2, 7-level));
     auto xy = newGridSize * newGridSize;
     auto z = (index-previousChunks) / xy;
     auto y = (index-previousChunks - (z * xy)) / newGridSize;
@@ -31,7 +31,7 @@ uint64_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vect
     if(octree[index].isFinished && octree[index].pointCount > 0) {
 
         count = octree[index].pointCount;
-        for (uint64_t u = 0; u < octree[index].pointCount; ++u)
+        for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
             Vector3 point = chunkData[octree[index].chunkDataIndex + u];
             REQUIRE(point.x > (x * voxelSize));
@@ -44,7 +44,7 @@ uint64_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vect
     }
     else {
         if (level > 0) {
-            for(unsigned long long childrenChunk : octree[index].childrenChunks) {
+            for(uint32_t childrenChunk : octree[index].childrenChunks) {
                 count += testOctreenode(octree, chunkData, level - 1, childrenChunk);
             }
         }
@@ -71,7 +71,7 @@ TEST_CASE ("Test point distributing", "distributing") {
 
     auto octree = cloud->getOctree();
     auto data = cloud->getChunkData();
-    uint64_t topLevelIndex = 2396745-1;
+    uint32_t topLevelIndex = 2396745-1;
 
     REQUIRE(testOctreenode(octree, data, 7, topLevelIndex) == cloud->getMetadata().pointAmount);
 }

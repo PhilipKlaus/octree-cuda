@@ -22,56 +22,56 @@ TEST_CASE ("Test point merging ", "merging") {
 
     // Test if each point fall exactly in one cell
     auto octree = cloud->getOctree();
-    uint64_t cellOffset = 0;
+    uint32_t cellOffset = 0;
 
     for(int i = 0; i < pow(128, 3); ++i) {
         REQUIRE(octree[i].pointCount == 1);
         REQUIRE(octree[i].isFinished == false);
         REQUIRE(octree[i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(128, 3));
+    cellOffset += static_cast<uint32_t >(pow(128, 3));
 
     for(int i = 0; i < pow(64, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 8);
         REQUIRE(octree[cellOffset + i].isFinished == false);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(64, 3));
+    cellOffset += static_cast<uint32_t >(pow(64, 3));
 
     for(int i = 0; i < pow(32, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 64);
         REQUIRE(octree[cellOffset + i].isFinished == false);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(32, 3));
+    cellOffset += static_cast<uint32_t >(pow(32, 3));
 
     for(int i = 0; i < pow(16, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 512);
         REQUIRE(octree[cellOffset + i].isFinished == false);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(16, 3));
+    cellOffset += static_cast<uint32_t >(pow(16, 3));
 
     for(int i = 0; i < pow(8, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 4096);
         REQUIRE(octree[cellOffset + i].isFinished == true);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(8, 3));
+    cellOffset += static_cast<uint32_t >(pow(8, 3));
 
     for(int i = 0; i < pow(4, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 0);
         REQUIRE(octree[cellOffset + i].isFinished == true);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(4, 3));
+    cellOffset += static_cast<uint32_t >(pow(4, 3));
 
     for(int i = 0; i < pow(2, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 0);
         REQUIRE(octree[cellOffset + i].isFinished == true);
         REQUIRE(octree[cellOffset + i].parentChunkIndex != INVALID_INDEX);
     }
-    cellOffset += static_cast<uint64_t >(pow(2, 3));
+    cellOffset += static_cast<uint32_t >(pow(2, 3));
 
     for(int i = 0; i < pow(1, 3); ++i) {
         REQUIRE(octree[cellOffset + i].pointCount == 0);
