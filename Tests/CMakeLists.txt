@@ -3,9 +3,10 @@ project(OctreeTest)
 # Create the Test executable
 add_executable(OctreeTest
         main.cpp
-        test_chunking.cpp
+        test_merging.cpp
         test_tools.cpp
-)
+        test_initial_point_counting.cpp
+        test_point_distributing.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLib)

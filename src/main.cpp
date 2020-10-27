@@ -19,6 +19,7 @@ int main() {
     EventWatcher& watcher = EventWatcher::getInstance();
     watcher.reservedMemoryEvent(0, "Program start");
 
+    // Hardcoded: read PLY: ToDo: Include PLY library
     uint64_t pointAmount = 1612868;//327323;
     ifstream ifs("doom_vertices.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
@@ -28,6 +29,7 @@ int main() {
     ifs.read(reinterpret_cast<char *>(pChars), length);
     ifs.close();
 
+    // Calculate bounding box: ToDo: Read from LAZ/PLY library
     Vector3 minimum {INFINITY, INFINITY, INFINITY};
     Vector3 maximum {-INFINITY, -INFINITY, -INFINITY};
     auto *points = reinterpret_cast<Vector3*>(pChars);
@@ -40,9 +42,11 @@ int main() {
         maximum.z = fmax(maximum.z, points[i].z);
     }
 
+    // Copy ply point cloud to GPU
     auto data = make_unique<CudaArray<Vector3>>(pointAmount, "pointcloud");
     data->toGPU(pChars);
 
+    // Set cloud settings
     auto cloud = make_unique<PointCloud>(move(data));
     cloud->getMetadata().pointAmount = pointAmount;
     cloud->getMetadata().boundingBox.minimum = minimum;
@@ -50,6 +54,7 @@ int main() {
     cloud->getMetadata().cloudOffset = minimum;
     cloud->getMetadata().scale = {1.f, 1.f, 1.f};
 
+    // Perform subsampling
     cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();
@@ -72,6 +77,7 @@ int main() {
     }
     assert(sum == pointAmount);
 
+    // Delete ply point cloud data on CPU
     delete[] pChars;
 
 }

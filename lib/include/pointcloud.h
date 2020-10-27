@@ -37,7 +37,7 @@ public:
 
 private:
 
-    void exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index);
+    uint64_t exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint64_t level, uint64_t index);
 
 
 private:
