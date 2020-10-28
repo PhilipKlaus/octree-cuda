@@ -45,7 +45,6 @@ int main() {
     // Copy ply point cloud to GPU
     auto data = make_unique<CudaArray<Vector3>>(pointAmount, "pointcloud");
     data->toGPU(pChars);
-    delete[] pChars;
 
     // Set cloud settings
     auto cloud = make_unique<PointCloud>(move(data));
@@ -59,6 +58,8 @@ int main() {
     cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();
-    cloud->exportOctree();
+    cloud->exportOctree(points);
     cloud->exportTimeMeasurement();
+    delete[] pChars;
+
 }

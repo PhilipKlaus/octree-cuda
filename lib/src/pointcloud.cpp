@@ -5,16 +5,17 @@
 #include <fstream>
 #include "pointcloud.h"
 #include <string>
+#include <cassert>
 
 unique_ptr<Chunk[]> PointCloud::getOctree() {
     return itsOctree->toHost();
 }
 
-unique_ptr<Vector3[]> PointCloud::getChunkData() {
-    return itsChunkData->toHost();
+unique_ptr<uint32_t []> PointCloud::getDataLUT() {
+    return itsDataLUT->toHost();
 }
 
-uint32_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index) {
+uint32_t PointCloud::exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index) {
     uint32_t count = 0;
 
     if(octree[index].isFinished && octree[index].pointCount > 0) {
@@ -42,27 +43,27 @@ uint32_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const uni
                "end_header\n";
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
-            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].x)), sizeof (float));
-            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].y)), sizeof (float));
-            ply.write (reinterpret_cast<const char*> (&(chunkData[octree[index].chunkDataIndex + u].z)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]].x)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]].y)), sizeof (float));
+            ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]].z)), sizeof (float));
         }
         ply.close ();
     }
     else {
         if (level > 0) {
             for(uint32_t childrenChunk : octree[index].childrenChunks) {
-                count += exportTreeNode(octree, chunkData, level - 1, childrenChunk);
+                count += exportTreeNode(cpuPointCloud, octree, dataLUT, level - 1, childrenChunk);
             }
         }
     }
     return count;
 }
 
-void PointCloud::exportOctree() {
+void PointCloud::exportOctree(Vector3* cpuPointCloud) {
     auto octree = getOctree();
-    auto chunkData = getChunkData();
+    auto dataLUT = getDataLUT();
     uint32_t topLevelIndex = itsCellAmount - 1;
-    uint32_t exportedPoints = exportTreeNode(octree, chunkData, 7, topLevelIndex); // ToDo: Remove hard-coded level
+    uint32_t exportedPoints = exportTreeNode(cpuPointCloud, octree, dataLUT, 7, topLevelIndex); // ToDo: Remove hard-coded level
     assert(exportedPoints == itsMetadata.pointAmount);
 }
 
@@ -72,7 +73,7 @@ void PointCloud::exportTimeMeasurement() {
     timingCsv.open ("timings.csv", std::ios::out);
     timingCsv << "initialPointCounting";
     uint32_t i = 0;
-    for(float timing : itsMerginTime) {
+    for(float timing : itsMergingTime) {
         timingCsv << ",merging_" << (itsGridBaseSideLength >> i++);
         timings += ("," + std::to_string(timing));
     }

@@ -6,7 +6,7 @@
 __global__ void kernelDistributing(
         Chunk *grid,
         Vector3 *cloud,
-        Vector3 *treeData,
+        uint32_t *dataLUT,
         uint32_t *tmpIndexRegister,
         PointCloudMetadata metadata,
         uint32_t gridSize
@@ -29,7 +29,7 @@ __global__ void kernelDistributing(
     }
 
     uint32_t i = atomicAdd(&tmpIndexRegister[dstIndex], 1);
-    treeData[grid[dstIndex].chunkDataIndex + i] = point;
+    dataLUT[grid[dstIndex].chunkDataIndex + i] = index;
 }
 
 void PointCloud::distributePoints() {
@@ -47,7 +47,7 @@ void PointCloud::distributePoints() {
     kernelDistributing <<<  grid, block >>> (
             itsOctree->devicePointer(),
             itsCloudData->devicePointer(),
-            itsChunkData->devicePointer(),
+            itsDataLUT->devicePointer(),
             tmpIndexRegister->devicePointer(),
             itsMetadata,
             itsGridBaseSideLength);

@@ -161,7 +161,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
         timer.stop();
 
         cellOffsetOld = cellOffsetNew;
-        itsMerginTime.push_back(timer.getMilliseconds());
-        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, itsMerginTime.back());
+        itsMergingTime.push_back(timer.getMilliseconds());
+        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, itsMergingTime.back());
     }
 }

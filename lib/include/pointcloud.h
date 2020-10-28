@@ -18,7 +18,7 @@ public:
             itsGridBaseSideLength(0),
             itsMetadata({})
     {
-        itsChunkData = make_unique<CudaArray<Vector3>>(itsCloudData->pointCount(), "Chunk Data");
+        itsDataLUT = make_unique<CudaArray<uint32_t>>(itsCloudData->pointCount(), "Data LUT");
     }
 
     // Avoid object copy
@@ -28,17 +28,17 @@ public:
     void initialPointCounting(uint32_t initialDepth);
     void performCellMerging(uint32_t threshold);
     void distributePoints();
-    void exportOctree();
+    void exportOctree(Vector3* cpuPointCloud);
     void exportTimeMeasurement();
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
     unique_ptr<Chunk[]> getOctree();
-    unique_ptr<Vector3[]> getChunkData();
+    unique_ptr<uint32_t[]> getDataLUT();
 
 
 private:
 
-    uint32_t exportTreeNode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index);
+    uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index);
 
 
 private:
@@ -48,7 +48,7 @@ private:
 
     // Octree
     unique_ptr<CudaArray<Chunk>> itsOctree;         // The actual hierarchical octree data structure
-    unique_ptr<CudaArray<Vector3>> itsChunkData;    // Holding actual point cloud data for the octree
+    unique_ptr<CudaArray<uint32_t>> itsDataLUT;     // LUT for accessing point cloud data from the octree
 
     // Octree Metadata
     uint32_t itsCellAmount;                         // Overall initial cell amount of the octree
@@ -56,7 +56,7 @@ private:
 
     // Time measurements
     float itsInitialPointCountTime;
-    std::vector<float> itsMerginTime;
+    std::vector<float> itsMergingTime;
     float itsDistributionTime;
 };
 
