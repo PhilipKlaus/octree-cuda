@@ -82,3 +82,15 @@ void PointCloud::exportTimeMeasurement() {
     timingCsv << timings;
     timingCsv.close();
 }
+
+unique_ptr<uint32_t[]> PointCloud::getDensePointCount() {
+    return itsDensePointCount->toHost();
+}
+
+unique_ptr<int[]> PointCloud::getDenseToSparseLUT() {
+    return itsDenseToSparseLUT->toHost();
+}
+
+uint32_t PointCloud::getCellAmountSparse() {
+    return itsCellAmountSparse;
+}

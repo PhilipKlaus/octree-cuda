@@ -15,6 +15,7 @@ public:
     explicit PointCloud(std::unique_ptr<CudaArray<Vector3>> data):
             itsCloudData(move(data)),
             itsCellAmount(0),
+            itsCellAmountSparse(0),
             itsGridBaseSideLength(0),
             itsMetadata({})
     {
@@ -41,6 +42,11 @@ public:
     unique_ptr<Chunk[]> getOctree();
     unique_ptr<uint32_t[]> getDataLUT();
 
+    // Sparse Octree functions
+
+    unique_ptr<uint32_t[]> getDensePointCount();
+    unique_ptr<int[]> getDenseToSparseLUT();
+    uint32_t getCellAmountSparse();
 
 private:
 
@@ -56,9 +62,17 @@ private:
     unique_ptr<CudaArray<Chunk>> itsOctree;         // The actual hierarchical octree data structure
     unique_ptr<CudaArray<uint32_t>> itsDataLUT;     // LUT for accessing point cloud data from the octree
 
-    // Octree Metadata
+    // Dense Octree Metadata
     uint32_t itsCellAmount;                         // Overall initial cell amount of the octree
     uint32_t itsGridBaseSideLength;                 // The side length of the lowest grid in the octree (e.g. 128)
+
+    // Sparse Octree
+    unique_ptr<CudaArray<uint32_t>> itsDensePointCount; // Holds all point counts in dense form
+    unique_ptr<CudaArray<int>> itsDenseToSparseLUT;     // LUT for mapping from dense to sparse
+
+    // Sparse Octree Metadata
+    uint32_t itsCellAmountSparse;                         // Overall initial cell amount of the sparse octree
+
 
     // Time measurements
     float itsInitialPointCountTime;

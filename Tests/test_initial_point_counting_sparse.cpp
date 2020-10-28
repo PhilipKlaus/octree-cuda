@@ -1,14 +1,12 @@
 //
-// Created by KlausP on 27.10.2020.
+// Created by KlausP on 28.10.2020.
 //
 
 #include "catch2/catch.hpp"
 #include "../lib/src/tools.cuh"
-#include "../lib/src/defines.cuh"
 #include "pointcloud.h"
 
-
-TEST_CASE ("Test initial point counting", "counting") {
+TEST_CASE ("Test initial sparse point counting", "counting sparse") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
@@ -21,14 +19,18 @@ TEST_CASE ("Test initial point counting", "counting") {
     cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
     cloud->getMetadata().scale = {1.f, 1.f, 1.f};
 
-    cloud->initialPointCounting(7);
+    cloud->initialPointCountingSparse(7);
 
-    // Test if each point fall exactly in one cell
-    auto octree = cloud->getOctree();
+    auto denseCount = cloud->getDensePointCount();
 
+    // Require that all cells are filled and that there is no empty space
+    REQUIRE(cloud->getCellAmountSparse() == pow(128, 3));
+
+    // Require that the sum of the accumulated point counts equaly to the actual point amount of the cloud
+    uint32_t sum = 0;
     for(int i = 0; i < pow(128, 3); ++i) {
-        REQUIRE(octree[i].pointCount == 8);
-        REQUIRE(octree[i].isFinished == false);
-        REQUIRE(octree[i].parentChunkIndex != INVALID_INDEX);
+        REQUIRE(denseCount[i] == 8);
+        sum += denseCount[i];
     }
+    REQUIRE(sum == cloud->getMetadata().pointAmount);
 }
