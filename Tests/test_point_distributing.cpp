@@ -12,7 +12,7 @@
 #include "pointcloud.h"
 
 
-uint32_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vector3[]> &chunkData, uint32_t level, uint32_t index) {
+uint32_t testOctreenode(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index) {
     uint32_t count = 0;
 
     uint32_t previousChunks = 0;
@@ -33,7 +33,7 @@ uint32_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vect
         count = octree[index].pointCount;
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
-            Vector3 point = chunkData[octree[index].chunkDataIndex + u];
+            Vector3 point = cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]];
             REQUIRE(point.x > (x * voxelSize));
             REQUIRE(point.x < ((x + 1) * voxelSize));
             REQUIRE(point.y > (y * voxelSize));
@@ -45,7 +45,7 @@ uint32_t testOctreenode(const unique_ptr<Chunk[]> &octree, const unique_ptr<Vect
     else {
         if (level > 0) {
             for(uint32_t childrenChunk : octree[index].childrenChunks) {
-                count += testOctreenode(octree, chunkData, level - 1, childrenChunk);
+                count += testOctreenode(cpuPointCloud, octree, dataLUT, level - 1, childrenChunk);
             }
         }
     }
@@ -56,7 +56,7 @@ TEST_CASE ("Test point distributing", "distributing") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);
-
+    auto cpuData = cuboid->toHost();
     auto cloud = make_unique<PointCloud>(move(cuboid));
 
     cloud->getMetadata().pointAmount = 128 * 128 * 128;
@@ -70,8 +70,8 @@ TEST_CASE ("Test point distributing", "distributing") {
     cloud->distributePoints();
 
     auto octree = cloud->getOctree();
-    auto data = cloud->getChunkData();
+    auto dataLUT = cloud->getDataLUT();
     uint32_t topLevelIndex = 2396745-1;
 
-    REQUIRE(testOctreenode(octree, data, 7, topLevelIndex) == cloud->getMetadata().pointAmount);
+    REQUIRE(testOctreenode(cpuData.get(), octree, dataLUT, 7, topLevelIndex) == cloud->getMetadata().pointAmount);
 }
