@@ -29,6 +29,7 @@ public:
     void performCellMerging(uint32_t threshold);
     void distributePoints();
     void exportOctree();
+    void exportTimeMeasurement();
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
     unique_ptr<Chunk[]> getOctree();
@@ -48,9 +49,15 @@ private:
     // Octree
     unique_ptr<CudaArray<Chunk>> itsOctree;         // The actual hierarchical octree data structure
     unique_ptr<CudaArray<Vector3>> itsChunkData;    // Holding actual point cloud data for the octree
+
+    // Octree Metadata
     uint32_t itsCellAmount;                         // Overall initial cell amount of the octree
     uint32_t itsGridBaseSideLength;                 // The side length of the lowest grid in the octree (e.g. 128)
 
+    // Time measurements
+    float itsInitialPointCountTime;
+    std::vector<float> itsMerginTime;
+    float itsDistributionTime;
 };
 
 #endif //POINT_CLOUD_H

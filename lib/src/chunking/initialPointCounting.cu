@@ -41,6 +41,6 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
             itsMetadata,
             itsGridBaseSideLength);
     timer.stop();
-
-    spdlog::info("'initialPointCounting' took {:f} [ms]", timer.getMilliseconds());
+    itsInitialPointCountTime = timer.getMilliseconds();
+    spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
 }

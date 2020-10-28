@@ -56,5 +56,6 @@ void PointCloud::distributePoints() {
     // Manually delete the original point cloud data on GPU -> it is not needed anymore
     itsCloudData.reset();
 
-    spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
+    itsDistributionTime = timer.getMilliseconds();
+    spdlog::info("'distributePoints' took {:f} [ms]", itsDistributionTime);
 }

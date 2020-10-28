@@ -50,7 +50,7 @@ uint32_t PointCloud::exportTreeNode(const unique_ptr<Chunk[]> &octree, const uni
     }
     else {
         if (level > 0) {
-            for(unsigned long long childrenChunk : octree[index].childrenChunks) {
+            for(uint32_t childrenChunk : octree[index].childrenChunks) {
                 count += exportTreeNode(octree, chunkData, level - 1, childrenChunk);
             }
         }
@@ -64,4 +64,20 @@ void PointCloud::exportOctree() {
     uint32_t topLevelIndex = itsCellAmount - 1;
     uint32_t exportedPoints = exportTreeNode(octree, chunkData, 7, topLevelIndex); // ToDo: Remove hard-coded level
     assert(exportedPoints == itsMetadata.pointAmount);
+}
+
+void PointCloud::exportTimeMeasurement() {
+    std::string timings = to_string(itsInitialPointCountTime);
+    std::ofstream timingCsv;
+    timingCsv.open ("timings.csv", std::ios::out);
+    timingCsv << "initialPointCounting";
+    uint32_t i = 0;
+    for(float timing : itsMerginTime) {
+        timingCsv << ",merging_" << (itsGridBaseSideLength >> i++);
+        timings += ("," + std::to_string(timing));
+    }
+    timingCsv << ",distribution" << std::endl;
+    timings += ("," + to_string(itsDistributionTime));
+    timingCsv << timings;
+    timingCsv.close();
 }

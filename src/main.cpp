@@ -60,4 +60,5 @@ int main() {
     cloud->performCellMerging(30000);
     cloud->distributePoints();
     cloud->exportOctree();
+    cloud->exportTimeMeasurement();
 }
