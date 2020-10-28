@@ -5,14 +5,14 @@
 #ifndef POINT_CLOUD_H
 #define POINT_CLOUD_H
 
-
 #include "types.h"
+#include "cudaArray.h"
 
 
 class PointCloud {
 
 public:
-    explicit PointCloud(unique_ptr<CudaArray<Vector3>> data):
+    explicit PointCloud(std::unique_ptr<CudaArray<Vector3>> data):
             itsCloudData(move(data)),
             itsCellAmount(0),
             itsGridBaseSideLength(0),

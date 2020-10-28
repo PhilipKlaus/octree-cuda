@@ -52,6 +52,7 @@ void PointCloud::distributePoints() {
             itsMetadata,
             itsGridBaseSideLength);
     timer.stop();
+    gpuErrchk(cudaGetLastError());
 
     // Manually delete the original point cloud data on GPU -> it is not needed anymore
     itsCloudData.reset();

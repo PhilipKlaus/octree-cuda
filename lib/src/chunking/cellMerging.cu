@@ -133,7 +133,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsChunkData' register
     auto counter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
-    cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint32_t));
+    gpuErrchk(cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     uint32_t cellOffsetNew = 0;
     uint32_t cellOffsetOld = 0;
@@ -159,6 +159,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
                 cellOffsetNew,
                 cellOffsetOld);
         timer.stop();
+        gpuErrchk(cudaGetLastError());
 
         cellOffsetOld = cellOffsetNew;
         itsMergingTime.push_back(timer.getMilliseconds());

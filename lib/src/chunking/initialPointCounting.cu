@@ -26,7 +26,7 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
 
     // Create and initialize the complete grid
     itsOctree = make_unique<CudaArray<Chunk>>(itsCellAmount, "grid");
-    cudaMemset (itsOctree->devicePointer(), 0, itsCellAmount * sizeof(Chunk));
+    gpuErrchk(cudaMemset (itsOctree->devicePointer(), 0, itsCellAmount * sizeof(Chunk)));
 
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -41,6 +41,7 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
             itsMetadata,
             itsGridBaseSideLength);
     timer.stop();
+    gpuErrchk(cudaGetLastError());
     itsInitialPointCountTime = timer.getMilliseconds();
     spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
 }

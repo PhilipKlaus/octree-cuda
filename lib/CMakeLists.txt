@@ -11,13 +11,11 @@ add_library( ${PROJECT_NAME} STATIC
         src/tools.cu
         src/tools.cuh
         src/defines.cuh
-        src/timing.cuh
-        )
+        src/timing.cuh)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON

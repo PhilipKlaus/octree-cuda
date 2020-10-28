@@ -3,8 +3,9 @@
 
 #include <cuda_runtime_api.h>
 #include <cuda.h>
-# include <memory>
+#include <memory>
 #include "types.h"
+#include "cudaArray.h"
 
 using namespace std;
 
