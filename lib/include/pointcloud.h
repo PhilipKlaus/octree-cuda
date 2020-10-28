@@ -25,9 +25,15 @@ public:
     PointCloud(const PointCloud&) = delete;
     void operator=(const PointCloud&) = delete;
 
+    // Pipeline
     void initialPointCounting(uint32_t initialDepth);
+    void initialPointCountingSparse(uint32_t initialDepth);
     void performCellMerging(uint32_t threshold);
+    void performCellMergingSparse(uint32_t threshold);
     void distributePoints();
+    void distributePointsSparse();
+
+    // Export functions
     void exportOctree(Vector3* cpuPointCloud);
     void exportTimeMeasurement();
 
