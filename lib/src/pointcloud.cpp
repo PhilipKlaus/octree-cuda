@@ -92,5 +92,5 @@ unique_ptr<int[]> PointCloud::getDenseToSparseLUT() {
 }
 
 uint32_t PointCloud::getCellAmountSparse() {
-    return itsCellAmountSparse;
+    return itsCellAmountSparse->toHost()[0];
 }

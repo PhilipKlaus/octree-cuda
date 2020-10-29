@@ -5,8 +5,9 @@
 
 
 __global__ void kernelMergingSparse(
-        Chunk *grid,
-        uint32_t *globalChunkCounter,
+        uint32_t *densePointCount,
+        int *denseToSparseLUT,
+        uint32_t *sparseIndexCounter,
         uint32_t newCellAmount,
         uint32_t newGridSize,
         uint32_t oldGridSize,
@@ -28,6 +29,10 @@ __global__ void kernelMergingSparse(
 
     auto oldXY = oldGridSize * oldGridSize;
 
+    // The new dense index for the actual chunk
+    uint32_t denseVoxelIndex = cellOffsetNew + index;
+
+    // Calculate the dense indices of the 8 underlying cells
     uint32_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
     uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
     uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
@@ -37,24 +42,27 @@ __global__ void kernelMergingSparse(
     uint32_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
     uint32_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
 
-    Chunk *chunk_0_0_0 = grid + chunk_0_0_0_index;
-    Chunk *chunk_0_0_1 = grid + chunk_0_0_1_index;
-    Chunk *chunk_0_1_0 = grid + chunk_0_1_0_index;
-    Chunk *chunk_0_1_1 = grid + chunk_0_1_1_index;
-    Chunk *chunk_1_0_0 = grid + chunk_1_0_0_index;
-    Chunk *chunk_1_0_1 = grid + chunk_1_0_1_index;
-    Chunk *chunk_1_1_0 = grid + chunk_1_1_0_index;
-    Chunk *chunk_1_1_1 = grid + chunk_1_1_1_index;
+    // Create pointers to the 8 underlying cells
+    uint32_t *chunk_0_0_0 = densePointCount + chunk_0_0_0_index;
+    uint32_t *chunk_0_0_1 = densePointCount + chunk_0_0_1_index;
+    uint32_t *chunk_0_1_0 = densePointCount + chunk_0_1_0_index;
+    uint32_t *chunk_0_1_1 = densePointCount + chunk_0_1_1_index;
+    uint32_t *chunk_1_0_0 = densePointCount + chunk_1_0_0_index;
+    uint32_t *chunk_1_0_1 = densePointCount + chunk_1_0_1_index;
+    uint32_t *chunk_1_1_0 = densePointCount + chunk_1_1_0_index;
+    uint32_t *chunk_1_1_1 = densePointCount + chunk_1_1_1_index;
 
-    uint32_t chunk_0_0_0_count = chunk_0_0_0->pointCount;
-    uint32_t chunk_0_0_1_count = chunk_0_0_1->pointCount;
-    uint32_t chunk_0_1_0_count = chunk_0_1_0->pointCount;
-    uint32_t chunk_0_1_1_count = chunk_0_1_1->pointCount;
-    uint32_t chunk_1_0_0_count = chunk_1_0_0->pointCount;
-    uint32_t chunk_1_0_1_count = chunk_1_0_1->pointCount;
-    uint32_t chunk_1_1_0_count = chunk_1_1_0->pointCount;
-    uint32_t chunk_1_1_1_count = chunk_1_1_1->pointCount;
+    // Buffer the point counts within each cell
+    uint32_t chunk_0_0_0_count = *chunk_0_0_0;
+    uint32_t chunk_0_0_1_count = *chunk_0_0_1;
+    uint32_t chunk_0_1_0_count = *chunk_0_1_0;
+    uint32_t chunk_0_1_1_count = *chunk_0_1_1;
+    uint32_t chunk_1_0_0_count = *chunk_1_0_0;
+    uint32_t chunk_1_0_1_count = *chunk_1_0_1;
+    uint32_t chunk_1_1_0_count = *chunk_1_1_0;
+    uint32_t chunk_1_1_1_count = *chunk_1_1_1;
 
+    // Summarize all children counts
     auto sum =
             chunk_0_0_0_count +
             chunk_0_0_1_count +
@@ -65,75 +73,19 @@ __global__ void kernelMergingSparse(
             chunk_1_1_0_count +
             chunk_1_1_1_count;
 
-    bool containsFinalizedCells = chunk_0_0_0->isFinished ||
-                                  chunk_0_0_1->isFinished ||
-                                  chunk_0_1_0->isFinished ||
-                                  chunk_0_1_1->isFinished ||
-                                  chunk_1_0_0->isFinished ||
-                                  chunk_1_0_1->isFinished ||
-                                  chunk_1_1_0->isFinished ||
-                                  chunk_1_1_1->isFinished;
-
-    bool isFinalized = (sum >= threshold) || containsFinalizedCells;
-
-    // Update new (higher-level) chunk
-    uint32_t newIndex = cellOffsetNew + index;
-    grid[newIndex].pointCount = !isFinalized ? sum : 0;
-    grid[newIndex].isFinished = isFinalized;
-
-    grid[newIndex].childrenChunks[0] = chunk_0_0_0_index;
-    grid[newIndex].childrenChunks[1] = chunk_0_0_1_index;
-    grid[newIndex].childrenChunks[2] = chunk_0_1_0_index;
-    grid[newIndex].childrenChunks[3] = chunk_0_1_1_index;
-    grid[newIndex].childrenChunks[4] = chunk_1_0_0_index;
-    grid[newIndex].childrenChunks[5] = chunk_1_0_1_index;
-    grid[newIndex].childrenChunks[6] = chunk_1_1_0_index;
-    grid[newIndex].childrenChunks[7] = chunk_1_1_1_index;
-
-    // Update old (8 lower-level) chunks
-    chunk_0_0_0->parentChunkIndex = newIndex;
-    chunk_0_0_1->parentChunkIndex = newIndex;
-    chunk_0_1_0->parentChunkIndex = newIndex;
-    chunk_0_1_1->parentChunkIndex = newIndex;
-    chunk_1_0_0->parentChunkIndex = newIndex;
-    chunk_1_0_1->parentChunkIndex = newIndex;
-    chunk_1_1_0->parentChunkIndex = newIndex;
-    chunk_1_1_1->parentChunkIndex = newIndex;
-
-    chunk_0_0_0->isFinished = isFinalized;
-    chunk_0_0_1->isFinished = isFinalized;
-    chunk_0_1_0->isFinished = isFinalized;
-    chunk_0_1_1->isFinished = isFinalized;
-    chunk_1_0_0->isFinished = isFinalized;
-    chunk_1_0_1->isFinished = isFinalized;
-    chunk_1_1_0->isFinished = isFinalized;
-    chunk_1_1_1->isFinished = isFinalized;
-
-    if(isFinalized && sum > 0) {
-        uint32_t i = atomicAdd(globalChunkCounter, sum);
-        chunk_0_0_0->chunkDataIndex = i;
-        i += chunk_0_0_0_count;
-        chunk_0_0_1->chunkDataIndex = i;
-        i += chunk_0_0_1_count;
-        chunk_0_1_0->chunkDataIndex = i;
-        i += chunk_0_1_0_count;
-        chunk_0_1_1->chunkDataIndex = i;
-        i += chunk_0_1_1_count;
-        chunk_1_0_0->chunkDataIndex = i;
-        i += chunk_1_0_0_count;
-        chunk_1_0_1->chunkDataIndex = i;
-        i += chunk_1_0_1_count;
-        chunk_1_1_0->chunkDataIndex = i;
-        i += chunk_1_1_0_count;
-        chunk_1_1_1->chunkDataIndex = i;
+    // If sum > 0:
+    // 1. Store children count into densePointCount
+    // 2. Increment sparseIndexCounter to mark a new cell and to retrieve a dense index
+    // 3. Store the new sparse index in the dense->sparse LUT
+    if(sum > 0) {
+        densePointCount[denseVoxelIndex] += sum;
+        auto sparseVoxelIndex = atomicAdd(sparseIndexCounter, 1);
+        denseToSparseLUT[denseVoxelIndex] = sparseVoxelIndex;
     }
 }
 
 void PointCloud::performCellMergingSparse(uint32_t threshold) {
 
-    // Create a temporary counter register for assigning indices for chunks within the 'itsChunkData' register
-    auto counter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
-    cudaMemset (counter->devicePointer(), 0, 1 * sizeof(uint32_t));
 
     uint32_t cellOffsetNew = 0;
     uint32_t cellOffsetOld = 0;
@@ -150,8 +102,9 @@ void PointCloud::performCellMergingSparse(uint32_t threshold) {
         tools::KernelTimer timer;
         timer.start();
         kernelMergingSparse <<<  grid, block >>> (
-                itsOctree->devicePointer(),
-                counter->devicePointer(),
+                itsDensePointCount->devicePointer(),
+                itsDenseToSparseLUT->devicePointer(),
+                itsCellAmountSparse->devicePointer(),
                 newCellAmount,
                 gridSize>>1,
                 gridSize,
@@ -159,9 +112,20 @@ void PointCloud::performCellMergingSparse(uint32_t threshold) {
                 cellOffsetNew,
                 cellOffsetOld);
         timer.stop();
+        gpuErrchk(cudaGetLastError());
 
         cellOffsetOld = cellOffsetNew;
+
         itsMergingTime.push_back(timer.getMilliseconds());
         spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, itsMergingTime.back());
     }
+
+    uint32_t cellAmountSparse = itsCellAmountSparse->toHost()[0];
+    spdlog::info(
+            "Sparse octree cells: {} instead of {} -> Memory saving: {:f} [%] {:f} [GB]",
+            cellAmountSparse,
+            itsCellAmount,
+            (1 - static_cast<float>(cellAmountSparse) / itsCellAmount) * 100,
+            static_cast<float>(itsCellAmount - cellAmountSparse) * sizeof(Chunk) / 1000000000.f
+    );
 }

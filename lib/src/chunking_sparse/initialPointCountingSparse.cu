@@ -49,8 +49,8 @@ void PointCloud::initialPointCountingSparse(uint32_t initialDepth) {
     gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsCellAmount * sizeof(int)));
 
     // Allocate the global sparseIndexCounter
-    auto sparseIndexCounter = make_unique<CudaArray<uint32_t>>(1, "sparseIndexCounter");
-    gpuErrchk(cudaMemset (sparseIndexCounter->devicePointer(), 0, 1 * sizeof(uint32_t)));
+    itsCellAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseIndexCounter");
+    gpuErrchk(cudaMemset (itsCellAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -63,22 +63,12 @@ void PointCloud::initialPointCountingSparse(uint32_t initialDepth) {
                     itsCloudData->devicePointer(),
                     itsDensePointCount->devicePointer(),
                     itsDenseToSparseLUT->devicePointer(),
-                    sparseIndexCounter->devicePointer(),
+                    itsCellAmountSparse->devicePointer(),
                     itsMetadata,
                     itsGridBaseSideLength);
-    gpuErrchk(cudaGetLastError());
     timer.stop();
+    gpuErrchk(cudaGetLastError());
+
     itsInitialPointCountTime = timer.getMilliseconds();
-
-    // Increase amount of needed cells for sparse octree
-    itsCellAmountSparse += sparseIndexCounter->toHost()[0];
-
     spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
-    spdlog::info(
-            "Base grid: {} instead of {} -> Memory saving: {:f} [%] {:f} [Bytes]",
-            itsCellAmountSparse,
-            pow(itsGridBaseSideLength, 3),
-            (1 - static_cast<float>(itsCellAmountSparse) / pow(itsGridBaseSideLength, 3)) * 100,
-            static_cast<float>(itsCellAmount - itsCellAmountSparse) * sizeof(Chunk) / 1000000000.f
-            );
 }

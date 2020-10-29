@@ -56,6 +56,7 @@ int main() {
 
     // Perform subsampling
     cloud->initialPointCountingSparse(7);
+    cloud->performCellMergingSparse(30000);
     /*cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();

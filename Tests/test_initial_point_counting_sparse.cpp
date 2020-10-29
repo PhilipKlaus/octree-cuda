@@ -22,6 +22,7 @@ TEST_CASE ("Test initial sparse point counting", "counting sparse") {
     cloud->initialPointCountingSparse(7);
 
     auto denseCount = cloud->getDensePointCount();
+    auto denseToSparseLUT = cloud->getDenseToSparseLUT();
 
     // Require that all cells are filled and that there is no empty space
     REQUIRE(cloud->getCellAmountSparse() == pow(128, 3));
@@ -31,6 +32,8 @@ TEST_CASE ("Test initial sparse point counting", "counting sparse") {
     for(int i = 0; i < pow(128, 3); ++i) {
         REQUIRE(denseCount[i] == 8);
         sum += denseCount[i];
+        // We can assume that there exist a sparse index for each dense index as there are no empty cells
+        REQUIRE(denseToSparseLUT[i] != -1);
     }
     REQUIRE(sum == cloud->getMetadata().pointAmount);
 }

@@ -15,7 +15,6 @@ public:
     explicit PointCloud(std::unique_ptr<CudaArray<Vector3>> data):
             itsCloudData(move(data)),
             itsCellAmount(0),
-            itsCellAmountSparse(0),
             itsGridBaseSideLength(0),
             itsMetadata({})
     {
@@ -71,7 +70,7 @@ private:
     unique_ptr<CudaArray<int>> itsDenseToSparseLUT;     // LUT for mapping from dense to sparse
 
     // Sparse Octree Metadata
-    uint32_t itsCellAmountSparse;                         // Overall initial cell amount of the sparse octree
+    unique_ptr<CudaArray<uint32_t>> itsCellAmountSparse;                         // Overall initial cell amount of the sparse octree
 
 
     // Time measurements
