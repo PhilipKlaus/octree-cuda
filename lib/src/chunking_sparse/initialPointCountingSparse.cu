@@ -41,15 +41,15 @@ void PointCloud::initialPointCountingSparse(uint32_t initialDepth) {
     spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
 
     // Allocate the dense point count
-    itsDensePointCount = make_unique<CudaArray<uint32_t>>(itsCellAmount, "reorderedPointAmount");
+    itsDensePointCount = make_unique<CudaArray<uint32_t>>(itsCellAmount, "densePointCount");
     gpuErrchk(cudaMemset (itsDensePointCount->devicePointer(), 0, itsCellAmount * sizeof(uint32_t)));
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsCellAmount, "conversionLUT");
+    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsCellAmount, "denseToSparseLUT");
     gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsCellAmount * sizeof(int)));
 
     // Allocate the global sparseIndexCounter
-    itsCellAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseIndexCounter");
+    itsCellAmountSparse = make_unique<CudaArray<uint32_t>>(1, "cellAmountSparse");
     gpuErrchk(cudaMemset (itsCellAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Calculate kernel dimensions
@@ -70,5 +70,5 @@ void PointCloud::initialPointCountingSparse(uint32_t initialDepth) {
     gpuErrchk(cudaGetLastError());
 
     itsInitialPointCountTime = timer.getMilliseconds();
-    spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
+    spdlog::info("'initialPointCountingSparse' took {:f} [ms]", itsInitialPointCountTime);
 }

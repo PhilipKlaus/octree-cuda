@@ -24,6 +24,7 @@ TEST_CASE ("Test cell merging sparse", "merging sparse") {
 
     auto denseCount = cloud->getDensePointCount();
     auto denseToSparseLUT = cloud->getDenseToSparseLUT();
+    auto octreeSparse = cloud->getOctreeSparse();
 
     // Require that all cells are filled and that there is no empty space
     REQUIRE(cloud->getCellAmountSparse() == 2396745);
@@ -37,47 +38,89 @@ TEST_CASE ("Test cell merging sparse", "merging sparse") {
     for(int i = 0; i < pow(128, 3); ++i) {
         REQUIRE(denseCount[i] == 8);
         REQUIRE(denseToSparseLUT[i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].pointCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].isFinished == false);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].childrenChunksCount == 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(128, 3));
 
     for(int i = 0; i < pow(64, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 64);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 64);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(64, 3));
 
     for(int i = 0; i < pow(32, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 512);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 512);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(32, 3));
 
     for(int i = 0; i < pow(16, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 4096);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 4096);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(16, 3));
 
     for(int i = 0; i < pow(8, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 32768);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 32768);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(8, 3));
 
     for(int i = 0; i < pow(4, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 262144);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(4, 3));
 
     for(int i = 0; i < pow(2, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 2097152);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
     }
     cellOffset += static_cast<uint32_t >(pow(2, 3));
 
     for(int i = 0; i < pow(1, 3); ++i) {
         REQUIRE(denseCount[cellOffset + i] == 16777216);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex == 0);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(cellOffset + i == denseToSparseLUT[cellOffset + i]);
+        REQUIRE(denseToSparseLUT[cellOffset + i] == 2396744);
     }
 }
