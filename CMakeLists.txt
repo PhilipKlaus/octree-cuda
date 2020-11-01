@@ -25,14 +25,14 @@ endif()
 ######################
 # ADD OCTREE LIBRARY #
 ######################
-add_subdirectory(OctreeLibrary)
+add_subdirectory(OctreeApi)
 
 
 ######################
 # LINK TO LIBRARIES  #
 ######################
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
-target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLibrary)
+target_link_libraries(${PROJECT_NAME} PRIVATE OctreeApi)
 
 
 #########################################
@@ -41,7 +41,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLibrary)
 if(WIN32)
     add_custom_command(TARGET PotreeConverterGPU
             POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OctreeLibrary> "${CMAKE_CURRENT_BINARY_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:OctreeApi> "${CMAKE_CURRENT_BINARY_DIR}"
             COMMENT "Copy dll file to ${CMAKE_CURRENT_BINARY_DIR} directory" VERBATIM
             )
 endif()

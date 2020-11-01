@@ -3,7 +3,7 @@
 //
 
 #include <fstream>
-#include "pointcloud.h"
+#include "../include/pointcloud.h"
 #include <string>
 #include <cassert>
 
@@ -121,7 +121,7 @@ void PointCloud::exportOctreeSparse(Vector3 *cpuPointCloud) {
     uint32_t topLevelIndex = itsCellAmountSparse->toHost()[0]  - 1;
     uint32_t exportedPoints = exportTreeNodeSparse(cpuPointCloud, octreeSparse, dataLUT, 7, topLevelIndex); // ToDo: Remove hard-coded level
     assert(exportedPoints == itsMetadata.pointAmount);
-    spdlog::info("Exported {} points from {}", exportedPoints, itsMetadata.pointAmount);
+    spdlog::debug("Exported {} points from {}", exportedPoints, itsMetadata.pointAmount);
 }
 
 

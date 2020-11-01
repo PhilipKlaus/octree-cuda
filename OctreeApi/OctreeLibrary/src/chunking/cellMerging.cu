@@ -1,4 +1,4 @@
-#include "../pointcloud.h"
+#include "../../include/pointcloud.h"
 #include "../tools.cuh"
 #include "../timing.cuh"
 #include "../defines.cuh"

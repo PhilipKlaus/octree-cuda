@@ -5,7 +5,7 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
-#include "pointcloud.h"
+#include "../OctreeLibrary/include/pointcloud.h"
 
 class Session
 {

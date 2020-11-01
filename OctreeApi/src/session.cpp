@@ -6,7 +6,6 @@
 
 #include <memory>
 #include "spdlog/spdlog.h"
-#include "../src/defines.cuh"
 
 #include <iostream>
 Session* Session::ToSession (void* session)
@@ -16,6 +15,7 @@ Session* Session::ToSession (void* session)
     {
         return s;
     }
+    throw runtime_error("No Session is currently initialized!");
 }
 
 Session::Session(int device):
@@ -66,13 +66,16 @@ void Session::generateOctree() {
     itsPointCloud->initialPointCountingSparse(itsGlobalOctreeLevel);
     itsPointCloud->performCellMergingSparse(itsMergingThreshold);
     itsPointCloud->distributePointsSparse();
+    spdlog::debug("octree generated");
 }
 
 void Session::exportOctree(Vector3 *cpuPointCloud) {
     itsPointCloud->exportOctreeSparse(cpuPointCloud);
+    spdlog::debug("octree exported");
 }
 
 void Session::configureMemoryReport(const std::string &filename) {
     EventWatcher::getInstance().configureMemoryReport(filename);
+    spdlog::debug("configured  memory report: {}", filename);
 }
 

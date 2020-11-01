@@ -5,9 +5,8 @@
 #ifndef POINT_CLOUD_H
 #define POINT_CLOUD_H
 
-#include "cudaArray.h"
-#include "octreeApi.h"
-
+#include "../src/cudaArray.h"
+#include "types.h"
 #include <memory>
 
 using namespace std;

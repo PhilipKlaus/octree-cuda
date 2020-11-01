@@ -5,7 +5,7 @@
 #include <cuda.h>
 #include <memory>
 #include "cudaArray.h"
-#include "octreeApi.h"
+#include "types.h"
 
 using namespace std;
 

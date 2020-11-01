@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "../lib/src/tools.cuh"
+#include "../src/tools.cuh"
 #include "pointcloud.h"
 
 TEST_CASE ("Test cell merging sparse", "merging sparse") {
