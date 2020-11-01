@@ -68,3 +68,11 @@ void Session::generateOctree() {
     itsPointCloud->distributePointsSparse();
 }
 
+void Session::exportOctree(Vector3 *cpuPointCloud) {
+    itsPointCloud->exportOctreeSparse(cpuPointCloud);
+}
+
+void Session::configureMemoryReport(const std::string &filename) {
+    EventWatcher::getInstance().configureMemoryReport(filename);
+}
+

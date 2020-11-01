@@ -24,6 +24,8 @@ public:
     void setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold);
     const PointCloudMetadata& getMetadata() const;
     void generateOctree();
+    void exportOctree(Vector3 *cpuPointCloud);
+    void configureMemoryReport(const std::string &filename);
 
 private:
     int itsDevice;

@@ -3,11 +3,9 @@
 //
 
 #include "octreeApi.h"
-//#include "session.h"
 #include "spdlog/spdlog.h"
 #include "session.h"
 
-#include <iostream>
 
 void ocpi_set_logging_level(int level) {
     switch(level) {
@@ -55,4 +53,14 @@ void ocpi_configure_octree(void* session, uint16_t globalOctreeLevel, uint32_t m
 void ocpi_generate_octree(void *session) {
     auto s = Session::ToSession (session);
     s->generateOctree();
+}
+
+void ocpi_export_octree(void *session, Vector3 *cpuPointCloud) {
+    auto s = Session::ToSession (session);
+    s->exportOctree(cpuPointCloud);
+}
+
+void ocpi_configure_memory_report(void *session, const char *filename) {
+    auto s = Session::ToSession (session);
+    s->configureMemoryReport(filename);
 }
