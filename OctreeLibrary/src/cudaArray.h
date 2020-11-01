@@ -9,7 +9,9 @@
 #include <string>
 #include <memory>
 #include "eventWatcher.h"
-#include "../src/defines.cuh"
+#include "defines.cuh"
+
+using namespace std;
 
 template <typename dataType>
 class CudaArray {

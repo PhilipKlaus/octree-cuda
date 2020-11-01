@@ -4,8 +4,8 @@
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include <memory>
-#include "types.h"
 #include "cudaArray.h"
+#include "octreeApi.h"
 
 using namespace std;
 

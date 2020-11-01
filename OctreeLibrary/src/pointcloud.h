@@ -5,8 +5,12 @@
 #ifndef POINT_CLOUD_H
 #define POINT_CLOUD_H
 
-#include "types.h"
 #include "cudaArray.h"
+#include "octreeApi.h"
+
+#include <memory>
+
+using namespace std;
 
 
 class PointCloud {

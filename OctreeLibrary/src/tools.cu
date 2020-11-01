@@ -1,5 +1,4 @@
 #include "tools.cuh"
-#include "types.h"
 #include "defines.cuh"
 
 
