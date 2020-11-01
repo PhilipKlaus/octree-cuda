@@ -6,7 +6,9 @@ add_executable(OctreeTest
         test_merging.cpp
         test_tools.cpp
         test_initial_point_counting.cpp
-        test_point_distributing.cpp)
+        test_point_distributing.cpp
+        test_initial_point_counting_sparse.cpp
+        test_merging_sparse.cpp)
 
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLib)

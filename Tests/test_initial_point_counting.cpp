@@ -11,13 +11,13 @@
 TEST_CASE ("Test initial point counting", "counting") {
 
     // Create test data point cloud
-    unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);
+    unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
 
     auto cloud = make_unique<PointCloud>(move(cuboid));
 
-    cloud->getMetadata().pointAmount = 128 * 128 * 128;
+    cloud->getMetadata().pointAmount = 256 * 256 * 256;
     cloud->getMetadata().boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
+    cloud->getMetadata().boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
     cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
     cloud->getMetadata().scale = {1.f, 1.f, 1.f};
 
@@ -27,7 +27,7 @@ TEST_CASE ("Test initial point counting", "counting") {
     auto octree = cloud->getOctree();
 
     for(int i = 0; i < pow(128, 3); ++i) {
-        REQUIRE(octree[i].pointCount == 1);
+        REQUIRE(octree[i].pointCount == 8);
         REQUIRE(octree[i].isFinished == false);
         REQUIRE(octree[i].parentChunkIndex != INVALID_INDEX);
     }

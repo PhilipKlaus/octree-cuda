@@ -18,6 +18,7 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
 void PointCloud::initialPointCounting(uint32_t initialDepth) {
 
     // Precalculate parameters
+    itsOctreeLevels = initialDepth;
     itsGridBaseSideLength = static_cast<uint32_t >(pow(2, initialDepth));
     for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
         itsCellAmount += static_cast<uint32_t>(pow(gridSize, 3));
@@ -45,3 +46,5 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
     itsInitialPointCountTime = timer.getMilliseconds();
     spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
 }
+
+

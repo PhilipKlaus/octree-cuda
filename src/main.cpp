@@ -55,11 +55,18 @@ int main() {
     cloud->getMetadata().scale = {1.f, 1.f, 1.f};
 
     // Perform subsampling
-    cloud->initialPointCounting(7);
+    cloud->initialPointCountingSparse(7);
+    cloud->performCellMergingSparse(30000);
+    cloud->distributePointsSparse();
+    cloud->exportOctreeSparse(points);
+    //cloud->exportOctree(points);
+    //cloud->exportTimeMeasurement();
+    //cloud->distributePointsSparse();
+    /*cloud->initialPointCounting(7);
     cloud->performCellMerging(30000);
     cloud->distributePoints();
     cloud->exportOctree(points);
-    cloud->exportTimeMeasurement();
+    cloud->exportTimeMeasurement();*/
     delete[] pChars;
 
 }
