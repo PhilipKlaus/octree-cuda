@@ -6,10 +6,10 @@
 // Created by KlausP on 27.10.2020.
 //
 
+#include <denseOctree.h>
 #include "catch2/catch.hpp"
 #include "../src/tools.cuh"
 #include "../src/defines.cuh"
-#include "pointcloud.h"
 
 
 uint32_t testOctreenode(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index) {
@@ -57,19 +57,21 @@ TEST_CASE ("Test point distributing", "distributing") {
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);
     auto cpuData = cuboid->toHost();
-    auto cloud = make_unique<PointCloud>(move(cuboid));
 
-    cloud->getMetadata().pointAmount = 128 * 128 * 128;
-    cloud->getMetadata().boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
-    cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().scale = {1.f, 1.f, 1.f};
+    PointCloudMetadata metadata{};
+    metadata.pointAmount = 128 * 128 * 128;
+    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
+    metadata.boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
+    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+    metadata.scale = {1.f, 1.f, 1.f};
+
+    auto cloud = make_unique<DenseOctree>(metadata, move(cuboid));
 
     cloud->initialPointCounting(7);
     cloud->performCellMerging(10000); // All points reside in the 4th level (8x8x8) of the octree
     cloud->distributePoints();
 
-    auto octree = cloud->getOctree();
+    auto octree = cloud->getOctreeDense();
     auto dataLUT = cloud->getDataLUT();
     uint32_t topLevelIndex = 2396745-1;
 

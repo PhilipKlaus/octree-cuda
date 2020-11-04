@@ -1,4 +1,4 @@
-#include "../../include/pointcloud.h"
+#include <denseOctree.h>
 #include "../tools.cuh"
 #include "../timing.cuh"
 
@@ -15,19 +15,19 @@ __global__ void kernelCounting(Chunk *grid, Vector3 *cloud, PointCloudMetadata m
     atomicAdd(&(grid + gridIndex)->pointCount, 1);
 }
 
-void PointCloud::initialPointCounting(uint32_t initialDepth) {
+void DenseOctree::initialPointCounting(uint32_t initialDepth) {
 
     // Precalculate parameters
-    itsOctreeLevels = initialDepth;
-    itsGridBaseSideLength = static_cast<uint32_t >(pow(2, initialDepth));
-    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 0; gridSize >>= 1) {
-        itsCellAmount += static_cast<uint32_t>(pow(gridSize, 3));
+    itsGlobalOctreeDepth = initialDepth;
+    itsGlobalOctreeBase = static_cast<uint32_t >(pow(2, initialDepth));
+    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 0; gridSize >>= 1) {
+        itsVoxelAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
     }
-    spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsCellAmount);
+    spdlog::info("Overall 'CellAmount' in hierarchical grid {}", itsVoxelAmountDense);
 
     // Create and initialize the complete grid
-    itsOctree = make_unique<CudaArray<Chunk>>(itsCellAmount, "grid");
-    gpuErrchk(cudaMemset (itsOctree->devicePointer(), 0, itsCellAmount * sizeof(Chunk)));
+    itsOctreeDense = make_unique<CudaArray<Chunk>>(itsVoxelAmountDense, "grid");
+    gpuErrchk(cudaMemset (itsOctreeDense->devicePointer(), 0, itsVoxelAmountDense * sizeof(Chunk)));
 
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -37,14 +37,15 @@ void PointCloud::initialPointCounting(uint32_t initialDepth) {
     tools::KernelTimer timer;
     timer.start();
     kernelCounting <<<  grid, block >>> (
-            itsOctree->devicePointer(),
+            itsOctreeDense->devicePointer(),
             itsCloudData->devicePointer(),
             itsMetadata,
-            itsGridBaseSideLength);
+            itsGlobalOctreeBase);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-    itsInitialPointCountTime = timer.getMilliseconds();
-    spdlog::info("'initialPointCounting' took {:f} [ms]", itsInitialPointCountTime);
+
+    itsTimeMeasurement.insert(std::make_pair("initialPointCount", timer.getMilliseconds()));
+    spdlog::info("'initialPointCounting' took {:f} [ms]", timer.getMilliseconds());
 }
 
 

@@ -33,6 +33,8 @@ public:
 public:
     PointCloudMetadata& getMetadata() { return itsMetadata; }
 
+    unique_ptr<uint32_t[]> getDataLUT() { return itsDataLUT->toHost(); }
+
     void exportTimeMeasurements(const string &filePath) {
         string headerLine, timeLine;
         ofstream timingCsv;

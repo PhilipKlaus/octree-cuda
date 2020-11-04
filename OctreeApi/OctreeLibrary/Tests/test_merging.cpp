@@ -1,7 +1,7 @@
+#include <denseOctree.h>
 #include "catch2/catch.hpp"
 #include "../src/tools.cuh"
 #include "../src/defines.cuh"
-#include "pointcloud.h"
 
 
 TEST_CASE ("Test point merging ", "merging") {
@@ -9,19 +9,20 @@ TEST_CASE ("Test point merging ", "merging") {
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);
 
-    auto cloud = make_unique<PointCloud>(move(cuboid));
+    PointCloudMetadata metadata{};
+    metadata.pointAmount = 128 * 128 * 128;
+    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
+    metadata.boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
+    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+    metadata.scale = {1.f, 1.f, 1.f};
 
-    cloud->getMetadata().pointAmount = 128 * 128 * 128;
-    cloud->getMetadata().boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
-    cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().scale = {1.f, 1.f, 1.f};
+    auto cloud = make_unique<DenseOctree>(metadata, move(cuboid));
 
     cloud->initialPointCounting(7);
     cloud->performCellMerging(10000);
 
     // Test if each point fall exactly in one cell
-    auto octree = cloud->getOctree();
+    auto octree = cloud->getOctreeDense();
     uint32_t cellOffset = 0;
 
     for(int i = 0; i < pow(128, 3); ++i) {

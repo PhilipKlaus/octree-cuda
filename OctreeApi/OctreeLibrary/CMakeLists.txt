@@ -16,7 +16,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/chunking_sparse/pointDistributionSparse.cu
         include/octreeBase.h
         include/sparseOctree.h
-        src/sparseOctree.cpp)
+        src/sparseOctree.cpp include/denseOctree.h src/denseOctree.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
