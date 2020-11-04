@@ -46,6 +46,6 @@ EXPORTED void ocpi_set_point_cloud_metadata (void* session, const PointCloudMeta
 EXPORTED void ocpi_load_point_cloud_from_host (void* session, uint8_t *pointCloud);
 EXPORTED void ocpi_configure_octree(void* session, uint16_t globalOctreeLevel, uint32_t mergingThreshold);
 EXPORTED void ocpi_generate_octree(void *session);
-EXPORTED void ocpi_export_octree(void *session, Vector3 *cpuPointCloud);
+EXPORTED void ocpi_export_octree(void *session, const char *filename);
 EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
 #endif

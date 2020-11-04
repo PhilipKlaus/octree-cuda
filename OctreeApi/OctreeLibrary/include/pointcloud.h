@@ -5,7 +5,7 @@
 #ifndef POINT_CLOUD_H
 #define POINT_CLOUD_H
 
-#include "../src/cudaArray.h"
+#include "cudaArray.h"
 #include "types.h"
 #include <memory>
 

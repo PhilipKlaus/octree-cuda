@@ -57,7 +57,7 @@ int main() {
     ocpi_load_point_cloud_from_host(session, pChars);
     ocpi_configure_octree(session, 7, 30000);
     ocpi_generate_octree(session);
-    ocpi_export_octree(session, points);
+    ocpi_export_octree(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
     ocpi_configure_memory_report(session, "doom_vertices.html");
     ocpi_destroy_session(session);
 
