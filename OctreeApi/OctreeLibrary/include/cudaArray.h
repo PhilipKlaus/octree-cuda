@@ -9,7 +9,7 @@
 #include <string>
 #include <memory>
 #include "eventWatcher.h"
-#include "defines.cuh"
+#include "../src/defines.cuh"
 
 using namespace std;
 

@@ -6,15 +6,16 @@
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library( ${PROJECT_NAME} STATIC
-        src/pointcloud.cpp
         src/tools.cu
-        src/chunking/cellMerging.cu
-        src/chunking/initialPointCounting.cu
-        src/chunking/pointDistribution.cu
-        src/chunking_sparse/cellMergingSparse.cu
-        src/chunking_sparse/initialPointCountingSparse.cu
-        src/chunking_sparse/pointDistributionSparse.cu
-        )
+        src/denseOctree/cellMerging.cu
+        src/denseOctree/initialPointCounting.cu
+        src/denseOctree/pointDistribution.cu
+        src/sparseOctree/cellMergingSparse.cu
+        src/sparseOctree/initialPointCountingSparse.cu
+        src/sparseOctree/pointDistributionSparse.cu
+        include/octreeBase.h
+        include/sparseOctree.h
+        src/sparseOctree/sparseOctree.cpp include/denseOctree.h src/denseOctree/denseOctree.cpp src/sparseOctree/indexing.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)

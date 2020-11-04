@@ -1,7 +1,7 @@
-#include "../../include/pointcloud.h"
-#include "../tools.cuh"
-#include "../timing.cuh"
-#include "../defines.cuh"
+#include <denseOctree.h>
+#include "tools.cuh"
+#include "timing.cuh"
+#include "defines.cuh"
 
 
 __global__ void kernelMerging(
@@ -129,7 +129,7 @@ __global__ void kernelMerging(
     }
 }
 
-void PointCloud::performCellMerging(uint32_t threshold) {
+void DenseOctree::performCellMerging(uint32_t threshold) {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsChunkData' register
     auto counter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
@@ -139,7 +139,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
     uint32_t cellOffsetOld = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
+    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
 
         cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
@@ -150,7 +150,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
         tools::KernelTimer timer;
         timer.start();
         kernelMerging <<<  grid, block >>> (
-                itsOctree->devicePointer(),
+                itsOctreeDense->devicePointer(),
                 counter->devicePointer(),
                 newCellAmount,
                 gridSize>>1,
@@ -162,7 +162,7 @@ void PointCloud::performCellMerging(uint32_t threshold) {
         gpuErrchk(cudaGetLastError());
 
         cellOffsetOld = cellOffsetNew;
-        itsMergingTime.push_back(timer.getMilliseconds());
-        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, itsMergingTime.back());
+        itsTimeMeasurement.insert(std::make_pair("performCellMerging_" + std::to_string(gridSize), timer.getMilliseconds()));
+        spdlog::info("'performCellMerging' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
 }

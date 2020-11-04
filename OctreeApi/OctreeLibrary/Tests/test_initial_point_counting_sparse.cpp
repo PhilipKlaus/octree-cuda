@@ -2,30 +2,31 @@
 // Created by KlausP on 28.10.2020.
 //
 
+#include <sparseOctree.h>
 #include "catch2/catch.hpp"
 #include "../src/tools.cuh"
-#include "pointcloud.h"
 
 TEST_CASE ("Test initial sparse point counting", "counting sparse") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
 
-    auto cloud = make_unique<PointCloud>(move(cuboid));
+    PointCloudMetadata metadata{};
+    metadata.pointAmount = 256 * 256 * 256;
+    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
+    metadata.boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
+    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+    metadata.scale = {1.f, 1.f, 1.f};
 
-    cloud->getMetadata().pointAmount = 256 * 256 * 256;
-    cloud->getMetadata().boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
-    cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().scale = {1.f, 1.f, 1.f};
+    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
 
-    cloud->initialPointCountingSparse(7);
+    cloud->initialPointCounting(7);
 
-    auto denseCount = cloud->getDensePointCount();
+    auto denseCount = cloud->getDensePointCountPerVoxel();
     auto denseToSparseLUT = cloud->getDenseToSparseLUT();
 
     // Require that all cells are filled and that there is no empty space
-    REQUIRE(cloud->getCellAmountSparse() == pow(128, 3));
+    REQUIRE(cloud->getVoxelAmountSparse() == pow(128, 3));
 
     // Require that the sum of the accumulated point counts equaly to the actual point amount of the cloud
     uint32_t sum = 0;

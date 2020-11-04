@@ -1,7 +1,7 @@
-#include "../../include/pointcloud.h"
-#include "../tools.cuh"
-#include "../timing.cuh"
-#include "../defines.cuh"
+#include <sparseOctree.h>
+#include "tools.cuh"
+#include "timing.cuh"
+#include "defines.cuh"
 
 __global__ void kernelInitializeBaseGridSparse(
         Chunk *octreeSparse,
@@ -231,15 +231,13 @@ __global__ void kernelEvaluateSparseOctree(
     }
 }
 
-void PointCloud::performCellMergingSparse(uint32_t threshold) {
-
-    itsMergingThreshold = threshold;
+void SparseOctree::performCellMerging(uint32_t threshold) {
 
     uint32_t cellOffsetNew = 0;
     uint32_t cellOffsetOld = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
+    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
 
         cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
@@ -250,9 +248,9 @@ void PointCloud::performCellMergingSparse(uint32_t threshold) {
         tools::KernelTimer timer;
         timer.start();
         kernelEvaluateSparseOctree << < grid, block >> > (
-                itsDensePointCount->devicePointer(),
+                itsDensePointCountPerVoxel->devicePointer(),
                 itsDenseToSparseLUT->devicePointer(),
-                itsCellAmountSparse->devicePointer(),
+                itsVoxelAmountSparse->devicePointer(),
                 newCellAmount,
                 gridSize>>1,
                 gridSize,
@@ -263,28 +261,27 @@ void PointCloud::performCellMergingSparse(uint32_t threshold) {
 
         cellOffsetOld = cellOffsetNew;
 
-        itsMergingTime.push_back(timer.getMilliseconds());
-        spdlog::info("'EvaluateSparseOctree' for a grid size of {} took {:f} [ms]", gridSize, itsMergingTime.back());
+        itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(gridSize), timer.getMilliseconds()));
+        spdlog::info("'EvaluateSparseOctree' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
 
-    uint32_t cellAmountSparse = itsCellAmountSparse->toHost()[0];
-    itsOctreeSparse = make_unique<CudaArray<Chunk>>(cellAmountSparse, "octreeSparse");
+    uint32_t voxelAmountSparse = itsVoxelAmountSparse->toHost()[0];
+    itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
 
     spdlog::info(
-            "Sparse octree cells: {} instead of {} -> Memory saving: {:f} [%] {:f} [GB]",
-            cellAmountSparse,
-            itsCellAmount,
-            (1 - static_cast<float>(cellAmountSparse) / itsCellAmount) * 100,
-            static_cast<float>(itsCellAmount - cellAmountSparse) * sizeof(Chunk) / 1000000000.f
+            "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
+            voxelAmountSparse,
+            (1 - static_cast<float>(voxelAmountSparse) / itsVoxelAmountDense) * 100,
+            static_cast<float>(itsVoxelAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
     );
 
     initializeBaseGridSparse();
-    initializeOctreeSparse();
+    initializeOctreeSparse(threshold);
 }
 
-void PointCloud::initializeBaseGridSparse() {
+void SparseOctree::initializeBaseGridSparse() {
 
-    auto cellAmount = static_cast<uint32_t >(pow(itsGridBaseSideLength, 3));
+    auto cellAmount = static_cast<uint32_t >(pow(itsGlobalOctreeBase, 3));
 
     dim3 grid, block;
     tools::create1DKernel(block, grid, cellAmount);
@@ -293,17 +290,17 @@ void PointCloud::initializeBaseGridSparse() {
     timer.start();
     kernelInitializeBaseGridSparse << < grid, block >> > (
             itsOctreeSparse->devicePointer(),
-            itsDensePointCount->devicePointer(),
+            itsDensePointCountPerVoxel->devicePointer(),
             itsDenseToSparseLUT->devicePointer(),
             cellAmount);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
-    auto initBaseGridTime = timer.getMilliseconds(); // ToDo: make member variable
-    spdlog::info("'initializeBaseGridSparse' took {:f} [ms]", initBaseGridTime);
+    itsTimeMeasurement.insert(std::make_pair("initializeBaseGridSparse", timer.getMilliseconds()));
+    spdlog::info("'initializeBaseGridSparse' took {:f} [ms]", timer.getMilliseconds());
 }
 
-void PointCloud::initializeOctreeSparse() {
+void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
@@ -313,7 +310,7 @@ void PointCloud::initializeOctreeSparse() {
     uint32_t cellOffsetOld = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t gridSize = itsGridBaseSideLength; gridSize > 1; gridSize >>= 1) {
+    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
 
         cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
@@ -325,10 +322,10 @@ void PointCloud::initializeOctreeSparse() {
         timer.start();
         kernelInitializeOctreeSparse << < grid, block >> > (
                 itsOctreeSparse->devicePointer(),
-                itsDensePointCount->devicePointer(),
+                itsDensePointCountPerVoxel->devicePointer(),
                 itsDenseToSparseLUT->devicePointer(),
                 globalChunkCounter->devicePointer(),
-                itsMergingThreshold,
+                threshold,
                 newCellAmount,
                 gridSize>>1,
                 gridSize,
@@ -339,7 +336,7 @@ void PointCloud::initializeOctreeSparse() {
 
         cellOffsetOld = cellOffsetNew;
 
-        itsMergingTime.push_back(timer.getMilliseconds());
-        spdlog::info("'initializeOctreeSparse' for a grid size of {} took {:f} [ms]", gridSize, itsMergingTime.back());
+        itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(gridSize), timer.getMilliseconds()));
+        spdlog::info("'initializeOctreeSparse' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
 }

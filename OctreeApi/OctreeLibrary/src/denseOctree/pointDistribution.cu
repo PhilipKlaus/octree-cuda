@@ -1,6 +1,6 @@
-#include "../../include/pointcloud.h"
-#include "../tools.cuh"
-#include "../timing.cuh"
+#include <denseOctree.h>
+#include "tools.cuh"
+#include "timing.cuh"
 
 
 __global__ void kernelDistributing(
@@ -32,10 +32,10 @@ __global__ void kernelDistributing(
     dataLUT[grid[dstIndex].chunkDataIndex + i] = index;
 }
 
-void PointCloud::distributePoints() {
+void DenseOctree::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsCellAmount, "tmpIndexRegister");
+    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "tmpIndexRegister");
 
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -45,18 +45,18 @@ void PointCloud::distributePoints() {
     tools::KernelTimer timer;
     timer.start();
     kernelDistributing <<<  grid, block >>> (
-            itsOctree->devicePointer(),
+            itsOctreeDense->devicePointer(),
             itsCloudData->devicePointer(),
             itsDataLUT->devicePointer(),
             tmpIndexRegister->devicePointer(),
             itsMetadata,
-            itsGridBaseSideLength);
+            itsGlobalOctreeBase);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
     // Manually delete the original point cloud data on GPU -> it is not needed anymore
     itsCloudData.reset();
 
-    itsDistributionTime = timer.getMilliseconds();
-    spdlog::info("'distributePoints' took {:f} [ms]", itsDistributionTime);
+    itsTimeMeasurement.insert(std::make_pair("distributePoints", timer.getMilliseconds()));
+    spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
 }

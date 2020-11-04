@@ -1,6 +1,6 @@
-#include "../../include/pointcloud.h"
-#include "../tools.cuh"
-#include "../timing.cuh"
+#include <sparseOctree.h>
+#include "tools.cuh"
+#include "timing.cuh"
 
 
 __global__ void kernelDistributingSparse (
@@ -33,10 +33,10 @@ __global__ void kernelDistributingSparse (
     dataLUT[octreeSparse[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk] = index;
 }
 
-void PointCloud::distributePointsSparse() {
+void SparseOctree::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto cellAmountSparse = itsCellAmountSparse->toHost()[0];
+    auto cellAmountSparse = itsVoxelAmountSparse->toHost()[0];
     auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(cellAmountSparse, "tmpIndexRegister");
     gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, cellAmountSparse * sizeof(uint32_t)));
 
@@ -54,10 +54,10 @@ void PointCloud::distributePointsSparse() {
             itsDenseToSparseLUT->devicePointer(),
             tmpIndexRegister->devicePointer(),
             itsMetadata,
-            itsGridBaseSideLength);
+            itsGlobalOctreeBase);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
-    itsDistributionTime = timer.getMilliseconds();
-    spdlog::info("'distributePointsSparse' took {:f} [ms]", itsDistributionTime);
+    itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", timer.getMilliseconds()));
+    spdlog::info("'distributePointsSparse' took {:f} [ms]", timer.getMilliseconds());
 }

@@ -4,30 +4,30 @@
 
 #include "catch2/catch.hpp"
 #include "../src/tools.cuh"
-#include "pointcloud.h"
-
+#include "sparseOctree.h"
 TEST_CASE ("Test cell merging sparse", "merging sparse") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
 
-    auto cloud = make_unique<PointCloud>(move(cuboid));
+    PointCloudMetadata metadata{};
+    metadata.pointAmount = 256 * 256 * 256;
+    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
+    metadata.boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
+    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+    metadata.scale = {1.f, 1.f, 1.f};
 
-    cloud->getMetadata().pointAmount = 256 * 256 * 256;
-    cloud->getMetadata().boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
-    cloud->getMetadata().cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    cloud->getMetadata().scale = {1.f, 1.f, 1.f};
+    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
 
-    cloud->initialPointCountingSparse(7);
-    cloud->performCellMergingSparse(40000);
+    cloud->initialPointCounting(7);
+    cloud->performCellMerging(40000);
 
-    auto denseCount = cloud->getDensePointCount();
+    auto denseCount = cloud->getDensePointCountPerVoxel();
     auto denseToSparseLUT = cloud->getDenseToSparseLUT();
     auto octreeSparse = cloud->getOctreeSparse();
 
     // Require that all cells are filled and that there is no empty space
-    REQUIRE(cloud->getCellAmountSparse() == 2396745);
+    REQUIRE(cloud->getVoxelAmountSparse() == 2396745);
 
     // Require that the point count in the root cell is the sum of all points
     REQUIRE(denseCount[2396744] == 256 * 256 * 256);

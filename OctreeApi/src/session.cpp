@@ -36,6 +36,7 @@ void Session::setDevice() const {
 }
 
 Session::~Session() {
+    itsOctree->freeGpuMemory();
     spdlog::debug("session destroyed");
 }
 
@@ -51,7 +52,8 @@ const PointCloudMetadata& Session::getMetadata() const {
 void Session::setPointCloudHost(uint8_t *pointCloud) {
     data = make_unique<CudaArray<Vector3>>(itsMetadata.pointAmount, "pointcloud");
     data->toGPU(pointCloud);
-    itsPointCloud = make_unique<PointCloud>(move(data));
+    //itsPointCloud = make_unique<PointCloud>(move(data));
+    itsOctree = make_unique<SparseOctree>(itsMetadata, move(data));
     spdlog::debug("copied point cloud from host to device");
 }
 
@@ -62,15 +64,16 @@ void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingTh
 }
 
 void Session::generateOctree() {
-    itsPointCloud->getMetadata() = itsMetadata;
-    itsPointCloud->initialPointCountingSparse(itsGlobalOctreeLevel);
-    itsPointCloud->performCellMergingSparse(itsMergingThreshold);
-    itsPointCloud->distributePointsSparse();
+    //itsPointCloud->getMetadata() = itsMetadata;
+    itsOctree->initialPointCounting(itsGlobalOctreeLevel);
+    itsOctree->performCellMerging(itsMergingThreshold);
+    itsOctree->distributePoints();
+    itsOctree->performIndexing();
     spdlog::debug("octree generated");
 }
 
-void Session::exportOctree(Vector3 *cpuPointCloud) {
-    itsPointCloud->exportOctreeSparse(cpuPointCloud);
+void Session::exportOctree(const string &filename) {
+    itsOctree->exportOctree(filename);
     spdlog::debug("octree exported");
 }
 
@@ -79,3 +82,7 @@ void Session::configureMemoryReport(const std::string &filename) {
     spdlog::debug("configured  memory report: {}", filename);
 }
 
+void Session::exportTimeMeasurements(const std::string &filename) {
+    itsOctree->exportTimeMeasurements(filename);
+    spdlog::debug("exported time measurements");
+}
