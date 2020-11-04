@@ -23,10 +23,31 @@ public:
         itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
     }
 
+public:
     virtual void initialPointCounting(uint32_t initialDepth) = 0;
     virtual void performCellMerging(uint32_t threshold) = 0;
     virtual void distributePoints() = 0;
     virtual void exportOctree(const string &folderPath) = 0;
+    virtual void freeGpuMemory() = 0;
+
+public:
+    PointCloudMetadata& getMetadata() { return itsMetadata; }
+
+    void exportTimeMeasurements(const string &filePath) {
+        string headerLine, timeLine;
+        ofstream timingCsv;
+        timingCsv.open (filePath, ios::out);
+        for (auto const& timeEntry : itsTimeMeasurement) {
+            headerLine += (timeEntry.first + ",");
+            timeLine += (to_string(timeEntry.second) + ",");
+        }
+        // Remove last colons
+        headerLine = headerLine.substr(0, headerLine.size()-1);
+        timeLine = timeLine.substr(0, timeLine.size()-1);
+        timingCsv << headerLine << std::endl << timeLine;
+        timingCsv.close();
+        spdlog::info("Exported time measurements to {}", filePath);
+    }
 
 public:
     OctreeBase(const OctreeBase&) = delete;

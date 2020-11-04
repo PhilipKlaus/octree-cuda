@@ -23,6 +23,13 @@ public:
     void performCellMerging(uint32_t threshold) override;
     void distributePoints() override;
     void exportOctree(const string &folderPath) override;
+    void freeGpuMemory() override;
+
+    // Debugging methods
+    unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
+    unique_ptr<int[]> getDenseToSparseLUT();
+    unique_ptr<Chunk[]> getOctreeSparse();
+    uint32_t getVoxelAmountSparse();
 
 private:
     void initializeOctreeSparse(uint32_t threshold);

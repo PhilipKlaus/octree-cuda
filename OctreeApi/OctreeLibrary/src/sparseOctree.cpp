@@ -67,3 +67,27 @@ void SparseOctree::exportOctree(const string &folderPath) {
     assert(exportedPoints == itsMetadata.pointAmount);
     spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.pointAmount, folderPath);
 }
+
+void SparseOctree::freeGpuMemory() {
+    itsDensePointCountPerVoxel.reset();
+    itsDenseToSparseLUT.reset();
+    itsVoxelAmountSparse.reset();
+    itsOctreeSparse.reset();
+    spdlog::debug("Sparse octree GPU memory deleted");
+}
+
+unique_ptr<uint32_t[]> SparseOctree::getDensePointCountPerVoxel() {
+    return itsDensePointCountPerVoxel->toHost();
+}
+
+unique_ptr<int[]> SparseOctree::getDenseToSparseLUT() {
+    return itsDenseToSparseLUT->toHost();
+}
+
+unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() {
+    return itsOctreeSparse->toHost();
+}
+
+uint32_t SparseOctree::getVoxelAmountSparse() {
+    return itsVoxelAmountSparse->toHost()[0];
+}

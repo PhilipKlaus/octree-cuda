@@ -36,6 +36,7 @@ void Session::setDevice() const {
 }
 
 Session::~Session() {
+    itsOctree->freeGpuMemory();
     spdlog::debug("session destroyed");
 }
 
@@ -80,3 +81,7 @@ void Session::configureMemoryReport(const std::string &filename) {
     spdlog::debug("configured  memory report: {}", filename);
 }
 
+void Session::exportTimeMeasurements(const std::string &filename) {
+    itsOctree->exportTimeMeasurements(filename);
+    spdlog::debug("exported time measurements");
+}

@@ -27,6 +27,7 @@ public:
     void generateOctree();
     void exportOctree(const string &filename);
     void configureMemoryReport(const std::string &filename);
+    void exportTimeMeasurements(const std::string &filename);
 
 private:
     int itsDevice;

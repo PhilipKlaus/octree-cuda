@@ -32,16 +32,12 @@ public:
 
     // Pipeline
     void initialPointCounting(uint32_t initialDepth);
-    void initialPointCountingSparse(uint32_t initialDepth);
     void performCellMerging(uint32_t threshold);
-    void performCellMergingSparse(uint32_t threshold);
     void distributePoints();
-    void distributePointsSparse();
 
     // Export functions
     void exportOctree(Vector3* cpuPointCloud);
     void exportTimeMeasurement();
-    void exportOctreeSparse(Vector3 *cpuPointCloud);
 
     PointCloudMetadata& getMetadata() { return itsMetadata; }
     unique_ptr<Chunk[]> getOctree();
@@ -56,10 +52,6 @@ public:
 private:
 
     uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index);
-    uint32_t exportTreeNodeSparse(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index);
-
-    void initializeOctreeSparse();
-    void initializeBaseGridSparse();
 
 private:
     // Point cloud

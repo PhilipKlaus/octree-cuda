@@ -48,4 +48,5 @@ EXPORTED void ocpi_configure_octree(void* session, uint16_t globalOctreeLevel, u
 EXPORTED void ocpi_generate_octree(void *session);
 EXPORTED void ocpi_export_octree(void *session, const char *filename);
 EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
+EXPORTED void ocpi_export_time_measurements(void *session, const char *filename);
 #endif

@@ -42,7 +42,7 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     spdlog::info("The dense octree grid cell amount: {}", itsVoxelAmountDense);
 
     // Allocate the dense point count
-    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "densePointCount");
+    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "itsDensePointCountPerVoxel");
     gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsVoxelAmountDense * sizeof(uint32_t)));
 
     // Allocate the conversion LUT from dense to sparse
