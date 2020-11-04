@@ -5,7 +5,6 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
-#include "../OctreeLibrary/include/pointcloud.h"
 #include <sparseOctree.h>
 
 class Session
@@ -34,6 +33,7 @@ private:
     PointCloudMetadata itsMetadata{};
     unique_ptr<OctreeBase> itsOctree;
     unique_ptr<CudaArray<Vector3>> data;
+
     // Octree Configuration
     uint16_t itsGlobalOctreeLevel{};
     uint32_t itsMergingThreshold{};

@@ -27,6 +27,7 @@ public:
     virtual void initialPointCounting(uint32_t initialDepth) = 0;
     virtual void performCellMerging(uint32_t threshold) = 0;
     virtual void distributePoints() = 0;
+    virtual void performIndexing() = 0;
     virtual void exportOctree(const string &folderPath) = 0;
     virtual void freeGpuMemory() = 0;
 
@@ -59,7 +60,7 @@ protected:
     PointCloudMetadata itsMetadata;
     unique_ptr<CudaArray<Vector3>> itsCloudData;
     unique_ptr<CudaArray<uint32_t>> itsDataLUT;         // LUT for accessing point cloud data from the octree
-    map<std::string, float> itsTimeMeasurement;
+    unordered_map<std::string, float> itsTimeMeasurement;
 
 };
 

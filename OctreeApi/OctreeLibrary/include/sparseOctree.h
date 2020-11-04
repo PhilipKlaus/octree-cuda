@@ -22,6 +22,8 @@ public:
     void initialPointCounting(uint32_t initialDepth) override;
     void performCellMerging(uint32_t threshold) override;
     void distributePoints() override;
+    void performIndexing() override;
+
     void exportOctree(const string &folderPath) override;
     void freeGpuMemory() override;
 

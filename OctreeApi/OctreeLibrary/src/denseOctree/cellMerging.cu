@@ -1,7 +1,7 @@
 #include <denseOctree.h>
-#include "../tools.cuh"
-#include "../timing.cuh"
-#include "../defines.cuh"
+#include "tools.cuh"
+#include "timing.cuh"
+#include "defines.cuh"
 
 
 __global__ void kernelMerging(

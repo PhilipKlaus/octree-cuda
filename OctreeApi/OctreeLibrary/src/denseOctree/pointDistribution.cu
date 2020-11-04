@@ -1,6 +1,6 @@
 #include <denseOctree.h>
-#include "../tools.cuh"
-#include "../timing.cuh"
+#include "tools.cuh"
+#include "timing.cuh"
 
 
 __global__ void kernelDistributing(

@@ -1,7 +1,7 @@
 #include <sparseOctree.h>
-#include "../tools.cuh"
-#include "../timing.cuh"
-#include "../defines.cuh"
+#include "tools.cuh"
+#include "timing.cuh"
+#include "defines.cuh"
 
 __global__ void kernelInitializeBaseGridSparse(
         Chunk *octreeSparse,
@@ -269,7 +269,8 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
 
     spdlog::info(
-            "Sparse octree -> Memory saving: {:f} [%] {:f} [GB]",
+            "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
+            voxelAmountSparse,
             (1 - static_cast<float>(voxelAmountSparse) / itsVoxelAmountDense) * 100,
             static_cast<float>(itsVoxelAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
     );

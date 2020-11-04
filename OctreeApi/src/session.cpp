@@ -68,6 +68,7 @@ void Session::generateOctree() {
     itsOctree->initialPointCounting(itsGlobalOctreeLevel);
     itsOctree->performCellMerging(itsMergingThreshold);
     itsOctree->distributePoints();
+    itsOctree->performIndexing();
     spdlog::debug("octree generated");
 }
 
