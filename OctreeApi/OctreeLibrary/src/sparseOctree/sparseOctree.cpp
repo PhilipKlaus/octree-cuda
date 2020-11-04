@@ -84,6 +84,10 @@ unique_ptr<int[]> SparseOctree::getDenseToSparseLUT() {
     return itsDenseToSparseLUT->toHost();
 }
 
+unique_ptr<int[]> SparseOctree::getSparseToDenseLUT(){
+    return itsSparseToDenseLUT->toHost();
+}
+
 unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() {
     return itsOctreeSparse->toHost();
 }

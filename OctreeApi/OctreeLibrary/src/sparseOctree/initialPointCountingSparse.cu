@@ -1,6 +1,7 @@
 #include <sparseOctree.h>
 #include "tools.cuh"
 #include "timing.cuh"
+#include "../../include/sparseOctree.h"
 
 
 __global__ void kernelCountingSparse(

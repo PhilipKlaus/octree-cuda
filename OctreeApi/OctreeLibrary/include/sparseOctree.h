@@ -30,6 +30,7 @@ public:
     // Debugging methods
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
     unique_ptr<int[]> getDenseToSparseLUT();
+    unique_ptr<int[]> getSparseToDenseLUT();
     unique_ptr<Chunk[]> getOctreeSparse();
     uint32_t getVoxelAmountSparse();
 
@@ -45,8 +46,9 @@ private:
 
     unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel;     // Holds all point counts in dense form
     unique_ptr<CudaArray<int>> itsDenseToSparseLUT;                 // LUT for mapping from dense to sparse
-    unique_ptr<CudaArray<uint32_t>> itsVoxelAmountSparse;    // Overall initial cell amount of the sparse octree
-    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;       // Holds the sparse octree
+    unique_ptr<CudaArray<int>> itsSparseToDenseLUT;                 // LUT for mapping from sparse to dense
+    unique_ptr<CudaArray<uint32_t>> itsVoxelAmountSparse;           // Overall initial cell amount of the sparse octree
+    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;                   // Holds the sparse octree
 
 };
 

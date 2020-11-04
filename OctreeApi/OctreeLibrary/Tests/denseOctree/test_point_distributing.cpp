@@ -2,13 +2,9 @@
 // Created by KlausP on 27.10.2020.
 //
 
-//
-// Created by KlausP on 27.10.2020.
-//
-
 #include <denseOctree.h>
 #include "catch2/catch.hpp"
-#include "../src/tools.cuh"
+#include "../../src/tools.cuh"
 
 
 uint32_t testOctreenode(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index) {
@@ -51,7 +47,7 @@ uint32_t testOctreenode(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octre
     return count;
 }
 
-TEST_CASE ("Test point distributing", "distributing") {
+TEST_CASE ("Test point distributing", "[distributing dense]") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);

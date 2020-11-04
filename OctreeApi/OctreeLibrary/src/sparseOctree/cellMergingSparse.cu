@@ -7,6 +7,7 @@ __global__ void kernelInitializeBaseGridSparse(
         Chunk *octreeSparse,
         uint32_t *densePointCount,
         int *denseToSparseLUT,
+        int *sparseToDenseLUT,
         uint32_t cellAmount
         ) {
 
@@ -22,6 +23,9 @@ __global__ void kernelInitializeBaseGridSparse(
         return;
     }
 
+    // Update sparseToDense LUT
+    sparseToDenseLUT[sparseVoxelIndex] = denseVoxelIndex;
+
     Chunk *chunk = octreeSparse + sparseVoxelIndex;
     chunk->pointCount = densePointCount[denseVoxelIndex];
 }
@@ -30,6 +34,7 @@ __global__ void kernelInitializeOctreeSparse(
         Chunk *octree,
         uint32_t *densePointCount,
         int *denseToSparseLUT,
+        int *sparseToDenseLUT,
         uint32_t *globalChunkCounter,
         uint32_t threshold,
         uint32_t newCellAmount,
@@ -148,8 +153,8 @@ __global__ void kernelInitializeOctreeSparse(
         }
     }
 
-
-
+    // Update sparseToDense LUT
+    sparseToDenseLUT[sparseVoxelIndex] = denseVoxelIndex;
 }
 
 __global__ void kernelEvaluateSparseOctree(
@@ -275,6 +280,10 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
             static_cast<float>(itsVoxelAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
     );
 
+    // Allocate the conversion LUT from sparse to dense
+    itsSparseToDenseLUT = make_unique<CudaArray<int>>(voxelAmountSparse, "sparseToDenseLUT");
+    gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, voxelAmountSparse * sizeof(int)));
+
     initializeBaseGridSparse();
     initializeOctreeSparse(threshold);
 }
@@ -292,6 +301,7 @@ void SparseOctree::initializeBaseGridSparse() {
             itsOctreeSparse->devicePointer(),
             itsDensePointCountPerVoxel->devicePointer(),
             itsDenseToSparseLUT->devicePointer(),
+            itsSparseToDenseLUT->devicePointer(),
             cellAmount);
     timer.stop();
     gpuErrchk(cudaGetLastError());
@@ -324,6 +334,7 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
                 itsOctreeSparse->devicePointer(),
                 itsDensePointCountPerVoxel->devicePointer(),
                 itsDenseToSparseLUT->devicePointer(),
+                itsSparseToDenseLUT->devicePointer(),
                 globalChunkCounter->devicePointer(),
                 threshold,
                 newCellAmount,

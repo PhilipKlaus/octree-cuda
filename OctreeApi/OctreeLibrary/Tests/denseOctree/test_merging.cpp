@@ -1,10 +1,10 @@
 #include <denseOctree.h>
 #include "catch2/catch.hpp"
-#include "../src/tools.cuh"
-#include "../src/defines.cuh"
+#include "../../src/tools.cuh"
+#include "../../src/defines.cuh"
 
 
-TEST_CASE ("Test point merging ", "merging") {
+TEST_CASE ("Test point merging ", "[merging dense]") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);

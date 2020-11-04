@@ -4,10 +4,10 @@
 
 #include <denseOctree.h>
 #include "catch2/catch.hpp"
-#include "../src/tools.cuh"
+#include "../../src/tools.cuh"
 
 
-TEST_CASE ("Test initial point counting", "counting") {
+TEST_CASE ("Test initial point counting", "[counting dense]") {
 
     // Create test data point cloud
     unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
