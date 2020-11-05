@@ -11,8 +11,7 @@ void SparseOctree::hierarchicalCount(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         const unique_ptr<int[]> &h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
-        uint32_t denseVoxelOffset,
-        uint32_t gridSizeLength) {
+        uint32_t level) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
 
@@ -21,7 +20,7 @@ void SparseOctree::hierarchicalCount(
     for(auto i = 0; i < voxel.childrenChunksCount; ++i) {
         if(h_octreeSparse[voxel.childrenChunks[i]].isFinished) {
             hasFinishedChildren = true;
-            hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, voxel.childrenChunks[i], denseVoxelOffset - pow(gridSizeLength << 1, 3), gridSizeLength << 1);
+            hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, voxel.childrenChunks[i], level - 1);
         }
     }
 
@@ -32,36 +31,18 @@ void SparseOctree::hierarchicalCount(
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
 
         // 4. Calculate the dense coordinates of the voxel
-        Vector3i coord{};
-        auto indexInVoxel = denseVoxelIndex - denseVoxelOffset;
-        tools::mapFromDenseIdxToDenseCoordinates(coord, indexInVoxel, gridSizeLength);
-
-        // 5. Calculate the bounding box for the actual voxel
-        // ToDo: Include scale and offset!!!
-        auto dimension = tools::subtract(itsMetadata.boundingBox.maximum, itsMetadata.boundingBox.minimum);
-        auto width = dimension.x / gridSizeLength;
-        auto height = dimension.y / gridSizeLength;
-        auto depth = dimension.z / gridSizeLength;
+        BoundingBox bb{};
+        Vector3i coords{};
+        calculateVoxelBB(bb, coords, denseVoxelIndex, level);
 
         PointCloudMetadata metadata{};
         metadata.scale = itsMetadata.scale;
-        metadata.boundingBox = {
-                {
-                    coord.x * width,
-                    coord.y * height,
-                    coord.z * depth
-                },
-                {
-                        (coord.x + 1.f) * width,
-                        (coord.y + 1.f) * height,
-                        (coord.z + 1.f) * depth
-                }
-        };
-        std::cout << "dense Index: " << indexInVoxel << ", gridSize: " << gridSizeLength << ", width/height/depth: " << width << "/" << height << "/" << depth << std::endl;
+        metadata.boundingBox = bb;
+
         std::cout << "min: " << "x: " << metadata.boundingBox.minimum.x << ", y: " << metadata.boundingBox.minimum.y << ", z: " << metadata.boundingBox.minimum.z << std::endl;
         std::cout << "max: " << "x: " << metadata.boundingBox.maximum.x << ", y: " << metadata.boundingBox.maximum.y << ", z: " << metadata.boundingBox.maximum.z << std::endl;
-        std::cout << "x: " << coord.x << ", y: " << coord.y << ", z:" << coord.z << std::endl;
-        // 6. Spawn kernel for calculating
+
+        // 5. Spawn kernel for calculating
         uint32_t subsamplePointCount = 0;
 
         voxel.pointCount = subsamplePointCount;
@@ -78,12 +59,7 @@ void SparseOctree::performIndexing() {
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
     uint32_t rootVoxelIndexSparse = itsVoxelAmountSparse->toHost()[0] - 1;
 
-    uint32_t denseVoxelOffset = 0;
-    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
-        denseVoxelOffset += static_cast<uint32_t >(pow(gridSize, 3));
-    }
-
-    hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, rootVoxelIndexSparse, denseVoxelOffset, 1);
+    hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, rootVoxelIndexSparse, itsGlobalOctreeDepth);
 
     /*dim3 grid, block;
     tools::create1DKernel(block, grid, newCellAmount);

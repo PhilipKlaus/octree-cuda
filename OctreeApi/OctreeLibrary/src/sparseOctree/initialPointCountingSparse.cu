@@ -33,14 +33,9 @@ __global__ void kernelCountingSparse(
 }
 
 void SparseOctree::initialPointCounting(uint32_t initialDepth) {
-    itsGlobalOctreeDepth = initialDepth;
 
-    // Precalculate parameters
-    itsGlobalOctreeBase = static_cast<uint32_t >(pow(2, initialDepth));
-    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 0; gridSize >>= 1) {
-        itsVoxelAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
-    }
-    spdlog::info("The dense octree grid cell amount: {}", itsVoxelAmountDense);
+    // Pre-calculate different Octree parameters
+    preCalculateOctreeParameters(initialDepth);
 
     // Allocate the dense point count
     itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "itsDensePointCountPerVoxel");
@@ -67,7 +62,7 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
                     itsDenseToSparseLUT->devicePointer(),
                     itsVoxelAmountSparse->devicePointer(),
                     itsMetadata,
-                    itsGlobalOctreeBase);
+                    itsGobalOctreeSideLength);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 

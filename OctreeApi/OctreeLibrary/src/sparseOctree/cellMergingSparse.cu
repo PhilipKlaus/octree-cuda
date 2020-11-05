@@ -3,6 +3,7 @@
 #include "timing.cuh"
 #include "defines.cuh"
 
+
 __global__ void kernelInitializeBaseGridSparse(
         Chunk *octreeSparse,
         uint32_t *densePointCount,
@@ -123,8 +124,8 @@ __global__ void kernelInitializeOctreeSparse(
     // 5.4. update the amount of assigned children chunks
     chunk->childrenChunksCount = childrenChunksCount;
 
+    // 6. Update all children chunks
     auto sum = 0;
-    // 7. Update all children chunks
     for(auto i = 0; i < childrenChunksCount; ++i) {
 
         // 6.1. Update isFinished in each child
@@ -172,10 +173,9 @@ __global__ void kernelEvaluateSparseOctree(
         return;
     }
 
-    auto xy = newGridSize * newGridSize;
-    auto z = index / xy;
-    auto y = (index - (z * xy)) / newGridSize;
-    auto x = (index - (z * xy)) % newGridSize;
+    // 1. Calculate the actual dense coordinates in the octree
+    Vector3i coords{};
+    tools::mapFromDenseIdxToDenseCoordinates(coords, index, newGridSize);
 
     auto oldXY = oldGridSize * oldGridSize;
 
@@ -183,7 +183,7 @@ __global__ void kernelEvaluateSparseOctree(
     uint32_t denseVoxelIndex = cellOffsetNew + index;
 
     // Calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);
     uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
     uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
     uint32_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
@@ -236,41 +236,35 @@ __global__ void kernelEvaluateSparseOctree(
 
 void SparseOctree::performCellMerging(uint32_t threshold) {
 
-    uint32_t cellOffsetNew = 0;
-    uint32_t cellOffsetOld = 0;
-
     float time = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
-        auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
-
-        cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
+    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
 
         dim3 grid, block;
-        tools::create1DKernel(block, grid, newCellAmount);
+        tools::create1DKernel(block, grid, itsVoxelsPerLevel[i + 1]);
 
         tools::KernelTimer timer;
         timer.start();
         kernelEvaluateSparseOctree << < grid, block >> > (
                 itsDensePointCountPerVoxel->devicePointer(),
-                itsDenseToSparseLUT->devicePointer(),
-                itsVoxelAmountSparse->devicePointer(),
-                newCellAmount,
-                gridSize>>1,
-                gridSize,
-                cellOffsetNew,
-                cellOffsetOld);
+                        itsDenseToSparseLUT->devicePointer(),
+                        itsVoxelAmountSparse->devicePointer(),
+                        itsVoxelsPerLevel[i + 1],
+                        itsGridSideLengthPerLevel[i + 1],
+                        itsGridSideLengthPerLevel[i],
+                        itsLinearizedDenseVoxelOffset[i + 1],
+                        itsLinearizedDenseVoxelOffset[i]);
         timer.stop();
         gpuErrchk(cudaGetLastError());
 
-        cellOffsetOld = cellOffsetNew;
         time += timer.getMilliseconds();
-        itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(gridSize), timer.getMilliseconds()));
+        itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(itsGridSideLengthPerLevel[i]), timer.getMilliseconds()));
     }
 
     spdlog::info("'EvaluateSparseOctree' took {:f} [ms]", time);
 
+    // Create the sparse octree
     uint32_t voxelAmountSparse = itsVoxelAmountSparse->toHost()[0];
     itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
 
@@ -291,10 +285,8 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
 
 void SparseOctree::initializeBaseGridSparse() {
 
-    auto cellAmount = static_cast<uint32_t >(pow(itsGlobalOctreeBase, 3));
-
     dim3 grid, block;
-    tools::create1DKernel(block, grid, cellAmount);
+    tools::create1DKernel(block, grid, itsVoxelsPerLevel[0]);
 
     tools::KernelTimer timer;
     timer.start();
@@ -303,7 +295,7 @@ void SparseOctree::initializeBaseGridSparse() {
             itsDensePointCountPerVoxel->devicePointer(),
             itsDenseToSparseLUT->devicePointer(),
             itsSparseToDenseLUT->devicePointer(),
-            cellAmount);
+            itsVoxelsPerLevel[0]);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
@@ -317,40 +309,33 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
     auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
     gpuErrchk(cudaMemset (globalChunkCounter->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
-    uint32_t cellOffsetNew = 0;
-    uint32_t cellOffsetOld = 0;
-
-    float time = 0;
-
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
-        auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
-
-        cellOffsetNew += static_cast<uint32_t >(pow(gridSize, 3));
+    float time = 0;
+    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
 
         dim3 grid, block;
-        tools::create1DKernel(block, grid, newCellAmount);
+        tools::create1DKernel(block, grid, itsVoxelsPerLevel[i + 1]);
 
         tools::KernelTimer timer;
         timer.start();
         kernelInitializeOctreeSparse << < grid, block >> > (
                 itsOctreeSparse->devicePointer(),
-                itsDensePointCountPerVoxel->devicePointer(),
-                itsDenseToSparseLUT->devicePointer(),
-                itsSparseToDenseLUT->devicePointer(),
-                globalChunkCounter->devicePointer(),
-                threshold,
-                newCellAmount,
-                gridSize>>1,
-                gridSize,
-                cellOffsetNew,
-                cellOffsetOld);
+                        itsDensePointCountPerVoxel->devicePointer(),
+                        itsDenseToSparseLUT->devicePointer(),
+                        itsSparseToDenseLUT->devicePointer(),
+                        globalChunkCounter->devicePointer(),
+                        threshold,
+                        itsVoxelsPerLevel[i + 1],
+                        itsGridSideLengthPerLevel[i + 1],
+                        itsGridSideLengthPerLevel[i],
+                        itsLinearizedDenseVoxelOffset[i + 1],
+                        itsLinearizedDenseVoxelOffset[i]);
         timer.stop();
         gpuErrchk(cudaGetLastError());
 
-        cellOffsetOld = cellOffsetNew;
         time += timer.getMilliseconds();
-        itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(gridSize), timer.getMilliseconds()));
+        itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(itsGridSideLengthPerLevel[i]), timer.getMilliseconds()));
     }
+
     spdlog::info("'initializeOctreeSparse' took {:f} [ms]", time);
 }

@@ -11,10 +11,7 @@ class SparseOctree : public OctreeBase {
 
 public:
     SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
-            OctreeBase(cloudMetadata, std::move(cloudData)),
-            itsGlobalOctreeDepth(0),
-            itsGlobalOctreeBase(0),
-            itsVoxelAmountDense(0)
+            OctreeBase(cloudMetadata, std::move(cloudData))
     {
         spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
     }
@@ -44,16 +41,12 @@ private:
     void hierarchicalCount(const unique_ptr<Chunk[]> &h_octreeSparse,
                            const unique_ptr<int[]> &h_sparseToDenseLUT,
                            uint32_t sparseVoxelIndex,
-                           uint32_t denseVoxelOffset,
-                           uint32_t gridSizeLength);
+                           uint32_t level);
 
     // Exporting
     uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
 
 private:
-    uint32_t itsGlobalOctreeDepth;
-    uint32_t itsGlobalOctreeBase;
-    uint32_t itsVoxelAmountDense;
 
     unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel;     // Holds all point counts in dense form
     unique_ptr<CudaArray<int>> itsDenseToSparseLUT;                 // LUT for mapping from dense to sparse
