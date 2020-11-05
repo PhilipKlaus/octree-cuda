@@ -4,7 +4,7 @@
 
 #include <sparseOctree.h>
 #include "catch2/catch.hpp"
-#include "../../src/tools.cuh"
+#include "tools.cuh"
 
 
 uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
@@ -18,10 +18,10 @@ uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> 
     int denseIndex = sparseToDense[index];
 
     auto newGridSize = static_cast<uint32_t>(pow(2, 7-level));
-    auto xy = newGridSize * newGridSize;
-    auto z = (denseIndex-previousChunks) / xy;
-    auto y = (denseIndex-previousChunks - (z * xy)) / newGridSize;
-    auto x = (denseIndex-previousChunks - (z * xy)) % newGridSize;
+
+    Vector3i coord{};
+    auto indexInVoxel = denseIndex - previousChunks;
+    tools::mapFromDenseIdxToDenseCoordinates(coord, indexInVoxel, newGridSize);
 
     auto voxelSize = 128.f / newGridSize;
 
@@ -31,12 +31,12 @@ uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> 
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
             Vector3 point = cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]];
-            REQUIRE(point.x > (x * voxelSize));
-            REQUIRE(point.x < ((x + 1) * voxelSize));
-            REQUIRE(point.y > (y * voxelSize));
-            REQUIRE(point.y < ((y + 1) * voxelSize));
-            REQUIRE(point.z > (z * voxelSize));
-            REQUIRE(point.z < ((z + 1) * voxelSize));
+            REQUIRE(point.x > (coord.x * voxelSize));
+            REQUIRE(point.x < ((coord.x + 1) * voxelSize));
+            REQUIRE(point.y > (coord.y * voxelSize));
+            REQUIRE(point.y < ((coord.y + 1) * voxelSize));
+            REQUIRE(point.z > (coord.z * voxelSize));
+            REQUIRE(point.z < ((coord.z + 1) * voxelSize));
         }
     }
     else {

@@ -13,6 +13,11 @@ struct Vector3
     float x, y, z;
 };
 
+struct Vector3i
+{
+    uint32_t x, y, z;
+};
+
 struct Chunk {
     uint32_t pointCount;        // How many points does this chunk have
     uint32_t parentChunkIndex;  // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging

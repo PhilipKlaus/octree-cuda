@@ -21,7 +21,7 @@ __global__ void kernel_point_cloud_cuboid(Vector3 *out, uint32_t n, uint32_t sid
 
 namespace tools {
 
-    __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b) {
+    __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b) {
         return {
                 a.x - b.x,
                 a.y - b.y,
@@ -93,6 +93,16 @@ namespace tools {
         );
     }
 
+    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(
+            Vector3i &coordinates,
+            uint32_t denseVoxelIdx,
+            uint32_t gridSizeLength) {
+
+        auto xy = gridSizeLength * gridSizeLength;
+        coordinates.z = denseVoxelIdx / xy;
+        coordinates.y = (denseVoxelIdx - (coordinates.z * xy)) / gridSizeLength;
+        coordinates.x = (denseVoxelIdx - (coordinates.z * xy)) % gridSizeLength;
+    }
 }
 
 

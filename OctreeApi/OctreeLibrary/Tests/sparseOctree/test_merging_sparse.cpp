@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "../../src/tools.cuh"
+#include "tools.cuh"
 #include "sparseOctree.h"
 TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
 

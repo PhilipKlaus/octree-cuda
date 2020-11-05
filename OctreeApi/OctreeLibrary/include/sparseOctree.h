@@ -35,8 +35,19 @@ public:
     uint32_t getVoxelAmountSparse();
 
 private:
+
+    // Merging
     void initializeOctreeSparse(uint32_t threshold);
     void initializeBaseGridSparse();
+
+    // Indexing
+    void hierarchicalCount(const unique_ptr<Chunk[]> &h_octreeSparse,
+                           const unique_ptr<int[]> &h_sparseToDenseLUT,
+                           uint32_t sparseVoxelIndex,
+                           uint32_t denseVoxelOffset,
+                           uint32_t gridSizeLength);
+
+    // Exporting
     uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
 
 private:

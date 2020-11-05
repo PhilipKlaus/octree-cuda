@@ -71,6 +71,7 @@ void SparseOctree::exportOctree(const string &folderPath) {
 void SparseOctree::freeGpuMemory() {
     itsDensePointCountPerVoxel.reset();
     itsDenseToSparseLUT.reset();
+    itsSparseToDenseLUT.reset();
     itsVoxelAmountSparse.reset();
     itsOctreeSparse.reset();
     spdlog::debug("Sparse octree GPU memory deleted");

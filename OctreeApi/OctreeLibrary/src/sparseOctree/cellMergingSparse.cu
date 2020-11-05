@@ -50,11 +50,9 @@ __global__ void kernelInitializeOctreeSparse(
         return;
     }
 
-    // 1. Calculate the actual dense index in the octree
-    auto xy = newGridSize * newGridSize;
-    auto z = index / xy;
-    auto y = (index - (z * xy)) / newGridSize;
-    auto x = (index - (z * xy)) % newGridSize;
+    // 1. Calculate the actual dense coordinates in the octree
+    Vector3i coords{};
+    tools::mapFromDenseIdxToDenseCoordinates(coords, index, newGridSize);
 
     auto oldXY = oldGridSize * oldGridSize;
     uint32_t denseVoxelIndex = cellOffsetNew + index;
@@ -68,7 +66,7 @@ __global__ void kernelInitializeOctreeSparse(
     }
 
     // 4. If the chunk exists, calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetOld + (z * oldXY * 2) + (y * oldGridSize * 2) + (x * 2);
+    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);
     uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
     uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
     uint32_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
@@ -241,6 +239,8 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     uint32_t cellOffsetNew = 0;
     uint32_t cellOffsetOld = 0;
 
+    float time = 0;
+
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
@@ -265,10 +265,11 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
         gpuErrchk(cudaGetLastError());
 
         cellOffsetOld = cellOffsetNew;
-
+        time += timer.getMilliseconds();
         itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(gridSize), timer.getMilliseconds()));
-        spdlog::info("'EvaluateSparseOctree' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
+
+    spdlog::info("'EvaluateSparseOctree' took {:f} [ms]", time);
 
     uint32_t voxelAmountSparse = itsVoxelAmountSparse->toHost()[0];
     itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
@@ -319,6 +320,8 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
     uint32_t cellOffsetNew = 0;
     uint32_t cellOffsetOld = 0;
 
+    float time = 0;
+
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     for(uint32_t gridSize = itsGlobalOctreeBase; gridSize > 1; gridSize >>= 1) {
         auto newCellAmount = static_cast<uint32_t>(pow(gridSize, 3) / 8);
@@ -346,8 +349,8 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
         gpuErrchk(cudaGetLastError());
 
         cellOffsetOld = cellOffsetNew;
-
+        time += timer.getMilliseconds();
         itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(gridSize), timer.getMilliseconds()));
-        spdlog::info("'initializeOctreeSparse' for a grid size of {} took {:f} [ms]", gridSize, timer.getMilliseconds());
     }
+    spdlog::info("'initializeOctreeSparse' took {:f} [ms]", time);
 }

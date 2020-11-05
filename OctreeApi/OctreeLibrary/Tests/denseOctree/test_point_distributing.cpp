@@ -4,7 +4,7 @@
 
 #include <denseOctree.h>
 #include "catch2/catch.hpp"
-#include "../../src/tools.cuh"
+#include "tools.cuh"
 
 
 uint32_t testOctreenode(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index) {

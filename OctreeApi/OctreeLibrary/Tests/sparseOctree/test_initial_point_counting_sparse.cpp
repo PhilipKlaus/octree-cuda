@@ -4,7 +4,7 @@
 
 #include <sparseOctree.h>
 #include "catch2/catch.hpp"
-#include "../../src/tools.cuh"
+#include "tools.cuh"
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 

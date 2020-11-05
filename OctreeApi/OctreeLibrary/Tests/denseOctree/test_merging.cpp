@@ -1,6 +1,6 @@
 #include <denseOctree.h>
 #include "catch2/catch.hpp"
-#include "../../src/tools.cuh"
+#include "tools.cuh"
 #include "../../src/defines.cuh"
 
 
