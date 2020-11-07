@@ -13,9 +13,13 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/cellMergingSparse.cu
         src/sparseOctree/initialPointCountingSparse.cu
         src/sparseOctree/pointDistributionSparse.cu
-        include/octreeBase.h
-        include/sparseOctree.h
-        src/sparseOctree/sparseOctree.cpp include/denseOctree.h src/denseOctree/denseOctree.cpp src/sparseOctree/indexing.cpp)
+        src/sparseOctree/sparseOctree.cpp
+        src/denseOctree/denseOctree.cpp
+        src/sparseOctree/indexing.cu
+
+        src/timing.cuh
+
+        src/kernel/mapCloudToGrid.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)

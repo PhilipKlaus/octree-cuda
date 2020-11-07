@@ -21,7 +21,6 @@ public:
             itsMetadata(cloudMetadata),
             itsCloudData(move(cloudData)),
             itsGlobalOctreeDepth(0),
-            itsGobalOctreeSideLength(0),
             itsVoxelAmountDense(0)
     {
         itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
@@ -60,8 +59,8 @@ public:
         itsGlobalOctreeDepth = octreeDepth;
 
         // Precalculate parameters
-        itsGobalOctreeSideLength = static_cast<uint32_t >(pow(2, octreeDepth));
-        for(uint32_t gridSize = itsGobalOctreeSideLength; gridSize > 0; gridSize >>= 1) {
+        auto sideLength = static_cast<uint32_t >(pow(2, octreeDepth));
+        for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
             itsGridSideLengthPerLevel.push_back(gridSize);
             itsLinearizedDenseVoxelOffset.push_back(itsVoxelAmountDense);
             itsVoxelsPerLevel.push_back(static_cast<uint32_t>(pow(gridSize, 3)));
@@ -69,7 +68,7 @@ public:
         }
     }
 
-    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, uint32_t denseVoxelIndex, uint32_t level) {
+    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingBox &cloud, uint32_t denseVoxelIndex, uint32_t level) {
 
         // 1. Calculate coordinates of voxel within the actual level
         auto indexInVoxel = denseVoxelIndex - itsLinearizedDenseVoxelOffset[level];
@@ -82,12 +81,12 @@ public:
         auto height = dimension.y / itsGridSideLengthPerLevel[level];
         auto depth = dimension.z / itsGridSideLengthPerLevel[level];
 
-        bb.minimum.x = coords.x * width;
-        bb.minimum.y = coords.y * height;
-        bb.minimum.z = coords.z * depth;
-        bb.maximum.x = (coords.x + 1.f) * width;
-        bb.maximum.y = (coords.y + 1.f) * height;
-        bb.maximum.z = (coords.z + 1.f) * depth;
+        bb.minimum.x = cloud.minimum.x + coords.x * width;
+        bb.minimum.y = cloud.minimum.y + coords.y * height;
+        bb.minimum.z = cloud.minimum.z + coords.z * depth;
+        bb.maximum.x = cloud.minimum.x + (coords.x + 1.f) * width;
+        bb.maximum.y = cloud.minimum.y + (coords.y + 1.f) * height;
+        bb.maximum.z = cloud.minimum.z + (coords.z + 1.f) * depth;
     }
 
 public:
@@ -102,7 +101,6 @@ protected:
 
     uint32_t itsGlobalOctreeDepth;                              // The depth of the global octree
     uint32_t itsVoxelAmountDense;                               // The amount of dense voxels within the octree hierarchy
-    uint32_t itsGobalOctreeSideLength;                          // The side-length of the octree's base
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel ;                        // Holds the voxel amount per level (dense)

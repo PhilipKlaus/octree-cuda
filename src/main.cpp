@@ -45,6 +45,9 @@ int main() {
         maximum.y = fmax(maximum.y, points[i].y);
         maximum.z = fmax(maximum.z, points[i].z);
     }
+    spdlog::info(
+            "Cloud dimensions: width: {}, height: {}, depth: {}",
+            maximum.x-minimum.x, maximum.y-minimum.y, maximum.z-minimum.z);
 
     PointCloudMetadata metadata = {};
     metadata.pointAmount = pointAmount;
@@ -55,7 +58,7 @@ int main() {
 
     ocpi_set_point_cloud_metadata(session, metadata);
     ocpi_load_point_cloud_from_host(session, pChars);
-    ocpi_configure_octree(session, 7, 30000);
+    ocpi_configure_octree(session, 7, 5000);
     ocpi_generate_octree(session);
     ocpi_export_octree(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
     ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");

@@ -83,6 +83,7 @@ __global__ void kernelInitializeOctreeSparse(
 
     // 5.1. Update the point count
     chunk->pointCount = isFinished? 0 : pointCount;
+    chunk->isParent = isFinished;
 
     // 5.2. Update the isFinished
     chunk->isFinished = isFinished;

@@ -9,7 +9,7 @@ add_executable(OctreeTest
         denseOctree/test_point_distributing.cpp
         sparseOctree/test_initial_point_counting_sparse.cpp
         sparseOctree/test_merging_sparse.cpp
-        sparseOctree/test_point_distribution_sparse.cpp)
+        sparseOctree/test_point_distribution_sparse.cpp sparseOctree/test_subsampling_sparse.cpp)
 
 ####################
 # ADD CUDA SUPPORT #

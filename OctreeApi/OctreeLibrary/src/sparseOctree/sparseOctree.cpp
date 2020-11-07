@@ -96,3 +96,11 @@ unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() {
 uint32_t SparseOctree::getVoxelAmountSparse() {
     return itsVoxelAmountSparse->toHost()[0];
 }
+
+unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
+    return itsSubsampleLUTs;
+}
+/*
+vector<unique_ptr<int>> const& SparseOctree::getTest() const {
+    return test;
+}*/
