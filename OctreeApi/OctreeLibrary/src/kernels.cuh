@@ -51,6 +51,17 @@ namespace kernel {
             uint32_t gridSideLength
     );
 
+    /*__global__ void kernelDistributeSubsamlePoints(
+            Vector3 *cloud,
+            uint32_t *cloudDataLUT,
+            uint32_t dataLUTStartIndex,
+            uint32_t *countingGrid,
+            int *denseToSparseLUT,
+            uint32_t *sparseIndexCounter,
+            PointCloudMetadata metadata,
+            uint32_t gridSideLength
+    );*/
+
 }
 
 namespace kernelExecution {
@@ -68,7 +79,7 @@ namespace kernelExecution {
             unique_ptr<CudaArray<Vector3>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
             uint32_t dataLUTStartIndex,
-            unique_ptr<CudaArray<uint32_t>> &densePointCount,
+            unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
             PointCloudMetadata metadata,

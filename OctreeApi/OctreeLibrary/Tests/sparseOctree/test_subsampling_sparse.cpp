@@ -15,13 +15,6 @@ void testSubsampleTree(const unique_ptr<Chunk[]> &octree, unordered_map<uint32_t
             testSubsampleTree(octree, subsampleLUT, chunk.childrenChunks[i], ++level);
         }
     }
-
-   /* for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-        Chunk child = octree[chunk.childrenChunks[i]];
-        if(child.isParent) {
-            testSubsampleTree()
-        }
-    }*/
 }
 
 TEST_CASE ("Test node subsampling", "[subsampling]") {
