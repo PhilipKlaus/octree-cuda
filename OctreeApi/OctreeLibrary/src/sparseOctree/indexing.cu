@@ -7,6 +7,8 @@
 #include <kernels.cuh>
 #include <tools.cuh>
 #include <timing.cuh>
+#include "../../../../../../../../../../Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.2/include/driver_types.h"
+#include "../../include/types.h"
 
 // Move point indices from old (child LUT) to new (parent LUT)
 __global__ void distributeSubsamples(
@@ -34,6 +36,7 @@ __global__ void distributeSubsamples(
     // 3. If the thread is the first one accumulating the counter within the cell -> move index from child to parent LUT
     if(oldIndex == 0) {
         parentDataLUT[denseToSparseLUT[denseVoxelIndex]] = childDataLUT[childDataLUTStart + index];
+        childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
     }
 }
 
@@ -205,8 +208,6 @@ void SparseOctree::hierarchicalCount(
                 );
             }
         }
-
-        spdlog::info("level [{}]: Subsampled {} voxels into {} voxels", level, itsVoxelsPerLevel[0], amountUsedVoxels);
     }
 }
 

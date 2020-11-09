@@ -44,6 +44,7 @@ __global__ void kernel::kernelMapCloudToGrid_LUT(
     if(index >= metadata.pointAmount) {
         return;
     }
+
     Vector3 point = cloud[cloudDataLUT[dataLUTStartIndex + index]];
 
     // 1. Calculate the index within the dense grid

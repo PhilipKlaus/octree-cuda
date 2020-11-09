@@ -14,15 +14,30 @@ uint32_t SparseOctree::exportTreeNode(
         ) {
 
     uint32_t count = octreeSparse[index].isParent ? itsSubsampleLUTs[index]->pointCount() : octreeSparse[index].pointCount;
+    uint32_t validPoints = count;
+    for (uint32_t u = 0; u < count; ++u)
+    {
+        if(octreeSparse[index].isParent) {
+            auto lut = itsSubsampleLUTs[index]->toHost();
+            if(lut[u] == INVALID_INDEX) {
+                --validPoints;
+            }
+        }
+        else {
+            if(dataLUT[octreeSparse[index].chunkDataIndex + u] == INVALID_INDEX) {
+                --validPoints;
+            }
+        }
+    }
 
-    if(octreeSparse[index].isFinished && count > 0) {
+    if(octreeSparse[index].isFinished && validPoints > 0) {
         string name = octreeSparse[index].isParent ? (folder + "//_parent_") : (folder + "//_leaf_");
         std::ofstream ply;
         ply.open (name + std::to_string(level) +
                   "_" +
                   std::to_string(index) +
                   "_" +
-                  std::to_string(count) +
+                  std::to_string(validPoints) +
                   ".ply",
                   std::ios::binary
         );
@@ -31,7 +46,7 @@ uint32_t SparseOctree::exportTreeNode(
                "format binary_little_endian 1.0\n"
                "comment Created by AIT Austrian Institute of Technology\n"
                "element vertex "
-            << count
+            << validPoints
             << "\n"
                "property float x\n"
                "property float y\n"
@@ -41,15 +56,18 @@ uint32_t SparseOctree::exportTreeNode(
         {
             if(octreeSparse[index].isParent) {
                 auto lut = itsSubsampleLUTs[index]->toHost();
-                //spdlog::info("{}", lut[u]);
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].x)), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].y)), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].z)), sizeof (float));
+                if(lut[u] != INVALID_INDEX) {
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].x)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].y)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].z)), sizeof (float));
+                }
             }
             else {
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].x)), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].y)), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].z)), sizeof (float));
+                if(dataLUT[octreeSparse[index].chunkDataIndex + u] != INVALID_INDEX) {
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].x)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].y)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].z)), sizeof (float));
+                }
             }
         }
         ply.close ();
