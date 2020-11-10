@@ -5,14 +5,32 @@
 #include <sparseOctree.h>
 #include "catch2/catch.hpp"
 
-void testSubsampleTree(const unique_ptr<Chunk[]> &octree, unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& subsampleLUT, uint32_t index, uint32_t level) {
+void testSubsampleTree(
+        const unique_ptr<Chunk[]> &octree,
+        unordered_map<uint32_t,
+        unique_ptr<CudaArray<uint32_t>>> const& subsampleLUT,
+        uint32_t index,
+        uint32_t level) {
 
     Chunk chunk = octree[index];
 
     if(chunk.isParent) {
-        spdlog::error("{}", subsampleLUT.at(index)->pointCount());
+        spdlog::error("{}, {}", level, subsampleLUT.at(index)->pointCount());
+        switch(level) {
+            case 7:
+                REQUIRE(subsampleLUT.at(index)->pointCount() == 128 * 128 * 128);
+                break;
+            case 6:
+                REQUIRE(subsampleLUT.at(index)->pointCount() == 64 * 64 * 64);
+                break;
+            case 5:
+                REQUIRE(subsampleLUT.at(index)->pointCount() == 32 * 32 * 32);
+                break;
+            default:
+                break;
+        }
         for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            testSubsampleTree(octree, subsampleLUT, chunk.childrenChunks[i], ++level);
+            testSubsampleTree(octree, subsampleLUT, chunk.childrenChunks[i], level - 1);
         }
     }
 }
@@ -42,5 +60,5 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
 
     auto octree = cloud->getOctreeSparse();
     uint32_t topLevelIndex = cloud->getVoxelAmountSparse()-1;
-    testSubsampleTree(octree, cloud->getSubsampleLUT(), topLevelIndex, 0);
+    testSubsampleTree(octree, cloud->getSubsampleLUT(), topLevelIndex, 7);
 }
