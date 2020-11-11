@@ -1,8 +1,9 @@
-#include "kernels.cuh"
+#include <chunking.cuh>
 #include <tools.cuh>
 #include <timing.cuh>
 
-__global__ void kernel::kernelMapCloudToGrid(
+
+__global__ void chunking::kernelInitialPointCounting(
         Vector3 *cloud,
         uint32_t *densePointCount,
         int *denseToSparseLUT,
@@ -31,7 +32,7 @@ __global__ void kernel::kernelMapCloudToGrid(
 }
 
 
-float kernelExecution::executeKernelMapCloudToGrid(
+float chunking::initialPointCounting(
         unique_ptr<CudaArray<Vector3>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &densePointCount,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
@@ -46,7 +47,7 @@ float kernelExecution::executeKernelMapCloudToGrid(
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
-    kernel::kernelMapCloudToGrid <<<  grid, block >>> (
+    chunking::kernelInitialPointCounting <<<  grid, block >>> (
             cloud->devicePointer(),
             densePointCount->devicePointer(),
             denseToSparseLUT->devicePointer(),

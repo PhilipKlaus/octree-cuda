@@ -11,7 +11,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/denseOctree/initialPointCounting.cu
         src/denseOctree/pointDistribution.cu
         src/sparseOctree/cellMergingSparse.cu
-        src/sparseOctree/initialPointCountingSparse.cu
+        src/sparseOctree/initial_point_counting.cpp
         src/sparseOctree/pointDistributionSparse.cu
         src/sparseOctree/sparseOctree.cpp
         src/denseOctree/denseOctree.cpp
@@ -19,7 +19,8 @@ add_library( ${PROJECT_NAME} STATIC
 
         src/timing.cuh
 
-        src/kernel/mapCloudToGrid.cu
+        # Cuda kernels
+        src/kernel/initial_point_counting.cu
         src/kernel/pseudo_random_subsampling.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)

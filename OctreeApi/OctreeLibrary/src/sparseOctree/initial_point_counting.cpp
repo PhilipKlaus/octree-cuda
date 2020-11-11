@@ -1,6 +1,5 @@
 #include <sparseOctree.h>
-#include <kernels.cuh>
-
+#include <chunking.cuh>
 
 void SparseOctree::initialPointCounting(uint32_t initialDepth) {
 
@@ -19,7 +18,7 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     itsVoxelAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseVoxelAmount");
     gpuErrchk(cudaMemset (itsVoxelAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
-    float time = kernelExecution::executeKernelMapCloudToGrid(
+    float time = chunking::initialPointCounting(
             itsCloudData,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
