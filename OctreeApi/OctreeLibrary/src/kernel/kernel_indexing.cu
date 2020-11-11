@@ -22,8 +22,7 @@ __global__ void indexing::kernelDistributeSubsamples(
     // 1. Calculate the index within the dense grid of the subsample
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
-    // 2. We are only interested in the first point within a cell -> reset the countinGrid implicitly
-    //auto oldIndex = atomicCAS((countingGrid + denseVoxelIndex), 1, 0);
+    // 2. We are only interested in the first point within a cell
     auto oldIndex = atomicAdd((countingGrid + denseVoxelIndex), 1);
 
     // 3. If the thread is the first one ->
@@ -56,7 +55,6 @@ __global__ void indexing::kernelSimpleSubsampling(
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
     // 2. We are only interested in the first point within a cell
-    //auto oldIndex = atomicCAS((densePointCount + denseVoxelIndex), 0, 1);
     auto oldIndex = atomicAdd((densePointCount + denseVoxelIndex), 1);
 
     // 3. If the thread is the first one -> increase map from the dense grid to the sparse grid

@@ -45,40 +45,20 @@ void SparseOctree::hierarchicalCount(
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t i = 0; i < voxel.childrenChunksCount; ++i) {
 
-            Chunk child = h_octreeSparse[voxel.childrenChunks[i]];
+            uint32_t childIndex = voxel.childrenChunks[i];
+            Chunk child = h_octreeSparse[childIndex];
+            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-            if(!child.isParent) {
-
-                metadata.pointAmount = child.pointCount;
-
-                float time = indexing::simpleSubsampling(
-                        itsCloudData,
-                        itsDataLUT,
-                        child.chunkDataIndex,
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        subsampleSparseVoxelCount,
-                        metadata,
-                        itsGridSideLengthPerLevel[0]
-                );
-
-            }
-            else {
-
-                metadata.pointAmount = itsSubsampleLUTs[voxel.childrenChunks[i]]->pointCount();
-
-                float time = indexing::simpleSubsampling(
-                        itsCloudData,
-                        itsSubsampleLUTs[voxel.childrenChunks[i]],
-                        0,
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        subsampleSparseVoxelCount,
-                        metadata,
-                        itsGridSideLengthPerLevel[0]
-                );
-
-            }
+            float time = indexing::simpleSubsampling(
+                    itsCloudData,
+                    child.isParent ? itsSubsampleLUTs[childIndex]: itsDataLUT,
+                    child.isParent ? 0: child.chunkDataIndex,
+                    subsampleCountingGrid,
+                    subsampleDenseToSparseLUT,
+                    subsampleSparseVoxelCount,
+                    metadata,
+                    itsGridSideLengthPerLevel[0]
+            );
         }
 
         // 5. Reserve memory for a data LUT for the parent node
@@ -91,37 +71,20 @@ void SparseOctree::hierarchicalCount(
         gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, itsVoxelsPerLevel[0] * sizeof(uint32_t)));
         for(uint32_t i = 0; i < voxel.childrenChunksCount; ++i) {
 
-            Chunk child = h_octreeSparse[voxel.childrenChunks[i]];
+            uint32_t childIndex = voxel.childrenChunks[i];
+            Chunk child = h_octreeSparse[childIndex];
+            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-            if(!child.isParent) {
-
-                metadata.pointAmount = child.pointCount;
-
-                float time = indexing::distributeSubsamples(
-                        itsCloudData,
-                        itsDataLUT,
-                        child.chunkDataIndex,
-                        itsSubsampleLUTs[sparseVoxelIndex],
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        metadata,
-                        itsGridSideLengthPerLevel[0]
-                );
-            }
-            else {
-                metadata.pointAmount = itsSubsampleLUTs[voxel.childrenChunks[i]]->pointCount();
-
-                float time = indexing::distributeSubsamples(
-                        itsCloudData,
-                        itsSubsampleLUTs[voxel.childrenChunks[i]],
-                        0,
-                        itsSubsampleLUTs[sparseVoxelIndex],
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        metadata,
-                        itsGridSideLengthPerLevel[0]
-                );
-            }
+            float time = indexing::distributeSubsamples(
+                    itsCloudData,
+                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                    child.isParent ? 0: child.chunkDataIndex,
+                    itsSubsampleLUTs[sparseVoxelIndex],
+                    subsampleCountingGrid,
+                    subsampleDenseToSparseLUT,
+                    metadata,
+                    itsGridSideLengthPerLevel[0]
+            );
         }
     }
 }
