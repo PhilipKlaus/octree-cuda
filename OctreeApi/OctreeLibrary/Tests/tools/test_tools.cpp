@@ -3,10 +3,10 @@
 //
 
 #include "catch2/catch.hpp"
-#include "../src/tools.cuh"
+#include "tools.cuh"
 
 
-TEST_CASE ("Test generation of equally sampled point cloud cuboid", "[cuboid]") {
+TEST_CASE ("Test cuboid sample generation", "[cuboid]") {
 auto data = tools::generate_point_cloud_cuboid(2);
 auto host = data->toHost();
 

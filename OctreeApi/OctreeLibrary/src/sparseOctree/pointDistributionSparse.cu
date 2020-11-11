@@ -54,7 +54,7 @@ void SparseOctree::distributePoints() {
             itsDenseToSparseLUT->devicePointer(),
             tmpIndexRegister->devicePointer(),
             itsMetadata,
-            itsGlobalOctreeBase);
+            itsGridSideLengthPerLevel[0]);
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
