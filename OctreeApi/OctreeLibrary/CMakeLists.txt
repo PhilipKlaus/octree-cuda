@@ -15,12 +15,12 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/pointDistributionSparse.cu
         src/sparseOctree/sparseOctree.cpp
         src/denseOctree/denseOctree.cpp
-        src/sparseOctree/indexing.cu
+        src/sparseOctree/indexing.cpp
 
         src/timing.cuh
 
         src/kernel/mapCloudToGrid.cu
-        src/kernel/kernel_indexing.cu)
+        src/kernel/pseudo_random_subsampling.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src src/kernel)

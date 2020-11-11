@@ -3,7 +3,7 @@
 //
 
 #include <sparseOctree.h>
-#include <kernel_indexing.cuh>
+#include <pseudo_random_subsampling.cuh>
 
 
 void SparseOctree::hierarchicalCount(
@@ -49,10 +49,10 @@ void SparseOctree::hierarchicalCount(
             Chunk child = h_octreeSparse[childIndex];
             metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-            float time = indexing::simpleSubsampling(
+            float time = pseudo__random_subsampling::subsample(
                     itsCloudData,
-                    child.isParent ? itsSubsampleLUTs[childIndex]: itsDataLUT,
-                    child.isParent ? 0: child.chunkDataIndex,
+                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                    child.isParent ? 0 : child.chunkDataIndex,
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
                     subsampleSparseVoxelCount,
@@ -75,7 +75,7 @@ void SparseOctree::hierarchicalCount(
             Chunk child = h_octreeSparse[childIndex];
             metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-            float time = indexing::distributeSubsamples(
+            float time = pseudo__random_subsampling::distributeSubsamples(
                     itsCloudData,
                     child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
                     child.isParent ? 0: child.chunkDataIndex,

@@ -1,9 +1,9 @@
-#include <kernel_indexing.cuh>
+#include "pseudo_random_subsampling.cuh"
 #include <tools.cuh>
 #include <timing.cuh>
 
 // Move point indices from old (child LUT) to new (parent LUT)
-__global__ void indexing::kernelDistributeSubsamples(
+__global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
         Vector3 *cloud,
         uint32_t *childDataLUT,
         uint32_t childDataLUTStart,
@@ -34,7 +34,7 @@ __global__ void indexing::kernelDistributeSubsamples(
     }
 }
 
-__global__ void indexing::kernelSimpleSubsampling(
+__global__ void pseudo__random_subsampling::kernelSubsample(
         Vector3 *cloud,
         uint32_t *cloudDataLUT,
         uint32_t dataLUTStartIndex,
@@ -64,7 +64,7 @@ __global__ void indexing::kernelSimpleSubsampling(
     }
 }
 
-float indexing::distributeSubsamples(
+float pseudo__random_subsampling::distributeSubsamples(
         unique_ptr<CudaArray<Vector3>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &childDataLUT,
         uint32_t childDataLUTStart,
@@ -97,7 +97,7 @@ float indexing::distributeSubsamples(
     return timer.getMilliseconds();
 }
 
-float indexing::simpleSubsampling(
+float pseudo__random_subsampling::subsample(
         unique_ptr<CudaArray<Vector3>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
         uint32_t dataLUTStartIndex,
@@ -114,7 +114,7 @@ float indexing::simpleSubsampling(
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
-    indexing::kernelSimpleSubsampling << < grid, block >> > (
+    kernelSubsample << < grid, block >> > (
             cloud->devicePointer(),
                     cloudDataLUT->devicePointer(),
                     dataLUTStartIndex,
