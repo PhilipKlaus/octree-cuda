@@ -3,93 +3,8 @@
 //
 
 #include <sparseOctree.h>
-#include <iostream>
-#include <kernels.cuh>
-#include <tools.cuh>
-#include <timing.cuh>
-#include "../../../../../../../../../../Program Files/NVIDIA GPU Computing Toolkit/CUDA/v10.2/include/driver_types.h"
-#include "../../include/types.h"
+#include <kernel_indexing.cuh>
 
-// Move point indices from old (child LUT) to new (parent LUT)
-__global__ void distributeSubsamples(
-        Vector3 *cloud,
-        uint32_t *childDataLUT,
-        uint32_t childDataLUTStart,
-        uint32_t *parentDataLUT,
-        uint32_t *countingGrid,
-        int *denseToSparseLUT,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength
-        ) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
-    if(index >= metadata.pointAmount) {
-        return;
-    }
-    Vector3 point = cloud[childDataLUT[childDataLUTStart + index]];
-
-    // 1. Calculate the index within the dense grid
-    auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
-
-    // 2. Accumulate the counter within the dense cell
-    auto oldIndex = atomicAdd((countingGrid + denseVoxelIndex), 1);
-
-    // 3. If the thread is the first one accumulating the counter within the cell -> move index from child to parent LUT
-    if(oldIndex == 0) {
-        parentDataLUT[denseToSparseLUT[denseVoxelIndex]] = childDataLUT[childDataLUTStart + index];
-        childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
-    }
-}
-
-float executeKernelDistributeSubsamples(
-        unique_ptr<CudaArray<Vector3>> &cloud,
-        unique_ptr<CudaArray<uint32_t>> &childDataLUT,
-        uint32_t childDataLUTStart,
-        unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
-        unique_ptr<CudaArray<uint32_t>> &countingGrid,
-        unique_ptr<CudaArray<int>> &denseToSparseLUT,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength
-) {
-    // Calculate kernel dimensions
-    dim3 grid, block;
-    tools::create1DKernel(block, grid, metadata.pointAmount);
-
-    // Initial point counting
-    tools::KernelTimer timer;
-    timer.start();
-    distributeSubsamples <<<  grid, block >>> (
-            cloud->devicePointer(),
-            childDataLUT->devicePointer(),
-            childDataLUTStart,
-            parentDataLUT->devicePointer(),
-            countingGrid->devicePointer(),
-            denseToSparseLUT->devicePointer(),
-            metadata,
-            gridSideLength);
-    timer.stop();
-    gpuErrchk(cudaGetLastError());
-
-    spdlog::info("'kernelDistributeSubsamples' took {:f} [ms]", timer.getMilliseconds());
-    return timer.getMilliseconds();
-}
-
-void SparseOctree::evaluateOctreeStatistics(const unique_ptr<Chunk[]> &h_octreeSparse, uint32_t sparseVoxelIndex) {
-    Chunk chunk = h_octreeSparse[sparseVoxelIndex];
-
-    ++itsRelevantNodes;
-
-    // Leaf node
-    if(!chunk.isParent) {
-        ++itsLeafeNodes;
-    }
-
-    // No leaf node but relevant
-    else {
-        for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            evaluateOctreeStatistics(h_octreeSparse, chunk.childrenChunks[i]);
-        }
-    }
-}
 
 void SparseOctree::hierarchicalCount(
         const unique_ptr<Chunk[]> &h_octreeSparse,
@@ -136,7 +51,7 @@ void SparseOctree::hierarchicalCount(
 
                 metadata.pointAmount = child.pointCount;
 
-                float time = kernelExecution::executeKernelMapCloudToGrid_LUT(
+                float time = indexing::simpleSubsampling(
                         itsCloudData,
                         itsDataLUT,
                         child.chunkDataIndex,
@@ -152,7 +67,7 @@ void SparseOctree::hierarchicalCount(
 
                 metadata.pointAmount = itsSubsampleLUTs[voxel.childrenChunks[i]]->pointCount();
 
-                float time = kernelExecution::executeKernelMapCloudToGrid_LUT(
+                float time = indexing::simpleSubsampling(
                         itsCloudData,
                         itsSubsampleLUTs[voxel.childrenChunks[i]],
                         0,
@@ -182,7 +97,7 @@ void SparseOctree::hierarchicalCount(
 
                 metadata.pointAmount = child.pointCount;
 
-                float time = executeKernelDistributeSubsamples(
+                float time = indexing::distributeSubsamples(
                         itsCloudData,
                         itsDataLUT,
                         child.chunkDataIndex,
@@ -196,7 +111,7 @@ void SparseOctree::hierarchicalCount(
             else {
                 metadata.pointAmount = itsSubsampleLUTs[voxel.childrenChunks[i]]->pointCount();
 
-                float time = executeKernelDistributeSubsamples(
+                float time = indexing::distributeSubsamples(
                         itsCloudData,
                         itsSubsampleLUTs[voxel.childrenChunks[i]],
                         0,
@@ -217,9 +132,6 @@ void SparseOctree::performIndexing() {
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
     uint32_t rootVoxelIndexSparse = itsVoxelAmountSparse->toHost()[0] - 1;
 
-    // Gather some octree statistics
-    evaluateOctreeStatistics(h_octreeSparse, rootVoxelIndexSparse);
-
     // Prepare data strucutres for the subsampling
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(itsVoxelsPerLevel[0], "pointCountGrid");
     auto denseToSpareLUT = make_unique<CudaArray<int >>(itsVoxelsPerLevel[0], "denseToSpareLUT");
@@ -227,12 +139,5 @@ void SparseOctree::performIndexing() {
 
     // Perform the actual subsampling
     hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, rootVoxelIndexSparse, itsGlobalOctreeDepth, pointCountGrid, denseToSpareLUT, voxelCount);
-
-    // Print some octree statistics
-    spdlog::error("Sparse octree overall nodes: {}", itsVoxelAmountSparse->toHost()[0]);
-    spdlog::error("Sparse octree relevant nodes: {}", itsRelevantNodes);
-    spdlog::error("Sparse octree leaf nodes: {}", itsLeafeNodes);
-    spdlog::error("Sparse octree non-leaf nodes: {}", itsRelevantNodes-itsLeafeNodes);
-
 };
 

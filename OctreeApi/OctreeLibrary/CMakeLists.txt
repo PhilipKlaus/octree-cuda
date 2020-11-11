@@ -19,10 +19,11 @@ add_library( ${PROJECT_NAME} STATIC
 
         src/timing.cuh
 
-        src/kernel/mapCloudToGrid.cu)
+        src/kernel/mapCloudToGrid.cu
+        src/kernel/kernel_indexing.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src)
+target_include_directories(${PROJECT_NAME} PRIVATE src src/kernel)
 
 ####################
 # ADD CUDA SUPPORT #

@@ -11,9 +11,7 @@ class SparseOctree : public OctreeBase {
 
 public:
     SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
-            OctreeBase(cloudMetadata, std::move(cloudData)),
-            itsRelevantNodes(0),
-            itsLeafeNodes(0)
+            OctreeBase(cloudMetadata, std::move(cloudData))
     {
         spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
     }
@@ -62,10 +60,6 @@ private:
     unique_ptr<CudaArray<Chunk>> itsOctreeSparse;                               // Holds the sparse octree
 
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
-
-    // Octree statistics
-    uint32_t itsRelevantNodes;                                      // All relevant nodes after merging (all sparse nodes - empty nodes)
-    uint32_t itsLeafeNodes;                                         // All leafe nodes after merging
 };
 
 #endif //OCTREE_LIBRARY_SPARSE_OCTREE_H

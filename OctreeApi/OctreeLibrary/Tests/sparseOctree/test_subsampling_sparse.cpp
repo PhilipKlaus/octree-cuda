@@ -15,7 +15,6 @@ void testSubsampleTree(
     Chunk chunk = octree[index];
 
     if(chunk.isParent) {
-        spdlog::error("{}, {}", level, subsampleLUT.at(index)->pointCount());
         switch(level) {
             case 7:
                 REQUIRE(subsampleLUT.at(index)->pointCount() == 128 * 128 * 128);
