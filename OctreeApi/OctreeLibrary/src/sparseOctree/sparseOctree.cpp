@@ -3,7 +3,7 @@
 //
 
 #include <sparseOctree.h>
-
+#include <chunking.cuh>
 uint32_t SparseOctree::exportTreeNode(
         Vector3 *cpuPointCloud,
         const unique_ptr<Chunk[]> &octreeSparse,
@@ -124,4 +124,87 @@ uint32_t SparseOctree::getVoxelAmountSparse() {
 
 unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
     return itsSubsampleLUTs;
+}
+
+//###################
+//#     Pipeline    #
+//###################
+
+void SparseOctree::distributePoints() {
+
+    // Create temporary indexRegister for assigning an index for each point within its chunk area
+    auto cellAmountSparse = itsVoxelAmountSparse->toHost()[0];
+    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(cellAmountSparse, "tmpIndexRegister");
+    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, cellAmountSparse * sizeof(uint32_t)));
+
+    float time = chunking::distributePoints(
+            itsOctreeSparse,
+            itsCloudData,
+            itsDataLUT,
+            itsDenseToSparseLUT,
+            tmpIndexRegister,
+            itsMetadata,
+            itsGridSideLengthPerLevel[0]);
+
+    itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", time));
+}
+
+void SparseOctree::initialPointCounting(uint32_t initialDepth) {
+
+    // Pre-calculate different Octree parameters
+    preCalculateOctreeParameters(initialDepth);
+
+    // Allocate the dense point count
+    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "itsDensePointCountPerVoxel");
+    gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsVoxelAmountDense * sizeof(uint32_t)));
+
+    // Allocate the conversion LUT from dense to sparse
+    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsVoxelAmountDense, "denseToSparseLUT");
+    gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsVoxelAmountDense * sizeof(int)));
+
+    // Allocate the global sparseIndexCounter
+    itsVoxelAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseVoxelAmount");
+    gpuErrchk(cudaMemset (itsVoxelAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
+
+    float time = chunking::initialPointCounting(
+            itsCloudData,
+            itsDensePointCountPerVoxel,
+            itsDenseToSparseLUT,
+            itsVoxelAmountSparse,
+            itsMetadata,
+            itsGridSideLengthPerLevel[0]
+    );
+
+    itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
+}
+
+
+void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
+
+    // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
+    auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
+    gpuErrchk(cudaMemset (globalChunkCounter->devicePointer(), 0, 1 * sizeof(uint32_t)));
+
+    // Perform a hierarchicaly merging of the grid cells which results in an octree structure
+    float timeAccumulated = 0;
+    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
+
+        float time = chunking::mergeTreeNodes(
+                itsOctreeSparse,
+                itsDensePointCountPerVoxel,
+                itsDenseToSparseLUT,
+                itsSparseToDenseLUT,
+                globalChunkCounter,
+                threshold,
+                itsVoxelsPerLevel[i + 1],
+                itsGridSideLengthPerLevel[i + 1],
+                itsGridSideLengthPerLevel[i],
+                itsLinearizedDenseVoxelOffset[i + 1],
+                itsLinearizedDenseVoxelOffset[i]
+        );
+
+        itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
+    }
+
+    spdlog::info("'initializeOctreeSparse' took {:f} [ms]", timeAccumulated);
 }

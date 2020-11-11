@@ -1,5 +1,5 @@
 ##########################################################################
-# OctreeApi                                                          #
+# OctreeApi                                                              #
 # A Library for generating octree structures for point clouds on the GPU #
 ##########################################################################
 
@@ -11,8 +11,6 @@ add_library( ${PROJECT_NAME} STATIC
         src/denseOctree/initialPointCounting.cu
         src/denseOctree/pointDistribution.cu
         src/sparseOctree/cellMergingSparse.cu
-        src/sparseOctree/initial_point_counting.cpp
-        src/sparseOctree/pointDistributionSparse.cu
         src/sparseOctree/sparseOctree.cpp
         src/denseOctree/denseOctree.cpp
         src/sparseOctree/indexing.cpp
@@ -21,6 +19,8 @@ add_library( ${PROJECT_NAME} STATIC
 
         # Cuda kernels
         src/kernel/initial_point_counting.cu
+        src/kernel/point_distributing.cu
+        src/kernel/tree_node_merging.cu
         src/kernel/pseudo_random_subsampling.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
