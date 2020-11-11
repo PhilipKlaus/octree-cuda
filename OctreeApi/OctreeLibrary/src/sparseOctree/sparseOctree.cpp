@@ -178,6 +178,49 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
 }
 
+void SparseOctree::performCellMerging(uint32_t threshold) {
+
+    float timeAccumulated = 0;
+
+    // Perform a hierarchicaly merging of the grid cells which results in an octree structure
+    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
+
+        float time = chunking::propagatePointCounts (
+                itsDensePointCountPerVoxel,
+                itsDenseToSparseLUT,
+                itsVoxelAmountSparse,
+                itsVoxelsPerLevel[i + 1],
+                itsGridSideLengthPerLevel[i + 1],
+                itsGridSideLengthPerLevel[i],
+                itsLinearizedDenseVoxelOffset[i + 1],
+                itsLinearizedDenseVoxelOffset[i]);
+
+        itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
+        timeAccumulated += time;
+    }
+
+    spdlog::info("'EvaluateSparseOctree' took {:f} [ms]", timeAccumulated);
+
+    // Create the sparse octree
+    uint32_t voxelAmountSparse = itsVoxelAmountSparse->toHost()[0];
+    itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
+
+    spdlog::info(
+            "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
+            voxelAmountSparse,
+            (1 - static_cast<float>(voxelAmountSparse) / itsVoxelAmountDense) * 100,
+            static_cast<float>(itsVoxelAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
+    );
+
+    // Allocate the conversion LUT from sparse to dense
+    itsSparseToDenseLUT = make_unique<CudaArray<int>>(voxelAmountSparse, "sparseToDenseLUT");
+    gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, voxelAmountSparse * sizeof(int)));
+
+    initializeBaseGridSparse();
+    initializeOctreeSparse(threshold);
+}
+
+
 // ToDo: Rename
 void SparseOctree::initializeBaseGridSparse() {
 
@@ -216,6 +259,7 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
                 itsLinearizedDenseVoxelOffset[i]
         );
 
+        timeAccumulated += time;
         itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
     }
 

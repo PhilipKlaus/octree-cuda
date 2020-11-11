@@ -45,6 +45,27 @@ namespace chunking {
             uint32_t cellAmount
     );
 
+    __global__ void kernelPropagatePointCounts(
+            uint32_t *countingGrid,
+            int *denseToSparseLUT,
+            uint32_t *sparseIndexCounter,
+            uint32_t newCellAmount,
+            uint32_t newGridSize,
+            uint32_t oldGridSize,
+            uint32_t cellOffsetNew,
+            uint32_t cellOffsetOld
+    );
+
+    float propagatePointCounts(
+            unique_ptr<CudaArray<uint32_t>> &countingGrid,
+            unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            uint32_t newCellAmount,
+            uint32_t newGridSize,
+            uint32_t oldGridSize,
+            uint32_t cellOffsetNew,
+            uint32_t cellOffsetOld
+    );
 
     __global__ void kernelMergeHierarchical(
         Chunk *octree,

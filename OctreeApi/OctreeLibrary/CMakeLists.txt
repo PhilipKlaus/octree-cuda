@@ -10,7 +10,6 @@ add_library( ${PROJECT_NAME} STATIC
         src/denseOctree/cellMerging.cu
         src/denseOctree/initialPointCounting.cu
         src/denseOctree/pointDistribution.cu
-        src/sparseOctree/cellMergingSparse.cu
         src/sparseOctree/sparseOctree.cpp
         src/denseOctree/denseOctree.cpp
         src/sparseOctree/indexing.cpp
@@ -19,8 +18,9 @@ add_library( ${PROJECT_NAME} STATIC
 
         # Cuda kernels
         src/kernel/initial_point_counting.cu
-        src/kernel/point_distributing.cu
+        src/kernel/point_count_propagation.cu
         src/kernel/octree_initialization.cu
+        src/kernel/point_distributing.cu
         src/kernel/tree_node_merging.cu
         src/kernel/pseudo_random_subsampling.cu)
 
