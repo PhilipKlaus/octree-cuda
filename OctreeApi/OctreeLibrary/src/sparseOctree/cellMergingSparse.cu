@@ -3,35 +3,6 @@
 #include "timing.cuh"
 #include "defines.cuh"
 
-
-__global__ void kernelInitializeBaseGridSparse(
-        Chunk *octreeSparse,
-        uint32_t *densePointCount,
-        int *denseToSparseLUT,
-        int *sparseToDenseLUT,
-        uint32_t cellAmount
-        ) {
-
-    int denseVoxelIndex = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if(denseVoxelIndex >= cellAmount) {
-        return;
-    }
-
-    int sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
-
-    if(sparseVoxelIndex == -1) {
-        return;
-    }
-
-    // Update sparseToDense LUT
-    sparseToDenseLUT[sparseVoxelIndex] = denseVoxelIndex;
-
-    Chunk *chunk = octreeSparse + sparseVoxelIndex;
-    chunk->pointCount = densePointCount[denseVoxelIndex];
-}
-
-
 __global__ void kernelEvaluateSparseOctree(
         uint32_t *densePointCount,
         int *denseToSparseLUT,
@@ -159,22 +130,4 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     initializeOctreeSparse(threshold);
 }
 
-void SparseOctree::initializeBaseGridSparse() {
 
-    dim3 grid, block;
-    tools::create1DKernel(block, grid, itsVoxelsPerLevel[0]);
-
-    tools::KernelTimer timer;
-    timer.start();
-    kernelInitializeBaseGridSparse << < grid, block >> > (
-            itsOctreeSparse->devicePointer(),
-            itsDensePointCountPerVoxel->devicePointer(),
-            itsDenseToSparseLUT->devicePointer(),
-            itsSparseToDenseLUT->devicePointer(),
-            itsVoxelsPerLevel[0]);
-    timer.stop();
-    gpuErrchk(cudaGetLastError());
-
-    itsTimeMeasurement.insert(std::make_pair("initializeBaseGridSparse", timer.getMilliseconds()));
-    spdlog::info("'initializeBaseGridSparse' took {:f} [ms]", timer.getMilliseconds());
-}

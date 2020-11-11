@@ -178,7 +178,20 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
 }
 
+// ToDo: Rename
+void SparseOctree::initializeBaseGridSparse() {
 
+    float time = chunking::initLowestOctreeHierarchy(
+            itsOctreeSparse,
+            itsDensePointCountPerVoxel,
+            itsDenseToSparseLUT,
+            itsSparseToDenseLUT,
+            itsVoxelsPerLevel[0]);
+
+    itsTimeMeasurement.insert(std::make_pair("initializeBaseGridSparse", time));
+}
+
+// ToDo: Rename
 void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
@@ -189,7 +202,7 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
     float timeAccumulated = 0;
     for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
 
-        float time = chunking::mergeTreeNodes(
+        float time = chunking::mergeHierarchical(
                 itsOctreeSparse,
                 itsDensePointCountPerVoxel,
                 itsDenseToSparseLUT,

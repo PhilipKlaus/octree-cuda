@@ -2,8 +2,8 @@
 #include <tools.cuh>
 #include <timing.cuh>
 
-
-__global__ void chunking::kernelMergeTreeNodes(
+// ToDo: Rename file
+__global__ void chunking::kernelMergeHierarchical(
         Chunk *octree,
         uint32_t *countingGrid,
         int *denseToSparseLUT,
@@ -129,7 +129,7 @@ __global__ void chunking::kernelMergeTreeNodes(
     sparseToDenseLUT[sparseVoxelIndex] = denseVoxelIndex;
 }
 
-float chunking::mergeTreeNodes(
+float chunking::mergeHierarchical(
         unique_ptr<CudaArray<Chunk>> &octree,
         unique_ptr<CudaArray<uint32_t>> &countingGrid,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
@@ -147,7 +147,7 @@ float chunking::mergeTreeNodes(
 
     tools::KernelTimer timer;
     timer.start();
-    chunking::kernelMergeTreeNodes << < grid, block >> > (
+    chunking::kernelMergeHierarchical << < grid, block >> > (
             octree->devicePointer(),
             countingGrid->devicePointer(),
             denseToSparseLUT->devicePointer(),

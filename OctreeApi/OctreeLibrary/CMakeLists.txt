@@ -20,6 +20,7 @@ add_library( ${PROJECT_NAME} STATIC
         # Cuda kernels
         src/kernel/initial_point_counting.cu
         src/kernel/point_distributing.cu
+        src/kernel/octree_initialization.cu
         src/kernel/tree_node_merging.cu
         src/kernel/pseudo_random_subsampling.cu)
 

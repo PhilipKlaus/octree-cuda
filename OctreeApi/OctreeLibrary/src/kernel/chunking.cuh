@@ -29,21 +29,38 @@ namespace chunking {
 
     //--------- Octree Initialization / Merging -------
 
-    __global__ void kernelMergeTreeNodes(
-            Chunk *octree,
-            uint32_t *countingGrid,
+    __global__ void kernelInitLowestOctreeHierarchy(
+            Chunk *octreeSparse,
+            uint32_t *densePointCount,
             int *denseToSparseLUT,
             int *sparseToDenseLUT,
-            uint32_t *globalChunkCounter,
-            uint32_t threshold,
-            uint32_t newCellAmount,
-            uint32_t newGridSize,
-            uint32_t oldGridSize,
-            uint32_t cellOffsetNew,
-            uint32_t cellOffsetOld
+            uint32_t cellAmount
     );
 
-    float mergeTreeNodes(
+    float initLowestOctreeHierarchy(
+            unique_ptr<CudaArray<Chunk>> &octree,
+            unique_ptr<CudaArray<uint32_t>> &countingGrid,
+            unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            unique_ptr<CudaArray<int>> &sparseToDenseLUT,
+            uint32_t cellAmount
+    );
+
+
+    __global__ void kernelMergeHierarchical(
+        Chunk *octree,
+        uint32_t *countingGrid,
+        int *denseToSparseLUT,
+        int *sparseToDenseLUT,
+        uint32_t *globalChunkCounter,
+        uint32_t threshold,
+        uint32_t newCellAmount,
+        uint32_t newGridSize,
+        uint32_t oldGridSize,
+        uint32_t cellOffsetNew,
+        uint32_t cellOffsetOld
+    );
+
+    float mergeHierarchical(
             unique_ptr<CudaArray<Chunk>> &octree,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
