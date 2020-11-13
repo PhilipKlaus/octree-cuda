@@ -3,10 +3,7 @@ project(OctreeTest)
 # Create the Test executable
 add_executable(OctreeTest
         main.cpp
-        denseOctree/test_merging.cpp
         tools/test_tools.cpp
-        denseOctree/test_initial_point_counting.cpp
-        denseOctree/test_point_distributing.cpp
         sparseOctree/test_initial_point_counting_sparse.cpp
         sparseOctree/test_merging_sparse.cpp
         sparseOctree/test_point_distribution_sparse.cpp sparseOctree/test_subsampling_sparse.cpp)

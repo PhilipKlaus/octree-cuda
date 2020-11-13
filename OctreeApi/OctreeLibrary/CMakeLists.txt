@@ -7,14 +7,15 @@ project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library( ${PROJECT_NAME} STATIC
         src/tools.cu
-        src/denseOctree/cellMerging.cu
-        src/denseOctree/initialPointCounting.cu
-        src/denseOctree/pointDistribution.cu
         src/sparseOctree/sparseOctree.cpp
-        src/denseOctree/denseOctree.cpp
         src/sparseOctree/indexing.cpp
 
         src/timing.cuh
+
+        # Sparse octree
+        src/sparseOctree/benchmarking.cpp
+        src/sparseOctree/data_export.cpp
+        src/sparseOctree/tools.cpp
 
         # Cuda kernels
         src/kernel/initial_point_counting.cu
@@ -22,7 +23,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/kernel/octree_initialization.cu
         src/kernel/point_distributing.cu
         src/kernel/tree_node_merging.cu
-        src/kernel/pseudo_random_subsampling.cu)
+        src/kernel/pseudo_random_subsampling.cu )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src src/kernel)

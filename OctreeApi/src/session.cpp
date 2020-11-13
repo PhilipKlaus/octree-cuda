@@ -36,7 +36,6 @@ void Session::setDevice() const {
 }
 
 Session::~Session() {
-    itsOctree->freeGpuMemory();
     spdlog::debug("session destroyed");
 }
 
