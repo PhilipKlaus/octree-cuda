@@ -24,16 +24,3 @@ void SparseOctree::calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingB
     bb.maximum.y = cloud.minimum.y + (coords.y + 1.f) * height;
     bb.maximum.z = cloud.minimum.z + (coords.z + 1.f) * depth;
 }
-
-void SparseOctree::preCalculateOctreeParameters(uint32_t octreeDepth) {
-    itsMetadata.depth = octreeDepth;
-
-    // Precalculate parameters
-    auto sideLength = static_cast<uint32_t >(pow(2, octreeDepth));
-    for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
-        itsGridSideLengthPerLevel.push_back(gridSize);
-        itsLinearizedDenseVoxelOffset.push_back(itsMetadata.nodeAmountDense);
-        itsVoxelsPerLevel.push_back(static_cast<uint32_t>(pow(gridSize, 3)));
-        itsMetadata.nodeAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
-    }
-}

@@ -20,7 +20,7 @@ class SparseOctree {
 
 public:
 
-    SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
+    SparseOctree(uint32_t depth, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 
@@ -30,14 +30,13 @@ public:
     void exportTimeMeasurements(const string &filePath);
 
     // Octree pipeline
-    void initialPointCounting(uint32_t initialDepth);
+    void initialPointCounting();
     void performCellMerging(uint32_t threshold);
     void distributePoints();
     void performIndexing();
 
     // Calculation tools
     void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingBox &cloud, uint32_t denseVoxelIndex, uint32_t level);
-    void preCalculateOctreeParameters(uint32_t octreeDepth);
 
     // Data export
     void exportOctree(const string &folderPath);

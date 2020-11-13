@@ -51,20 +51,19 @@ const PointCloudMetadata& Session::getMetadata() const {
 void Session::setPointCloudHost(uint8_t *pointCloud) {
     data = make_unique<CudaArray<Vector3>>(itsMetadata.pointAmount, "pointcloud");
     data->toGPU(pointCloud);
-    //itsPointCloud = make_unique<PointCloud>(move(data));
-    itsOctree = make_unique<SparseOctree>(itsMetadata, move(data));
     spdlog::debug("copied point cloud from host to device");
 }
 
 void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold) {
     itsGlobalOctreeLevel = globalOctreeLevel;
     itsMergingThreshold = mergingThreshold;
+    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMetadata, move(data));
+
     spdlog::debug("set octree properties");
 }
 
 void Session::generateOctree() {
-    //itsPointCloud->getMetadata() = itsPointCloudMetadata;
-    itsOctree->initialPointCounting(itsGlobalOctreeLevel);
+    itsOctree->initialPointCounting();
     itsOctree->performCellMerging(itsMergingThreshold);
     itsOctree->distributePoints();
     itsOctree->performIndexing();

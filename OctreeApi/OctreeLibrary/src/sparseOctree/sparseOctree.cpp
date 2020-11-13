@@ -5,15 +5,27 @@
 #include <sparseOctree.h>
 #include <chunking.cuh>
 
-SparseOctree::SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
+SparseOctree::SparseOctree(uint32_t depth, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
         itsCloudData(move(cloudData)),
         itsPointCloudMetadata(cloudMetadata)
 {
     // Initialize octree metadata
-    itsMetadata.depth = 0;
+    itsMetadata.depth = depth;
     itsMetadata.nodeAmountDense = 0;
+    itsMetadata.nodeAmountSparse = 0;
 
+    // Pre calculate often-used octree metrics
+    auto sideLength = static_cast<uint32_t >(pow(2, depth));
+    for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
+        itsGridSideLengthPerLevel.push_back(gridSize);
+        itsLinearizedDenseVoxelOffset.push_back(itsMetadata.nodeAmountDense);
+        itsVoxelsPerLevel.push_back(static_cast<uint32_t>(pow(gridSize, 3)));
+        itsMetadata.nodeAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
+    }
+
+    // Create data LUT
     itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
+
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
 
@@ -63,10 +75,7 @@ void SparseOctree::distributePoints() {
     itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", time));
 }
 
-void SparseOctree::initialPointCounting(uint32_t initialDepth) {
-
-    // Pre-calculate different Octree parameters
-    preCalculateOctreeParameters(initialDepth);
+void SparseOctree::initialPointCounting() {
 
     // Allocate the dense point count
     itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountDense, "itsDensePointCountPerVoxel");
