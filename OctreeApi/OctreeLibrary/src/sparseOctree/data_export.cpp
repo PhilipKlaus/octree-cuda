@@ -84,7 +84,7 @@ void SparseOctree::exportOctree(const string &folderPath) {
     auto cpuPointCloud = itsCloudData->toHost();
     auto octreeSparse = itsOctreeSparse->toHost();
     auto dataLUT = itsDataLUT->toHost();
-    uint32_t topLevelIndex = itsVoxelAmountSparse->toHost()[0] - 1;
+    uint32_t topLevelIndex = itsMetadata.nodeAmountSparse - 1;
 
     // ToDo: Remove .get() -> pass unique_ptr by reference
     uint32_t exportedPoints = exportTreeNode(cpuPointCloud.get(), octreeSparse, dataLUT, itsMetadata.depth, topLevelIndex, folderPath);

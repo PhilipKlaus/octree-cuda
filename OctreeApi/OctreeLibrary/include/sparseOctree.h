@@ -12,6 +12,7 @@
 struct OctreeMetadata {
 
     uint32_t depth;             // The depth of the octree // ToDo: -1
+    uint32_t nodeAmountSparse;  // The actual amount of sparse nodes
     uint32_t nodeAmountDense;   // The theoretical amount of dense nodes
 };
 
@@ -84,7 +85,6 @@ private:
 
     // Octree Metadata
     OctreeMetadata itsMetadata;                                 // The octree metadata
-    unique_ptr<CudaArray<uint32_t>> itsVoxelAmountSparse;       // Overall initial cell amount of the sparse octree
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel ;                        // Holds the voxel amount per level (dense)

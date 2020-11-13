@@ -93,7 +93,7 @@ void SparseOctree::performIndexing() {
 
     auto h_octreeSparse = itsOctreeSparse->toHost();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
-    uint32_t rootVoxelIndexSparse = itsVoxelAmountSparse->toHost()[0] - 1;
+    uint32_t rootVoxelIndexSparse = itsMetadata.nodeAmountSparse - 1;
 
     // Prepare data strucutres for the subsampling
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(itsVoxelsPerLevel[0], "pointCountGrid");

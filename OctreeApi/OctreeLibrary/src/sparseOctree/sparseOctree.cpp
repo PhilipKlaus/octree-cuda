@@ -34,7 +34,7 @@ unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() {
 }
 
 uint32_t SparseOctree::getVoxelAmountSparse() {
-    return itsVoxelAmountSparse->toHost()[0];
+    return itsMetadata.nodeAmountSparse;
 }
 
 unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
@@ -48,9 +48,8 @@ unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::ge
 void SparseOctree::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto cellAmountSparse = itsVoxelAmountSparse->toHost()[0];
-    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(cellAmountSparse, "tmpIndexRegister");
-    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, cellAmountSparse * sizeof(uint32_t)));
+    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
+    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
 
     float time = chunking::distributePoints(
             itsOctreeSparse,
@@ -77,23 +76,30 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountDense, "denseToSparseLUT");
     gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsMetadata.nodeAmountDense * sizeof(int)));
 
-    // Allocate the global sparseIndexCounter
-    itsVoxelAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseVoxelAmount");
-    gpuErrchk(cudaMemset (itsVoxelAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
+    // Allocate the temporary sparseIndexCounter
+    auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
+    gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     float time = chunking::initialPointCounting(
             itsCloudData,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
-            itsVoxelAmountSparse,
+            nodeAmountSparse,
             itsPointCloudMetadata,
             itsGridSideLengthPerLevel[0]
     );
 
+    // Store the current amount of sparse nodes
+    // !IMPORTANT! At this time the amount of sparse node just holds the amount of sparse nodes in the base level
+    itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
 }
-
 void SparseOctree::performCellMerging(uint32_t threshold) {
+
+    // Allocate the temporary sparseIndexCounter
+    auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
+    // !IMPORTANT! initialize it with the current sparse node counts (from base level)
+    gpuErrchk(cudaMemcpy(nodeAmountSparse->devicePointer(), &itsMetadata.nodeAmountSparse, 1 * sizeof(uint32_t), cudaMemcpyHostToDevice));
 
     float timeAccumulated = 0;
 
@@ -103,7 +109,7 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
         float time = chunking::propagatePointCounts (
                 itsDensePointCountPerVoxel,
                 itsDenseToSparseLUT,
-                itsVoxelAmountSparse,
+                nodeAmountSparse,
                 itsVoxelsPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i],
@@ -116,20 +122,20 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
 
     spdlog::info("'EvaluateSparseOctree' took {:f} [ms]", timeAccumulated);
 
-    // Create the sparse octree
-    uint32_t voxelAmountSparse = itsVoxelAmountSparse->toHost()[0];
-    itsOctreeSparse = make_unique<CudaArray<Chunk>>(voxelAmountSparse, "octreeSparse");
+    // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
+    itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
+    itsOctreeSparse = make_unique<CudaArray<Chunk>>(itsMetadata.nodeAmountSparse, "octreeSparse");
 
     spdlog::info(
             "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
-            voxelAmountSparse,
-            (1 - static_cast<float>(voxelAmountSparse) / itsMetadata.nodeAmountDense) * 100,
-            static_cast<float>(itsMetadata.nodeAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
+            itsMetadata.nodeAmountSparse,
+            (1 - static_cast<float>(itsMetadata.nodeAmountSparse) / itsMetadata.nodeAmountDense) * 100,
+            static_cast<float>(itsMetadata.nodeAmountDense - itsMetadata.nodeAmountSparse) * sizeof(Chunk) / 1000000000.f
     );
 
     // Allocate the conversion LUT from sparse to dense
-    itsSparseToDenseLUT = make_unique<CudaArray<int>>(voxelAmountSparse, "sparseToDenseLUT");
-    gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, voxelAmountSparse * sizeof(int)));
+    itsSparseToDenseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
+    gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, itsMetadata.nodeAmountSparse * sizeof(int)));
 
     initializeBaseGridSparse();
     initializeOctreeSparse(threshold);
