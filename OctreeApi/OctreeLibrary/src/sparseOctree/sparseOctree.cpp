@@ -5,7 +5,7 @@
 #include <sparseOctree.h>
 #include <chunking.cuh>
 
-SparseOctree::SparseOctree(uint32_t depth, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
+SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
         itsCloudData(move(cloudData)),
         itsPointCloudMetadata(cloudMetadata)
 {
@@ -13,6 +13,7 @@ SparseOctree::SparseOctree(uint32_t depth, PointCloudMetadata cloudMetadata, uni
     itsMetadata.depth = depth;
     itsMetadata.nodeAmountDense = 0;
     itsMetadata.nodeAmountSparse = 0;
+    itsMetadata.mergingThreshold = mergingThreshold;
 
     // Pre calculate often-used octree metrics
     auto sideLength = static_cast<uint32_t >(pow(2, depth));
@@ -103,7 +104,7 @@ void SparseOctree::initialPointCounting() {
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
 }
-void SparseOctree::performCellMerging(uint32_t threshold) {
+void SparseOctree::performCellMerging() {
 
     // Allocate the temporary sparseIndexCounter
     auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
@@ -147,7 +148,7 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, itsMetadata.nodeAmountSparse * sizeof(int)));
 
     initializeBaseGridSparse();
-    initializeOctreeSparse(threshold);
+    initializeOctreeSparse();
 }
 
 
@@ -165,7 +166,7 @@ void SparseOctree::initializeBaseGridSparse() {
 }
 
 // ToDo: Rename
-void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
+void SparseOctree::initializeOctreeSparse() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
@@ -181,7 +182,7 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
                 itsDenseToSparseLUT,
                 itsSparseToDenseLUT,
                 globalChunkCounter,
-                threshold,
+                itsMetadata.mergingThreshold,
                 itsVoxelsPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i],

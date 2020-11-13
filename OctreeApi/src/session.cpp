@@ -53,14 +53,14 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
 void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold) {
     itsGlobalOctreeLevel = globalOctreeLevel;
     itsMergingThreshold = mergingThreshold;
-    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMetadata, move(data));
+    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMergingThreshold, itsMetadata, move(data));
 
     spdlog::debug("set octree properties");
 }
 
 void Session::generateOctree() {
     itsOctree->initialPointCounting();
-    itsOctree->performCellMerging(itsMergingThreshold);
+    itsOctree->performCellMerging();
     itsOctree->distributePoints();
     itsOctree->performIndexing();
     spdlog::debug("octree generated");

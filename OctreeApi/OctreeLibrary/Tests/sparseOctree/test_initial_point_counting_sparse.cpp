@@ -18,9 +18,9 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
 
-    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
+    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 
-    cloud->initialPointCounting(7);
+    cloud->initialPointCounting();
 
     auto denseCount = cloud->getDensePointCountPerVoxel();
     auto denseToSparseLUT = cloud->getDenseToSparseLUT();

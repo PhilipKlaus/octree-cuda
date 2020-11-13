@@ -14,13 +14,14 @@ struct OctreeMetadata {
     uint32_t depth;             // The depth of the octree // ToDo: -1
     uint32_t nodeAmountSparse;  // The actual amount of sparse nodes
     uint32_t nodeAmountDense;   // The theoretical amount of dense nodes
+    uint32_t mergingThreshold;  // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
 };
 
 class SparseOctree {
 
 public:
 
-    SparseOctree(uint32_t depth, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
+    SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 
@@ -31,7 +32,7 @@ public:
 
     // Octree pipeline
     void initialPointCounting();
-    void performCellMerging(uint32_t threshold);
+    void performCellMerging();
     void distributePoints();
     void performIndexing();
 
@@ -54,7 +55,7 @@ public:
 private:
 
     // Merging
-    void initializeOctreeSparse(uint32_t threshold);
+    void initializeOctreeSparse();
     void initializeBaseGridSparse();
 
     // Indexing
