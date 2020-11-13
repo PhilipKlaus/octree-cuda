@@ -73,7 +73,7 @@ uint32_t SparseOctree::exportTreeNode(
         ply.close ();
     }
     if (level > 0) {
-        for(int i = 0; i < octreeSparse[index].childrenChunksCount; ++i) {
+        for(uint32_t i = 0; i < octreeSparse[index].childrenChunksCount; ++i) {
             count += exportTreeNode(cpuPointCloud, octreeSparse, dataLUT, level - 1, octreeSparse[index].childrenChunks[i], folder);
         }
     }
@@ -87,8 +87,8 @@ void SparseOctree::exportOctree(const string &folderPath) {
     uint32_t topLevelIndex = itsVoxelAmountSparse->toHost()[0] - 1;
 
     // ToDo: Remove .get() -> pass unique_ptr by reference
-    uint32_t exportedPoints = exportTreeNode(cpuPointCloud.get(), octreeSparse, dataLUT, itsGlobalOctreeDepth, topLevelIndex, folderPath);
-    assert(exportedPoints == itsMetadata.pointAmount);
-    spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.pointAmount, folderPath);
+    uint32_t exportedPoints = exportTreeNode(cpuPointCloud.get(), octreeSparse, dataLUT, itsMetadata.depth, topLevelIndex, folderPath);
+    assert(exportedPoints == itsPointCloudMetadata.pointAmount);
+    spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsPointCloudMetadata.pointAmount, folderPath);
     spdlog::info("{}", itsSubsampleLUTs.size());
 }

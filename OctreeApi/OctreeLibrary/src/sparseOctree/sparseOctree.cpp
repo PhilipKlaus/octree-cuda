@@ -6,11 +6,13 @@
 #include <chunking.cuh>
 
 SparseOctree::SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
-itsCloudData(move(cloudData)),
-itsMetadata(cloudMetadata),
-itsGlobalOctreeDepth(0),
-itsVoxelAmountDense(0)
+        itsCloudData(move(cloudData)),
+        itsPointCloudMetadata(cloudMetadata),
+        itsVoxelAmountDense(0)
 {
+    // Initialize octree metadata
+    itsMetadata.depth = 0;
+
     itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
@@ -56,7 +58,7 @@ void SparseOctree::distributePoints() {
             itsDataLUT,
             itsDenseToSparseLUT,
             tmpIndexRegister,
-            itsMetadata,
+            itsPointCloudMetadata,
             itsGridSideLengthPerLevel[0]);
 
     itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", time));
@@ -84,7 +86,7 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
             itsVoxelAmountSparse,
-            itsMetadata,
+            itsPointCloudMetadata,
             itsGridSideLengthPerLevel[0]
     );
 
@@ -96,7 +98,7 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     float timeAccumulated = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
+    for(uint32_t i = 0; i < itsMetadata.depth; ++i) {
 
         float time = chunking::propagatePointCounts (
                 itsDensePointCountPerVoxel,
@@ -156,7 +158,7 @@ void SparseOctree::initializeOctreeSparse(uint32_t threshold) {
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     float timeAccumulated = 0;
-    for(uint32_t i = 0; i < itsGlobalOctreeDepth; ++i) {
+    for(uint32_t i = 0; i < itsMetadata.depth; ++i) {
 
         float time = chunking::mergeHierarchical(
                 itsOctreeSparse,

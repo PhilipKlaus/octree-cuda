@@ -9,6 +9,11 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 
+struct OctreeMetadata {
+
+    uint32_t depth;            // The depth of the octree // ToDo: -1
+};
+
 class SparseOctree {
 
 public:
@@ -36,7 +41,7 @@ public:
     void exportOctree(const string &folderPath);
 
     // Debugging methods
-    const PointCloudMetadata& getMetadata() { return itsMetadata; }
+    const PointCloudMetadata& getMetadata() { return itsPointCloudMetadata; }
     unique_ptr<uint32_t[]> getDataLUT() { return itsDataLUT->toHost(); }
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
     unique_ptr<int[]> getDenseToSparseLUT();
@@ -66,7 +71,7 @@ private:
 private:
 
     // Point cloud
-    PointCloudMetadata itsMetadata;                             // The metadata associated with the cloud
+    PointCloudMetadata itsPointCloudMetadata;                             // The metadata associated with the cloud
     unique_ptr<CudaArray<Vector3>> itsCloudData;                // The cloud data
 
     // Required data structures for calculation
@@ -77,7 +82,7 @@ private:
     unique_ptr<CudaArray<Chunk>> itsOctreeSparse;               // Holds the sparse octree
 
     // Octree Metadata
-    uint32_t itsGlobalOctreeDepth;                              // The depth of the global octree
+    OctreeMetadata itsMetadata;                                 // The octree metadata
     unique_ptr<CudaArray<uint32_t>> itsVoxelAmountSparse;       // Overall initial cell amount of the sparse octree
     uint32_t itsVoxelAmountDense;                               // The amount of dense voxels within the octree hierarchy
 

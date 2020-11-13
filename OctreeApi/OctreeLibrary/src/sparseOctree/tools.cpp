@@ -12,7 +12,7 @@ void SparseOctree::calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingB
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    auto dimension = tools::subtract(itsMetadata.boundingBox.maximum, itsMetadata.boundingBox.minimum);
+    auto dimension = tools::subtract(itsPointCloudMetadata.boundingBox.maximum, itsPointCloudMetadata.boundingBox.minimum);
     auto width = dimension.x / itsGridSideLengthPerLevel[level];
     auto height = dimension.y / itsGridSideLengthPerLevel[level];
     auto depth = dimension.z / itsGridSideLengthPerLevel[level];
@@ -26,7 +26,7 @@ void SparseOctree::calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingB
 }
 
 void SparseOctree::preCalculateOctreeParameters(uint32_t octreeDepth) {
-    itsGlobalOctreeDepth = octreeDepth;
+    itsMetadata.depth = octreeDepth;
 
     // Precalculate parameters
     auto sideLength = static_cast<uint32_t >(pow(2, octreeDepth));

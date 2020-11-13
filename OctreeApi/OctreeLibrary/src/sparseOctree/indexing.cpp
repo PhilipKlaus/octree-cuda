@@ -31,10 +31,10 @@ void SparseOctree::hierarchicalCount(
         BoundingBox bb{};
         Vector3i coords{};
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
-        calculateVoxelBB(bb, coords, itsMetadata.boundingBox, denseVoxelIndex, level);
+        calculateVoxelBB(bb, coords, itsPointCloudMetadata.boundingBox, denseVoxelIndex, level);
 
         PointCloudMetadata metadata{};
-        metadata.scale = itsMetadata.scale;
+        metadata.scale = itsPointCloudMetadata.scale;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
 
@@ -101,6 +101,14 @@ void SparseOctree::performIndexing() {
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
 
     // Perform the actual subsampling
-    hierarchicalCount(h_octreeSparse, h_sparseToDenseLUT, rootVoxelIndexSparse, itsGlobalOctreeDepth, pointCountGrid, denseToSpareLUT, voxelCount);
+    hierarchicalCount(
+            h_octreeSparse,
+            h_sparseToDenseLUT,
+            rootVoxelIndexSparse,
+            itsMetadata.depth,
+            pointCountGrid,
+            denseToSpareLUT,
+            voxelCount
+            );
 };
 

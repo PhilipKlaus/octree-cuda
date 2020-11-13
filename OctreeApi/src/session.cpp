@@ -63,7 +63,7 @@ void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingTh
 }
 
 void Session::generateOctree() {
-    //itsPointCloud->getMetadata() = itsMetadata;
+    //itsPointCloud->getMetadata() = itsPointCloudMetadata;
     itsOctree->initialPointCounting(itsGlobalOctreeLevel);
     itsOctree->performCellMerging(itsMergingThreshold);
     itsOctree->distributePoints();
