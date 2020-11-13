@@ -7,11 +7,11 @@
 
 SparseOctree::SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
         itsCloudData(move(cloudData)),
-        itsPointCloudMetadata(cloudMetadata),
-        itsVoxelAmountDense(0)
+        itsPointCloudMetadata(cloudMetadata)
 {
     // Initialize octree metadata
     itsMetadata.depth = 0;
+    itsMetadata.nodeAmountDense = 0;
 
     itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
@@ -70,12 +70,12 @@ void SparseOctree::initialPointCounting(uint32_t initialDepth) {
     preCalculateOctreeParameters(initialDepth);
 
     // Allocate the dense point count
-    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsVoxelAmountDense, "itsDensePointCountPerVoxel");
-    gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsVoxelAmountDense * sizeof(uint32_t)));
+    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountDense, "itsDensePointCountPerVoxel");
+    gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsMetadata.nodeAmountDense * sizeof(uint32_t)));
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsVoxelAmountDense, "denseToSparseLUT");
-    gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsVoxelAmountDense * sizeof(int)));
+    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountDense, "denseToSparseLUT");
+    gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsMetadata.nodeAmountDense * sizeof(int)));
 
     // Allocate the global sparseIndexCounter
     itsVoxelAmountSparse = make_unique<CudaArray<uint32_t>>(1, "sparseVoxelAmount");
@@ -123,8 +123,8 @@ void SparseOctree::performCellMerging(uint32_t threshold) {
     spdlog::info(
             "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
             voxelAmountSparse,
-            (1 - static_cast<float>(voxelAmountSparse) / itsVoxelAmountDense) * 100,
-            static_cast<float>(itsVoxelAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
+            (1 - static_cast<float>(voxelAmountSparse) / itsMetadata.nodeAmountDense) * 100,
+            static_cast<float>(itsMetadata.nodeAmountDense - voxelAmountSparse) * sizeof(Chunk) / 1000000000.f
     );
 
     // Allocate the conversion LUT from sparse to dense

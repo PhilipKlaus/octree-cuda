@@ -32,8 +32,8 @@ void SparseOctree::preCalculateOctreeParameters(uint32_t octreeDepth) {
     auto sideLength = static_cast<uint32_t >(pow(2, octreeDepth));
     for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
         itsGridSideLengthPerLevel.push_back(gridSize);
-        itsLinearizedDenseVoxelOffset.push_back(itsVoxelAmountDense);
+        itsLinearizedDenseVoxelOffset.push_back(itsMetadata.nodeAmountDense);
         itsVoxelsPerLevel.push_back(static_cast<uint32_t>(pow(gridSize, 3)));
-        itsVoxelAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
+        itsMetadata.nodeAmountDense += static_cast<uint32_t>(pow(gridSize, 3));
     }
 }
