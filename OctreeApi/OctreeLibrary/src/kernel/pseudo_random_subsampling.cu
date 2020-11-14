@@ -93,7 +93,7 @@ float pseudo__random_subsampling::distributeSubsamples(
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
-    spdlog::info("'distributeSubsamples' took {:f} [ms]", timer.getMilliseconds());
+    spdlog::debug("'kernelDistributeSubsamples' took {:f} [ms]", timer.getMilliseconds());
     return timer.getMilliseconds();
 }
 
@@ -126,6 +126,6 @@ float pseudo__random_subsampling::subsample(
     timer.stop();
     gpuErrchk(cudaGetLastError());
 
-    spdlog::info("'simpleSubsampling' took {:f} [ms]", timer.getMilliseconds());
+    spdlog::debug("'kernelSubsample' took {:f} [ms]", timer.getMilliseconds());
     return timer.getMilliseconds();
 }

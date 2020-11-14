@@ -6,13 +6,12 @@
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library( ${PROJECT_NAME} STATIC
-        src/tools.cu
-        src/sparseOctree/sparseOctree.cpp
-        src/sparseOctree/indexing.cpp
 
-        src/timing.cuh
+        # Misc
+        src/misc/tools.cu
 
         # Sparse octree
+        src/sparseOctree/sparseOctree.cpp
         src/sparseOctree/benchmarking.cpp
         src/sparseOctree/data_export.cpp
         src/sparseOctree/tools.cpp
@@ -27,7 +26,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/kernel/pseudo_random_subsampling.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src src/kernel)
+target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
 
 ####################
 # ADD CUDA SUPPORT #
