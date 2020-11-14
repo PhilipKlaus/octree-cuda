@@ -36,5 +36,5 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
         // We can assume that there exist a sparse index for each dense index as there are no empty cells
         REQUIRE(denseToSparseLUT[i] != -1);
     }
-    REQUIRE(sum == cloud->getMetadata().pointAmount);
+    REQUIRE(sum == cloud->getMetadata().cloudMetadata.pointAmount);
 }

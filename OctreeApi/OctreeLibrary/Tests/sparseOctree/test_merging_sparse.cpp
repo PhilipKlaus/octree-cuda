@@ -45,7 +45,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].childrenChunksCount == 0);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].isParent == false);
         REQUIRE(i == sparseToDenseLUT[denseToSparseLUT[i]]);
     }
@@ -58,7 +58,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == false);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -71,7 +71,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == false);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -84,7 +84,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == false);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -97,7 +97,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == false);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -110,7 +110,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == true);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -123,7 +123,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == true);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
     }
@@ -136,7 +136,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].childrenChunksCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex == 0);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().pointAmount);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < cloud->getMetadata().cloudMetadata.pointAmount);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isParent == true);
         REQUIRE((cellOffset + i) == sparseToDenseLUT[denseToSparseLUT[cellOffset + i]]);
         REQUIRE(cellOffset + i == denseToSparseLUT[cellOffset + i]);

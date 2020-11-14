@@ -11,10 +11,11 @@
 
 struct OctreeMetadata {
 
-    uint32_t depth;             // The depth of the octree // ToDo: -1
-    uint32_t nodeAmountSparse;  // The actual amount of sparse nodes
-    uint32_t nodeAmountDense;   // The theoretical amount of dense nodes
-    uint32_t mergingThreshold;  // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    uint32_t depth;                     // The depth of the octree // ToDo: -1
+    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes
+    uint32_t nodeAmountDense;           // The theoretical amount of dense nodes
+    uint32_t mergingThreshold;          // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    PointCloudMetadata cloudMetadata;   // The cloud metadata;
 };
 
 class SparseOctree {
@@ -43,7 +44,7 @@ public:
     void exportOctree(const string &folderPath);
 
     // Debugging methods
-    const PointCloudMetadata& getMetadata() { return itsPointCloudMetadata; }
+    const OctreeMetadata& getMetadata();
     unique_ptr<uint32_t[]> getDataLUT() { return itsDataLUT->toHost(); }
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
     unique_ptr<int[]> getDenseToSparseLUT();
@@ -73,7 +74,6 @@ private:
 private:
 
     // Point cloud
-    PointCloudMetadata itsPointCloudMetadata;                             // The metadata associated with the cloud
     unique_ptr<CudaArray<Vector3>> itsCloudData;                // The cloud data
 
     // Required data structures for calculation

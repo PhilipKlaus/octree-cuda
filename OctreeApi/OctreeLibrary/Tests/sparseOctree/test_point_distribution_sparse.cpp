@@ -73,5 +73,5 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     auto sparseToDenseLUT = cloud->getSparseToDenseLUT();
     uint32_t topLevelIndex = cloud->getVoxelAmountSparse()-1;
 
-    REQUIRE(testOctreenodeSparse(cpuData.get(), octree, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == cloud->getMetadata().pointAmount);
+    REQUIRE(testOctreenodeSparse(cpuData.get(), octree, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == cloud->getMetadata().cloudMetadata.pointAmount);
 }

@@ -89,6 +89,6 @@ void SparseOctree::exportOctree(const string &folderPath) {
     // ToDo: Remove .get() -> pass unique_ptr by reference
     uint32_t exportedPoints = exportTreeNode(cpuPointCloud.get(), octreeSparse, dataLUT, itsMetadata.depth, topLevelIndex, folderPath);
     assert(exportedPoints == itsPointCloudMetadata.pointAmount);
-    spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsPointCloudMetadata.pointAmount, folderPath);
+    spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.cloudMetadata.pointAmount, folderPath);
     spdlog::info("{}", itsSubsampleLUTs.size());
 }

@@ -31,10 +31,10 @@ void SparseOctree::hierarchicalCount(
         BoundingBox bb{};
         Vector3i coords{};
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
-        calculateVoxelBB(bb, coords, itsPointCloudMetadata.boundingBox, denseVoxelIndex, level);
+        calculateVoxelBB(bb, coords, itsMetadata.cloudMetadata.boundingBox, denseVoxelIndex, level);
 
         PointCloudMetadata metadata{};
-        metadata.scale = itsPointCloudMetadata.scale;
+        metadata.scale = itsMetadata.cloudMetadata.scale;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
 
