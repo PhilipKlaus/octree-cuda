@@ -55,8 +55,8 @@ public:
 private:
 
     // Merging
-    void initializeOctreeSparse();
-    void initializeBaseGridSparse();
+    void mergeHierarchical();
+    void initLowestOctreeHierarchy();
 
     // Indexing
     void hierarchicalCount(const unique_ptr<Chunk[]> &h_octreeSparse,

@@ -161,6 +161,6 @@ float chunking::mergeHierarchical(
             cellOffsetOld);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-    spdlog::info("'initializeOctreeSparse' for gridSize of {} took {:f} [ms]", newGridSize, timer.getMilliseconds());
+    spdlog::debug("'kernelMergeHierarchical' for gridSize of {} took {:f} [ms]", newGridSize, timer.getMilliseconds());
     return timer.getMilliseconds();
 }

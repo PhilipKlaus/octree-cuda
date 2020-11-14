@@ -51,6 +51,7 @@ void SparseOctree::distributePoints() {
             itsGridSideLengthPerLevel[0]);
 
     itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", time));
+    spdlog::info("'distributePoints' took {:f} [ms]", time);
 }
 
 void SparseOctree::initialPointCounting() {
@@ -80,6 +81,7 @@ void SparseOctree::initialPointCounting() {
     // !IMPORTANT! At this time the amount of sparse node just holds the amount of sparse nodes in the base level
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
+    spdlog::info("'initialPointCounting' took {:f} [ms]", time);
 }
 void SparseOctree::performCellMerging() {
 
@@ -103,11 +105,11 @@ void SparseOctree::performCellMerging() {
                 itsLinearizedDenseVoxelOffset[i + 1],
                 itsLinearizedDenseVoxelOffset[i]);
 
-        itsTimeMeasurement.insert(std::make_pair("EvaluateSparseOctree_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
+        itsTimeMeasurement.insert(std::make_pair("PropagatePointCounts_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
         timeAccumulated += time;
     }
 
-    spdlog::info("'EvaluateSparseOctree' took {:f} [ms]", timeAccumulated);
+    spdlog::info("'propagatePointCounts' took {:f} [ms]", timeAccumulated);
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
@@ -124,13 +126,13 @@ void SparseOctree::performCellMerging() {
     itsSparseToDenseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, itsMetadata.nodeAmountSparse * sizeof(int)));
 
-    initializeBaseGridSparse();
-    initializeOctreeSparse();
+    initLowestOctreeHierarchy();
+    mergeHierarchical();
 }
 
 
 // ToDo: Rename
-void SparseOctree::initializeBaseGridSparse() {
+void SparseOctree::initLowestOctreeHierarchy() {
 
     float time = chunking::initLowestOctreeHierarchy(
             itsOctreeSparse,
@@ -139,11 +141,11 @@ void SparseOctree::initializeBaseGridSparse() {
             itsSparseToDenseLUT,
             itsVoxelsPerLevel[0]);
 
-    itsTimeMeasurement.insert(std::make_pair("initializeBaseGridSparse", time));
+    itsTimeMeasurement.insert(std::make_pair("initLowestOctreeHierarchy", time));
+    spdlog::info("'initLowestOctreeHierarchy' took {:f} [ms]", time);
 }
 
-// ToDo: Rename
-void SparseOctree::initializeOctreeSparse() {
+void SparseOctree::mergeHierarchical() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
@@ -171,5 +173,5 @@ void SparseOctree::initializeOctreeSparse() {
         itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
     }
 
-    spdlog::info("'initializeOctreeSparse' took {:f} [ms]", timeAccumulated);
+    spdlog::info("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
 }

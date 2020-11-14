@@ -50,7 +50,5 @@ float chunking::initLowestOctreeHierarchy(
             lowestGridSize);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-
-    spdlog::info("'initializeBaseGridSparse' took {:f} [ms]", timer.getMilliseconds());
     return timer.getMilliseconds();
 }

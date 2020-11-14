@@ -57,7 +57,5 @@ float chunking::distributePoints(
             gridSize);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-
-    spdlog::info("'distributePoints' took {:f} [ms]", timer.getMilliseconds());
     return timer.getMilliseconds();
 }

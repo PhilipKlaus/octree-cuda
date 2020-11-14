@@ -107,6 +107,6 @@ float chunking::propagatePointCounts(
             cellOffsetOld);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-    spdlog::info("'propagatePointCounts' for gridSize of {} took {:f} [ms]", newGridSize, timer.getMilliseconds());
+    spdlog::debug("'propagatePointCounts' for gridSize of {} took {:f} [ms]", newGridSize, timer.getMilliseconds());
     return timer.getMilliseconds();
 }

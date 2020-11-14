@@ -56,7 +56,5 @@ float chunking::initialPointCounting(
             gridSideLength);
     timer.stop();
     gpuErrchk(cudaGetLastError());
-
-    spdlog::info("'kernelMapCloudToGrid' took {:f} [ms]", timer.getMilliseconds());
     return timer.getMilliseconds();
 }
