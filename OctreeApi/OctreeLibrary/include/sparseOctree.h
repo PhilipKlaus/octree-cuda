@@ -44,13 +44,12 @@ public:
     void exportOctree(const string &folderPath);
 
     // Debugging methods
-    const OctreeMetadata& getMetadata();
-    unique_ptr<uint32_t[]> getDataLUT() { return itsDataLUT->toHost(); }
-    unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
-    unique_ptr<int[]> getDenseToSparseLUT();
-    unique_ptr<int[]> getSparseToDenseLUT();
-    unique_ptr<Chunk[]> getOctreeSparse();
-    uint32_t getVoxelAmountSparse();
+    const OctreeMetadata& getMetadata() const;
+    unique_ptr<uint32_t[]> getDataLUT()const;
+    unique_ptr<uint32_t[]> getDensePointCountPerVoxel() const;
+    unique_ptr<int[]> getDenseToSparseLUT() const;
+    unique_ptr<int[]> getSparseToDenseLUT() const;
+    unique_ptr<Chunk[]> getOctreeSparse() const;
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& getSubsampleLUT() const;
 
 private:

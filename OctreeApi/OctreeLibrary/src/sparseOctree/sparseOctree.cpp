@@ -30,33 +30,6 @@ SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloud
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
 
-const OctreeMetadata &SparseOctree::getMetadata() {
-    return itsMetadata;
-}
-
-unique_ptr<uint32_t[]> SparseOctree::getDensePointCountPerVoxel() {
-    return itsDensePointCountPerVoxel->toHost();
-}
-
-unique_ptr<int[]> SparseOctree::getDenseToSparseLUT() {
-    return itsDenseToSparseLUT->toHost();
-}
-
-unique_ptr<int[]> SparseOctree::getSparseToDenseLUT(){
-    return itsSparseToDenseLUT->toHost();
-}
-
-unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() {
-    return itsOctreeSparse->toHost();
-}
-
-uint32_t SparseOctree::getVoxelAmountSparse() {
-    return itsMetadata.nodeAmountSparse;
-}
-
-unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
-    return itsSubsampleLUTs;
-}
 
 //###################
 //#     Pipeline    #

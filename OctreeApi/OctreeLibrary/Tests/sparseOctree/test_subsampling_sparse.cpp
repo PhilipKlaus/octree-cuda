@@ -58,6 +58,6 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
    REQUIRE(cloud->getSubsampleLUT().size() == pow(4,3) + pow(2,3) + pow(1,3));
 
     auto octree = cloud->getOctreeSparse();
-    uint32_t topLevelIndex = cloud->getVoxelAmountSparse()-1;
+    uint32_t topLevelIndex = cloud->getMetadata().nodeAmountSparse-1;
     testSubsampleTree(octree, cloud->getSubsampleLUT(), topLevelIndex, 7);
 }
