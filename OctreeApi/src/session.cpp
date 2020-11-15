@@ -36,7 +36,6 @@ void Session::setDevice() const {
 }
 
 Session::~Session() {
-    itsOctree->freeGpuMemory();
     spdlog::debug("session destroyed");
 }
 
@@ -45,30 +44,25 @@ void Session::setMetadata(const PointCloudMetadata &metadata) {
     spdlog::debug("set metadata");
 };
 
-const PointCloudMetadata& Session::getMetadata() const {
-    return itsMetadata;
-}
-
 void Session::setPointCloudHost(uint8_t *pointCloud) {
     data = make_unique<CudaArray<Vector3>>(itsMetadata.pointAmount, "pointcloud");
     data->toGPU(pointCloud);
-    //itsPointCloud = make_unique<PointCloud>(move(data));
-    itsOctree = make_unique<SparseOctree>(itsMetadata, move(data));
     spdlog::debug("copied point cloud from host to device");
 }
 
 void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold) {
     itsGlobalOctreeLevel = globalOctreeLevel;
     itsMergingThreshold = mergingThreshold;
+    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMergingThreshold, itsMetadata, move(data));
+
     spdlog::debug("set octree properties");
 }
 
 void Session::generateOctree() {
-    //itsPointCloud->getMetadata() = itsMetadata;
-    itsOctree->initialPointCounting(itsGlobalOctreeLevel);
-    itsOctree->performCellMerging(itsMergingThreshold);
+    itsOctree->initialPointCounting();
+    itsOctree->performCellMerging();
     itsOctree->distributePoints();
-    itsOctree->performIndexing();
+    itsOctree->performSubsampling();
     spdlog::debug("octree generated");
 }
 

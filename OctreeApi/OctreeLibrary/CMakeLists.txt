@@ -1,29 +1,32 @@
 ##########################################################################
-# OctreeApi                                                          #
+# OctreeApi                                                              #
 # A Library for generating octree structures for point clouds on the GPU #
 ##########################################################################
 
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library( ${PROJECT_NAME} STATIC
-        src/tools.cu
-        src/denseOctree/cellMerging.cu
-        src/denseOctree/initialPointCounting.cu
-        src/denseOctree/pointDistribution.cu
-        src/sparseOctree/cellMergingSparse.cu
-        src/sparseOctree/initialPointCountingSparse.cu
-        src/sparseOctree/pointDistributionSparse.cu
+
+        # Misc
+        src/misc/tools.cu
+
+        # Sparse octree
         src/sparseOctree/sparseOctree.cpp
-        src/denseOctree/denseOctree.cpp
-        src/sparseOctree/indexing.cu
+        src/sparseOctree/benchmarking.cpp
+        src/sparseOctree/data_export.cpp
+        src/sparseOctree/tools.cpp
+        src/sparseOctree/debugging.cpp
 
-        src/timing.cuh
-
-        src/kernel/mapCloudToGrid.cu
-        src/kernel/kernel_indexing.cu)
+        # Cuda kernels
+        src/kernel/initial_point_counting.cu
+        src/kernel/point_count_propagation.cu
+        src/kernel/octree_initialization.cu
+        src/kernel/point_distributing.cu
+        src/kernel/tree_node_merging.cu
+        src/kernel/pseudo_random_subsampling.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src src/kernel)
+target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
 
 ####################
 # ADD CUDA SUPPORT #

@@ -5,61 +5,101 @@
 #ifndef OCTREE_LIBRARY_SPARSE_OCTREE_H
 #define OCTREE_LIBRARY_SPARSE_OCTREE_H
 
-#include "octreeBase.h"
+#include <types.h>
+#include <cudaArray.h>
+#include <tools.cuh>
 
-class SparseOctree : public OctreeBase {
+struct OctreeMetadata {
+
+    uint32_t depth;                     // The depth of the octree // ToDo: -1
+    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes
+    uint32_t nodeAmountDense;           // The theoretical amount of dense nodes
+    uint32_t mergingThreshold;          // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    PointCloudMetadata cloudMetadata;   // The cloud metadata;
+};
+
+class SparseOctree {
 
 public:
-    SparseOctree(PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
-            OctreeBase(cloudMetadata, std::move(cloudData))
-    {
-        spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
-    }
 
-    void initialPointCounting(uint32_t initialDepth) override;
-    void performCellMerging(uint32_t threshold) override;
-    void distributePoints() override;
-    void performIndexing() override;
+    SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
+    SparseOctree(const SparseOctree&) = delete;
+    void operator=(const SparseOctree&) = delete;
 
-    void exportOctree(const string &folderPath) override;
-    void freeGpuMemory() override;
+public:
+
+    // Benchmarking
+    void exportTimeMeasurements(const string &filePath);
+
+    // Octree pipeline
+    void initialPointCounting();
+    void performCellMerging();
+    void distributePoints();
+    void performSubsampling();
+
+    // Calculation tools
+    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingBox &cloud, uint32_t denseVoxelIndex, uint32_t level);
+
+    // Data export
+    void exportOctree(const string &folderPath);
 
     // Debugging methods
-    unique_ptr<uint32_t[]> getDensePointCountPerVoxel();
-    unique_ptr<int[]> getDenseToSparseLUT();
-    unique_ptr<int[]> getSparseToDenseLUT();
-    unique_ptr<Chunk[]> getOctreeSparse();
-    uint32_t getVoxelAmountSparse();
+    const OctreeMetadata& getMetadata() const;
+    unique_ptr<uint32_t[]> getDataLUT()const;
+    unique_ptr<uint32_t[]> getDensePointCountPerVoxel() const;
+    unique_ptr<int[]> getDenseToSparseLUT() const;
+    unique_ptr<int[]> getSparseToDenseLUT() const;
+    unique_ptr<Chunk[]> getOctreeSparse() const;
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& getSubsampleLUT() const;
 
 private:
 
     // Merging
-    void initializeOctreeSparse(uint32_t threshold);
-    void initializeBaseGridSparse();
+    void mergeHierarchical();
+    void initLowestOctreeHierarchy();
 
-    // Indexing
-    void evaluateOctreeStatistics(const unique_ptr<Chunk[]> &h_octreeSparse, uint32_t sparseVoxelIndex);
-    void hierarchicalCount(const unique_ptr<Chunk[]> &h_octreeSparse,
-                           const unique_ptr<int[]> &h_sparseToDenseLUT,
-                           uint32_t sparseVoxelIndex,
-                           uint32_t level,
-                           unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
-                           unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-                           unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
+    // Subsampling
+    float hierarchicalSubsampling(const unique_ptr<Chunk[]> &h_octreeSparse,
+                                 const unique_ptr<int[]> &h_sparseToDenseLUT,
+                                 uint32_t sparseVoxelIndex,
+                                 uint32_t level,
+                                 unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
+                                 unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
+                                 unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
 
     // Exporting
     uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
 
 private:
 
-    unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel;                 // Holds all point counts in dense form
-    unique_ptr<CudaArray<int>> itsDenseToSparseLUT;                             // LUT for mapping from dense to sparse
-    unique_ptr<CudaArray<int>> itsSparseToDenseLUT;                             // LUT for mapping from sparse to dense
-    unique_ptr<CudaArray<uint32_t>> itsVoxelAmountSparse;                       // Overall initial cell amount of the sparse octree
-    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;                               // Holds the sparse octree
+    // Point cloud
+    unique_ptr<CudaArray<Vector3>> itsCloudData;                // The cloud data
 
+    // Required data structures for calculation
+    unique_ptr<CudaArray<uint32_t>> itsDataLUT;                 // LUT for accessing point cloud data from the octree
+    unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel; // Holds all point counts in dense form
+    unique_ptr<CudaArray<int>> itsDenseToSparseLUT;             // LUT for mapping from dense to sparse
+    unique_ptr<CudaArray<int>> itsSparseToDenseLUT;             // LUT for mapping from sparse to dense
+    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;               // Holds the sparse octree
+
+    // Octree Metadata
+    OctreeMetadata itsMetadata;                                 // The octree metadata
+
+    // Pre-calculations
+    vector<uint32_t> itsVoxelsPerLevel ;                        // Holds the voxel amount per level (dense)
+    vector<uint32_t> itsGridSideLengthPerLevel;                 // Holds the side length of the grid per level
+                                                                // E.g.: level 0 -> 128x128x128 -> side length: 128
+    vector<uint32_t> itsLinearizedDenseVoxelOffset;             // Holds the linear voxel offset for each level (dense)
+                                                                // Level 0 is e.g. 128x128x128
+                                                                // Offset for level 0 = 0
+                                                                // Offset for level 1 = level 0 + 128 x 128 x128
+
+    // Subsampling
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
+
+    // Benchmarking
+    unordered_map<std::string, float> itsTimeMeasurement;       // Holds all time measurements in the form (measurementName, time)
+
 };
 
 #endif //OCTREE_LIBRARY_SPARSE_OCTREE_H

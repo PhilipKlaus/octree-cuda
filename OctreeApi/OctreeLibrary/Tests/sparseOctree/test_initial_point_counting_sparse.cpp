@@ -18,15 +18,15 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
 
-    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
+    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 
-    cloud->initialPointCounting(7);
+    cloud->initialPointCounting();
 
     auto denseCount = cloud->getDensePointCountPerVoxel();
     auto denseToSparseLUT = cloud->getDenseToSparseLUT();
 
     // Require that all cells are filled and that there is no empty space
-    REQUIRE(cloud->getVoxelAmountSparse() == pow(128, 3));
+    REQUIRE(cloud->getMetadata().nodeAmountSparse == pow(128, 3));
 
     // Require that the sum of the accumulated point counts equaly to the actual point amount of the cloud
     uint32_t sum = 0;
@@ -36,5 +36,5 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
         // We can assume that there exist a sparse index for each dense index as there are no empty cells
         REQUIRE(denseToSparseLUT[i] != -1);
     }
-    REQUIRE(sum == cloud->getMetadata().pointAmount);
+    REQUIRE(sum == cloud->getMetadata().cloudMetadata.pointAmount);
 }

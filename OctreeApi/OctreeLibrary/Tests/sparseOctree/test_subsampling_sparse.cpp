@@ -47,17 +47,17 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
 
-    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
+    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 
-    cloud->initialPointCounting(7);
-    cloud->performCellMerging(10000); // All points reside in the 3th level (8x8x8) of the octree
+    cloud->initialPointCounting();
+    cloud->performCellMerging(); // All points reside in the 3th level (8x8x8) of the octree
     cloud->distributePoints();
-    cloud->performIndexing();
+    cloud->performSubsampling();
 
    // Ensure that for each relevant parent node exists a subsample data Lut
    REQUIRE(cloud->getSubsampleLUT().size() == pow(4,3) + pow(2,3) + pow(1,3));
 
     auto octree = cloud->getOctreeSparse();
-    uint32_t topLevelIndex = cloud->getVoxelAmountSparse()-1;
+    uint32_t topLevelIndex = cloud->getMetadata().nodeAmountSparse-1;
     testSubsampleTree(octree, cloud->getSubsampleLUT(), topLevelIndex, 7);
 }

@@ -5,7 +5,7 @@
 #include <types.h>
 #include <cudaArray.h>
 
-namespace indexing {
+namespace pseudo__random_subsampling {
     __global__ void kernelDistributeSubsamples(
             Vector3 *cloud,
             uint32_t *childDataLUT,
@@ -17,7 +17,7 @@ namespace indexing {
             uint32_t gridSideLength
     );
 
-    __global__ void kernelSimpleSubsampling(
+    __global__ void kernelSubsample(
             Vector3 *cloud,
             uint32_t *cloudDataLUT,
             uint32_t dataLUTStartIndex,
@@ -39,7 +39,7 @@ namespace indexing {
             uint32_t gridSideLength
     );
 
-    float simpleSubsampling(
+    float subsample(
             unique_ptr<CudaArray<Vector3>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
             uint32_t dataLUTStartIndex,

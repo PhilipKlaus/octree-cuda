@@ -41,7 +41,7 @@ uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> 
     }
     else {
         if (level > 0) {
-            for(int i = 0; i < octree[index].childrenChunksCount; ++i) {
+            for(uint32_t i = 0; i < octree[index].childrenChunksCount; ++i) {
                 count += testOctreenodeSparse(cpuPointCloud, octree, dataLUT, sparseToDense, level - 1, octree[index].childrenChunks[i]);
             }
         }
@@ -62,16 +62,16 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
 
-    auto cloud = make_unique<SparseOctree>(metadata, move(cuboid));
+    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 
-    cloud->initialPointCounting(7);
-    cloud->performCellMerging(10000); // All points reside in the 4th level (8x8x8) of the octree
+    cloud->initialPointCounting();
+    cloud->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
     cloud->distributePoints();
 
     auto octree = cloud->getOctreeSparse();
     auto dataLUT = cloud->getDataLUT();
     auto sparseToDenseLUT = cloud->getSparseToDenseLUT();
-    uint32_t topLevelIndex = cloud->getVoxelAmountSparse()-1;
+    uint32_t topLevelIndex = cloud->getMetadata().nodeAmountSparse-1;
 
-    REQUIRE(testOctreenodeSparse(cpuData.get(), octree, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == cloud->getMetadata().pointAmount);
+    REQUIRE(testOctreenodeSparse(cpuData.get(), octree, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == cloud->getMetadata().cloudMetadata.pointAmount);
 }

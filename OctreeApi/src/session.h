@@ -22,7 +22,6 @@ public:
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
     void setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold);
-    const PointCloudMetadata& getMetadata() const;
     void generateOctree();
     void exportOctree(const string &filename);
     void configureMemoryReport(const std::string &filename);
@@ -31,7 +30,7 @@ public:
 private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
-    unique_ptr<OctreeBase> itsOctree;
+    unique_ptr<SparseOctree> itsOctree;
     unique_ptr<CudaArray<Vector3>> data;
 
     // Octree Configuration
