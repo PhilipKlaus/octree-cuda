@@ -3,7 +3,9 @@
 //
 
 #include <sparseOctree.h>
+#include <json.hpp>
 
+using json = nlohmann::json;
 
 void SparseOctree::exportTimeMeasurements(const string &filePath) {
     string headerLine, timeLine;

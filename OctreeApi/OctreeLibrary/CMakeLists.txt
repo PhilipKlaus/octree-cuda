@@ -28,6 +28,10 @@ add_library( ${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
 
+# Add Lohmann JSON library
+target_include_directories(${PROJECT_NAME} PRIVATE nlohmann)
+
+
 ####################
 # ADD CUDA SUPPORT #
 ####################
