@@ -9,12 +9,19 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 
+
 struct OctreeMetadata {
 
     uint32_t depth;                     // The depth of the octree // ToDo: -1
-    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes
+    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes (amount leafs + amount parents)
+    uint32_t leafNodeAmount;            // The amount of child nodes
+    uint32_t parentNodeAmount;          // The amount of parent nodes
     uint32_t nodeAmountDense;           // The theoretical amount of dense nodes
     uint32_t mergingThreshold;          // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    float meanPointsPerLeafNode;        // Mean points per leaf node
+    float stdevPointsPerLeafNode;       // Standard deviation of points per leaf node
+    uint32_t minPointsPerNode;
+    uint32_t maxPointsPerNode;
     PointCloudMetadata cloudMetadata;   // The cloud metadata;
 };
 
@@ -30,6 +37,8 @@ public:
 
     // Benchmarking
     void exportTimeMeasurements(const string &filePath);
+    void exportOctreeStatistics(const string &filePath);
+    void exportHistogram(const string &filePath, uint32_t binWidth);
 
     // Octree pipeline
     void initialPointCounting();
@@ -69,6 +78,13 @@ private:
 
     // Exporting
     uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
+
+    // Benchmarking
+    uint32_t getRootIndex();
+    void updateOctreeStatistics();
+    void evaluateOctreeProperties(const unique_ptr<Chunk[]> &h_octreeSparse, uint32_t &leafNodes, uint32_t &parentNodes, uint32_t &pointSum, uint32_t  &min, uint32_t &max, uint32_t nodeIndex) const;
+    void calculatePointVarianceInLeafNoes(const unique_ptr<Chunk[]> &h_octreeSparse, float &sumVariance, float &ean, uint32_t nodeIndex) const;
+    void histogramBinning(const unique_ptr<Chunk[]> &h_octreeSparse, std::vector<uint32_t> &counts, uint32_t min, uint32_t binWidth, uint32_t nodeIndex) const;
 
 private:
 

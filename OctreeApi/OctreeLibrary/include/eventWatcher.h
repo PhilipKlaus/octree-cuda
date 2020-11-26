@@ -41,7 +41,7 @@ public:
         }
 
         std::ofstream htmlData;
-        htmlData.open (std::string(itsFilename), std::ios::out);
+        htmlData.open (std::string(itsMemoryReportFileName), std::ios::out);
         htmlData << itsHtmlPart1;
         htmlData << "{labels: [" << labels << "], datasets: [{label: \"Memory footprint\", backgroundColor: "
                                               "\"rgb(255, 99, 132)\", borderColor: \"rgb(255, 99, 132)\",";
@@ -51,7 +51,7 @@ public:
     }
 
     void configureMemoryReport(const std::string &filename) {
-        itsFilename = filename;
+        itsMemoryReportFileName = filename;
     }
 
     void reservedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
@@ -68,7 +68,7 @@ private:
 
     EventWatcher() {
         memoryConsumption = 0;
-        itsFilename = "memory_report.html";
+        itsMemoryReportFileName = "memory_report.html";
     }
 
     void recordEvent(const std::string& name) {
@@ -85,7 +85,7 @@ private:
     std::vector<double> itsMemoryFootprints;
     std::vector<std::string> itsEventLabels;
     time_point<steady_clock> itsStart;
-    std::string itsFilename;
+    std::string itsMemoryReportFileName;
 
     const std::string itsHtmlPart1 =
             "<html>\n"

@@ -13,6 +13,12 @@ SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloud
     itsMetadata.depth = depth;
     itsMetadata.nodeAmountDense = 0;
     itsMetadata.nodeAmountSparse = 0;
+    itsMetadata.leafNodeAmount = 0;
+    itsMetadata.parentNodeAmount = 0;
+    itsMetadata.meanPointsPerLeafNode = 0.f;
+    itsMetadata.stdevPointsPerLeafNode = 0.f;
+    itsMetadata.minPointsPerNode = 0;
+    itsMetadata.maxPointsPerNode = 0;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata = cloudMetadata;
 
@@ -292,5 +298,5 @@ void SparseOctree::performSubsampling() {
     );
 
     spdlog::info("subsampling took {}[ms]", time);
-};
+}
 

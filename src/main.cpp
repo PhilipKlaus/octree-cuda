@@ -59,10 +59,14 @@ int main() {
     ocpi_set_point_cloud_metadata(session, metadata);
     ocpi_load_point_cloud_from_host(session, pChars);
     ocpi_configure_octree(session, 7, 10000);
+    ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 400);
+
     ocpi_generate_octree(session);
     ocpi_export_octree(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
     ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
+
     ocpi_export_time_measurements(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\time_measurement.csv)");
+    ocpi_export_octree_statistics(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
     ocpi_destroy_session(session);
 
     delete[] pChars;

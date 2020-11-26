@@ -32,3 +32,7 @@ unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() const {
 unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
     return itsSubsampleLUTs;
 }
+
+uint32_t SparseOctree::getRootIndex() {
+    return itsMetadata.nodeAmountSparse - 1;
+}
