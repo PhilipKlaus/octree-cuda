@@ -10,7 +10,7 @@ namespace chunking {
     //------------- Point Counting ----------------------
 
     __global__ void kernelInitialPointCounting(
-            Vector3 *cloud,
+            uint8_t *cloud,
             uint32_t *densePointCount,
             int *denseToSparseLUT,
             uint32_t *sparseIndexCounter,
@@ -19,7 +19,7 @@ namespace chunking {
     );
 
     float initialPointCounting(
-            unique_ptr<CudaArray<Vector3>> &cloud,
+            unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &densePointCount,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
@@ -100,7 +100,7 @@ namespace chunking {
 
     __global__ void kernelDistributePoints (
             Chunk *octree,
-            Vector3 *cloud,
+            uint8_t *cloud,
             uint32_t *dataLUT,
             int *denseToSparseLUT,
             uint32_t *tmpIndexRegister,
@@ -110,7 +110,7 @@ namespace chunking {
 
     float distributePoints(
         unique_ptr<CudaArray<Chunk>> &octree,
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &dataLUT,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
         unique_ptr<CudaArray<uint32_t>> &tmpIndexRegister,

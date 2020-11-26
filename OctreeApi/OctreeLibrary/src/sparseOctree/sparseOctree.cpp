@@ -6,7 +6,7 @@
 #include <chunking.cuh>
 #include <pseudo_random_subsampling.cuh>
 
-SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
+SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
         itsCloudData(move(cloudData))
 {
     // Initialize octree metadata

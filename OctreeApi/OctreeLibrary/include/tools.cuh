@@ -16,7 +16,7 @@ namespace tools {
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __device__ uint32_t calculateGridIndex(const Vector3 &point, PointCloudMetadata const &metadata, uint16_t gridSize);
+    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint16_t gridSize);
 
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b);
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(Vector3i &coordinates, uint32_t denseVoxelIdx, uint32_t level);

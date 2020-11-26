@@ -33,7 +33,7 @@ private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
     unique_ptr<SparseOctree> itsOctree;
-    unique_ptr<CudaArray<Vector3>> data;
+    unique_ptr<CudaArray<uint8_t>> data;
 
     // Octree Configuration
     uint16_t itsGlobalOctreeLevel{};

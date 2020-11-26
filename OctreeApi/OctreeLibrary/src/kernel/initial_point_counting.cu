@@ -1,10 +1,12 @@
 #include <chunking.cuh>
 #include <tools.cuh>
 #include <timing.cuh>
+#include <cstdint>
+#include "../../include/types.h"
 
 
 __global__ void chunking::kernelInitialPointCounting(
-        Vector3 *cloud,
+        uint8_t *cloud,
         uint32_t *densePointCount,
         int *denseToSparseLUT,
         uint32_t *sparseIndexCounter,
@@ -16,7 +18,8 @@ __global__ void chunking::kernelInitialPointCounting(
     if(index >= metadata.pointAmount) {
         return;
     }
-    Vector3 point = cloud[index];
+
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * 12);
 
     // 1. Calculate the index within the dense grid
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -33,7 +36,7 @@ __global__ void chunking::kernelInitialPointCounting(
 
 
 float chunking::initialPointCounting(
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &densePointCount,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
         unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,

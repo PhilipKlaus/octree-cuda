@@ -7,7 +7,7 @@
 
 namespace pseudo__random_subsampling {
     __global__ void kernelDistributeSubsamples(
-            Vector3 *cloud,
+            uint8_t *cloud,
             uint32_t *childDataLUT,
             uint32_t childDataLUTStart,
             uint32_t *parentDataLUT,
@@ -18,7 +18,7 @@ namespace pseudo__random_subsampling {
     );
 
     __global__ void kernelSubsample(
-            Vector3 *cloud,
+            uint8_t *cloud,
             uint32_t *cloudDataLUT,
             uint32_t dataLUTStartIndex,
             uint32_t *densePointCount,
@@ -29,7 +29,7 @@ namespace pseudo__random_subsampling {
     );
 
     float distributeSubsamples(
-            unique_ptr<CudaArray<Vector3>> &cloud,
+            unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &childDataLUT,
             uint32_t childDataLUTStart,
             unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
@@ -40,7 +40,7 @@ namespace pseudo__random_subsampling {
     );
 
     float subsample(
-            unique_ptr<CudaArray<Vector3>> &cloud,
+            unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
             uint32_t dataLUTStartIndex,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,

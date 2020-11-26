@@ -4,7 +4,7 @@
 
 // Move point indices from old (child LUT) to new (parent LUT)
 __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
-        Vector3 *cloud,
+        uint8_t *cloud,
         uint32_t *childDataLUT,
         uint32_t childDataLUTStart,
         uint32_t *parentDataLUT,
@@ -17,7 +17,9 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
     if(index >= metadata.pointAmount) {
         return;
     }
-    Vector3 point = cloud[childDataLUT[childDataLUTStart + index]];
+    //Vector3 point = cloud[childDataLUT[childDataLUTStart + index]];
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + childDataLUT[childDataLUTStart + index] * 12);
+
 
     // 1. Calculate the index within the dense grid of the subsample
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -35,7 +37,7 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
 }
 
 __global__ void pseudo__random_subsampling::kernelSubsample(
-        Vector3 *cloud,
+        uint8_t *cloud,
         uint32_t *cloudDataLUT,
         uint32_t dataLUTStartIndex,
         uint32_t *densePointCount,
@@ -49,7 +51,8 @@ __global__ void pseudo__random_subsampling::kernelSubsample(
         return;
     }
 
-    Vector3 point = cloud[cloudDataLUT[dataLUTStartIndex + index]];
+    //Vector3 point = cloud[cloudDataLUT[dataLUTStartIndex + index]];
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + cloudDataLUT[dataLUTStartIndex + index] * 12);
 
     // 1. Calculate the index within the dense grid of the subsample
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -65,7 +68,7 @@ __global__ void pseudo__random_subsampling::kernelSubsample(
 }
 
 float pseudo__random_subsampling::distributeSubsamples(
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &childDataLUT,
         uint32_t childDataLUTStart,
         unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
@@ -98,7 +101,7 @@ float pseudo__random_subsampling::distributeSubsamples(
 }
 
 float pseudo__random_subsampling::subsample(
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
         uint32_t dataLUTStartIndex,
         unique_ptr<CudaArray<uint32_t>> &countingGrid,

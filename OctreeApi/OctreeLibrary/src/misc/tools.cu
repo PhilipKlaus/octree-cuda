@@ -29,14 +29,14 @@ namespace tools {
         };
     }
 
-    __device__ uint32_t calculateGridIndex(const Vector3 &point, PointCloudMetadata const &metadata, uint16_t gridSize) {
+    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint16_t gridSize) {
 
         // See OctreeConverter : chunker_countsort_laszip.cpp :131
 
         float dGridSize = gridSize;
-        auto X = static_cast<int32_t>((point.x - metadata.cloudOffset.x) / metadata.scale.x);
-        auto Y = static_cast<int32_t>((point.y - metadata.cloudOffset.y) / metadata.scale.y);
-        auto Z = static_cast<int32_t>((point.z - metadata.cloudOffset.z) / metadata.scale.z);
+        auto X = static_cast<int32_t>((point->x - metadata.cloudOffset.x) / metadata.scale.x);
+        auto Y = static_cast<int32_t>((point->y - metadata.cloudOffset.y) / metadata.scale.y);
+        auto Z = static_cast<int32_t>((point->z - metadata.cloudOffset.z) / metadata.scale.z);
         auto size = tools::subtract(metadata.boundingBox.maximum, metadata.boundingBox.minimum);
 
         float ux =

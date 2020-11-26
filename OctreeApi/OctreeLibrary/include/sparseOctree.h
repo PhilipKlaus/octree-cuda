@@ -29,7 +29,7 @@ class SparseOctree {
 
 public:
 
-    SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData);
+    SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 
@@ -77,7 +77,7 @@ private:
                                  unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
 
     // Exporting
-    uint32_t exportTreeNode(Vector3* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
+    uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
 
     // Benchmarking
     uint32_t getRootIndex();
@@ -89,7 +89,7 @@ private:
 private:
 
     // Point cloud
-    unique_ptr<CudaArray<Vector3>> itsCloudData;                // The cloud data
+    unique_ptr<CudaArray<uint8_t>> itsCloudData;                // The cloud data
 
     // Required data structures for calculation
     unique_ptr<CudaArray<uint32_t>> itsDataLUT;                 // LUT for accessing point cloud data from the octree

@@ -4,7 +4,7 @@
 
 __global__ void chunking::kernelDistributePoints (
         Chunk *octree,
-        Vector3 *cloud,
+        uint8_t *cloud,
         uint32_t *dataLUT,
         int *denseToSparseLUT,
         uint32_t *tmpIndexRegister,
@@ -15,7 +15,9 @@ __global__ void chunking::kernelDistributePoints (
     if(index >= metadata.pointAmount) {
         return;
     }
-    Vector3 point = cloud[index];
+    //Vector3 point = cloud[index];
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * 12);
+
 
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSize);
     auto sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
@@ -33,7 +35,7 @@ __global__ void chunking::kernelDistributePoints (
 
 float chunking::distributePoints(
         unique_ptr<CudaArray<Chunk>> &octree,
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &dataLUT,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
         unique_ptr<CudaArray<uint32_t>> &tmpIndexRegister,

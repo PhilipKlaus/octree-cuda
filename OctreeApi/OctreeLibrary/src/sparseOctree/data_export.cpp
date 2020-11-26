@@ -5,7 +5,7 @@
 #include <sparseOctree.h>
 
 uint32_t SparseOctree::exportTreeNode(
-        Vector3 *cpuPointCloud,
+        uint8_t *cpuPointCloud,
         const unique_ptr<Chunk[]> &octreeSparse,
         const unique_ptr<uint32_t[]> &dataLUT,
         uint32_t level,
@@ -57,16 +57,16 @@ uint32_t SparseOctree::exportTreeNode(
             if(octreeSparse[index].isParent) {
                 auto lut = itsSubsampleLUTs[index]->toHost();
                 if(lut[u] != INVALID_INDEX) {
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].x)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].y)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u]].z)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12 + 4])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12 + 8])), sizeof (float));
                 }
             }
             else {
                 if(dataLUT[octreeSparse[index].chunkDataIndex + u] != INVALID_INDEX) {
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].x)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].y)), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u]].z)), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12 + 4])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12 + 8])), sizeof (float));
                 }
             }
         }

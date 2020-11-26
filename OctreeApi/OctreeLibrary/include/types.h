@@ -8,10 +8,13 @@
 
 #include <cstdint>
 
+//https://stackoverflow.com/questions/19995440/c-cast-byte-array-to-struct
+#pragma pack(push, 1)
 struct Vector3
 {
     float x, y, z;
 };
+#pragma pack(pop)
 
 struct Vector3i
 {
