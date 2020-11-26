@@ -26,6 +26,8 @@ public:
     void exportOctree(const string &filename);
     void configureMemoryReport(const std::string &filename);
     void exportTimeMeasurements(const std::string &filename);
+    void exportOctreeStatistics(const std::string &filename);
+    void configurePointDistributionReport(const std::string &filename, uint32_t);
 
 private:
     int itsDevice;
@@ -37,6 +39,8 @@ private:
     uint16_t itsGlobalOctreeLevel{};
     uint32_t itsMergingThreshold{};
 
+    string itsPointDistributionReport = "";
+    uint32_t itsPointDistributionBinWidth = 0;
 };
 
 #endif //OCTREE_API_SESSION_H

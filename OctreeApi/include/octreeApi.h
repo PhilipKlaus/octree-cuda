@@ -44,9 +44,13 @@ EXPORTED void ocpi_destroy_session (void* session);
 EXPORTED void ocpi_set_logging_level (int level);
 EXPORTED void ocpi_set_point_cloud_metadata (void* session, const PointCloudMetadata &metadata);
 EXPORTED void ocpi_load_point_cloud_from_host (void* session, uint8_t *pointCloud);
+
 EXPORTED void ocpi_configure_octree(void* session, uint16_t globalOctreeLevel, uint32_t mergingThreshold);
+EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
+EXPORTED void ocpi_configure_point_distribution_report(void *session, const char *filename, uint32_t binWidth);
+
 EXPORTED void ocpi_generate_octree(void *session);
 EXPORTED void ocpi_export_octree(void *session, const char *filename);
-EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
 EXPORTED void ocpi_export_time_measurements(void *session, const char *filename);
+EXPORTED void ocpi_export_octree_statistics(void *session, const char *filename);
 #endif

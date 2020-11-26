@@ -63,6 +63,9 @@ void Session::generateOctree() {
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
     itsOctree->performSubsampling();
+    if(!itsPointDistributionReport.empty()) {
+        itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
+    }
     spdlog::debug("octree generated");
 }
 
@@ -79,4 +82,14 @@ void Session::configureMemoryReport(const std::string &filename) {
 void Session::exportTimeMeasurements(const std::string &filename) {
     itsOctree->exportTimeMeasurements(filename);
     spdlog::debug("exported time measurements");
+}
+
+void Session::exportOctreeStatistics(const std::string &filename) {
+    itsOctree->exportOctreeStatistics(filename);
+    spdlog::debug("exported octree statistics");
+}
+
+void Session::configurePointDistributionReport(const std::string &filename, uint32_t binWidth) {
+    itsPointDistributionReport = filename;
+    itsPointDistributionBinWidth = binWidth;
 }
