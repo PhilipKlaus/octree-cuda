@@ -72,12 +72,15 @@ uint32_t SparseOctree::exportTreeNode(
         }
         ply.close ();
     }
+    else {
+        validPoints = 0;
+    }
     if (level > 0) {
         for(uint32_t i = 0; i < octreeSparse[index].childrenChunksCount; ++i) {
-            count += exportTreeNode(cpuPointCloud, octreeSparse, dataLUT, level - 1, octreeSparse[index].childrenChunks[i], folder);
+            validPoints += exportTreeNode(cpuPointCloud, octreeSparse, dataLUT, level - 1, octreeSparse[index].childrenChunks[i], folder);
         }
     }
-    return count;
+    return validPoints;
 }
 
 void SparseOctree::exportOctree(const string &folderPath) {

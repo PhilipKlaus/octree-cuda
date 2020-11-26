@@ -55,7 +55,7 @@ void ocpi_generate_octree(void *session) {
     s->generateOctree();
 }
 
-void ocpi_export_octree(void *session, const char *filename) {
+void ocpi_export_ply_nodes(void *session, const char *filename) {
     auto s = Session::ToSession (session);
     s->exportOctree(filename);
 }
