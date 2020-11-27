@@ -50,7 +50,7 @@ public:
     void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingBox &cloud, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
-    void exportOctree(const string &folderPath);
+    void exportPlyNodes(const string &folderPath);
 
     // Debugging methods
     const OctreeMetadata& getMetadata() const;

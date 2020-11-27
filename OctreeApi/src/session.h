@@ -23,7 +23,7 @@ public:
     void setMetadata(const PointCloudMetadata &metadata);
     void setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold);
     void generateOctree();
-    void exportOctree(const string &filename);
+    void exportPlyNodes(const string &filename);
     void configureMemoryReport(const std::string &filename);
     void exportTimeMeasurements(const std::string &filename);
     void exportOctreeStatistics(const std::string &filename);

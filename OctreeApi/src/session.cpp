@@ -70,8 +70,8 @@ void Session::generateOctree() {
     spdlog::debug("octree generated");
 }
 
-void Session::exportOctree(const string &filename) {
-    itsOctree->exportOctree(filename);
+void Session::exportPlyNodes(const string &filename) {
+    itsOctree->exportPlyNodes(filename);
     spdlog::debug("octree exported");
 }
 

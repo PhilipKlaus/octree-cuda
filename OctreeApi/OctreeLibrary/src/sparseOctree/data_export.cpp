@@ -93,7 +93,7 @@ uint32_t SparseOctree::exportTreeNode(
     return validPoints;
 }
 
-void SparseOctree::exportOctree(const string &folderPath) {
+void SparseOctree::exportPlyNodes(const string &folderPath) {
     auto cpuPointCloud = itsCloudData->toHost();
     auto octreeSparse = itsOctreeSparse->toHost();
     auto dataLUT = itsDataLUT->toHost();
