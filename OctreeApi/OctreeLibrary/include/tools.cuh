@@ -12,7 +12,7 @@ using namespace std;
 
 namespace tools {
 
-    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength);
+    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength, PointCloudMetadata &metadata);
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 

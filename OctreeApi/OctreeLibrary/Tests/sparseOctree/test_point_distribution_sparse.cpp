@@ -52,16 +52,9 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
 TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
 
     // Create test data point cloud
-    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(128);
-    auto cpuData = cuboid->toHost();
-
     PointCloudMetadata metadata{};
-    metadata.pointAmount = 128 * 128 * 128;
-    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    metadata.boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
-    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    metadata.scale = {1.f, 1.f, 1.f};
-    metadata.pointDataStride = 12;
+    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(128, metadata);
+    auto cpuData = cuboid->toHost();
 
     auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 

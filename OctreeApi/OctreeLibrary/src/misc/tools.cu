@@ -68,7 +68,15 @@ namespace tools {
         printKernelDimensions(block, grid);
     }
 
-    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength) {
+    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength, PointCloudMetadata &metadata) {
+
+        float boundingBoxMax = static_cast<float>(sideLength) - 0.5f;
+        metadata.pointAmount = static_cast<uint32_t>(pow(sideLength, 3.f));
+        metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
+        metadata.boundingBox.maximum = Vector3 {boundingBoxMax, boundingBoxMax, boundingBoxMax};
+        metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+        metadata.scale = {1.f, 1.f, 1.f};
+        metadata.pointDataStride = 12;
 
         auto pointAmount = sideLength * sideLength * sideLength;
         auto data = std::make_unique<CudaArray<uint8_t>>(pointAmount * 12, "cuboid");
