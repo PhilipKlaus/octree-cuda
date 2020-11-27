@@ -7,7 +7,7 @@
 #include "tools.cuh"
 
 
-uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
+uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
     uint32_t count = 0;
 
     uint32_t previousChunks = 0;
@@ -30,13 +30,13 @@ uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> 
         count = octree[index].pointCount;
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
-            Vector3 point = cpuPointCloud[dataLUT[octree[index].chunkDataIndex + u]];
-            REQUIRE(point.x > (coord.x * voxelSize));
-            REQUIRE(point.x < ((coord.x + 1) * voxelSize));
-            REQUIRE(point.y > (coord.y * voxelSize));
-            REQUIRE(point.y < ((coord.y + 1) * voxelSize));
-            REQUIRE(point.z > (coord.z * voxelSize));
-            REQUIRE(point.z < ((coord.z + 1) * voxelSize));
+            auto *point = reinterpret_cast<Vector3*>(cpuPointCloud + dataLUT[octree[index].chunkDataIndex + u] * 12);
+            REQUIRE(point->x > (coord.x * voxelSize));
+            REQUIRE(point->x < ((coord.x + 1) * voxelSize));
+            REQUIRE(point->y > (coord.y * voxelSize));
+            REQUIRE(point->y < ((coord.y + 1) * voxelSize));
+            REQUIRE(point->z > (coord.z * voxelSize));
+            REQUIRE(point->z < ((coord.z + 1) * voxelSize));
         }
     }
     else {
@@ -52,7 +52,7 @@ uint32_t testOctreenodeSparse(Vector3 *cpuPointCloud, const unique_ptr<Chunk[]> 
 TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
 
     // Create test data point cloud
-    unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(128);
+    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(128);
     auto cpuData = cuboid->toHost();
 
     PointCloudMetadata metadata{};
@@ -61,6 +61,7 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     metadata.boundingBox.maximum = Vector3 {127.5, 127.5, 127.5};
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
+    metadata.pointDataStride = 12;
 
     auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 

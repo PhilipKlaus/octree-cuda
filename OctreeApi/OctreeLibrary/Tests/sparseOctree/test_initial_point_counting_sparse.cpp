@@ -9,7 +9,7 @@
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 
     // Create test data point cloud
-    unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
+    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(256);
 
     PointCloudMetadata metadata{};
     metadata.pointAmount = 256 * 256 * 256;
@@ -17,6 +17,7 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     metadata.boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
     metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
     metadata.scale = {1.f, 1.f, 1.f};
+    metadata.pointDataStride = 12;
 
     auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 

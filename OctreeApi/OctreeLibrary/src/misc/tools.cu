@@ -2,7 +2,7 @@
 #include "defines.cuh"
 
 
-__global__ void kernel_point_cloud_cuboid(Vector3 *out, uint32_t n, uint32_t side) {
+__global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t side) {
     int index = blockIdx.x * blockDim.x + threadIdx.x;
     if(index >= n) {
         return;
@@ -13,9 +13,9 @@ __global__ void kernel_point_cloud_cuboid(Vector3 *out, uint32_t n, uint32_t sid
     auto y = (index - (z * xy)) / side;
     auto x = (index - (z * xy)) % side;
 
-    out[index].x = x + 0.5;
-    out[index].y = y + 0.5;
-    out[index].z = z + 0.5;
+    reinterpret_cast<Vector3*>(out + index * 12)->x = x + 0.5;
+    reinterpret_cast<Vector3*>(out + index * 12)->y = y + 0.5;
+    reinterpret_cast<Vector3*>(out + index * 12)->z = z + 0.5;
 }
 
 
@@ -68,10 +68,10 @@ namespace tools {
         printKernelDimensions(block, grid);
     }
 
-    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint32_t sideLength) {
+    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength) {
 
         auto pointAmount = sideLength * sideLength * sideLength;
-        auto data = std::make_unique<CudaArray<Vector3>>(pointAmount, "cuboid");
+        auto data = std::make_unique<CudaArray<uint8_t>>(pointAmount * 12, "cuboid");
 
         auto blocks = ceil(pointAmount / 1024.f);
         auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);

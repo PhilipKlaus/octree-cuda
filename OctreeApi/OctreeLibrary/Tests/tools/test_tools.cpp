@@ -10,36 +10,37 @@ TEST_CASE ("Test cuboid sample generation", "[cuboid]") {
 auto data = tools::generate_point_cloud_cuboid(2);
 auto host = data->toHost();
 
+Vector3* vecData = reinterpret_cast<Vector3*>(host.get());
 // ----------------------
-REQUIRE(host[0].x == (0.5));
-REQUIRE(host[0].y == (0.5));
-REQUIRE(host[0].z == (0.5));
+REQUIRE(vecData[0].x == (0.5));
+REQUIRE(vecData[0].y == (0.5));
+REQUIRE(vecData[0].z == (0.5));
 // ----------------------
-REQUIRE(host[1].x == (1.5));
-REQUIRE(host[1].y == (0.5));
-REQUIRE(host[1].z == (0.5));
+REQUIRE(vecData[1].x == (1.5));
+REQUIRE(vecData[1].y == (0.5));
+REQUIRE(vecData[1].z == (0.5));
 // ----------------------
-REQUIRE(host[2].x == (0.5));
-REQUIRE(host[2].y == (1.5));
-REQUIRE(host[2].z == (0.5));
+REQUIRE(vecData[2].x == (0.5));
+REQUIRE(vecData[2].y == (1.5));
+REQUIRE(vecData[2].z == (0.5));
 // ----------------------
-REQUIRE(host[3].x == (1.5));
-REQUIRE(host[3].y == (1.5));
-REQUIRE(host[3].z == (0.5));
+REQUIRE(vecData[3].x == (1.5));
+REQUIRE(vecData[3].y == (1.5));
+REQUIRE(vecData[3].z == (0.5));
 // ----------------------
-REQUIRE(host[4].x == (0.5));
-REQUIRE(host[4].y == (0.5));
-REQUIRE(host[4].z == (1.5));
+REQUIRE(vecData[4].x == (0.5));
+REQUIRE(vecData[4].y == (0.5));
+REQUIRE(vecData[4].z == (1.5));
 // ----------------------
-REQUIRE(host[5].x == (1.5));
-REQUIRE(host[5].y == (0.5));
-REQUIRE(host[5].z == (1.5));
+REQUIRE(vecData[5].x == (1.5));
+REQUIRE(vecData[5].y == (0.5));
+REQUIRE(vecData[5].z == (1.5));
 // ----------------------
-REQUIRE(host[6].x == (0.5));
-REQUIRE(host[6].y == (1.5));
-REQUIRE(host[6].z == (1.5));
+REQUIRE(vecData[6].x == (0.5));
+REQUIRE(vecData[6].y == (1.5));
+REQUIRE(vecData[6].z == (1.5));
 // ----------------------
-REQUIRE(host[7].x == (1.5));
-REQUIRE(host[7].y == (1.5));
-REQUIRE(host[7].z == (1.5));
+REQUIRE(vecData[7].x == (1.5));
+REQUIRE(vecData[7].y == (1.5));
+REQUIRE(vecData[7].z == (1.5));
 }
