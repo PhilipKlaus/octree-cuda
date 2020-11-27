@@ -218,8 +218,7 @@ float SparseOctree::hierarchicalSubsampling(
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB(bb, coords, itsMetadata.cloudMetadata.boundingBox, denseVoxelIndex, level);
 
-        PointCloudMetadata metadata{};
-        metadata.scale = itsMetadata.cloudMetadata.scale;
+        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
 

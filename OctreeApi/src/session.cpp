@@ -46,7 +46,7 @@ void Session::setMetadata(const PointCloudMetadata &metadata) {
 
 // ToDo: Generalize
 void Session::setPointCloudHost(uint8_t *pointCloud) {
-    data = make_unique<CudaArray<uint8_t>>(itsMetadata.pointAmount * 12, "pointcloud");
+    data = make_unique<CudaArray<uint8_t>>(itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
     data->toGPU(pointCloud);
     spdlog::debug("copied point cloud from host to device");
 }

@@ -19,7 +19,7 @@ __global__ void chunking::kernelInitialPointCounting(
         return;
     }
 
-    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * 12);
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);

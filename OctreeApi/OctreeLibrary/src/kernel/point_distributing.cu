@@ -16,7 +16,7 @@ __global__ void chunking::kernelDistributePoints (
         return;
     }
     //Vector3 point = cloud[index];
-    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * 12);
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
 
 
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSize);

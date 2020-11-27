@@ -13,6 +13,7 @@ uint32_t SparseOctree::exportTreeNode(
         const string &folder
 ) {
 
+    PointCloudMetadata metadata = itsMetadata.cloudMetadata;
     uint32_t count = octreeSparse[index].isParent ? itsSubsampleLUTs[index]->pointCount() : octreeSparse[index].pointCount;
     uint32_t validPoints = count;
     for (uint32_t u = 0; u < count; ++u)
@@ -51,22 +52,31 @@ uint32_t SparseOctree::exportTreeNode(
                "property float x\n"
                "property float y\n"
                "property float z\n"
+               "property uchar red\n"
+               "property uchar green\n"
+               "property uchar blue\n"
                "end_header\n";
         for (uint32_t u = 0; u < count; ++u)
         {
             if(octreeSparse[index].isParent) {
                 auto lut = itsSubsampleLUTs[index]->toHost();
                 if(lut[u] != INVALID_INDEX) {
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12])), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12 + 4])), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * 12 + 8])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 4])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 8])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 12])), sizeof (uint8_t));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 13])), sizeof (uint8_t));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 14])), sizeof (uint8_t));
                 }
             }
             else {
                 if(dataLUT[octreeSparse[index].chunkDataIndex + u] != INVALID_INDEX) {
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12])), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12 + 4])), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * 12 + 8])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 4])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 8])), sizeof (float));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 12])), sizeof (uint8_t));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 13])), sizeof (uint8_t));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 14])), sizeof (uint8_t));
                 }
             }
         }

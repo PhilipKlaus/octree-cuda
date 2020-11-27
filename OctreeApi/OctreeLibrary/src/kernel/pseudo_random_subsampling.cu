@@ -1,4 +1,5 @@
 #include "pseudo_random_subsampling.cuh"
+#include "../../include/types.h"
 #include <tools.cuh>
 #include <timing.cuh>
 
@@ -18,7 +19,7 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
         return;
     }
     //Vector3 point = cloud[childDataLUT[childDataLUTStart + index]];
-    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + childDataLUT[childDataLUTStart + index] * 12);
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
 
     // 1. Calculate the index within the dense grid of the subsample
@@ -52,7 +53,7 @@ __global__ void pseudo__random_subsampling::kernelSubsample(
     }
 
     //Vector3 point = cloud[cloudDataLUT[dataLUTStartIndex + index]];
-    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + cloudDataLUT[dataLUTStartIndex + index] * 12);
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + cloudDataLUT[dataLUTStartIndex + index] * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid of the subsample
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);

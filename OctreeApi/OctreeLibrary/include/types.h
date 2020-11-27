@@ -38,6 +38,7 @@ struct BoundingBox {
 
 struct PointCloudMetadata {
     uint32_t pointAmount;
+    uint32_t pointDataStride;
     BoundingBox boundingBox;
     Vector3 cloudOffset;
     Vector3 scale;
