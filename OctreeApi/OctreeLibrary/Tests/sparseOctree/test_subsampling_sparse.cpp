@@ -41,17 +41,18 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
     unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(128, metadata);
     auto cpuData = cuboid->toHost();
 
-    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
+    // Create the octree
+    auto octree = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
 
-    cloud->initialPointCounting();
-    cloud->performCellMerging(); // All points reside in the 3th level (8x8x8) of the octree
-    cloud->distributePoints();
-    cloud->performSubsampling();
+    octree->initialPointCounting();
+    octree->performCellMerging(); // All points reside in the 3th level (8x8x8) of the octree
+    octree->distributePoints();
+    octree->performSubsampling();
 
    // Ensure that for each relevant parent node exists a subsample data Lut
-   REQUIRE(cloud->getSubsampleLUT().size() == pow(4,3) + pow(2,3) + pow(1,3));
+   REQUIRE(octree->getSubsampleLUT().size() == pow(4, 3) + pow(2, 3) + pow(1, 3));
 
-    auto octree = cloud->getOctreeSparse();
-    uint32_t topLevelIndex = cloud->getMetadata().nodeAmountSparse-1;
-    testSubsampleTree(octree, cloud->getSubsampleLUT(), topLevelIndex, 7);
+    auto octreeData = octree->getOctreeSparse();
+    uint32_t topLevelIndex = octree->getMetadata().nodeAmountSparse - 1;
+    testSubsampleTree(octreeData, octree->getSubsampleLUT(), topLevelIndex, 7);
 }

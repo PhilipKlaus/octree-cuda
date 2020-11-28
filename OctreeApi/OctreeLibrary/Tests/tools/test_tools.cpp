@@ -11,7 +11,7 @@ TEST_CASE ("Test cuboid sample generation", "[cuboid]") {
     auto data = tools::generate_point_cloud_cuboid(2, metadata);
     auto host = data->toHost();
 
-    Vector3* vecData = reinterpret_cast<Vector3*>(host.get());
+    auto* vecData = reinterpret_cast<Vector3*>(host.get());
     // ----------------------
     REQUIRE(vecData[0].x == (0.5));
     REQUIRE(vecData[0].y == (0.5));

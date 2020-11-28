@@ -8,22 +8,20 @@
 
 
 uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
-    uint32_t count = 0;
 
+    uint32_t count = 0;
     uint32_t previousChunks = 0;
+    int denseIndex = sparseToDense[index];
+    auto newGridSize = static_cast<uint32_t>(pow(2, 7-level));
+    auto voxelSize = 128.f / newGridSize;
+
     for(uint32_t i = 7; i > (7 - level); --i) {
         previousChunks += static_cast<uint32_t>(pow(pow(2, i), 3));
     }
 
-    int denseIndex = sparseToDense[index];
-
-    auto newGridSize = static_cast<uint32_t>(pow(2, 7-level));
-
     Vector3i coord{};
     auto indexInVoxel = denseIndex - previousChunks;
     tools::mapFromDenseIdxToDenseCoordinates(coord, indexInVoxel, newGridSize);
-
-    auto voxelSize = 128.f / newGridSize;
 
     if(octree[index].isFinished && octree[index].pointCount > 0) {
 
@@ -53,19 +51,21 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
 
     // Create test data point cloud
     PointCloudMetadata metadata{};
-    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid(128, metadata);
-    auto cpuData = cuboid->toHost();
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
+    auto cpuData = cloud->toHost();
 
-    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
+    // Create the octree
+    auto octree = make_unique<SparseOctree>(7, 10000, metadata, move(cloud));
 
-    cloud->initialPointCounting();
-    cloud->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
-    cloud->distributePoints();
+    octree->initialPointCounting();
+    octree->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
+    octree->distributePoints();
 
-    auto octree = cloud->getOctreeSparse();
-    auto dataLUT = cloud->getDataLUT();
-    auto sparseToDenseLUT = cloud->getSparseToDenseLUT();
-    uint32_t topLevelIndex = cloud->getMetadata().nodeAmountSparse-1;
+    // Copy necessary data from GPU to CPU for testing purposes
+    auto octreeHost = octree->getOctreeSparse();
+    auto dataLUT = octree->getDataLUT();
+    auto sparseToDenseLUT = octree->getSparseToDenseLUT();
+    uint32_t topLevelIndex = octree->getMetadata().nodeAmountSparse - 1;
 
-    REQUIRE(testOctreenodeSparse(cpuData.get(), octree, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == cloud->getMetadata().cloudMetadata.pointAmount);
+    REQUIRE(testOctreenodeSparse(cpuData.get(), octreeHost, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == octree->getMetadata().cloudMetadata.pointAmount);
 }
