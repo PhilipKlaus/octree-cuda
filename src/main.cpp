@@ -23,9 +23,12 @@ int main() {
     void *session;
     ocpi_create_session(&session, 0);
 
-    // Hardcoded: read PLY: ToDo: Include PLY library
-    uint32_t pointAmount = 1612868;//327323;
-    ifstream ifs("doom_vertices_color_headerless.ply", ios::binary|ios::ate);
+    PointCloudMetadata metadata = {};
+    metadata.pointAmount = 5138448;
+    metadata.pointDataStride = 15;
+    metadata.scale = {1.f, 1.f, 1.f};
+
+    ifstream ifs("coin_color_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -33,31 +36,25 @@ int main() {
     ifs.read(reinterpret_cast<char *>(pChars), length);
     ifs.close();
 
-    // Calculate bounding box: ToDo: Read from LAZ/PLY library
     Vector3 minimum {INFINITY, INFINITY, INFINITY};
     Vector3 maximum {-INFINITY, -INFINITY, -INFINITY};
 
-    //auto *points = reinterpret_cast<Vector3*>(pChars);
-
-    for(uint32_t i = 0; i < pointAmount; ++i) {
-        minimum.x = fmin(minimum.x, *reinterpret_cast<float*>(pChars + i * 15));
-        minimum.y = fmin(minimum.y, *reinterpret_cast<float*>(pChars + i * 15 + 4));
-        minimum.z = fmin(minimum.z, *reinterpret_cast<float*>(pChars + i * 15 + 8));
-        maximum.x = fmax(maximum.x, *reinterpret_cast<float*>(pChars + i * 15));
-        maximum.y = fmax(maximum.y, *reinterpret_cast<float*>(pChars + i * 15 + 4));
-        maximum.z = fmax(maximum.z, *reinterpret_cast<float*>(pChars + i * 15 + 8));
+    // Calculate bounding box on CPU
+    for(uint32_t i = 0; i < metadata.pointAmount; ++i) {
+        minimum.x = fmin(minimum.x, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride));
+        minimum.y = fmin(minimum.y, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 4));
+        minimum.z = fmin(minimum.z, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 8));
+        maximum.x = fmax(maximum.x, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride));
+        maximum.y = fmax(maximum.y, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 4));
+        maximum.z = fmax(maximum.z, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 8));
     }
     spdlog::info(
             "Cloud dimensions: width: {}, height: {}, depth: {}",
             maximum.x-minimum.x, maximum.y-minimum.y, maximum.z-minimum.z);
 
-    PointCloudMetadata metadata = {};
-    metadata.pointAmount = pointAmount;
-    metadata.pointDataStride = 15;
     metadata.boundingBox.minimum = minimum;
     metadata.boundingBox.maximum = maximum;
     metadata.cloudOffset = minimum;
-    metadata.scale = {1.f, 1.f, 1.f};
 
     ocpi_set_point_cloud_metadata(session, metadata);
     ocpi_load_point_cloud_from_host(session, pChars);

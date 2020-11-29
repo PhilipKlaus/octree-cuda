@@ -44,7 +44,6 @@ void Session::setMetadata(const PointCloudMetadata &metadata) {
     spdlog::debug("set metadata");
 };
 
-// ToDo: Generalize
 void Session::setPointCloudHost(uint8_t *pointCloud) {
     data = make_unique<CudaArray<uint8_t>>(itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
     data->toGPU(pointCloud);
