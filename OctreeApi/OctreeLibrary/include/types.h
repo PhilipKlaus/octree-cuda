@@ -21,6 +21,7 @@ namespace OctreeTypes {
         GRID_8 = 8,
         GRID_4 = 4,
         GRID_2 = 2,
+        GRID_1 = 1
     };
 
 

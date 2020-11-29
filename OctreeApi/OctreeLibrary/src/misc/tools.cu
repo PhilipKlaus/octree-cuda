@@ -39,8 +39,10 @@ namespace tools {
                 return 3;
             case OctreeTypes::GRID_4:
                 return 2;
-            default:
+            case OctreeTypes::GRID_2:
                 return 1;
+            default:
+                return 0;
         }
     }
 
@@ -62,11 +64,44 @@ namespace tools {
                 return 8;
             case 2:
                 return 4;
-            default:
+            case 1:
                 return 2;
+            default:
+                return 1;
         }
     }
 
+    uint32_t getNodeAmount(uint32_t octreeLevel) {
+        switch (octreeLevel) {
+            case 9: // 512
+                return 134217728;
+            case 8: // 256
+                return 16777216;
+            case 7: // 128
+                return 2097152;
+            case 6: // 64
+                return 262144;
+            case 5: // 32
+                return 32768;
+            case 4: // 16
+                return 4096;
+            case 3: // 8
+                return 512;
+            case 2: // 4
+                return 64;
+            case 1: // 2
+                return 8;
+            default: // 1
+                return 1;
+        }
+    }
+
+    uint32_t getNodeOffset(uint32_t octreeLevel, uint32_t octreeDepth) {
+        uint32_t offset = 0;
+        for(uint32_t i = octreeDepth; i < octreeLevel; --i) {
+            offset += getNodeAmount(i);
+        }
+    }
 
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b) {
         return {

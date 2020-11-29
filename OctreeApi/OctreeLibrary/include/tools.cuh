@@ -14,6 +14,8 @@ namespace tools {
 
     uint32_t getOctreeLevel(OctreeTypes::GridSize gridSize);
     uint32_t getOctreeGrid(uint32_t octreeLevel);
+    uint32_t getNodeAmount(uint32_t octreeLevel);
+    uint32_t getNodeOffset(uint32_t octreeLevel, uint32_t octreeDepth);
 
     unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength, PointCloudMetadata &metadata);
     void printKernelDimensions(dim3 block, dim3 grid);
