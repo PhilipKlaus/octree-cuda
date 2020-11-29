@@ -101,6 +101,7 @@ namespace tools {
         for(uint32_t i = octreeDepth; i < octreeLevel; --i) {
             offset += getNodeAmount(i);
         }
+        return offset;
     }
 
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b) {
