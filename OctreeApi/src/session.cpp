@@ -20,7 +20,7 @@ Session* Session::ToSession (void* session)
 
 Session::Session(int device):
         itsDevice(device),
-        itsGlobalOctreeLevel(7),
+        itsChunkingGrid(GRID_128),
         itsMergingThreshold(10000)
 {
     spdlog::debug("session created");
@@ -50,10 +50,10 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
     spdlog::debug("copied point cloud from host to device");
 }
 
-void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold) {
-    itsGlobalOctreeLevel = globalOctreeLevel;
+void Session::setOctreeProperties(GridSize chunkingGrid, uint32_t mergingThreshold) {
+    itsChunkingGrid = chunkingGrid;
     itsMergingThreshold = mergingThreshold;
-    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMergingThreshold, itsMetadata, move(data));
+    itsOctree = make_unique<SparseOctree>(itsChunkingGrid, itsMergingThreshold, itsMetadata, move(data));
 
     spdlog::debug("set octree properties");
 }

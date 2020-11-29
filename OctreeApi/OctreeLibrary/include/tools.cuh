@@ -12,6 +12,9 @@ using namespace std;
 
 namespace tools {
 
+    uint32_t getOctreeLevel(OctreeTypes::GridSize gridSize);
+    uint32_t getOctreeGrid(uint32_t octreeLevel);
+
     unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength, PointCloudMetadata &metadata);
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);

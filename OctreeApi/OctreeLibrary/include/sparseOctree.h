@@ -9,6 +9,8 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 
+using namespace OctreeTypes;
+
 
 struct OctreeMetadata {
 
@@ -29,7 +31,7 @@ class SparseOctree {
 
 public:
 
-    SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
+    SparseOctree(GridSize chunkingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 

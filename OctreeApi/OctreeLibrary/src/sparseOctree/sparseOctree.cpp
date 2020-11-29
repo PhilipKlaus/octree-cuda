@@ -6,11 +6,11 @@
 #include <chunking.cuh>
 #include <pseudo_random_subsampling.cuh>
 
-SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
+SparseOctree::SparseOctree(GridSize chunkingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
         itsCloudData(move(cloudData))
 {
     // Initialize octree metadata
-    itsMetadata.depth = depth;
+    itsMetadata.depth = tools::getOctreeLevel(chunkingGrid);
     itsMetadata.nodeAmountDense = 0;
     itsMetadata.nodeAmountSparse = 0;
     itsMetadata.leafNodeAmount = 0;
@@ -23,7 +23,7 @@ SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloud
     itsMetadata.cloudMetadata = cloudMetadata;
 
     // Pre calculate often-used octree metrics
-    auto sideLength = static_cast<uint32_t >(pow(2, depth));
+    auto sideLength = static_cast<uint32_t >(pow(2, itsMetadata.depth));
     for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
         itsGridSideLengthPerLevel.push_back(gridSize);
         itsLinearizedDenseVoxelOffset.push_back(itsMetadata.nodeAmountDense);
