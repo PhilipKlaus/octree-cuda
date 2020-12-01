@@ -10,7 +10,7 @@ __global__ void chunking::kernelInitLowestOctreeHierarchy(
         uint32_t cellAmount
 ) {
 
-    int denseVoxelIndex = blockIdx.x * blockDim.x + threadIdx.x;
+    int denseVoxelIndex = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     if(denseVoxelIndex >= cellAmount) {
         return;
@@ -27,6 +27,8 @@ __global__ void chunking::kernelInitLowestOctreeHierarchy(
 
     Chunk *chunk = octreeSparse + sparseVoxelIndex;
     chunk->pointCount = densePointCount[denseVoxelIndex];
+
+    assert(chunk->pointCount != 0);
 }
 
 float chunking::initLowestOctreeHierarchy(

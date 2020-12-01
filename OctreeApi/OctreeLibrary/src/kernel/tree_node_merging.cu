@@ -17,7 +17,7 @@ __global__ void chunking::kernelMergeHierarchical(
         uint32_t cellOffsetOld
 ) {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     if(index >= newCellAmount) {
         return;
@@ -108,6 +108,8 @@ __global__ void chunking::kernelMergeHierarchical(
         (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
 
         sum += (octree + chunk->childrenChunks[i])->pointCount;
+
+        assert((octree + chunk->childrenChunks[i])->pointCount != 0);
     }
 
     // ##################################################################################

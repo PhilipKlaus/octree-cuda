@@ -36,11 +36,14 @@ struct Vector3
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
 struct Vector3i
 {
     uint32_t x, y, z;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct Chunk {
     uint32_t pointCount;            // How many points does this chunk have
     uint32_t parentChunkIndex;      // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
@@ -50,6 +53,7 @@ struct Chunk {
     uint32_t childrenChunksCount;   // Denotes the amount of children chunks (which are not empty)
     bool isParent;                  // Denotes if Chunk is a parent or a leaf node
 };
+#pragma pack(pop)
 
 struct BoundingBox {
     Vector3 minimum;

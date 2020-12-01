@@ -13,7 +13,7 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(256, metadata);
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(7, 10000, metadata, move(cloud));
+    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
 
     // Perform initial point counting
     octree->initialPointCounting();

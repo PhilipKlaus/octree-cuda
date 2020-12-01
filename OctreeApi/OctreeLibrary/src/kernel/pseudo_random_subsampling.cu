@@ -14,7 +14,7 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
         PointCloudMetadata metadata,
         uint32_t gridSideLength
 ) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if(index >= metadata.pointAmount) {
         return;
     }
@@ -47,7 +47,7 @@ __global__ void pseudo__random_subsampling::kernelSubsample(
         PointCloudMetadata metadata,
         uint32_t gridSideLength
 ) {
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if(index >= metadata.pointAmount) {
         return;
     }

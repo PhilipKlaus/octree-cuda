@@ -19,9 +19,7 @@ Session* Session::ToSession (void* session)
 }
 
 Session::Session(int device):
-        itsDevice(device),
-        itsChunkingGrid(GRID_128),
-        itsMergingThreshold(10000)
+        itsDevice(device)
 {
     spdlog::debug("session created");
     setDevice ();
@@ -50,10 +48,8 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
     spdlog::debug("copied point cloud from host to device");
 }
 
-void Session::setOctreeProperties(GridSize chunkingGrid, uint32_t mergingThreshold) {
-    itsChunkingGrid = chunkingGrid;
-    itsMergingThreshold = mergingThreshold;
-    itsOctree = make_unique<SparseOctree>(itsChunkingGrid, itsMergingThreshold, itsMetadata, move(data));
+void Session::setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold) {
+    itsOctree = make_unique<SparseOctree>(chunkingGrid, subsamplingGrid, mergingThreshold, itsMetadata, move(data));
 
     spdlog::debug("set octree properties");
 }
@@ -62,10 +58,11 @@ void Session::generateOctree() {
     itsOctree->initialPointCounting();
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
-    itsOctree->performSubsampling();
+
     if(!itsPointDistributionReport.empty()) {
         itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
     }
+    itsOctree->performSubsampling();
     spdlog::debug("octree generated");
 }
 

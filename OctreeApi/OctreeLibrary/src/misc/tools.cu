@@ -112,24 +112,24 @@ namespace tools {
         };
     }
 
-    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint16_t gridSize) {
+    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
 
         // See OctreeConverter : chunker_countsort_laszip.cpp :131
 
-        float dGridSize = gridSize;
+        double dGridSize = gridSize;
         auto X = static_cast<int32_t>((point->x - metadata.cloudOffset.x) / metadata.scale.x);
         auto Y = static_cast<int32_t>((point->y - metadata.cloudOffset.y) / metadata.scale.y);
         auto Z = static_cast<int32_t>((point->z - metadata.cloudOffset.z) / metadata.scale.z);
         auto size = tools::subtract(metadata.boundingBox.maximum, metadata.boundingBox.minimum);
 
-        float ux =
-                (static_cast<float>(X) * metadata.scale.x + metadata.cloudOffset.x - metadata.boundingBox.minimum.x)
+        double ux =
+                (static_cast<double>(X) * metadata.scale.x + metadata.cloudOffset.x - metadata.boundingBox.minimum.x)
                 / size.x;
-        float uy =
-                (static_cast<float>(Y) * metadata.scale.y + metadata.cloudOffset.y - metadata.boundingBox.minimum.y)
+        double uy =
+                (static_cast<double>(Y) * metadata.scale.y + metadata.cloudOffset.y - metadata.boundingBox.minimum.y)
                 / size.y;
-        float uz =
-                (static_cast<float>(Z) * metadata.scale.z + metadata.cloudOffset.z - metadata.boundingBox.minimum.z)
+        double uz =
+                (static_cast<double>(Z) * metadata.scale.z + metadata.cloudOffset.z - metadata.boundingBox.minimum.z)
                 / size.z;
 
         uint32_t ix = static_cast<int64_t>( fmin (dGridSize * ux, dGridSize - 1.0f));
@@ -142,12 +142,13 @@ namespace tools {
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
 
         auto blocks = ceil(static_cast<double>(pointCount) / BLOCK_SIZE_MAX);
-        auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);
-        auto gridY = ceil(blocks / gridX);
-
+        auto gridX = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+        auto gridY = ceil(blocks / GRID_SIZE_MAX);
 
         block = dim3(BLOCK_SIZE_MAX, 1, 1);
         grid = dim3 (static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
+        //spdlog::error("points: {} blocks: {}, block.x: {}, grid.x: {}, grid.y: {}", pointCount, blocks, block.x, grid.x, grid.y) ;
+
         printKernelDimensions(block, grid);
     }
 

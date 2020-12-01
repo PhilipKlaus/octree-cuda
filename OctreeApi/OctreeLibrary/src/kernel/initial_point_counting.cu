@@ -14,7 +14,7 @@ __global__ void chunking::kernelInitialPointCounting(
         uint32_t gridSideLength
 ) {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if(index >= metadata.pointAmount) {
         return;
     }

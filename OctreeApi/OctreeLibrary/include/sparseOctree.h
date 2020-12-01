@@ -15,6 +15,8 @@ using namespace OctreeTypes;
 struct OctreeMetadata {
 
     uint32_t depth;                     // The depth of the octree // ToDo: -1
+    uint32_t chunkingGrid;              // Side length of the grid used for chunking
+    uint32_t subsamplingGrid;           // Side length of the grid used for subsampling
     uint32_t nodeAmountSparse;          // The actual amount of sparse nodes (amount leafs + amount parents)
     uint32_t leafNodeAmount;            // The amount of child nodes
     uint32_t parentNodeAmount;          // The amount of parent nodes
@@ -31,7 +33,7 @@ class SparseOctree {
 
 public:
 
-    SparseOctree(GridSize chunkingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
+    SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 

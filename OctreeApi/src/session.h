@@ -23,7 +23,7 @@ public:
     void setDevice() const;
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
-    void setOctreeProperties(GridSize chunkingGrid, uint32_t mergingThreshold);
+    void setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
     void generateOctree();
     void exportPlyNodes(const string &filename);
     void configureMemoryReport(const std::string &filename);
@@ -37,9 +37,6 @@ private:
     unique_ptr<SparseOctree> itsOctree;
     unique_ptr<CudaArray<uint8_t>> data;
 
-    // Octree Configuration
-    GridSize itsChunkingGrid;
-    uint32_t itsMergingThreshold;
 
     string itsPointDistributionReport = "";
     uint32_t itsPointDistributionBinWidth = 0;
