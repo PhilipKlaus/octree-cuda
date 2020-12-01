@@ -147,7 +147,6 @@ namespace tools {
 
         block = dim3(BLOCK_SIZE_MAX, 1, 1);
         grid = dim3 (static_cast<unsigned int>(gridX), static_cast<unsigned int>(gridY), 1);
-        //spdlog::error("points: {} blocks: {}, block.x: {}, grid.x: {}, grid.y: {}", pointCount, blocks, block.x, grid.x, grid.y) ;
 
         printKernelDimensions(block, grid);
     }

@@ -283,7 +283,6 @@ void SparseOctree::performSubsampling() {
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
     auto nodesBaseLevel = static_cast<uint32_t>(pow(itsMetadata.subsamplingGrid, 3.f));
 
-    spdlog::error("{}",nodesBaseLevel);
     // Prepare data strucutres for the subsampling
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
     auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
