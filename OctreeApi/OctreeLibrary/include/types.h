@@ -68,4 +68,19 @@ struct PointCloudMetadata {
     Vector3 scale;
 };
 
+// https://stackoverflow.com/questions/2448242/struct-with-template-variables-in-c
+#pragma pack(push, 1)
+template <typename T>
+struct CoordinateVector {
+    T x, y, z;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+template <typename T>
+struct ColorVector {
+    T r, g, b;
+};
+#pragma pack(pop)
+
 #endif //POTREECONVERTERGPU_TYPES_H
