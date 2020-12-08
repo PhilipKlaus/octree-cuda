@@ -28,10 +28,6 @@ add_library( ${PROJECT_NAME} STATIC
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
 
-# Add Lohmann JSON library
-target_include_directories(${PROJECT_NAME} PRIVATE nlohmann)
-
-
 ####################
 # ADD CUDA SUPPORT #
 ####################
@@ -54,12 +50,20 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 
+############################
+# Add Lohmann JSON library #
+############################
+target_include_directories(${PROJECT_NAME} PRIVATE External/nlohmann)
+
+######################
+# Add LASZIP library #
+######################
+target_include_directories(${PROJECT_NAME} PRIVATE External/laszip)
 
 ######################
 # ADD SPDLOG LIBRARY #
 ######################
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
-
 
 #######################
 # BUILD LIBRARY TESTS #
