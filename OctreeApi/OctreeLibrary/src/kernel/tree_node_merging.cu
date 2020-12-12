@@ -64,52 +64,62 @@ __global__ void chunking::kernelMergeHierarchical(
     uint32_t childrenChunksCount = 0;
     int sparseChildIndex = (countingGrid[chunk_0_0_0_index] > 0) ? denseToSparseLUT[chunk_0_0_0_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_0_0_1_index] > 0) ? denseToSparseLUT[chunk_0_0_1_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_0_1_0_index] > 0) ? denseToSparseLUT[chunk_0_1_0_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_0_1_1_index] > 0) ? denseToSparseLUT[chunk_0_1_1_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_1_0_0_index] > 0) ? denseToSparseLUT[chunk_1_0_0_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_1_0_1_index] > 0) ? denseToSparseLUT[chunk_1_0_1_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_1_1_0_index] > 0) ? denseToSparseLUT[chunk_1_1_0_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     sparseChildIndex = (countingGrid[chunk_1_1_1_index] > 0) ? denseToSparseLUT[chunk_1_1_1_index] : -1;
     chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    ++childrenChunksCount;
+    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
 
     // 5.4. update the amount of assigned children chunks
-    chunk->childrenChunksCount = childrenChunksCount;
+    chunk->childrenChunksCount = 8;
 
     // 6. Update all children chunks
     auto sum = 0;
     for(auto i = 0; i < childrenChunksCount; ++i) {
 
-        // 6.1. Update isFinished in each child
-        (octree + chunk->childrenChunks[i])->isFinished = isFinished;
+        if(chunk->childrenChunks[i] != -1) {
+            // 6.1. Update isFinished in each child
+            (octree + chunk->childrenChunks[i])->isFinished = isFinished;
 
-        // 6.3. Assign current sparse chunk index to child as parentChunkIndex
-        (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
+            // 6.3. Assign current sparse chunk index to child as parentChunkIndex
+            (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
 
-        sum += (octree + chunk->childrenChunks[i])->pointCount;
+            sum += (octree + chunk->childrenChunks[i])->pointCount;
 
-        assert((octree + chunk->childrenChunks[i])->pointCount != 0);
+            assert((octree + chunk->childrenChunks[i])->pointCount != 0);
+        }
     }
 
     // ##################################################################################
@@ -121,9 +131,11 @@ __global__ void chunking::kernelMergeHierarchical(
 
         for(auto i = 0; i < childrenChunksCount; ++i) {
 
-            // 6.2. Update the exact index for the child within the dataLUT
-            (octree + chunk->childrenChunks[i])->chunkDataIndex = dataLUTIndex;
-            dataLUTIndex += (octree + chunk->childrenChunks[i])->pointCount;
+            if(chunk->childrenChunks[i] != -1) {
+                // 6.2. Update the exact index for the child within the dataLUT
+                (octree + chunk->childrenChunks[i])->chunkDataIndex = dataLUTIndex;
+                dataLUTIndex += (octree + chunk->childrenChunks[i])->pointCount;
+            }
         }
     }
 
