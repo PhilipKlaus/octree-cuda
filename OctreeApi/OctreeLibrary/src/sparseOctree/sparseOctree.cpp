@@ -198,8 +198,7 @@ float SparseOctree::hierarchicalSubsampling(
     float accumulatedTime = 0;
 
     // 1. Depth first traversal
-    for(uint32_t i = 0; i < 8; ++i) {
-        int chunkIndex = voxel.childrenChunks[i];
+    for(int chunkIndex : voxel.childrenChunks) {
 
         if(chunkIndex == -1) {
             continue;
@@ -235,9 +234,7 @@ float SparseOctree::hierarchicalSubsampling(
         gpuErrchk(cudaMemset (subsampleSparseVoxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
         
         // 4. Pre-calculate the subsamples and count the subsampled points
-        for(uint32_t i = 0; i < 8; ++i) {
-
-            uint32_t childIndex = voxel.childrenChunks[i];
+        for(uint32_t childIndex : voxel.childrenChunks) {
 
             if(childIndex == -1) {
                 continue;
@@ -267,9 +264,7 @@ float SparseOctree::hierarchicalSubsampling(
         // 6. Distribute points to the parent data LUT
         // ToDo: Remove memset by different strategy
         gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
-        for(uint32_t i = 0; i < 8; ++i) {
-
-            uint32_t childIndex = voxel.childrenChunks[i];
+        for(uint32_t childIndex : voxel.childrenChunks) {
 
             if(childIndex == -1) {
                 continue;

@@ -39,14 +39,15 @@ __global__ void chunking::kernelMergeHierarchical(
     }
 
     // 4. If the chunk exists, calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
-    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + oldXY;
-    uint32_t chunk_1_0_1_index = chunk_1_0_0_index + 1;
-    uint32_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
-    uint32_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
+    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);    // int: 0 -> Child 0
+    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;                                                                     // int: 4 -> child 4
+    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + oldGridSize;                                                           // int: 1 -> child 1
+    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;                                                                     // int: 5 -> child 5
+    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;                                                                 // int: 2 -> child 2
+    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;                                                                     // int: 6 -> child 6
+    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + oldGridSize;                                                           // int: 3 -> child 3
+    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;                                                                     // int: 7 -> child 7
+
 
     // 5. Update the actual (parent) chunk
     Chunk *chunk = octree + sparseVoxelIndex;
@@ -61,53 +62,36 @@ __global__ void chunking::kernelMergeHierarchical(
     chunk->isFinished = isFinished;
 
     // 5.3. Assign the sparse indices of the children chunks and calculate the amount of children chunks implicitly
-    uint32_t childrenChunksCount = 0;
     int sparseChildIndex = (countingGrid[chunk_0_0_0_index] > 0) ? denseToSparseLUT[chunk_0_0_0_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[0] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_0_0_1_index] > 0) ? denseToSparseLUT[chunk_0_0_1_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[1] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_0_1_0_index] > 0) ? denseToSparseLUT[chunk_0_1_0_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[2] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_0_1_1_index] > 0) ? denseToSparseLUT[chunk_0_1_1_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[3] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_1_0_0_index] > 0) ? denseToSparseLUT[chunk_1_0_0_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[4] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_1_0_1_index] > 0) ? denseToSparseLUT[chunk_1_0_1_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[5] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_1_1_0_index] > 0) ? denseToSparseLUT[chunk_1_1_0_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[6] = sparseChildIndex;
 
     sparseChildIndex = (countingGrid[chunk_1_1_1_index] > 0) ? denseToSparseLUT[chunk_1_1_1_index] : -1;
-    chunk->childrenChunks[childrenChunksCount] = sparseChildIndex;
-    ++childrenChunksCount;
-    //childrenChunksCount += (sparseChildIndex != -1 ? 1 : 0);
+    chunk->childrenChunks[7] = sparseChildIndex;
 
     // 5.4. update the amount of assigned children chunks
     chunk->childrenChunksCount = 8;
 
     // 6. Update all children chunks
     auto sum = 0;
-    for(auto i = 0; i < childrenChunksCount; ++i) {
+    for(auto i = 0; i < 8; ++i) {
 
         if(chunk->childrenChunks[i] != -1) {
             // 6.1. Update isFinished in each child
@@ -129,7 +113,7 @@ __global__ void chunking::kernelMergeHierarchical(
         // 6. Determine the start index inside the dataLUT for all children chunks
         uint32_t dataLUTIndex = atomicAdd(globalChunkCounter, sum);
 
-        for(auto i = 0; i < childrenChunksCount; ++i) {
+        for(auto i = 0; i < 8; ++i) {
 
             if(chunk->childrenChunks[i] != -1) {
                 // 6.2. Update the exact index for the child within the dataLUT
