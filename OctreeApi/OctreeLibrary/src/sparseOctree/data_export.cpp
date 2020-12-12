@@ -86,8 +86,11 @@ uint32_t SparseOctree::exportTreeNode(
         validPoints = 0;
     }
     if (level > 0) {
-        for(uint32_t i = 0; i < octreeSparse[index].childrenChunksCount; ++i) {
-            validPoints += exportTreeNode(cpuPointCloud, octreeSparse, dataLUT, level - 1, octreeSparse[index].childrenChunks[i], folder);
+        for(uint32_t i = 0; i < 8; ++i) {
+            int childIndex = octreeSparse[index].childrenChunks[i];
+            if(childIndex != -1) {
+                validPoints += exportTreeNode(cpuPointCloud, octreeSparse, dataLUT, level - 1, childIndex, folder);
+            }
         }
     }
     return validPoints;

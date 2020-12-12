@@ -39,8 +39,11 @@ void SparseOctree::calculatePointVarianceInLeafNoes(
 
     // Parent node
     else {
-        for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            calculatePointVarianceInLeafNoes(h_octreeSparse, sumVariance, mean, chunk.childrenChunks[i]);
+        for(uint32_t i = 0; i < 8; ++i) {
+            int childIndex = chunk.childrenChunks[i];
+            if(childIndex != -1) {
+                calculatePointVarianceInLeafNoes(h_octreeSparse, sumVariance, mean, childIndex);
+            }
         }
     }
 }
@@ -68,8 +71,11 @@ void SparseOctree::evaluateOctreeProperties(
     // Parent node
     else {
         parentNodes += 1;
-        for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            evaluateOctreeProperties(h_octreeSparse, leafNodes, parentNodes, pointSum, min, max, chunk.childrenChunks[i]);
+        for(uint32_t i = 0; i < 8; ++i) {
+            int childIndex = chunk.childrenChunks[i];
+            if(childIndex != -1) {
+                evaluateOctreeProperties(h_octreeSparse, leafNodes, parentNodes, pointSum, min, max, chunk.childrenChunks[i]);
+            }
         }
     }
 }
@@ -142,14 +148,18 @@ void SparseOctree::histogramBinning(
 
         // Parent node
     else {
-        for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            histogramBinning(h_octreeSparse, counts, min, binWidth, chunk.childrenChunks[i]);
+        for(uint32_t i = 0; i < 8; ++i) {
+            int childIndex = chunk.childrenChunks[i];
+            if(childIndex != -1) {
+                histogramBinning(h_octreeSparse, counts, min, binWidth, chunk.childrenChunks[i]);
+            }
         }
     }
 }
 
 void SparseOctree::exportHistogram(const string &filePath, uint32_t binWidth) {
     updateOctreeStatistics();
+
     if(binWidth == 0) {
         binWidth = static_cast<uint32_t>(ceil(3.5f * (itsMetadata.stdevPointsPerLeafNode / pow(itsMetadata.leafNodeAmount, 1.f/3.f))));
     }

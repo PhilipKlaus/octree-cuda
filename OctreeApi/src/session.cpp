@@ -62,6 +62,7 @@ void Session::generateOctree() {
     if(!itsPointDistributionReport.empty()) {
         itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
     }
+
     itsOctree->performSubsampling();
     spdlog::debug("octree generated");
 }
