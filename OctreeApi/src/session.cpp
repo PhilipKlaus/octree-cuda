@@ -19,9 +19,7 @@ Session* Session::ToSession (void* session)
 }
 
 Session::Session(int device):
-        itsDevice(device),
-        itsGlobalOctreeLevel(7),
-        itsMergingThreshold(10000)
+        itsDevice(device)
 {
     spdlog::debug("session created");
     setDevice ();
@@ -45,15 +43,13 @@ void Session::setMetadata(const PointCloudMetadata &metadata) {
 };
 
 void Session::setPointCloudHost(uint8_t *pointCloud) {
-    data = make_unique<CudaArray<Vector3>>(itsMetadata.pointAmount, "pointcloud");
+    data = make_unique<CudaArray<uint8_t>>(itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
     data->toGPU(pointCloud);
     spdlog::debug("copied point cloud from host to device");
 }
 
-void Session::setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold) {
-    itsGlobalOctreeLevel = globalOctreeLevel;
-    itsMergingThreshold = mergingThreshold;
-    itsOctree = make_unique<SparseOctree>(itsGlobalOctreeLevel, itsMergingThreshold, itsMetadata, move(data));
+void Session::setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold) {
+    itsOctree = make_unique<SparseOctree>(chunkingGrid, subsamplingGrid, mergingThreshold, itsMetadata, move(data));
 
     spdlog::debug("set octree properties");
 }
@@ -62,15 +58,16 @@ void Session::generateOctree() {
     itsOctree->initialPointCounting();
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
-    itsOctree->performSubsampling();
+
     if(!itsPointDistributionReport.empty()) {
         itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
     }
+    itsOctree->performSubsampling();
     spdlog::debug("octree generated");
 }
 
-void Session::exportOctree(const string &filename) {
-    itsOctree->exportOctree(filename);
+void Session::exportPlyNodes(const string &filename) {
+    itsOctree->exportPlyNodes(filename);
     spdlog::debug("octree exported");
 }
 

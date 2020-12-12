@@ -8,33 +8,30 @@
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 
-    // Create test data point cloud
-    unique_ptr<CudaArray<Vector3>> cuboid = tools::generate_point_cloud_cuboid(256);
-
+    // Create test data point octree
     PointCloudMetadata metadata{};
-    metadata.pointAmount = 256 * 256 * 256;
-    metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-    metadata.boundingBox.maximum = Vector3 {255.5, 255.5, 255.5};
-    metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
-    metadata.scale = {1.f, 1.f, 1.f};
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(256, metadata);
 
-    auto cloud = make_unique<SparseOctree>(7, 10000, metadata, move(cuboid));
+    // Create the octree
+    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
 
-    cloud->initialPointCounting();
+    // Perform initial point counting
+    octree->initialPointCounting();
 
-    auto denseCount = cloud->getDensePointCountPerVoxel();
-    auto denseToSparseLUT = cloud->getDenseToSparseLUT();
+    auto denseCount = octree->getDensePointCountPerVoxel();
+    auto denseToSparseLUT = octree->getDenseToSparseLUT();
 
     // Require that all cells are filled and that there is no empty space
-    REQUIRE(cloud->getMetadata().nodeAmountSparse == pow(128, 3));
+    REQUIRE(octree->getMetadata().nodeAmountSparse == pow(128, 3));
 
-    // Require that the sum of the accumulated point counts equaly to the actual point amount of the cloud
+    // Require that the sum of the accumulated point counts equaly to the actual point amount of the octree
     uint32_t sum = 0;
-    for(int i = 0; i < pow(128, 3); ++i) {
-        REQUIRE(denseCount[i] == 8);
+    for(uint32_t i = 0; i < static_cast<uint32_t>(pow(128, 3)); ++i) {
         sum += denseCount[i];
+        // We can assume that there are 8 points within each node
+        REQUIRE(denseCount[i] == 8);
         // We can assume that there exist a sparse index for each dense index as there are no empty cells
         REQUIRE(denseToSparseLUT[i] != -1);
     }
-    REQUIRE(sum == cloud->getMetadata().cloudMetadata.pointAmount);
+    REQUIRE(sum == octree->getMetadata().cloudMetadata.pointAmount);
 }

@@ -1,10 +1,13 @@
 #include <chunking.cuh>
 #include <tools.cuh>
 #include <timing.cuh>
+#include <cstdint>
+#include "../../include/types.h"
 
 
+//template <typename coordinateType, typename colorType>
 __global__ void chunking::kernelInitialPointCounting(
-        Vector3 *cloud,
+        uint8_t *cloud,
         uint32_t *densePointCount,
         int *denseToSparseLUT,
         uint32_t *sparseIndexCounter,
@@ -12,11 +15,12 @@ __global__ void chunking::kernelInitialPointCounting(
         uint32_t gridSideLength
 ) {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if(index >= metadata.pointAmount) {
         return;
     }
-    Vector3 point = cloud[index];
+
+    Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -32,8 +36,9 @@ __global__ void chunking::kernelInitialPointCounting(
 }
 
 
+//template <typename coordinateType, typename colorType>
 float chunking::initialPointCounting(
-        unique_ptr<CudaArray<Vector3>> &cloud,
+        unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &densePointCount,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
         unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
@@ -47,7 +52,7 @@ float chunking::initialPointCounting(
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
-    chunking::kernelInitialPointCounting <<<  grid, block >>> (
+    chunking::kernelInitialPointCounting/*<coordinateType, colorType>*/ <<<  grid, block >>> (
             cloud->devicePointer(),
             densePointCount->devicePointer(),
             denseToSparseLUT->devicePointer(),

@@ -6,11 +6,13 @@
 #include <chunking.cuh>
 #include <pseudo_random_subsampling.cuh>
 
-SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<Vector3>> cloudData) :
+SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
         itsCloudData(move(cloudData))
 {
     // Initialize octree metadata
-    itsMetadata.depth = depth;
+    itsMetadata.depth = tools::getOctreeLevel(chunkingGrid);
+    itsMetadata.chunkingGrid = chunkingGrid;
+    itsMetadata.subsamplingGrid = subsamplingGrid;
     itsMetadata.nodeAmountDense = 0;
     itsMetadata.nodeAmountSparse = 0;
     itsMetadata.leafNodeAmount = 0;
@@ -23,7 +25,7 @@ SparseOctree::SparseOctree(uint32_t depth, uint32_t mergingThreshold, PointCloud
     itsMetadata.cloudMetadata = cloudMetadata;
 
     // Pre calculate often-used octree metrics
-    auto sideLength = static_cast<uint32_t >(pow(2, depth));
+    auto sideLength = static_cast<uint32_t >(pow(2, itsMetadata.depth));
     for(uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1) {
         itsGridSideLengthPerLevel.push_back(gridSize);
         itsLinearizedDenseVoxelOffset.push_back(itsMetadata.nodeAmountDense);
@@ -75,7 +77,7 @@ void SparseOctree::initialPointCounting() {
     auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
     gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
-    float time = chunking::initialPointCounting(
+    float time = chunking::initialPointCounting/*<float, uint8_t>*/(
             itsCloudData,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
@@ -218,15 +220,14 @@ float SparseOctree::hierarchicalSubsampling(
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB(bb, coords, itsMetadata.cloudMetadata.boundingBox, denseVoxelIndex, level);
 
-        PointCloudMetadata metadata{};
-        metadata.scale = itsMetadata.cloudMetadata.scale;
+        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
 
         gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
         gpuErrchk(cudaMemset (subsampleDenseToSparseLUT->devicePointer(), 0, subsampleDenseToSparseLUT->pointCount() * sizeof(uint32_t)));
         gpuErrchk(cudaMemset (subsampleSparseVoxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
-
+        
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t i = 0; i < voxel.childrenChunksCount; ++i) {
 
@@ -242,12 +243,13 @@ float SparseOctree::hierarchicalSubsampling(
                     subsampleDenseToSparseLUT,
                     subsampleSparseVoxelCount,
                     metadata,
-                    itsGridSideLengthPerLevel[0]
+                    itsMetadata.subsamplingGrid
             );
         }
 
         // 5. Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
+
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
@@ -268,7 +270,7 @@ float SparseOctree::hierarchicalSubsampling(
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
                     metadata,
-                    itsGridSideLengthPerLevel[0]
+                    itsMetadata.subsamplingGrid
             );
         }
     }
@@ -279,24 +281,24 @@ void SparseOctree::performSubsampling() {
 
     auto h_octreeSparse = itsOctreeSparse->toHost();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
-    uint32_t rootVoxelIndexSparse = itsMetadata.nodeAmountSparse - 1;
+    auto nodesBaseLevel = static_cast<uint32_t>(pow(itsMetadata.subsamplingGrid, 3.f));
 
     // Prepare data strucutres for the subsampling
-    auto pointCountGrid = make_unique<CudaArray<uint32_t >>(itsVoxelsPerLevel[0], "pointCountGrid");
-    auto denseToSpareLUT = make_unique<CudaArray<int >>(itsVoxelsPerLevel[0], "denseToSpareLUT");
+    auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
+    auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
 
     // Perform the actual subsampling
     float time = hierarchicalSubsampling(
             h_octreeSparse,
             h_sparseToDenseLUT,
-            rootVoxelIndexSparse,
+            getRootIndex(),
             itsMetadata.depth,
             pointCountGrid,
             denseToSpareLUT,
             voxelCount
     );
 
-    spdlog::info("subsampling took {}[ms]", time);
+    spdlog::info("subsampling with gridSize of {} took {}[ms]", itsMetadata.subsamplingGrid, time);
 }
 

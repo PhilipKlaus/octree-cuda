@@ -13,7 +13,7 @@ __global__ void chunking::kernelPropagatePointCounts(
         uint32_t cellOffsetOld
 ) {
 
-    int index = blockIdx.x * blockDim.x + threadIdx.x;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     if(index >= newCellAmount) {
         return;

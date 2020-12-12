@@ -12,11 +12,16 @@ using namespace std;
 
 namespace tools {
 
-    unique_ptr<CudaArray<Vector3>> generate_point_cloud_cuboid(uint32_t sideLength);
+    uint32_t getOctreeLevel(OctreeTypes::GridSize gridSize);
+    uint32_t getOctreeGrid(uint32_t octreeLevel);
+    uint32_t getNodeAmount(uint32_t octreeLevel);
+    uint32_t getNodeOffset(uint32_t octreeLevel, uint32_t octreeDepth);
+
+    unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid(uint32_t sideLength, PointCloudMetadata &metadata);
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __device__ uint32_t calculateGridIndex(const Vector3 &point, PointCloudMetadata const &metadata, uint16_t gridSize);
+    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint32_t gridSize);
 
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b);
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(Vector3i &coordinates, uint32_t denseVoxelIdx, uint32_t level);

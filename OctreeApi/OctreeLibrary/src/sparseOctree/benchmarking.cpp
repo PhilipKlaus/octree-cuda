@@ -108,6 +108,8 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
 
     json statistics;
     statistics["depth"] = itsMetadata.depth;
+    statistics["chunkingGrid"] = itsMetadata.chunkingGrid;
+    statistics["subsamplingGrid"] = itsMetadata.subsamplingGrid;
     statistics["nodeAmount"] = itsMetadata.nodeAmountSparse;
     statistics["leafNodeAmount"] = itsMetadata.leafNodeAmount;
     statistics["parentNodeAmount"] = itsMetadata.parentNodeAmount;

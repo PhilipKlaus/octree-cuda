@@ -2,8 +2,8 @@
 // Created by KlausP on 28.10.2020.
 //
 
-#ifndef OCTREECUDA_CUDAARRAY_H
-#define OCTREECUDA_CUDAARRAY_H
+#ifndef OCTREE_LIBRARY_CUDAARRAY_H
+#define OCTREE_LIBRARY_CUDAARRAY_H
 
 #include <cstdint>
 #include <string>
@@ -61,4 +61,4 @@ private:
 };
 
 
-#endif //OCTREECUDA_CUDAARRAY_H
+#endif //OCTREE_LIBRARY_CUDAARRAY_H

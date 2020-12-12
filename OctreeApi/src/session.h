@@ -7,6 +7,8 @@
 
 #include <sparseOctree.h>
 
+using namespace OctreeTypes;
+
 class Session
 {
 public:
@@ -21,9 +23,9 @@ public:
     void setDevice() const;
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
-    void setOctreeProperties(uint16_t globalOctreeLevel, uint32_t mergingThreshold);
+    void setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
     void generateOctree();
-    void exportOctree(const string &filename);
+    void exportPlyNodes(const string &filename);
     void configureMemoryReport(const std::string &filename);
     void exportTimeMeasurements(const std::string &filename);
     void exportOctreeStatistics(const std::string &filename);
@@ -33,11 +35,8 @@ private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
     unique_ptr<SparseOctree> itsOctree;
-    unique_ptr<CudaArray<Vector3>> data;
+    unique_ptr<CudaArray<uint8_t>> data;
 
-    // Octree Configuration
-    uint16_t itsGlobalOctreeLevel{};
-    uint32_t itsMergingThreshold{};
 
     string itsPointDistributionReport = "";
     uint32_t itsPointDistributionBinWidth = 0;
