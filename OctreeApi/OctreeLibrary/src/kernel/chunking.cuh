@@ -9,6 +9,7 @@ namespace chunking {
 
     //------------- Point Counting ----------------------
 
+    //template <typename coordinateType, typename colorType>
     __global__ void kernelInitialPointCounting(
             uint8_t *cloud,
             uint32_t *densePointCount,
@@ -18,6 +19,7 @@ namespace chunking {
             uint32_t gridSideLength
     );
 
+    //template <typename coordinateType, typename colorType>
     float initialPointCounting(
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &densePointCount,

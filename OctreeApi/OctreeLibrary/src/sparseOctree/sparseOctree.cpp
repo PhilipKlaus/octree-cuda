@@ -77,7 +77,7 @@ void SparseOctree::initialPointCounting() {
     auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
     gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
-    float time = chunking::initialPointCounting(
+    float time = chunking::initialPointCounting/*<float, uint8_t>*/(
             itsCloudData,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
@@ -227,7 +227,7 @@ float SparseOctree::hierarchicalSubsampling(
         gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
         gpuErrchk(cudaMemset (subsampleDenseToSparseLUT->devicePointer(), 0, subsampleDenseToSparseLUT->pointCount() * sizeof(uint32_t)));
         gpuErrchk(cudaMemset (subsampleSparseVoxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
-
+        
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t i = 0; i < voxel.childrenChunksCount; ++i) {
 

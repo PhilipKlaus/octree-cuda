@@ -5,6 +5,7 @@
 #include "../../include/types.h"
 
 
+//template <typename coordinateType, typename colorType>
 __global__ void chunking::kernelInitialPointCounting(
         uint8_t *cloud,
         uint32_t *densePointCount,
@@ -35,6 +36,7 @@ __global__ void chunking::kernelInitialPointCounting(
 }
 
 
+//template <typename coordinateType, typename colorType>
 float chunking::initialPointCounting(
         unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &densePointCount,
@@ -50,7 +52,7 @@ float chunking::initialPointCounting(
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
-    chunking::kernelInitialPointCounting <<<  grid, block >>> (
+    chunking::kernelInitialPointCounting/*<coordinateType, colorType>*/ <<<  grid, block >>> (
             cloud->devicePointer(),
             densePointCount->devicePointer(),
             denseToSparseLUT->devicePointer(),
