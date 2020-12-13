@@ -228,10 +228,6 @@ float SparseOctree::hierarchicalSubsampling(
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
-
-        gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
-        gpuErrchk(cudaMemset (subsampleDenseToSparseLUT->devicePointer(), 0, subsampleDenseToSparseLUT->pointCount() * sizeof(uint32_t)));
-        gpuErrchk(cudaMemset (subsampleSparseVoxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
         
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t childIndex : voxel.childrenChunks) {
@@ -262,8 +258,6 @@ float SparseOctree::hierarchicalSubsampling(
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
         // 6. Distribute points to the parent data LUT
-        // ToDo: Remove memset by different strategy
-        gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
         for(uint32_t childIndex : voxel.childrenChunks) {
 
             if(childIndex == -1) {
@@ -280,6 +274,7 @@ float SparseOctree::hierarchicalSubsampling(
                     itsSubsampleLUTs[sparseVoxelIndex],
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
+                    subsampleSparseVoxelCount,
                     metadata,
                     itsMetadata.subsamplingGrid
             );
@@ -298,6 +293,10 @@ void SparseOctree::performSubsampling() {
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
     auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
+
+    gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
+    gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), 0, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
+    gpuErrchk(cudaMemset (voxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Perform the actual subsampling
     float time = hierarchicalSubsampling(

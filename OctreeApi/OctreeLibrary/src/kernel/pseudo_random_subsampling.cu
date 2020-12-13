@@ -11,6 +11,7 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
         uint32_t *parentDataLUT,
         uint32_t *countingGrid,
         int *denseToSparseLUT,
+        uint32_t *sparseIndexCounter,
         PointCloudMetadata metadata,
         uint32_t gridSideLength
 ) {
@@ -25,15 +26,19 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
     // 1. Calculate the index within the dense grid of the subsample
     auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
-    // 2. We are only interested in the first point within a cell
-    auto oldIndex = atomicAdd((countingGrid + denseVoxelIndex), 1);
+    // 2. We are only interested in the last point within a node -> Implicitely reset the countingGrid
+    auto oldIndex = atomicSub((countingGrid + denseVoxelIndex), 1);
 
     // 3. If the thread is the first one ->
     //      3.1 store the child lut table index in the parent lut
     //      3.2 'delete' the point within the child lut by invalidating its index entry
-    if(oldIndex == 0) {
+    if(oldIndex == 1) {
         parentDataLUT[denseToSparseLUT[denseVoxelIndex]] = childDataLUT[childDataLUTStart + index];
         childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
+
+        // Reset data structures
+        denseToSparseLUT[denseVoxelIndex] = 0;
+        *sparseIndexCounter = 0;
     }
 }
 
@@ -75,6 +80,7 @@ float pseudo__random_subsampling::distributeSubsamples(
         unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
         unique_ptr<CudaArray<uint32_t>> &countingGrid,
         unique_ptr<CudaArray<int>> &denseToSparseLUT,
+        unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
         PointCloudMetadata metadata,
         uint32_t gridSideLength
 ) {
@@ -92,6 +98,7 @@ float pseudo__random_subsampling::distributeSubsamples(
                     parentDataLUT->devicePointer(),
                     countingGrid->devicePointer(),
                     denseToSparseLUT->devicePointer(),
+                    sparseIndexCounter->devicePointer(),
                     metadata,
                     gridSideLength);
     timer.stop();

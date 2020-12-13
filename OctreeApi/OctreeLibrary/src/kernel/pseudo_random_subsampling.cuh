@@ -13,6 +13,7 @@ namespace pseudo__random_subsampling {
             uint32_t *parentDataLUT,
             uint32_t *countingGrid,
             int *denseToSparseLUT,
+            uint32_t *sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength
     );
@@ -35,6 +36,7 @@ namespace pseudo__random_subsampling {
             unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength
     );
