@@ -29,14 +29,14 @@ __global__ void chunking::kernelPropagatePointCounts(
     uint32_t denseVoxelIndex = cellOffsetNew + index;
 
     // Calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + 1;
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + 1;
-    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + oldXY;
-    uint32_t chunk_1_0_1_index = chunk_1_0_0_index + 1;
-    uint32_t chunk_1_1_0_index = chunk_1_0_0_index + oldGridSize;
-    uint32_t chunk_1_1_1_index = chunk_1_1_0_index + 1;
+    uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);    // int: 0 -> Child 0
+    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;                                                                     // int: 4 -> child 4
+    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + oldGridSize;                                                           // int: 1 -> child 1
+    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;                                                                     // int: 5 -> child 5
+    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;                                                                 // int: 2 -> child 2
+    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;                                                                     // int: 6 -> child 6
+    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + oldGridSize;                                                           // int: 3 -> child 3
+    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;                                                                     // int: 7 -> child 7
 
     // Create pointers to the 8 underlying cells
     uint32_t *chunk_0_0_0 = countingGrid + chunk_0_0_0_index;
@@ -77,6 +77,8 @@ __global__ void chunking::kernelPropagatePointCounts(
         countingGrid[denseVoxelIndex] += sum;
         auto sparseVoxelIndex = atomicAdd(sparseIndexCounter, 1);
         denseToSparseLUT[denseVoxelIndex] = sparseVoxelIndex;
+
+        assert(countingGrid[denseVoxelIndex] != 0);
     }
 }
 

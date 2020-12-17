@@ -200,11 +200,7 @@ float SparseOctree::hierarchicalSubsampling(
     // 1. Depth first traversal
     for(int chunkIndex : voxel.childrenChunks) {
 
-        if(chunkIndex == -1) {
-            continue;
-        }
-
-        if(h_octreeSparse[chunkIndex].isFinished) {
+        if(chunkIndex != -1 && h_octreeSparse[chunkIndex].isFinished) {
             accumulatedTime += hierarchicalSubsampling(
                     h_octreeSparse,
                     h_sparseToDenseLUT,
@@ -232,23 +228,21 @@ float SparseOctree::hierarchicalSubsampling(
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t childIndex : voxel.childrenChunks) {
 
-            if(childIndex == -1) {
-                continue;
+            if(childIndex != -1) {
+                Chunk child = h_octreeSparse[childIndex];
+                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
+
+                accumulatedTime += pseudo__random_subsampling::subsample(
+                        itsCloudData,
+                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                        child.isParent ? 0 : child.chunkDataIndex,
+                        subsampleCountingGrid,
+                        subsampleDenseToSparseLUT,
+                        subsampleSparseVoxelCount,
+                        metadata,
+                        itsMetadata.subsamplingGrid
+                );
             }
-
-            Chunk child = h_octreeSparse[childIndex];
-            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-            accumulatedTime += pseudo__random_subsampling::subsample(
-                    itsCloudData,
-                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                    child.isParent ? 0 : child.chunkDataIndex,
-                    subsampleCountingGrid,
-                    subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
-                    metadata,
-                    itsMetadata.subsamplingGrid
-            );
         }
 
         // 5. Reserve memory for a data LUT for the parent node
@@ -260,24 +254,22 @@ float SparseOctree::hierarchicalSubsampling(
         // 6. Distribute points to the parent data LUT
         for(uint32_t childIndex : voxel.childrenChunks) {
 
-            if(childIndex == -1) {
-                continue;
+            if(childIndex != -1) {
+                Chunk child = h_octreeSparse[childIndex];
+                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
+
+                accumulatedTime += pseudo__random_subsampling::distributeSubsamples(
+                        itsCloudData,
+                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                        child.isParent ? 0: child.chunkDataIndex,
+                        itsSubsampleLUTs[sparseVoxelIndex],
+                        subsampleCountingGrid,
+                        subsampleDenseToSparseLUT,
+                        subsampleSparseVoxelCount,
+                        metadata,
+                        itsMetadata.subsamplingGrid
+                );
             }
-
-            Chunk child = h_octreeSparse[childIndex];
-            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-            accumulatedTime += pseudo__random_subsampling::distributeSubsamples(
-                    itsCloudData,
-                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                    child.isParent ? 0: child.chunkDataIndex,
-                    itsSubsampleLUTs[sparseVoxelIndex],
-                    subsampleCountingGrid,
-                    subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
-                    metadata,
-                    itsMetadata.subsamplingGrid
-            );
         }
     }
     return accumulatedTime;

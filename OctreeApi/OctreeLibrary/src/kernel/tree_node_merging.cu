@@ -101,8 +101,6 @@ __global__ void chunking::kernelMergeHierarchical(
             (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
 
             sum += (octree + chunk->childrenChunks[i])->pointCount;
-
-            assert((octree + chunk->childrenChunks[i])->pointCount != 0);
         }
     }
 
