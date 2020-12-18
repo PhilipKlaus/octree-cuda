@@ -39,8 +39,10 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
     }
     else {
         if (level > 0) {
-            for(uint32_t i = 0; i < octree[index].childrenChunksCount; ++i) {
-                count += testOctreenodeSparse(cpuPointCloud, octree, dataLUT, sparseToDense, level - 1, octree[index].childrenChunks[i]);
+            for(uint32_t i = 0; i < 8; ++i) {
+                if(octree[index].childrenChunks[i] != -1) {
+                    count += testOctreenodeSparse(cpuPointCloud, octree, dataLUT, sparseToDense, level - 1, octree[index].childrenChunks[i]);
+                }
             }
         }
     }

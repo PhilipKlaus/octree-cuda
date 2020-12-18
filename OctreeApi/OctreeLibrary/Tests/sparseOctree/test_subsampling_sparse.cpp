@@ -28,8 +28,10 @@ void testSubsampleTree(
             default:
                 break;
         }
-        for(uint32_t i = 0; i < chunk.childrenChunksCount; ++i) {
-            testSubsampleTree(octree, subsampleLUT, chunk.childrenChunks[i], level - 1);
+        for(uint32_t i = 0; i < 8; ++i) {
+            if(chunk.childrenChunks[i] != -1) {
+                testSubsampleTree(octree, subsampleLUT, chunk.childrenChunks[i], level - 1);
+            }
         }
     }
 }
