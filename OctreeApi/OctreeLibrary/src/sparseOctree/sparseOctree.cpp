@@ -5,6 +5,8 @@
 #include <sparseOctree.h>
 #include <chunking.cuh>
 #include <pseudo_random_subsampling.cuh>
+#include <curand.h>
+#include <curand_kernel.h>
 
 SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
         itsCloudData(move(cloudData))
@@ -248,6 +250,20 @@ float SparseOctree::hierarchicalSubsampling(
         // 5. Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
+        //---------- GENERATE RANDOM INDICES FOR SUBSAMPLING ----------------
+        auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
+        auto randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
+
+        pseudo__random_subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
+        pseudo__random_subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
+
+        /*spdlog::error("------ Generated indices ------");
+        auto h_indices = randomIndices->toHost();
+        for(int i=0; i < randomIndices->pointCount(); ++i) {
+            spdlog::error("{}", h_indices[i]);
+        }*/
+        //-------------------------------------------------------------------
+
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
@@ -267,7 +283,8 @@ float SparseOctree::hierarchicalSubsampling(
                         subsampleDenseToSparseLUT,
                         subsampleSparseVoxelCount,
                         metadata,
-                        itsMetadata.subsamplingGrid
+                        itsMetadata.subsamplingGrid,
+                        randomIndices
                 );
             }
         }
@@ -287,7 +304,7 @@ void SparseOctree::performSubsampling() {
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
 
     gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
-    gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), 0, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
+    gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), -1, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
     gpuErrchk(cudaMemset (voxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Perform the actual subsampling
