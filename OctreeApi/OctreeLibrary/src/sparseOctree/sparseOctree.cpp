@@ -259,8 +259,14 @@ float SparseOctree::hierarchicalSubsampling(
 
         /*spdlog::error("------ Generated indices ------");
         auto h_indices = randomIndices->toHost();
-        for(int i=0; i < randomIndices->pointCount(); ++i) {
-            spdlog::error("{}", h_indices[i]);
+        auto h_countingGrid = subsampleCountingGrid->toHost();
+        auto h_denseToSparse = subsampleDenseToSparseLUT->toHost();
+
+        for(int i=0; i < subsampleCountingGrid->pointCount(); ++i) {
+            auto sparseIndex = h_denseToSparse[i];
+            if(sparseIndex > -1) {
+                spdlog::error("Amount points: {}, Generated index: {}", h_countingGrid[i], h_indices[sparseIndex]);
+            }
         }*/
         //-------------------------------------------------------------------
 

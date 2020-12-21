@@ -24,11 +24,11 @@ int main() {
     ocpi_create_session(&session, 0);
 
     PointCloudMetadata metadata = {};
-    metadata.pointAmount = 5138448;
-    metadata.pointDataStride = 43;
+    metadata.pointAmount = 25836417;
+    metadata.pointDataStride = 12;
     metadata.scale = {1.f, 1.f, 1.f};
 
-    ifstream ifs("coin_2320x9x2x4000_headerless.ply", ios::binary|ios::ate);
+    ifstream ifs("heidentor_vertices.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
