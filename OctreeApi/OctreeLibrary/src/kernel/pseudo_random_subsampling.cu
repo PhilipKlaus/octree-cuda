@@ -49,7 +49,10 @@ __global__ void pseudo__random_subsampling::kernelDistributeSubsamples(
 }
 
 // http://ianfinlayson.net/class/cpsc425/notes/cuda-random
-__global__ void pseudo__random_subsampling::kernelInitRandoms(unsigned int seed, curandState_t *states, uint32_t nodeAmount) {
+__global__ void pseudo__random_subsampling::kernelInitRandoms(
+        unsigned int seed,
+        curandState_t *states,
+        uint32_t nodeAmount) {
 
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -65,7 +68,12 @@ __global__ void pseudo__random_subsampling::kernelInitRandoms(unsigned int seed,
             &states[index]);
 }
 
-__global__ void pseudo__random_subsampling::kernelGenerateRandoms(curandState_t* states, uint32_t *randomIndices, const int *denseToSparseLUT, uint32_t *countingGrid, uint32_t gridNodes) {
+__global__ void pseudo__random_subsampling::kernelGenerateRandoms(
+        curandState_t* states,
+        uint32_t *randomIndices,
+        const int *denseToSparseLUT,
+        const uint32_t *countingGrid,
+        uint32_t gridNodes) {
 
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -148,7 +156,12 @@ float pseudo__random_subsampling::distributeSubsamples(
     return timer.getMilliseconds();
 }
 
-float pseudo__random_subsampling::generateRandoms(unique_ptr<CudaArray<curandState_t>> &states, unique_ptr<CudaArray<uint32_t>> &randomIndices, const unique_ptr<CudaArray<int>> &denseToSparseLUT, unique_ptr<CudaArray<uint32_t>> &countingGrid, uint32_t gridNodes) {
+float pseudo__random_subsampling::generateRandoms(
+        const unique_ptr<CudaArray<curandState_t>> &states,
+        unique_ptr<CudaArray<uint32_t>> &randomIndices,
+        const unique_ptr<CudaArray<int>> &denseToSparseLUT,
+        const unique_ptr<CudaArray<uint32_t>> &countingGrid,
+        uint32_t gridNodes) {
 
     // Calculate kernel dimensions
     dim3 grid, block;

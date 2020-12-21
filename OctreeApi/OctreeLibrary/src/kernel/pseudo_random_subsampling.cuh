@@ -20,7 +20,10 @@ namespace pseudo__random_subsampling {
             uint32_t gridSideLength,
             uint32_t *randomIndices);
 
-    __global__ void kernelInitRandoms(unsigned int seed, curandState_t* states, uint32_t nodeAmount);
+    __global__ void kernelInitRandoms(
+            unsigned int seed,
+            curandState_t* states,
+            uint32_t nodeAmount);
 
     __global__ void kernelSubsample(
             uint8_t *cloud,
@@ -32,7 +35,12 @@ namespace pseudo__random_subsampling {
             PointCloudMetadata metadata,
             uint32_t gridSideLength);
 
-    __global__ void kernelGenerateRandoms(curandState_t* states, uint32_t *randomIndices, const int *denseToSparseLUT, uint32_t *countingGrid, uint32_t gridNodes);
+    __global__ void kernelGenerateRandoms(
+            curandState_t* states,
+            uint32_t *randomIndices,
+            const int *denseToSparseLUT,
+            const uint32_t *countingGrid,
+            uint32_t gridNodes);
 
     float distributeSubsamples(
             unique_ptr<CudaArray<uint8_t>> &cloud,
@@ -56,13 +64,16 @@ namespace pseudo__random_subsampling {
             PointCloudMetadata metadata,
             uint32_t gridSideLength);
 
-    float initRandoms(unsigned int seed, unique_ptr<CudaArray<curandState_t>> &states, uint32_t nodeAmount);
+    float initRandoms(
+            unsigned int seed,
+            unique_ptr<CudaArray<curandState_t>> &states,
+            uint32_t nodeAmount);
 
     float generateRandoms(
-            unique_ptr<CudaArray<curandState_t>> &states,
+            const unique_ptr<CudaArray<curandState_t>> &states,
             unique_ptr<CudaArray<uint32_t>> &randomIndices,
             const unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
+            const unique_ptr<CudaArray<uint32_t>> &countingGrid,
             uint32_t gridNodes);
 }
 
