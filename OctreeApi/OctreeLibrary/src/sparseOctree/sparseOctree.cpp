@@ -5,6 +5,8 @@
 #include <sparseOctree.h>
 #include <chunking.cuh>
 #include <pseudo_random_subsampling.cuh>
+#include <curand.h>
+#include <curand_kernel.h>
 
 SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
         itsCloudData(move(cloudData))
@@ -200,11 +202,7 @@ float SparseOctree::hierarchicalSubsampling(
     // 1. Depth first traversal
     for(int chunkIndex : voxel.childrenChunks) {
 
-        if(chunkIndex == -1) {
-            continue;
-        }
-
-        if(h_octreeSparse[chunkIndex].isFinished) {
+        if(chunkIndex != -1 && h_octreeSparse[chunkIndex].isFinished) {
             accumulatedTime += hierarchicalSubsampling(
                     h_octreeSparse,
                     h_sparseToDenseLUT,
@@ -228,61 +226,73 @@ float SparseOctree::hierarchicalSubsampling(
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
-
-        gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
-        gpuErrchk(cudaMemset (subsampleDenseToSparseLUT->devicePointer(), 0, subsampleDenseToSparseLUT->pointCount() * sizeof(uint32_t)));
-        gpuErrchk(cudaMemset (subsampleSparseVoxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
         
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t childIndex : voxel.childrenChunks) {
 
-            if(childIndex == -1) {
-                continue;
+            if(childIndex != -1) {
+                Chunk child = h_octreeSparse[childIndex];
+                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
+
+                accumulatedTime += pseudo__random_subsampling::subsample(
+                        itsCloudData,
+                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                        child.isParent ? 0 : child.chunkDataIndex,
+                        subsampleCountingGrid,
+                        subsampleDenseToSparseLUT,
+                        subsampleSparseVoxelCount,
+                        metadata,
+                        itsMetadata.subsamplingGrid
+                );
             }
-
-            Chunk child = h_octreeSparse[childIndex];
-            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-            accumulatedTime += pseudo__random_subsampling::subsample(
-                    itsCloudData,
-                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                    child.isParent ? 0 : child.chunkDataIndex,
-                    subsampleCountingGrid,
-                    subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
-                    metadata,
-                    itsMetadata.subsamplingGrid
-            );
         }
 
         // 5. Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
+        //---------- GENERATE RANDOM INDICES FOR SUBSAMPLING ----------------
+        auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
+        auto randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
+
+        pseudo__random_subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
+        pseudo__random_subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
+
+        /*spdlog::error("------ Generated indices ------");
+        auto h_indices = randomIndices->toHost();
+        auto h_countingGrid = subsampleCountingGrid->toHost();
+        auto h_denseToSparse = subsampleDenseToSparseLUT->toHost();
+
+        for(int i=0; i < subsampleCountingGrid->pointCount(); ++i) {
+            auto sparseIndex = h_denseToSparse[i];
+            if(sparseIndex > -1) {
+                spdlog::error("Amount points: {}, Generated index: {}", h_countingGrid[i], h_indices[sparseIndex]);
+            }
+        }*/
+        //-------------------------------------------------------------------
+
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
         // 6. Distribute points to the parent data LUT
-        // ToDo: Remove memset by different strategy
-        gpuErrchk(cudaMemset (subsampleCountingGrid->devicePointer(), 0, subsampleCountingGrid->pointCount() * sizeof(uint32_t)));
         for(uint32_t childIndex : voxel.childrenChunks) {
 
-            if(childIndex == -1) {
-                continue;
+            if(childIndex != -1) {
+                Chunk child = h_octreeSparse[childIndex];
+                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
+
+                accumulatedTime += pseudo__random_subsampling::distributeSubsamples(
+                        itsCloudData,
+                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                        child.isParent ? 0: child.chunkDataIndex,
+                        itsSubsampleLUTs[sparseVoxelIndex],
+                        subsampleCountingGrid,
+                        subsampleDenseToSparseLUT,
+                        subsampleSparseVoxelCount,
+                        metadata,
+                        itsMetadata.subsamplingGrid,
+                        randomIndices
+                );
             }
-
-            Chunk child = h_octreeSparse[childIndex];
-            metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-            accumulatedTime += pseudo__random_subsampling::distributeSubsamples(
-                    itsCloudData,
-                    child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                    child.isParent ? 0: child.chunkDataIndex,
-                    itsSubsampleLUTs[sparseVoxelIndex],
-                    subsampleCountingGrid,
-                    subsampleDenseToSparseLUT,
-                    metadata,
-                    itsMetadata.subsamplingGrid
-            );
         }
     }
     return accumulatedTime;
@@ -298,6 +308,10 @@ void SparseOctree::performSubsampling() {
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
     auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
+
+    gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
+    gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), -1, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
+    gpuErrchk(cudaMemset (voxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Perform the actual subsampling
     float time = hierarchicalSubsampling(

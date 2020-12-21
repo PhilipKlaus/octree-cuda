@@ -86,9 +86,6 @@ __global__ void chunking::kernelMergeHierarchical(
     sparseChildIndex = (countingGrid[chunk_1_1_1_index] > 0) ? denseToSparseLUT[chunk_1_1_1_index] : -1;
     chunk->childrenChunks[7] = sparseChildIndex;
 
-    // 5.4. update the amount of assigned children chunks
-    chunk->childrenChunksCount = 8;
-
     // 6. Update all children chunks
     auto sum = 0;
     for(auto i = 0; i < 8; ++i) {
@@ -101,8 +98,6 @@ __global__ void chunking::kernelMergeHierarchical(
             (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
 
             sum += (octree + chunk->childrenChunks[i])->pointCount;
-
-            assert((octree + chunk->childrenChunks[i])->pointCount != 0);
         }
     }
 

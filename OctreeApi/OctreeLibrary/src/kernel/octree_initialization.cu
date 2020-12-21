@@ -1,6 +1,7 @@
 #include <chunking.cuh>
 #include <tools.cuh>
 #include <timing.cuh>
+#include "../../include/types.h"
 
 __global__ void chunking::kernelInitLowestOctreeHierarchy(
         Chunk *octreeSparse,
@@ -27,6 +28,15 @@ __global__ void chunking::kernelInitLowestOctreeHierarchy(
 
     Chunk *chunk = octreeSparse + sparseVoxelIndex;
     chunk->pointCount = densePointCount[denseVoxelIndex];
+
+    chunk->childrenChunks[0] = -1;
+    chunk->childrenChunks[1] = -1;
+    chunk->childrenChunks[2] = -1;
+    chunk->childrenChunks[3] = -1;
+    chunk->childrenChunks[4] = -1;
+    chunk->childrenChunks[5] = -1;
+    chunk->childrenChunks[6] = -1;
+    chunk->childrenChunks[7] = -1;
 
     assert(chunk->pointCount != 0);
 }
