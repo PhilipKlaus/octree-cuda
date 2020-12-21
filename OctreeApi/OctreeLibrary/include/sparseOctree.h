@@ -55,6 +55,7 @@ public:
 
     // Data export
     void exportPlyNodes(const string &folderPath);
+    void exportPlyNodesIntermediate(const string &folderPath);
 
     // Debugging methods
     const OctreeMetadata& getMetadata() const;
@@ -81,7 +82,8 @@ private:
                                  unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
 
     // Exporting
-    uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, uint32_t level, uint32_t index, const string &folder);
+    uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);
+    uint32_t exportTreeNodeIntermediate(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);
 
     // Benchmarking
     uint32_t getRootIndex();

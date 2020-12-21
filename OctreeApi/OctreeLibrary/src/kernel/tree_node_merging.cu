@@ -41,11 +41,11 @@ __global__ void chunking::kernelMergeHierarchical(
     // 4. If the chunk exists, calculate the dense indices of the 8 underlying cells
     uint32_t chunk_0_0_0_index = cellOffsetOld + (coords.z * oldXY * 2) + (coords.y * oldGridSize * 2) + (coords.x * 2);    // int: 0 -> Child 0
     uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;                                                                     // int: 4 -> child 4
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + oldGridSize;                                                           // int: 1 -> child 1
-    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;                                                                     // int: 5 -> child 5
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;                                                                 // int: 2 -> child 2
+    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldGridSize;                                                           // int: 2 -> child 2
     uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;                                                                     // int: 6 -> child 6
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + oldGridSize;                                                           // int: 3 -> child 3
+    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + oldXY;                                                                 // int: 1 -> child 1
+    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;                                                                     // int: 5 -> child 5
+    uint32_t chunk_0_1_1_index = chunk_0_0_1_index + oldGridSize;                                                           // int: 3 -> child 3
     uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;                                                                     // int: 7 -> child 7
 
 
