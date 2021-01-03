@@ -12,7 +12,7 @@
 
 namespace chunking {
 
-    __global__ void kernelInitLowestOctreeHierarchy(
+    __global__ void kernelOctreeInitialization(
             Chunk *octreeSparse,
             uint32_t *densePointCount,
             int *denseToSparseLUT,
@@ -50,7 +50,7 @@ namespace chunking {
         assert(chunk->pointCount != 0);
     }
 
-    float initLowestOctreeHierarchy(
+    float initOctree(
             unique_ptr<CudaArray<Chunk>> &octree,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
@@ -63,7 +63,7 @@ namespace chunking {
 
         tools::KernelTimer timer;
         timer.start();
-        chunking::kernelInitLowestOctreeHierarchy << < grid, block >> > (
+        chunking::kernelOctreeInitialization << < grid, block >> > (
                 octree->devicePointer(),
                         countingGrid->devicePointer(),
                         denseToSparseLUT->devicePointer(),

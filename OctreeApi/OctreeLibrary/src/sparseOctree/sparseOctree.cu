@@ -86,7 +86,7 @@ void SparseOctree::initialPointCounting() {
     auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
     gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
-    float time = chunking::initialPointCounting/*<float, uint8_t>*/(
+    float time = chunking::initialPointCounting<float>(
             itsCloudData,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
@@ -149,18 +149,17 @@ void SparseOctree::performCellMerging() {
 }
 
 
-// ToDo: Rename
 void SparseOctree::initLowestOctreeHierarchy() {
 
-    float time = chunking::initLowestOctreeHierarchy(
+    float time = chunking::initOctree(
             itsOctreeSparse,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
             itsSparseToDenseLUT,
             itsVoxelsPerLevel[0]);
 
-    itsTimeMeasurement.insert(std::make_pair("initLowestOctreeHierarchy", time));
-    spdlog::info("'initLowestOctreeHierarchy' took {:f} [ms]", time);
+    itsTimeMeasurement.insert(std::make_pair("initOctree", time));
+    spdlog::info("'initOctree' took {:f} [ms]", time);
 }
 
 void SparseOctree::mergeHierarchical() {

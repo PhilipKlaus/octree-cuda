@@ -11,7 +11,7 @@
 
 namespace chunking {
 
-    //template <typename coordinateType, typename colorType>
+    template <typename coordinateType>
     __global__ void kernelInitialPointCounting(
             uint8_t *cloud,
             uint32_t *densePointCount,
@@ -26,11 +26,11 @@ namespace chunking {
             return;
         }
 
-        //reinterpret_cast<CoordinateVector<coordinateType>>()
-        Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
+        CoordinateVector<coordinateType> *point =
+                reinterpret_cast<CoordinateVector<coordinateType>*>(cloud + index * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid
-        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndexTmp<coordinateType>(point, metadata, gridSideLength);
 
         // 2. Accumulate the counter within the dense cell
         auto oldIndex = atomicAdd((densePointCount + denseVoxelIndex), 1);
@@ -43,7 +43,7 @@ namespace chunking {
     }
 
 
-    //template <typename coordinateType, typename colorType>
+    template <typename coordinateType>
     float initialPointCounting(
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &densePointCount,
@@ -60,7 +60,7 @@ namespace chunking {
         // Initial point counting
         tools::KernelTimer timer;
         timer.start();
-        chunking::kernelInitialPointCounting/*<coordinateType, colorType>*/ <<<  grid, block >>> (
+        chunking::kernelInitialPointCounting<coordinateType> <<<  grid, block >>> (
                 cloud->devicePointer(),
                         densePointCount->devicePointer(),
                         denseToSparseLUT->devicePointer(),
