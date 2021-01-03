@@ -11,19 +11,20 @@ add_library( ${PROJECT_NAME} STATIC
         src/misc/tools.cu
 
         # Sparse octree
-        src/sparseOctree/sparseOctree.cpp
+        src/sparseOctree/sparseOctree.cu
         src/sparseOctree/benchmarking.cpp
         src/sparseOctree/data_export.cpp
         src/sparseOctree/tools.cpp
         src/sparseOctree/debugging.cpp
 
         # Cuda kernels
-        src/kernel/initial_point_counting.cu
-        src/kernel/point_count_propagation.cu
-        src/kernel/octree_initialization.cu
-        src/kernel/point_distributing.cu
-        src/kernel/tree_node_merging.cu
-        src/kernel/pseudo_random_subsampling.cu)
+
+        src/kernel/point_counting.cuh
+        src/kernel/octree_initialization.cuh
+        src/kernel/point_count_propagation.cuh
+        src/kernel/hierarchical_merging.cuh
+        src/kernel/point_distributing.cuh
+        src/kernel/random_subsampling.cuh)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
