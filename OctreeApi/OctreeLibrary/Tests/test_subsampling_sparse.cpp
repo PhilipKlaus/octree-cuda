@@ -4,7 +4,7 @@
 
 #include <sparseOctree.h>
 #include "catch2/catch.hpp"
-/*
+
 void testSubsampleTree(
         const unique_ptr<Chunk[]> &octree,
         unordered_map<uint32_t,
@@ -58,4 +58,3 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
     uint32_t topLevelIndex = octree->getMetadata().nodeAmountSparse - 1;
     testSubsampleTree(octreeData, octree->getSubsampleLUT(), topLevelIndex, 7);
 }
-*/

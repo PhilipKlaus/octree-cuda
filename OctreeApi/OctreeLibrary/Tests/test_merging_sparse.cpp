@@ -6,7 +6,7 @@
 #include "tools.cuh"
 #include "sparseOctree.h"
 
-/*
+
 TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
 
     // Create test data point octree
@@ -14,7 +14,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 40000, metadata, move(cloud));
+    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
 
     octree->initialPointCounting();
     octree->performCellMerging();
@@ -34,9 +34,9 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     uint32_t cellOffset = 0;
 
     for(int i = 0; i < pow(128, 3); ++i) {
-        REQUIRE(denseCount[i] == 8);
+        REQUIRE(denseCount[i] == 1);
         REQUIRE(denseToSparseLUT[i] != -1);
-        REQUIRE(octreeSparse[denseToSparseLUT[i]].pointCount == 8);
+        REQUIRE(octreeSparse[denseToSparseLUT[i]].pointCount == 1);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].parentChunkIndex != 0);
         REQUIRE(octreeSparse[denseToSparseLUT[i]].chunkDataIndex < octree->getMetadata().cloudMetadata.pointAmount);
@@ -46,9 +46,9 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(128, 3));
 
     for(int i = 0; i < pow(64, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 64);
+        REQUIRE(denseCount[cellOffset + i] == 8);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 64);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 8);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < octree->getMetadata().cloudMetadata.pointAmount);
@@ -58,9 +58,9 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(64, 3));
 
     for(int i = 0; i < pow(32, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 512);
+        REQUIRE(denseCount[cellOffset + i] == 64);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 512);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 64);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < octree->getMetadata().cloudMetadata.pointAmount);
@@ -70,9 +70,9 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(32, 3));
 
     for(int i = 0; i < pow(16, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 4096);
+        REQUIRE(denseCount[cellOffset + i] == 512);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 4096);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 512);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == false);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < octree->getMetadata().cloudMetadata.pointAmount);
@@ -82,9 +82,9 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(16, 3));
 
     for(int i = 0; i < pow(8, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 32768);
+        REQUIRE(denseCount[cellOffset + i] == 4096);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
-        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 32768);
+        REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 4096);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].parentChunkIndex != 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].chunkDataIndex < octree->getMetadata().cloudMetadata.pointAmount);
@@ -94,7 +94,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(8, 3));
 
     for(int i = 0; i < pow(4, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 262144);
+        REQUIRE(denseCount[cellOffset + i] == 32768);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
@@ -106,7 +106,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(4, 3));
 
     for(int i = 0; i < pow(2, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 2097152);
+        REQUIRE(denseCount[cellOffset + i] == 262144);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
@@ -118,7 +118,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     cellOffset += static_cast<uint32_t >(pow(2, 3));
 
     for(int i = 0; i < pow(1, 3); ++i) {
-        REQUIRE(denseCount[cellOffset + i] == 16777216);
+        REQUIRE(denseCount[cellOffset + i] == 2097152);
         REQUIRE(denseToSparseLUT[cellOffset + i] != -1);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].pointCount == 0);
         REQUIRE(octreeSparse[denseToSparseLUT[cellOffset + i]].isFinished == true);
@@ -129,4 +129,4 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(cellOffset + i == denseToSparseLUT[cellOffset + i]);
         REQUIRE(denseToSparseLUT[cellOffset + i] == 2396744);
     }
-}*/
+}

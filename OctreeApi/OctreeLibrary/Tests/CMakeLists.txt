@@ -3,10 +3,10 @@ project(OctreeTest)
 # Create the Test executable
 add_executable(OctreeTest
         main.cpp
-        tools/test_tools.cpp
-        sparseOctree/test_initial_point_counting_sparse.cpp
-        sparseOctree/test_merging_sparse.cpp
-        sparseOctree/test_point_distribution_sparse.cpp sparseOctree/test_subsampling_sparse.cpp)
+        test_tools.cpp
+        test_initial_point_counting_sparse.cpp
+        test_merging_sparse.cpp
+        test_point_distribution_sparse.cpp test_subsampling_sparse.cpp)
 
 ####################
 # ADD CUDA SUPPORT #
