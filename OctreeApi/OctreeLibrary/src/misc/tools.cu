@@ -1,5 +1,6 @@
 #include "tools.cuh"
 #include "defines.cuh"
+#include "../../include/types.h"
 
 
 __global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t side) {
@@ -98,7 +99,7 @@ namespace tools {
 
     uint32_t getNodeOffset(uint32_t octreeLevel, uint32_t octreeDepth) {
         uint32_t offset = 0;
-        for(uint32_t i = octreeDepth; i < octreeLevel; --i) {
+        for(uint32_t i = octreeDepth; i > octreeLevel; --i) {
             offset += getNodeAmount(i);
         }
         return offset;
@@ -116,27 +117,19 @@ namespace tools {
 
         // See OctreeConverter : chunker_countsort_laszip.cpp :131
 
-        double dGridSize = gridSize;
-        auto X = static_cast<int32_t>((point->x - metadata.cloudOffset.x) / metadata.scale.x);
-        auto Y = static_cast<int32_t>((point->y - metadata.cloudOffset.y) / metadata.scale.y);
-        auto Z = static_cast<int32_t>((point->z - metadata.cloudOffset.z) / metadata.scale.z);
-        auto size = tools::subtract(metadata.boundingBox.maximum, metadata.boundingBox.minimum);
+        double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
+        double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
+        double sizeZ = metadata.boundingBox.maximum.z - metadata.boundingBox.minimum.z;
 
-        double ux =
-                (static_cast<double>(X) * metadata.scale.x + metadata.cloudOffset.x - metadata.boundingBox.minimum.x)
-                / size.x;
-        double uy =
-                (static_cast<double>(Y) * metadata.scale.y + metadata.cloudOffset.y - metadata.boundingBox.minimum.y)
-                / size.y;
-        double uz =
-                (static_cast<double>(Z) * metadata.scale.z + metadata.cloudOffset.z - metadata.boundingBox.minimum.z)
-                / size.z;
+        double uX = (point->x - metadata.boundingBox.minimum.x) / (sizeX / gridSize);
+        double uY = (point->y - metadata.boundingBox.minimum.y) / (sizeY / gridSize);
+        double uZ = (point->z - metadata.boundingBox.minimum.z) / (sizeZ / gridSize);
 
-        uint32_t ix = static_cast<int64_t>( fmin (dGridSize * ux, dGridSize - 1.0f));
-        uint32_t iy = static_cast<int64_t>( fmin (dGridSize * uy, dGridSize - 1.0f));
-        uint32_t iz = static_cast<int64_t>( fmin (dGridSize * uz, dGridSize - 1.0f));
+        uint64_t ix = static_cast<int64_t >( fmin (uX, gridSize - 1.0));
+        uint64_t iy = static_cast<int64_t>( fmin (uY, gridSize - 1.0));
+        uint64_t iz = static_cast<int64_t>( fmin (uZ, gridSize - 1.0));
 
-        return ix + iy * gridSize + iz * gridSize * gridSize;
+        return static_cast<uint32_t >(ix + iy * gridSize + iz * gridSize * gridSize);
     }
 
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {

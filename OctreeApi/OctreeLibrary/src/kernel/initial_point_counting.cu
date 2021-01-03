@@ -5,6 +5,7 @@
 #include "../../include/types.h"
 
 
+
 //template <typename coordinateType, typename colorType>
 __global__ void chunking::kernelInitialPointCounting(
         uint8_t *cloud,
@@ -20,6 +21,7 @@ __global__ void chunking::kernelInitialPointCounting(
         return;
     }
 
+    //reinterpret_cast<CoordinateVector<coordinateType>>()
     Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid
@@ -35,8 +37,7 @@ __global__ void chunking::kernelInitialPointCounting(
     }
 }
 
-
-//template <typename coordinateType, typename colorType>
+// template <typename coordinateType, typename colorType>
 float chunking::initialPointCounting(
         unique_ptr<CudaArray<uint8_t>> &cloud,
         unique_ptr<CudaArray<uint32_t>> &densePointCount,

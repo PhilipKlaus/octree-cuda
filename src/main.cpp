@@ -25,10 +25,10 @@ int main() {
 
     PointCloudMetadata metadata = {};
     metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 12;
+    metadata.pointDataStride = 15;
     metadata.scale = {1.f, 1.f, 1.f};
 
-    ifstream ifs("heidentor_vertices.ply", ios::binary|ios::ate);
+    ifstream ifs("heidentor_color_raw.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -75,15 +75,16 @@ int main() {
 
     ocpi_set_point_cloud_metadata(session, metadata);
     ocpi_load_point_cloud_from_host(session, pChars);
-    ocpi_configure_octree(session, OctreeTypes::GRID_512, OctreeTypes::GRID_128, 20000);
+    ocpi_configure_octree(session, OctreeTypes::GRID_512, OctreeTypes::GRID_128, 10000);
     ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 0);
 
     ocpi_generate_octree(session);
+    ocpi_export_octree_statistics(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
     ocpi_export_ply_nodes(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
-    /*ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
+    ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
 
     ocpi_export_time_measurements(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\time_measurement.csv)");
-    ocpi_export_octree_statistics(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)"); */
+    ocpi_export_octree_statistics(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
     ocpi_destroy_session(session);
 
     delete[] pChars;

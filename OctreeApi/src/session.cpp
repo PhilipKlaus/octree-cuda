@@ -30,6 +30,7 @@ void Session::setDevice() const {
     gpuErrchk (cudaSetDevice (itsDevice));
     cudaDeviceProp props{};
     gpuErrchk(cudaGetDeviceProperties(&props, itsDevice));
+    gpuErrchk(cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 10000000));
     spdlog::info("Using GPU device: {}", props.name);
 }
 
@@ -58,11 +59,9 @@ void Session::generateOctree() {
     itsOctree->initialPointCounting();
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
-
     if(!itsPointDistributionReport.empty()) {
         itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
     }
-
     itsOctree->performSubsampling();
     spdlog::debug("octree generated");
 }
