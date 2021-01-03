@@ -194,23 +194,25 @@ float SparseOctree::hierarchicalSubsampling(
         uint32_t level,
         unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
         unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount) {
+        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+        string index) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     float accumulatedTime = 0;
 
     // 1. Depth first traversal
-    for(int chunkIndex : voxel.childrenChunks) {
-
-        if(chunkIndex != -1 && h_octreeSparse[chunkIndex].isFinished) {
+    for(uint32_t i = 0; i < 8; ++i) {
+        int childIndex = voxel.childrenChunks[i];
+        if(childIndex != -1) {
             accumulatedTime += hierarchicalSubsampling(
                     h_octreeSparse,
                     h_sparseToDenseLUT,
-                    chunkIndex,
+                    childIndex,
                     level - 1,
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount);
+                    subsampleSparseVoxelCount,
+                    index + to_string(i));
         }
     }
 
@@ -221,12 +223,12 @@ float SparseOctree::hierarchicalSubsampling(
         BoundingBox bb{};
         Vector3i coords{};
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
-        calculateVoxelBB(bb, coords, itsMetadata.cloudMetadata.boundingBox, denseVoxelIndex, level);
+        calculateVoxelBB(bb, coords, denseVoxelIndex, level);
 
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         metadata.boundingBox = bb;
         metadata.cloudOffset = bb.minimum;
-        
+
         // 4. Pre-calculate the subsamples and count the subsampled points
         for(uint32_t childIndex : voxel.childrenChunks) {
 
@@ -242,8 +244,7 @@ float SparseOctree::hierarchicalSubsampling(
                         subsampleDenseToSparseLUT,
                         subsampleSparseVoxelCount,
                         metadata,
-                        itsMetadata.subsamplingGrid
-                );
+                        itsMetadata.subsamplingGrid);
             }
         }
 
@@ -254,20 +255,10 @@ float SparseOctree::hierarchicalSubsampling(
         auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
         auto randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
 
+        // ToDo: Pre-calculate 1024 random states
         pseudo__random_subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
         pseudo__random_subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
 
-        /*spdlog::error("------ Generated indices ------");
-        auto h_indices = randomIndices->toHost();
-        auto h_countingGrid = subsampleCountingGrid->toHost();
-        auto h_denseToSparse = subsampleDenseToSparseLUT->toHost();
-
-        for(int i=0; i < subsampleCountingGrid->pointCount(); ++i) {
-            auto sparseIndex = h_denseToSparse[i];
-            if(sparseIndex > -1) {
-                spdlog::error("Amount points: {}, Generated index: {}", h_countingGrid[i], h_indices[sparseIndex]);
-            }
-        }*/
         //-------------------------------------------------------------------
 
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
@@ -321,7 +312,8 @@ void SparseOctree::performSubsampling() {
             itsMetadata.depth,
             pointCountGrid,
             denseToSpareLUT,
-            voxelCount
+            voxelCount,
+            "r"
     );
 
     spdlog::info("subsampling with gridSize of {} took {}[ms]", itsMetadata.subsamplingGrid, time);

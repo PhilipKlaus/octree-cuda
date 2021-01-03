@@ -6,7 +6,7 @@
 #include "catch2/catch.hpp"
 #include "tools.cuh"
 
-
+/*
 uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
 
     uint32_t count = 0;
@@ -71,3 +71,4 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
 
     REQUIRE(testOctreenodeSparse(cpuData.get(), octreeHost, dataLUT, sparseToDenseLUT, 7, topLevelIndex) == octree->getMetadata().cloudMetadata.pointAmount);
 }
+*/

@@ -96,8 +96,8 @@ __global__ void pseudo__random_subsampling::kernelSubsample(
         int *denseToSparseLUT,
         uint32_t *sparseIndexCounter,
         PointCloudMetadata metadata,
-        uint32_t gridSideLength
-) {
+        uint32_t gridSideLength) {
+
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if(index >= metadata.pointAmount) {
         return;
@@ -208,10 +208,12 @@ float pseudo__random_subsampling::subsample(
     // Calculate kernel dimensions
     dim3 grid, block;
     tools::create1DKernel(block, grid, metadata.pointAmount);
-
+    
     // Initial point counting
     tools::KernelTimer timer;
     timer.start();
+
+
     kernelSubsample << < grid, block >> > (
             cloud->devicePointer(),
                     cloudDataLUT->devicePointer(),

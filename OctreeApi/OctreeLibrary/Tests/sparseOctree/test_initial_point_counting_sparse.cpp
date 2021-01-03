@@ -10,7 +10,7 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 
     // Create test data point octree
     PointCloudMetadata metadata{};
-    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(256, metadata);
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
 
     // Create the octree
     auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
@@ -28,8 +28,8 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     uint32_t sum = 0;
     for(uint32_t i = 0; i < static_cast<uint32_t>(pow(128, 3)); ++i) {
         sum += denseCount[i];
-        // We can assume that there are 8 points within each node
-        REQUIRE(denseCount[i] == 8);
+        // We can assume that there is 1 point within each node
+        REQUIRE(denseCount[i] == 1);
         // We can assume that there exist a sparse index for each dense index as there are no empty cells
         REQUIRE(denseToSparseLUT[i] != -1);
     }

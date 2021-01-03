@@ -51,7 +51,7 @@ public:
     void performSubsampling();
 
     // Calculation tools
-    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, BoundingBox &cloud, uint32_t denseVoxelIndex, uint32_t level);
+    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes(const string &folderPath);
@@ -79,7 +79,8 @@ private:
                                  uint32_t level,
                                  unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
                                  unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-                                 unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
+                                 unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+                                 string index);
 
     // Exporting
     uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);

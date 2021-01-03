@@ -6,12 +6,12 @@
 #include "tools.cuh"
 #include "sparseOctree.h"
 
-
+/*
 TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
 
     // Create test data point octree
     PointCloudMetadata metadata{};
-    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(256, metadata);
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
 
     // Create the octree
     auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 40000, metadata, move(cloud));
@@ -28,7 +28,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     REQUIRE(octree->getMetadata().nodeAmountSparse == 2396745);
 
     // Require that the point count in the root cell is the sum of all points
-    REQUIRE(denseCount[2396744] == 256 * 256 * 256);
+    REQUIRE(denseCount[2396744] == 128 * 128 * 128);
 
     // Check if point counts in each level of detail are correct
     uint32_t cellOffset = 0;
@@ -129,4 +129,4 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
         REQUIRE(cellOffset + i == denseToSparseLUT[cellOffset + i]);
         REQUIRE(denseToSparseLUT[cellOffset + i] == 2396744);
     }
-}
+}*/

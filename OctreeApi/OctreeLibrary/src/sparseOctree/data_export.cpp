@@ -16,10 +16,15 @@ uint32_t SparseOctree::exportTreeNode(
     PointCloudMetadata metadata = itsMetadata.cloudMetadata;
     uint32_t count = octreeSparse[index].isParent ? itsSubsampleLUTs[index]->pointCount() : octreeSparse[index].pointCount;
     uint32_t validPoints = count;
+
+    std::unique_ptr<uint32_t[]> lut;
+    if(octreeSparse[index].isParent) {
+        lut = itsSubsampleLUTs[index]->toHost();
+    }
+
     for (uint32_t u = 0; u < count; ++u)
     {
         if(octreeSparse[index].isParent) {
-            auto lut = itsSubsampleLUTs[index]->toHost();
             if(lut[u] == INVALID_INDEX) {
                 --validPoints;
             }
@@ -32,7 +37,6 @@ uint32_t SparseOctree::exportTreeNode(
     }
 
     if(octreeSparse[index].isFinished && validPoints > 0) {
-        string name = octreeSparse[index].isParent ? (folder + "//_parent_") : (folder + "//_leaf_");
         std::ofstream ply;
         ply.open (folder + "//" + level + ".ply", std::ios::binary);
 
@@ -52,7 +56,6 @@ uint32_t SparseOctree::exportTreeNode(
         for (uint32_t u = 0; u < count; ++u)
         {
             if(octreeSparse[index].isParent) {
-                auto lut = itsSubsampleLUTs[index]->toHost();
                 if(lut[u] != INVALID_INDEX) {
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride])), sizeof (float));
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 4])), sizeof (float));
@@ -98,24 +101,25 @@ uint32_t SparseOctree::exportTreeNodeIntermediate(
 
     PointCloudMetadata metadata = itsMetadata.cloudMetadata;
 
-    if(octreeSparse[index].isFinished && octreeSparse[index].pointCount > 0) {
-        string name = octreeSparse[index].isParent ? (folder + "//_parent_") : (folder + "//_leaf_");
-        std::ofstream ply;
-        ply.open (folder + "//" + level + ".ply", std::ios::binary);
+    std::ofstream ply;
+    ply.open (folder + "//" + level + ".ply", std::ios::binary);
 
-        ply << "ply\n"
-               "format binary_little_endian 1.0\n"
-               "comment Created by AIT Austrian Institute of Technology\n"
-               "element vertex "
-            << octreeSparse[index].pointCount
-            << "\n"
-               "property float x\n"
-               "property float y\n"
-               "property float z\n"
-               "property uchar red\n"
-               "property uchar green\n"
-               "property uchar blue\n"
-               "end_header\n";
+    ply << "ply\n"
+           "format binary_little_endian 1.0\n"
+           "comment Created by AIT Austrian Institute of Technology\n"
+           "element vertex "
+        << octreeSparse[index].pointCount
+        << "\n"
+           "property float x\n"
+           "property float y\n"
+           "property float z\n"
+           "property uchar red\n"
+           "property uchar green\n"
+           "property uchar blue\n"
+           "end_header\n";
+
+    if(octreeSparse[index].isFinished && octreeSparse[index].pointCount > 0) {
+
         for (uint32_t u = 0; u < octreeSparse[index].pointCount; ++u)
         {
                 ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride])), sizeof (float));
