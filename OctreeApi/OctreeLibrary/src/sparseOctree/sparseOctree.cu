@@ -206,8 +206,7 @@ float SparseOctree::hierarchicalSubsampling(
         uint32_t level,
         unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
         unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
-        string index) {
+        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     float accumulatedTime = 0;
@@ -222,8 +221,7 @@ float SparseOctree::hierarchicalSubsampling(
                     level - 1,
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
-                    index + to_string(childIndex));
+                    subsampleSparseVoxelCount);
         }
     }
 
@@ -324,9 +322,8 @@ void SparseOctree::performSubsampling() {
             itsMetadata.depth,
             pointCountGrid,
             denseToSpareLUT,
-            voxelCount,
-            "r"
-    );
+            voxelCount);
+
     itsTimeMeasurement.emplace_back("subsampling", time);
     spdlog::info("subsampling with gridSize of {} took {}[ms]", itsMetadata.subsamplingGrid, time);
 }

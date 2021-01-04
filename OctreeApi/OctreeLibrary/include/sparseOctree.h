@@ -65,8 +65,7 @@ private:
                                  uint32_t level,
                                  unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
                                  unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-                                 unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
-                                 string index);
+                                 unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
 
     // Exporting
     uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);
