@@ -26,7 +26,6 @@ public:
     void generateOctree();
     void exportPlyNodes(const string &filename);
     void configureMemoryReport(const std::string &filename);
-    void exportTimeMeasurements(const std::string &filename);
     void exportOctreeStatistics(const std::string &filename);
     void configurePointDistributionReport(const std::string &filename, uint32_t);
 

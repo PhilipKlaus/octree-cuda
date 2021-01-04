@@ -76,11 +76,6 @@ void Session::configureMemoryReport(const std::string &filename) {
     spdlog::debug("configured  memory report: {}", filename);
 }
 
-void Session::exportTimeMeasurements(const std::string &filename) {
-    itsOctree->exportTimeMeasurements(filename);
-    spdlog::debug("exported time measurements");
-}
-
 void Session::exportOctreeStatistics(const std::string &filename) {
     itsOctree->exportOctreeStatistics(filename);
     spdlog::debug("exported octree statistics");

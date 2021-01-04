@@ -21,7 +21,6 @@ public:
 public:
 
     // Benchmarking
-    void exportTimeMeasurements(const string &filePath);
     void exportOctreeStatistics(const string &filePath);
     void exportHistogram(const string &filePath, uint32_t binWidth);
 
@@ -100,7 +99,7 @@ private:
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
 
     // Benchmarking
-    unordered_map<std::string, float> itsTimeMeasurement;       // Holds all time measurements in the form (measurementName, time)
+    std::vector<std::tuple<std::string, float>> itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)
 
 };
 

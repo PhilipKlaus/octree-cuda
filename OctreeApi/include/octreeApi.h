@@ -51,6 +51,5 @@ EXPORTED void ocpi_configure_point_distribution_report(void *session, const char
 
 EXPORTED void ocpi_generate_octree(void *session);
 EXPORTED void ocpi_export_ply_nodes(void *session, const char *filename);
-EXPORTED void ocpi_export_time_measurements(void *session, const char *filename);
 EXPORTED void ocpi_export_octree_statistics(void *session, const char *filename);
 #endif

@@ -65,11 +65,6 @@ void ocpi_configure_memory_report(void *session, const char *filename) {
     s->configureMemoryReport(filename);
 }
 
-void ocpi_export_time_measurements(void *session, const char *filename) {
-    auto s = Session::ToSession (session);
-    s->exportTimeMeasurements(filename);
-}
-
 void ocpi_export_octree_statistics(void *session, const char *filename) {
     auto s = Session::ToSession (session);
     s->exportOctreeStatistics(filename);

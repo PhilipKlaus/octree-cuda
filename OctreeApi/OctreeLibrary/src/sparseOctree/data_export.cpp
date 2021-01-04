@@ -80,6 +80,9 @@ uint32_t SparseOctree::exportTreeNode(
     }
     else {
         validPoints = 0;
+        if(octreeSparse[index].isFinished) {
+            ++itsMetadata.absorbedNodes;
+        }
     }
     for(uint32_t i = 0; i < 8; ++i) {
         int childIndex = octreeSparse[index].childrenChunks[i];

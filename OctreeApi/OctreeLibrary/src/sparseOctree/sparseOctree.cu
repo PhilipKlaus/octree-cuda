@@ -19,17 +19,10 @@ SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint
         itsCloudData(move(cloudData))
 {
     // Initialize octree metadata
+    itsMetadata = {};
     itsMetadata.depth = tools::getOctreeLevel(chunkingGrid);
     itsMetadata.chunkingGrid = chunkingGrid;
     itsMetadata.subsamplingGrid = subsamplingGrid;
-    itsMetadata.nodeAmountDense = 0;
-    itsMetadata.nodeAmountSparse = 0;
-    itsMetadata.leafNodeAmount = 0;
-    itsMetadata.parentNodeAmount = 0;
-    itsMetadata.meanPointsPerLeafNode = 0.f;
-    itsMetadata.stdevPointsPerLeafNode = 0.f;
-    itsMetadata.minPointsPerNode = 0;
-    itsMetadata.maxPointsPerNode = 0;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata = cloudMetadata;
 
@@ -52,26 +45,6 @@ SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint
 //###################
 //#     Pipeline    #
 //###################
-
-void SparseOctree::distributePoints() {
-
-    // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
-    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
-
-    float time = chunking::distributePoints<float>(
-            itsOctreeSparse,
-            itsCloudData,
-            itsDataLUT,
-            itsDenseToSparseLUT,
-            tmpIndexRegister,
-            itsMetadata.cloudMetadata,
-            itsGridSideLengthPerLevel[0]);
-
-    itsTimeMeasurement.insert(std::make_pair("distributePointsSparse", time));
-    spdlog::info("'distributePoints' took {:f} [ms]", time);
-}
-
 
 void SparseOctree::initialPointCounting() {
 
@@ -99,7 +72,7 @@ void SparseOctree::initialPointCounting() {
     // Store the current amount of sparse nodes
     // !IMPORTANT! At this time the amount of sparse node just holds the amount of sparse nodes in the base level
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
-    itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
+    itsTimeMeasurement.emplace_back("initialPointCount", time);
     spdlog::info("'initialPointCounting' took {:f} [ms]", time);
 }
 
@@ -126,7 +99,7 @@ void SparseOctree::performCellMerging() {
                 itsLinearizedDenseVoxelOffset[i + 1],
                 itsLinearizedDenseVoxelOffset[i]);
 
-        itsTimeMeasurement.insert(std::make_pair("PropagatePointCounts_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
+        itsTimeMeasurement.emplace_back("propagatePointCounts_" + std::to_string(itsGridSideLengthPerLevel[i]), time);
         timeAccumulated += time;
     }
 
@@ -161,8 +134,8 @@ void SparseOctree::initLowestOctreeHierarchy() {
             itsSparseToDenseLUT,
             itsVoxelsPerLevel[0]);
 
-    itsTimeMeasurement.insert(std::make_pair("initOctree", time));
-    spdlog::info("'initOctree' took {:f} [ms]", time);
+    itsTimeMeasurement.emplace_back("initLowestOctreeHierarchy", time);
+    spdlog::info("'initLowestOctreeHierarchy' took {:f} [ms]", time);
 }
 
 
@@ -191,10 +164,30 @@ void SparseOctree::mergeHierarchical() {
         );
 
         timeAccumulated += time;
-        itsTimeMeasurement.insert(std::make_pair("initializeOctreeSparse_" + std::to_string(itsGridSideLengthPerLevel[i]), time));
+        itsTimeMeasurement.emplace_back("mergeHierarchical_" + std::to_string(itsGridSideLengthPerLevel[i]), time);
     }
 
     spdlog::info("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
+}
+
+
+void SparseOctree::distributePoints() {
+
+    // Create temporary indexRegister for assigning an index for each point within its chunk area
+    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
+    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
+
+    float time = chunking::distributePoints<float>(
+            itsOctreeSparse,
+            itsCloudData,
+            itsDataLUT,
+            itsDenseToSparseLUT,
+            tmpIndexRegister,
+            itsMetadata.cloudMetadata,
+            itsGridSideLengthPerLevel[0]);
+
+    itsTimeMeasurement.emplace_back("distributePointsSparse", time);
+    spdlog::info("'distributePoints' took {:f} [ms]", time);
 }
 
 
@@ -326,7 +319,7 @@ void SparseOctree::performSubsampling() {
             voxelCount,
             "r"
     );
-
+    itsTimeMeasurement.emplace_back("subsampling", time);
     spdlog::info("subsampling with gridSize of {} took {}[ms]", itsMetadata.subsamplingGrid, time);
 }
 
