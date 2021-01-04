@@ -22,12 +22,9 @@ public:
     void setDevice() const;
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
-    void setOctreeProperties(
-            GridSize chunkingGrid,
-            GridSize subsamplingGrid,
-            uint32_t mergingThreshold,
-            SubsamplingStrategy strategy);
     void generateOctree();
+    void configureChunking(GridSize chunkingGrid, uint32_t mergingThreshold);
+    void configureSubsampling(GridSize subsamplingGrid, SubsamplingStrategy strategy);
     void configureOctreeExport(const string &directory);
     void configureMemoryReport(const std::string &filename);
     void configureJsonReport(const std::string &filename);
@@ -39,6 +36,11 @@ private:
     unique_ptr<SparseOctree> itsOctree;
     unique_ptr<CudaArray<uint8_t>> data;
 
+    GridSize itsChunkingGrid = GRID_128;
+    uint32_t itsMergingThreshold = 0;
+
+    GridSize itsSubsamplingGrid = GRID_128;
+    SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
 
     string itsPointDistReportFile = "";
     string itsJsonReportFile = "";

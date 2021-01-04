@@ -75,12 +75,13 @@ int main() {
 
     ocpi_set_point_cloud_metadata(session, metadata);
     ocpi_load_point_cloud_from_host(session, pChars);
-    ocpi_configure_octree(session, GRID_512, GRID_128, 10000, RANDOM_POINT);
+    ocpi_configure_chunking(session, GRID_512, 10000);
+    ocpi_configure_subsampling(session, GRID_128, RANDOM_POINT);
 
-    //ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 0);
+    ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 0);
     ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
     ocpi_configure_json_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
-    //ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
+    ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
 
     ocpi_generate_octree(session);
 

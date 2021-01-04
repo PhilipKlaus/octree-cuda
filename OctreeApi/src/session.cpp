@@ -49,23 +49,17 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
     spdlog::debug("copied point cloud from host to device");
 }
 
-void Session::setOctreeProperties(
-        GridSize chunkingGrid,
-        GridSize subsamplingGrid,
-        uint32_t mergingThreshold,
-        SubsamplingStrategy strategy) {
-
-    itsOctree = make_unique<SparseOctree>(
-            chunkingGrid,
-            subsamplingGrid,
-            mergingThreshold,
-            itsMetadata,
-            move(data),
-            strategy);
-    spdlog::debug("set octree properties");
-}
 
 void Session::generateOctree() {
+
+    itsOctree = make_unique<SparseOctree>(
+            itsChunkingGrid,
+            itsSubsamplingGrid,
+            itsMergingThreshold,
+            itsMetadata,
+            move(data),
+            itsSubsamplingStrategy);
+
     itsOctree->initialPointCounting();
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
@@ -105,4 +99,14 @@ void Session::configurePointDistributionReport(const std::string &filename, uint
     itsPointDistReportFile = filename;
     itsPointDistributionBinWidth = binWidth;
     spdlog::debug("Export point dist. report to: {}", filename);
+}
+
+void Session::configureChunking(GridSize chunkingGrid, uint32_t mergingThreshold) {
+    itsChunkingGrid = chunkingGrid;
+    itsMergingThreshold = mergingThreshold;
+}
+
+void Session::configureSubsampling(GridSize subsamplingGrid, SubsamplingStrategy strategy) {
+    itsSubsamplingGrid = subsamplingGrid;
+    itsSubsamplingStrategy = strategy;
 }
