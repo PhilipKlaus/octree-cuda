@@ -9,25 +9,6 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 
-using namespace OctreeTypes;
-
-
-struct OctreeMetadata {
-
-    uint32_t depth;                     // The depth of the octree // ToDo: -1
-    uint32_t chunkingGrid;              // Side length of the grid used for chunking
-    uint32_t subsamplingGrid;           // Side length of the grid used for subsampling
-    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes (amount leafs + amount parents)
-    uint32_t leafNodeAmount;            // The amount of child nodes
-    uint32_t parentNodeAmount;          // The amount of parent nodes
-    uint32_t nodeAmountDense;           // The theoretical amount of dense nodes
-    uint32_t mergingThreshold;          // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
-    float meanPointsPerLeafNode;        // Mean points per leaf node
-    float stdevPointsPerLeafNode;       // Standard deviation of points per leaf node
-    uint32_t minPointsPerNode;
-    uint32_t maxPointsPerNode;
-    PointCloudMetadata cloudMetadata;   // The cloud metadata;
-};
 
 class SparseOctree {
 
@@ -40,7 +21,6 @@ public:
 public:
 
     // Benchmarking
-    void exportTimeMeasurements(const string &filePath);
     void exportOctreeStatistics(const string &filePath);
     void exportHistogram(const string &filePath, uint32_t binWidth);
 
@@ -51,11 +31,10 @@ public:
     void performSubsampling();
 
     // Calculation tools
-    void calculateVoxelBB(BoundingBox &bb, Vector3i &coords, uint32_t denseVoxelIndex, uint32_t level);
+    void calculateVoxelBB(BoundingBox &bb, CoordinateVector<uint32_t> &coords, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes(const string &folderPath);
-    void exportPlyNodesIntermediate(const string &folderPath);
 
     // Debugging methods
     const OctreeMetadata& getMetadata() const;
@@ -84,7 +63,6 @@ private:
 
     // Exporting
     uint32_t exportTreeNode(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);
-    uint32_t exportTreeNodeIntermediate(uint8_t* cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse, const unique_ptr<uint32_t[]> &dataLUT, const string& level, uint32_t index, const string &folder);
 
     // Benchmarking
     uint32_t getRootIndex();
@@ -121,7 +99,7 @@ private:
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
 
     // Benchmarking
-    unordered_map<std::string, float> itsTimeMeasurement;       // Holds all time measurements in the form (measurementName, time)
+    std::vector<std::tuple<std::string, float>> itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)
 
 };
 

@@ -14,33 +14,33 @@ __global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t sid
     auto y = (index - (z * xy)) / side;
     auto x = (index - (z * xy)) % side;
 
-    reinterpret_cast<Vector3*>(out + index * 12)->x = x + 0.5;
-    reinterpret_cast<Vector3*>(out + index * 12)->y = y + 0.5;
-    reinterpret_cast<Vector3*>(out + index * 12)->z = z + 0.5;
+    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->x = x + 0.5;
+    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->y = y + 0.5;
+    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->z = z + 0.5;
 }
 
 
 namespace tools {
 
-    uint32_t getOctreeLevel(OctreeTypes::GridSize gridSize) {
+    uint32_t getOctreeLevel(GridSize gridSize) {
         switch (gridSize) {
-            case OctreeTypes::GRID_512:
+            case GRID_512:
                 return 9;
-            case OctreeTypes::GRID_256:
+            case GRID_256:
                 return 8;
-            case OctreeTypes::GRID_128:
+            case GRID_128:
                 return 7;
-            case OctreeTypes::GRID_64:
+            case GRID_64:
                 return 6;
-            case OctreeTypes::GRID_32:
+            case GRID_32:
                 return 5;
-            case OctreeTypes::GRID_16:
+            case GRID_16:
                 return 4;
-            case OctreeTypes::GRID_8:
+            case GRID_8:
                 return 3;
-            case OctreeTypes::GRID_4:
+            case GRID_4:
                 return 2;
-            case OctreeTypes::GRID_2:
+            case GRID_2:
                 return 1;
             default:
                 return 0;
@@ -105,33 +105,6 @@ namespace tools {
         return offset;
     }
 
-    __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b) {
-        return {
-                a.x - b.x,
-                a.y - b.y,
-                a.z - b.z
-        };
-    }
-
-    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
-
-        // See OctreeConverter : chunker_countsort_laszip.cpp :131
-
-        double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
-        double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
-        double sizeZ = metadata.boundingBox.maximum.z - metadata.boundingBox.minimum.z;
-
-        double uX = (point->x - metadata.boundingBox.minimum.x) / (sizeX / gridSize);
-        double uY = (point->y - metadata.boundingBox.minimum.y) / (sizeY / gridSize);
-        double uZ = (point->z - metadata.boundingBox.minimum.z) / (sizeZ / gridSize);
-
-        uint64_t ix = static_cast<int64_t >( fmin (uX, gridSize - 1.0));
-        uint64_t iy = static_cast<int64_t>( fmin (uY, gridSize - 1.0));
-        uint64_t iz = static_cast<int64_t>( fmin (uZ, gridSize - 1.0));
-
-        return static_cast<uint32_t >(ix + iy * gridSize + iz * gridSize * gridSize);
-    }
-
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount) {
 
         auto blocks = ceil(static_cast<double>(pointCount) / BLOCK_SIZE_MAX);
@@ -148,9 +121,9 @@ namespace tools {
 
         float boundingBoxMax = static_cast<float>(sideLength) - 0.5f;
         metadata.pointAmount = static_cast<uint32_t>(pow(sideLength, 3.f));
-        metadata.boundingBox.minimum = Vector3 {0.5, 0.5, 0.5};
-        metadata.boundingBox.maximum = Vector3 {boundingBoxMax, boundingBoxMax, boundingBoxMax};
-        metadata.cloudOffset = Vector3 {0.5, 0.5, 0.5};
+        metadata.boundingBox.minimum = CoordinateVector<float> {0.5, 0.5, 0.5};
+        metadata.boundingBox.maximum = CoordinateVector<float> {boundingBoxMax, boundingBoxMax, boundingBoxMax};
+        metadata.cloudOffset = CoordinateVector<float> {0.5, 0.5, 0.5};
         metadata.scale = {1.f, 1.f, 1.f};
         metadata.pointDataStride = 12;
 
@@ -178,7 +151,7 @@ namespace tools {
     }
 
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(
-            Vector3i &coordinates,
+            CoordinateVector<uint32_t> &coordinates,
             uint32_t denseVoxelIdx,
             uint32_t gridSizeLength) {
 

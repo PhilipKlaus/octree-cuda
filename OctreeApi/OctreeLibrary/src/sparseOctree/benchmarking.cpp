@@ -4,24 +4,10 @@
 
 #include <sparseOctree.h>
 #include <json.hpp>
+#include <iomanip>
 
 using json = nlohmann::json;
 
-void SparseOctree::exportTimeMeasurements(const string &filePath) {
-    string headerLine, timeLine;
-    ofstream timingCsv;
-    timingCsv.open (filePath, ios::out);
-    for (auto const& timeEntry : itsTimeMeasurement) {
-        headerLine += (timeEntry.first + ",");
-        timeLine += (to_string(timeEntry.second) + ",");
-    }
-    // Remove last colons
-    headerLine = headerLine.substr(0, headerLine.size()-1);
-    timeLine = timeLine.substr(0, timeLine.size()-1);
-    timingCsv << headerLine << std::endl << timeLine;
-    timingCsv.close();
-    spdlog::info("Exported time measurements to {}", filePath);
-}
 
 void SparseOctree::calculatePointVarianceInLeafNoes(
         const unique_ptr<Chunk[]> &h_octreeSparse,
@@ -112,21 +98,50 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
 
     updateOctreeStatistics();
 
-    json statistics;
+    nlohmann::ordered_json statistics;
     statistics["depth"] = itsMetadata.depth;
-    statistics["chunkingGrid"] = itsMetadata.chunkingGrid;
-    statistics["subsamplingGrid"] = itsMetadata.subsamplingGrid;
-    statistics["nodeAmount"] = itsMetadata.nodeAmountSparse;
-    statistics["leafNodeAmount"] = itsMetadata.leafNodeAmount;
-    statistics["parentNodeAmount"] = itsMetadata.parentNodeAmount;
-    statistics["theoreticalDenseNodes"] = itsMetadata.nodeAmountDense;
-    statistics["meanPointsPerLeafNode"] = itsMetadata.meanPointsPerLeafNode;
-    statistics["stdevPointsPerLeafNode"] = itsMetadata.stdevPointsPerLeafNode;
-    statistics["minPointsPerNode"] = itsMetadata.minPointsPerNode;
-    statistics["maxPointsPerNode"] = itsMetadata.maxPointsPerNode;
+
+    statistics["grids"]["chunkingGrid"] = itsMetadata.chunkingGrid;
+    statistics["grids"]["subsamplingGrid"] = itsMetadata.subsamplingGrid;
+
+    statistics["resultNodes"]["octreeNodes"] = itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount;
+    statistics["resultNodes"]["leafNodeAmount"] = itsMetadata.leafNodeAmount;
+    statistics["resultNodes"]["parentNodeAmount"] = itsMetadata.parentNodeAmount;
+    statistics["resultNodes"]["absorbedNodes"] = itsMetadata.absorbedNodes;
+
+    statistics["overallNodes"]["sparseOctreeNodes"] = itsMetadata.nodeAmountSparse;
+    statistics["overallNodes"]["denseOctreeNodes"] = itsMetadata.nodeAmountDense;
+    statistics["overallNodes"]["memorySaving"] =
+            (1 - (static_cast<float>(itsMetadata.nodeAmountSparse) / itsMetadata.nodeAmountDense)) * 100;
+
+    statistics["pointDistribution"]["meanPointsPerLeafNode"] = itsMetadata.meanPointsPerLeafNode;
+    statistics["pointDistribution"]["stdevPointsPerLeafNode"] = itsMetadata.stdevPointsPerLeafNode;
+    statistics["pointDistribution"]["minPointsPerNode"] = itsMetadata.minPointsPerNode;
+    statistics["pointDistribution"]["maxPointsPerNode"] = itsMetadata.maxPointsPerNode;
+
+    statistics["cloud"]["pointAmount"] = itsMetadata.cloudMetadata.pointAmount;
+    statistics["cloud"]["pointDataStride"] = itsMetadata.cloudMetadata.pointDataStride;
+    statistics["cloud"]["boundingBox"]["min"]["x"] = itsMetadata.cloudMetadata.boundingBox.minimum.x;
+    statistics["cloud"]["boundingBox"]["min"]["y"] = itsMetadata.cloudMetadata.boundingBox.minimum.y;
+    statistics["cloud"]["boundingBox"]["min"]["z"] = itsMetadata.cloudMetadata.boundingBox.minimum.z;
+    statistics["cloud"]["boundingBox"]["max"]["x"] = itsMetadata.cloudMetadata.boundingBox.maximum.x;
+    statistics["cloud"]["boundingBox"]["max"]["y"] = itsMetadata.cloudMetadata.boundingBox.maximum.y;
+    statistics["cloud"]["boundingBox"]["max"]["z"] = itsMetadata.cloudMetadata.boundingBox.maximum.z;
+    statistics["cloud"]["boundingBox"]["sideLength"] =
+            itsMetadata.cloudMetadata.boundingBox.maximum.x - itsMetadata.cloudMetadata.boundingBox.minimum.x;
+    statistics["cloud"]["offset"]["x"] = itsMetadata.cloudMetadata.cloudOffset.x;
+    statistics["cloud"]["offset"]["y"] = itsMetadata.cloudMetadata.cloudOffset.y;
+    statistics["cloud"]["offset"]["z"] = itsMetadata.cloudMetadata.cloudOffset.z;
+    statistics["cloud"]["scale"]["x"] = itsMetadata.cloudMetadata.scale.x;
+    statistics["cloud"]["scale"]["y"] = itsMetadata.cloudMetadata.scale.y;
+    statistics["cloud"]["scale"]["z"] = itsMetadata.cloudMetadata.scale.z;
+
+    for (auto const& timeEntry : itsTimeMeasurement) {
+        statistics["timeMeasurements"][get<0>(timeEntry)] = get<1>(timeEntry);
+    }
 
     std::ofstream file(filePath);
-    file << statistics;
+    file << std::setw(4) << statistics;
     file.close();
 }
 

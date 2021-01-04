@@ -80,6 +80,9 @@ uint32_t SparseOctree::exportTreeNode(
     }
     else {
         validPoints = 0;
+        if(octreeSparse[index].isFinished) {
+            ++itsMetadata.absorbedNodes;
+        }
     }
     for(uint32_t i = 0; i < 8; ++i) {
         int childIndex = octreeSparse[index].childrenChunks[i];
@@ -90,59 +93,6 @@ uint32_t SparseOctree::exportTreeNode(
     return validPoints;
 }
 
-uint32_t SparseOctree::exportTreeNodeIntermediate(
-        uint8_t *cpuPointCloud,
-        const unique_ptr<Chunk[]> &octreeSparse,
-        const unique_ptr<uint32_t[]> &dataLUT,
-        const string& level,
-        uint32_t index,
-        const string &folder
-) {
-
-    PointCloudMetadata metadata = itsMetadata.cloudMetadata;
-
-    std::ofstream ply;
-    ply.open (folder + "//" + level + ".ply", std::ios::binary);
-
-    ply << "ply\n"
-           "format binary_little_endian 1.0\n"
-           "comment Created by AIT Austrian Institute of Technology\n"
-           "element vertex "
-        << octreeSparse[index].pointCount
-        << "\n"
-           "property float x\n"
-           "property float y\n"
-           "property float z\n"
-           "property uchar red\n"
-           "property uchar green\n"
-           "property uchar blue\n"
-           "end_header\n";
-
-    if(octreeSparse[index].isFinished && octreeSparse[index].pointCount > 0) {
-
-        for (uint32_t u = 0; u < octreeSparse[index].pointCount; ++u)
-        {
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride])), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 4])), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 8])), sizeof (float));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 12])), sizeof (uint8_t));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 13])), sizeof (uint8_t));
-                ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[dataLUT[octreeSparse[index].chunkDataIndex + u] * metadata.pointDataStride + 14])), sizeof (uint8_t));
-        }
-        ply.close ();
-        return octreeSparse[index].pointCount;
-    }
-    else {
-        uint32_t sum = 0;
-        for(uint32_t i = 0; i < 8; ++i) {
-            int childIndex = octreeSparse[index].childrenChunks[i];
-            if(childIndex != -1) {
-                sum += exportTreeNodeIntermediate(cpuPointCloud, octreeSparse, dataLUT, level + std::to_string(i), childIndex, folder);
-            }
-        }
-        return sum;
-    }
-}
 
 void SparseOctree::exportPlyNodes(const string &folderPath) {
     auto cpuPointCloud = itsCloudData->toHost();
@@ -155,13 +105,3 @@ void SparseOctree::exportPlyNodes(const string &folderPath) {
     spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.cloudMetadata.pointAmount, folderPath);
 }
 
-void SparseOctree::exportPlyNodesIntermediate(const string &folderPath) {
-    auto cpuPointCloud = itsCloudData->toHost();
-    auto octreeSparse = itsOctreeSparse->toHost();
-    auto dataLUT = itsDataLUT->toHost();
-
-    // ToDo: Remove .get() -> pass unique_ptr by reference
-    uint32_t exportedPoints = exportTreeNodeIntermediate(cpuPointCloud.get(), octreeSparse, dataLUT, string("r"), getRootIndex(), folderPath);
-    assert(exportedPoints == itsMetadata.cloudMetadata.pointAmount);
-    spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.cloudMetadata.pointAmount, folderPath);
-}

@@ -19,7 +19,7 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
         previousChunks += static_cast<uint32_t>(pow(pow(2, i), 3));
     }
 
-    Vector3i coord{};
+    CoordinateVector<uint32_t > coord{};
     auto indexInVoxel = denseIndex - previousChunks;
     tools::mapFromDenseIdxToDenseCoordinates(coord, indexInVoxel, newGridSize);
 
@@ -28,7 +28,7 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
         count = octree[index].pointCount;
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
-            auto *point = reinterpret_cast<Vector3*>(cpuPointCloud + dataLUT[octree[index].chunkDataIndex + u] * 12);
+            auto *point = reinterpret_cast<CoordinateVector<float>*>(cpuPointCloud + dataLUT[octree[index].chunkDataIndex + u] * 12);
             REQUIRE(point->x > (coord.x * voxelSize));
             REQUIRE(point->x < ((coord.x + 1) * voxelSize));
             REQUIRE(point->y > (coord.y * voxelSize));
