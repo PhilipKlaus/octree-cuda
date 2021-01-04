@@ -24,9 +24,9 @@ public:
     void setMetadata(const PointCloudMetadata &metadata);
     void setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
     void generateOctree();
-    void exportPlyNodes(const string &filename);
+    void configureOctreeExport(const string &directory);
     void configureMemoryReport(const std::string &filename);
-    void exportOctreeStatistics(const std::string &filename);
+    void configureJsonReport(const std::string &filename);
     void configurePointDistributionReport(const std::string &filename, uint32_t);
 
 private:
@@ -36,7 +36,9 @@ private:
     unique_ptr<CudaArray<uint8_t>> data;
 
 
-    string itsPointDistributionReport = "";
+    string itsPointDistReportFile = "";
+    string itsJsonReportFile = "";
+    string itsOctreeExportDirectory = "";
     uint32_t itsPointDistributionBinWidth = 0;
 };
 

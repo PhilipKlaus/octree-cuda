@@ -48,8 +48,9 @@ EXPORTED void ocpi_load_point_cloud_from_host (void* session, uint8_t *pointClou
 EXPORTED void ocpi_configure_octree(void* session, GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
 EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
 EXPORTED void ocpi_configure_point_distribution_report(void *session, const char *filename, uint32_t binWidth);
+EXPORTED void ocpi_configure_json_report(void *session, const char *filename);
+EXPORTED void ocpi_configure_octree_export(void *session, const char *directory);
 
 EXPORTED void ocpi_generate_octree(void *session);
-EXPORTED void ocpi_export_ply_nodes(void *session, const char *filename);
-EXPORTED void ocpi_export_octree_statistics(void *session, const char *filename);
+
 #endif

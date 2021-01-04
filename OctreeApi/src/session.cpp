@@ -59,29 +59,40 @@ void Session::generateOctree() {
     itsOctree->initialPointCounting();
     itsOctree->performCellMerging();
     itsOctree->distributePoints();
-    if(!itsPointDistributionReport.empty()) {
-        itsOctree->exportHistogram(itsPointDistributionReport, itsPointDistributionBinWidth);
+
+    if(!itsPointDistReportFile.empty()) {
+        itsOctree->exportHistogram(itsPointDistReportFile, itsPointDistributionBinWidth);
     }
+
     itsOctree->performSubsampling();
+
+    if(!itsOctreeExportDirectory.empty()) {
+        itsOctree->exportPlyNodes(itsOctreeExportDirectory);
+    }
+
+    if(!itsJsonReportFile.empty()) {
+        itsOctree->exportOctreeStatistics(itsJsonReportFile);
+    }
     spdlog::debug("octree generated");
 }
 
-void Session::exportPlyNodes(const string &filename) {
-    itsOctree->exportPlyNodes(filename);
-    spdlog::debug("octree exported");
+void Session::configureOctreeExport(const string &directory) {
+    itsOctreeExportDirectory = directory;
+    spdlog::debug("Export Octree to: {}", directory);
 }
 
 void Session::configureMemoryReport(const std::string &filename) {
     EventWatcher::getInstance().configureMemoryReport(filename);
-    spdlog::debug("configured  memory report: {}", filename);
+    spdlog::debug("Export memory report to: {}", filename);
 }
 
-void Session::exportOctreeStatistics(const std::string &filename) {
-    itsOctree->exportOctreeStatistics(filename);
-    spdlog::debug("exported octree statistics");
+void Session::configureJsonReport(const std::string &filename) {
+    itsJsonReportFile = filename;
+    spdlog::debug("Export JSON report to: {}", filename);
 }
 
 void Session::configurePointDistributionReport(const std::string &filename, uint32_t binWidth) {
-    itsPointDistributionReport = filename;
+    itsPointDistReportFile = filename;
     itsPointDistributionBinWidth = binWidth;
+    spdlog::debug("Export point dist. report to: {}", filename);
 }

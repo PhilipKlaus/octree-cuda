@@ -55,9 +55,9 @@ void ocpi_generate_octree(void *session) {
     s->generateOctree();
 }
 
-void ocpi_export_ply_nodes(void *session, const char *filename) {
+void ocpi_configure_octree_export(void *session, const char *filename) {
     auto s = Session::ToSession (session);
-    s->exportPlyNodes(filename);
+    s->configureOctreeExport(filename);
 }
 
 void ocpi_configure_memory_report(void *session, const char *filename) {
@@ -65,9 +65,9 @@ void ocpi_configure_memory_report(void *session, const char *filename) {
     s->configureMemoryReport(filename);
 }
 
-void ocpi_export_octree_statistics(void *session, const char *filename) {
+void ocpi_configure_json_report(void *session, const char *filename) {
     auto s = Session::ToSession (session);
-    s->exportOctreeStatistics(filename);
+    s->configureJsonReport(filename);
 }
 
 void ocpi_configure_point_distribution_report(void *session, const char *filename, uint32_t binWidth) {
