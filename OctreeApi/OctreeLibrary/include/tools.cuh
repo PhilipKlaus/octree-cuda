@@ -21,7 +21,6 @@ namespace tools {
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b);
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(CoordinateVector<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
 

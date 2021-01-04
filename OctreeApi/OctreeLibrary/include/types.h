@@ -2,12 +2,20 @@
 // Created by KlausP on 01.11.2020.
 //
 
-#ifndef POTREECONVERTERGPU_TYPES_H
-#define POTREECONVERTERGPU_TYPES_H
-
+#pragma once
 
 #include <cstdint>
 #include <map>
+
+//https://stackoverflow.com/questions/19995440/c-cast-byte-array-to-struct
+// https://stackoverflow.com/questions/2448242/struct-with-template-variables-in-c
+#pragma pack(push, 1)
+template <typename T>
+struct CoordinateVector {
+    T x, y, z;
+};
+#pragma pack(pop)
+
 
 namespace OctreeTypes {
 
@@ -28,14 +36,6 @@ namespace OctreeTypes {
 }
 
 
-//https://stackoverflow.com/questions/19995440/c-cast-byte-array-to-struct
-#pragma pack(push, 1)
-struct Vector3
-{
-    float x, y, z;
-};
-#pragma pack(pop)
-
 #pragma pack(push, 1)
 struct Chunk {
     uint32_t pointCount;            // How many points does this chunk have
@@ -47,32 +47,17 @@ struct Chunk {
 };
 #pragma pack(pop)
 
+// ToDo: Maybe full double support?
 struct BoundingBox {
-    Vector3 minimum;
-    Vector3 maximum;
+    CoordinateVector<float> minimum;
+    CoordinateVector<float> maximum;
 };
 
+// ToDo: Maybe full double support?
 struct PointCloudMetadata {
     uint32_t pointAmount;
     uint32_t pointDataStride;
     BoundingBox boundingBox;
-    Vector3 cloudOffset;
-    Vector3 scale;
+    CoordinateVector<float> cloudOffset;
+    CoordinateVector<float> scale;
 };
-
-// https://stackoverflow.com/questions/2448242/struct-with-template-variables-in-c
-#pragma pack(push, 1)
-template <typename T>
-struct CoordinateVector {
-    T x, y, z;
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-template <typename T>
-struct ColorVector {
-    T r, g, b;
-};
-#pragma pack(pop)
-
-#endif //POTREECONVERTERGPU_TYPES_H

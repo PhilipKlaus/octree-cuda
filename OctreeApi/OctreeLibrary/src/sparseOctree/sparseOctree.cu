@@ -270,7 +270,7 @@ float SparseOctree::hierarchicalSubsampling(
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
         // 6. Distribute points to the parent data LUT
-        for(uint32_t childIndex : voxel.childrenChunks) {
+        for(int childIndex : voxel.childrenChunks) {
 
             if(childIndex != -1) {
                 Chunk child = h_octreeSparse[childIndex];

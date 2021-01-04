@@ -36,8 +36,8 @@ int main() {
     ifs.read(reinterpret_cast<char *>(pChars), length);
     ifs.close();
 
-    Vector3 minimum {INFINITY, INFINITY, INFINITY};
-    Vector3 maximum {-INFINITY, -INFINITY, -INFINITY};
+    CoordinateVector<float> minimum {INFINITY, INFINITY, INFINITY};
+    CoordinateVector<float> maximum {-INFINITY, -INFINITY, -INFINITY};
 
     // Calculate bounding box on CPU
     for(uint32_t i = 0; i < metadata.pointAmount; ++i) {
@@ -52,7 +52,7 @@ int main() {
             "Cloud dimensions: width: {}, height: {}, depth: {}",
             maximum.x-minimum.x, maximum.y-minimum.y, maximum.z-minimum.z);
 
-    Vector3 dimension{};
+    CoordinateVector<float> dimension{};
     dimension.x = maximum.x - minimum.x;
     dimension.y = maximum.y - minimum.y;
     dimension.z = maximum.z - minimum.z;
