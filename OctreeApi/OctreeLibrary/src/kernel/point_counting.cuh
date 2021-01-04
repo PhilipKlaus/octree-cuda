@@ -30,7 +30,7 @@ namespace chunking {
                 reinterpret_cast<CoordinateVector<coordinateType>*>(cloud + index * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid
-        auto denseVoxelIndex = tools::calculateGridIndexTmp<coordinateType>(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndex<coordinateType>(point, metadata, gridSideLength);
 
         // 2. Accumulate the counter within the dense cell
         auto oldIndex = atomicAdd((densePointCount + denseVoxelIndex), 1);

@@ -30,7 +30,7 @@ namespace chunking {
         CoordinateVector<coordinateType> *point =
                 reinterpret_cast<CoordinateVector<coordinateType>*>(cloud + index * metadata.pointDataStride);
 
-        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSize);
+        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSize);
         auto sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
 
         bool isFinished = octree[sparseVoxelIndex].isFinished;

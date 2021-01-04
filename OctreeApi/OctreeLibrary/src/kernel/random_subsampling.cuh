@@ -35,7 +35,7 @@ namespace subsampling {
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the subsample
-        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
         // 2. We are only interested in the last point within a node -> Implicitly reset the countingGrid
         auto oldIndex = atomicSub((countingGrid + denseVoxelIndex), 1);
@@ -113,7 +113,7 @@ namespace subsampling {
                         cloud + cloudDataLUT[dataLUTStartIndex + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the subsample
-        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
         // 2. We are only interested in the first point within a cell
         auto oldIndex = atomicAdd((densePointCount + denseVoxelIndex), 1);

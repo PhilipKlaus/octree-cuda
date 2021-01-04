@@ -21,16 +21,13 @@ namespace tools {
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint32_t gridSize);
-
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b);
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(CoordinateVector<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
-    template <typename coordinateType>
 
-    // ToDo: Rename to calculateGridIndex and remove old implementations from tools.cu
-    __device__ uint32_t calculateGridIndexTmp(const CoordinateVector<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
-        // See OctreeConverter : chunker_countsort_laszip.cpp :131
+    // See OctreeConverter : chunker_countsort_laszip.cpp :131
+    template <typename coordinateType>
+    __device__ uint32_t calculateGridIndex(const CoordinateVector<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
 
         double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
         double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
