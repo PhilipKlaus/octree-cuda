@@ -31,13 +31,11 @@ public:
         std::string data;
         std::string labels;
 
-        for(auto i = 0; i < itsMemoryFootprints.size(); ++i) {
-            data += std::to_string(itsMemoryFootprints[i]);
-            labels += ("\"" + itsEventLabels[i] + "\"");
-            if(i < itsMemoryFootprints.size() - 1) {
-                data += ",";
-                labels += ",";
-            }
+        for (auto const& event : itsEvents) {
+            data += std::to_string(std::get<1>(event));
+            labels += ("\"" + std::get<0>(event) + "\"");
+            data += ",";
+            labels += ",";
         }
 
         std::ofstream htmlData;
@@ -48,6 +46,8 @@ public:
         htmlData << "data: [" << data << "]}]},";
         htmlData << itsHtmlPart2;
         htmlData.close();
+
+        spdlog::info("Remaining memory on GPU: {:5.5f} [GB]", itsMemoryConsumption);
     }
 
     void configureMemoryReport(const std::string &filename) {
@@ -55,25 +55,54 @@ public:
     }
 
     void reservedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
-        memoryConsumption += (memoryFootprint / GB);
+        ++itsMemoryReserveEvents;
+        double reservedGB = (memoryFootprint / GB);
+        itsCumulatedMemoryReservation += reservedGB;
+        itsMemoryConsumption += reservedGB;
         recordEvent(name);
+        if(itsMemoryConsumption > itsMemoryPeak) {
+            itsMemoryPeak = itsMemoryConsumption;
+        }
     }
 
     void freedMemoryEvent(uint64_t memoryFootprint, const std::string& name) {
-        memoryConsumption -= (memoryFootprint / GB);
+        ++itsMemoryFreeEvents;
+        itsMemoryConsumption -= (memoryFootprint / GB);
         recordEvent("Deleted " + name);
     }
 
+    double getMemoryPeak() {
+        return itsMemoryPeak;
+    }
+
+    double getCumulatedMemoryReservation() {
+        return itsCumulatedMemoryReservation;
+    }
+
+    uint32_t getMemoryReserveEvents() {
+        return itsMemoryReserveEvents;
+    }
+
+    uint32_t getMemoryFreeEvents() {
+        return itsMemoryFreeEvents;
+    }
+
+    const std::vector<std::tuple<std::string, double>> &getMemoryEvents() {
+        return itsEvents;
+    }
 private:
 
     EventWatcher() {
-        memoryConsumption = 0;
+        itsMemoryPeak = 0;
+        itsMemoryConsumption = 0;
+        itsCumulatedMemoryReservation = 0;
+        itsMemoryReserveEvents = 0;
+        itsMemoryFreeEvents = 0;
         itsMemoryReportFileName = "memory_report.html";
     }
 
     void recordEvent(const std::string& name) {
-        itsEventLabels.push_back(name);
-        itsMemoryFootprints.push_back(memoryConsumption);
+        itsEvents.emplace_back(name, itsMemoryConsumption);
     }
 
 public:
@@ -81,11 +110,13 @@ public:
     void operator=(EventWatcher const&) = delete;
 
 private:
-    double memoryConsumption;
-    std::vector<double> itsMemoryFootprints;
-    std::vector<std::string> itsEventLabels;
-    time_point<steady_clock> itsStart;
     std::string itsMemoryReportFileName;
+    double itsMemoryConsumption;
+    double itsMemoryPeak;
+    double itsCumulatedMemoryReservation;
+    uint32_t itsMemoryReserveEvents;
+    uint32_t itsMemoryFreeEvents;
+    std::vector<std::tuple<std::string, double>> itsEvents;
 
     const std::string itsHtmlPart1 =
             "<html>\n"

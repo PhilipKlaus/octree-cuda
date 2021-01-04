@@ -140,6 +140,15 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
         statistics["timeMeasurements"][get<0>(timeEntry)] = get<1>(timeEntry);
     }
 
+    EventWatcher& watcher = EventWatcher::getInstance();
+    statistics["memory"]["peak"] = watcher.getMemoryPeak();
+    statistics["memory"]["reserveEvents"] = watcher.getMemoryReserveEvents();
+    statistics["memory"]["cumulatedReserved"] = watcher.getCumulatedMemoryReservation();
+
+    for (auto const& event : watcher.getMemoryEvents()) {
+        statistics["memory"]["events"][get<0>(event)] = get<1>(event);
+    }
+
     std::ofstream file(filePath);
     file << std::setw(4) << statistics;
     file.close();
