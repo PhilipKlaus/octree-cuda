@@ -72,6 +72,7 @@ void SparseOctree::distributePoints() {
     spdlog::info("'distributePoints' took {:f} [ms]", time);
 }
 
+
 void SparseOctree::initialPointCounting() {
 
     // Allocate the dense point count
@@ -101,6 +102,8 @@ void SparseOctree::initialPointCounting() {
     itsTimeMeasurement.insert(std::make_pair("initialPointCount", time));
     spdlog::info("'initialPointCounting' took {:f} [ms]", time);
 }
+
+
 void SparseOctree::performCellMerging() {
 
     // Allocate the temporary sparseIndexCounter
@@ -162,6 +165,7 @@ void SparseOctree::initLowestOctreeHierarchy() {
     spdlog::info("'initOctree' took {:f} [ms]", time);
 }
 
+
 void SparseOctree::mergeHierarchical() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
@@ -192,6 +196,7 @@ void SparseOctree::mergeHierarchical() {
 
     spdlog::info("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
 }
+
 
 float SparseOctree::hierarchicalSubsampling(
         const unique_ptr<Chunk[]> &h_octreeSparse,
@@ -293,6 +298,7 @@ float SparseOctree::hierarchicalSubsampling(
     }
     return accumulatedTime;
 }
+
 
 void SparseOctree::performSubsampling() {
 

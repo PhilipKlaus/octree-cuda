@@ -16,6 +16,40 @@ struct CoordinateVector {
 #pragma pack(pop)
 
 
+// ToDo: Maybe full double support?
+struct BoundingBox {
+    CoordinateVector<float> minimum;
+    CoordinateVector<float> maximum;
+};
+
+
+// ToDo: Maybe full double support?
+struct PointCloudMetadata {
+    uint32_t pointAmount;
+    uint32_t pointDataStride;
+    BoundingBox boundingBox;
+    CoordinateVector<float> cloudOffset;
+    CoordinateVector<float> scale;
+};
+
+
+struct OctreeMetadata {
+
+    uint32_t depth;                     // The depth of the octree // ToDo: -1
+    uint32_t chunkingGrid;              // Side length of the grid used for chunking
+    uint32_t subsamplingGrid;           // Side length of the grid used for subsampling
+    uint32_t nodeAmountSparse;          // The actual amount of sparse nodes (amount leafs + amount parents)
+    uint32_t leafNodeAmount;            // The amount of child nodes
+    uint32_t parentNodeAmount;          // The amount of parent nodes
+    uint32_t nodeAmountDense;           // The theoretical amount of dense nodes
+    uint32_t mergingThreshold;          // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    float meanPointsPerLeafNode;        // Mean points per leaf node
+    float stdevPointsPerLeafNode;       // Standard deviation of points per leaf node
+    uint32_t minPointsPerNode;
+    uint32_t maxPointsPerNode;
+    PointCloudMetadata cloudMetadata;   // The cloud metadata;
+};
+
 enum GridSize {
     GRID_512 = 512,
     GRID_256 = 256,
@@ -41,17 +75,3 @@ struct Chunk {
 };
 #pragma pack(pop)
 
-// ToDo: Maybe full double support?
-struct BoundingBox {
-    CoordinateVector<float> minimum;
-    CoordinateVector<float> maximum;
-};
-
-// ToDo: Maybe full double support?
-struct PointCloudMetadata {
-    uint32_t pointAmount;
-    uint32_t pointDataStride;
-    BoundingBox boundingBox;
-    CoordinateVector<float> cloudOffset;
-    CoordinateVector<float> scale;
-};
