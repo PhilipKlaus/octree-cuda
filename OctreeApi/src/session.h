@@ -7,7 +7,6 @@
 
 #include <sparseOctree.h>
 
-using namespace OctreeTypes;
 
 class Session
 {

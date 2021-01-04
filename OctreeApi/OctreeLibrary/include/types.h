@@ -5,7 +5,6 @@
 #pragma once
 
 #include <cstdint>
-#include <map>
 
 //https://stackoverflow.com/questions/19995440/c-cast-byte-array-to-struct
 // https://stackoverflow.com/questions/2448242/struct-with-template-variables-in-c
@@ -17,23 +16,18 @@ struct CoordinateVector {
 #pragma pack(pop)
 
 
-namespace OctreeTypes {
-
-    enum GridSize {
-        GRID_512 = 512,
-        GRID_256 = 256,
-        GRID_128 = 128,
-        GRID_64 = 64,
-        GRID_32 = 32,
-        GRID_16 = 16,
-        GRID_8 = 8,
-        GRID_4 = 4,
-        GRID_2 = 2,
-        GRID_1 = 1
-    };
-
-
-}
+enum GridSize {
+    GRID_512 = 512,
+    GRID_256 = 256,
+    GRID_128 = 128,
+    GRID_64 = 64,
+    GRID_32 = 32,
+    GRID_16 = 16,
+    GRID_8 = 8,
+    GRID_4 = 4,
+    GRID_2 = 2,
+    GRID_1 = 1
+};
 
 
 #pragma pack(push, 1)

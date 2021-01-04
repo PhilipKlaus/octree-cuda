@@ -9,8 +9,6 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 
-using namespace OctreeTypes;
-
 
 struct OctreeMetadata {
 

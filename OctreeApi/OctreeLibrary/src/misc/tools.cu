@@ -22,25 +22,25 @@ __global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t sid
 
 namespace tools {
 
-    uint32_t getOctreeLevel(OctreeTypes::GridSize gridSize) {
+    uint32_t getOctreeLevel(GridSize gridSize) {
         switch (gridSize) {
-            case OctreeTypes::GRID_512:
+            case GRID_512:
                 return 9;
-            case OctreeTypes::GRID_256:
+            case GRID_256:
                 return 8;
-            case OctreeTypes::GRID_128:
+            case GRID_128:
                 return 7;
-            case OctreeTypes::GRID_64:
+            case GRID_64:
                 return 6;
-            case OctreeTypes::GRID_32:
+            case GRID_32:
                 return 5;
-            case OctreeTypes::GRID_16:
+            case GRID_16:
                 return 4;
-            case OctreeTypes::GRID_8:
+            case GRID_8:
                 return 3;
-            case OctreeTypes::GRID_4:
+            case GRID_4:
                 return 2;
-            case OctreeTypes::GRID_2:
+            case GRID_2:
                 return 1;
             default:
                 return 0;
