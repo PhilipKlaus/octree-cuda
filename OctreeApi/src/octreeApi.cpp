@@ -45,9 +45,15 @@ void ocpi_load_point_cloud_from_host(void* session, uint8_t *pointCloud) {
     s->setPointCloudHost(pointCloud);
 }
 
-void ocpi_configure_octree(void* session, GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold) {
+void ocpi_configure_octree(
+        void* session,
+        GridSize chunkingGrid,
+        GridSize subsamplingGrid,
+        uint32_t mergingThreshold,
+        SubsamplingStrategy strategy) {
+
     auto s = Session::ToSession (session);
-    s->setOctreeProperties(chunkingGrid, subsamplingGrid, mergingThreshold);
+    s->setOctreeProperties(chunkingGrid, subsamplingGrid, mergingThreshold, strategy);
 }
 
 void ocpi_generate_octree(void *session) {

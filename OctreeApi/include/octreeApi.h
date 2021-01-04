@@ -45,7 +45,13 @@ EXPORTED void ocpi_set_logging_level (int level);
 EXPORTED void ocpi_set_point_cloud_metadata (void* session, const PointCloudMetadata &metadata);
 EXPORTED void ocpi_load_point_cloud_from_host (void* session, uint8_t *pointCloud);
 
-EXPORTED void ocpi_configure_octree(void* session, GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
+EXPORTED void ocpi_configure_octree(
+        void* session,
+        GridSize chunkingGrid,
+        GridSize subsamplingGrid,
+        uint32_t mergingThreshold,
+        SubsamplingStrategy strategy);
+
 EXPORTED void ocpi_configure_memory_report(void *session, const char *filename);
 EXPORTED void ocpi_configure_point_distribution_report(void *session, const char *filename, uint32_t binWidth);
 EXPORTED void ocpi_configure_json_report(void *session, const char *filename);

@@ -15,7 +15,14 @@
 #include <random_subsampling.cuh>
 
 
-SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData) :
+SparseOctree::SparseOctree(
+        GridSize chunkingGrid,
+        GridSize subsamplingGrid,
+        uint32_t mergingThreshold,
+        PointCloudMetadata cloudMetadata,
+        unique_ptr<CudaArray<uint8_t>> cloudData,
+        SubsamplingStrategy strategy) :
+
         itsCloudData(move(cloudData))
 {
     // Initialize octree metadata
@@ -25,6 +32,7 @@ SparseOctree::SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint
     itsMetadata.subsamplingGrid = subsamplingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata = cloudMetadata;
+    itsMetadata.strategy = strategy;
 
     // Pre calculate often-used octree metrics
     auto sideLength = static_cast<uint32_t >(pow(2, itsMetadata.depth));

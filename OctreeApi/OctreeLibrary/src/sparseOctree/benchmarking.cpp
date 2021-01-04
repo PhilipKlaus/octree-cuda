@@ -101,8 +101,18 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
     nlohmann::ordered_json statistics;
     statistics["depth"] = itsMetadata.depth;
 
-    statistics["grids"]["chunkingGrid"] = itsMetadata.chunkingGrid;
-    statistics["grids"]["subsamplingGrid"] = itsMetadata.subsamplingGrid;
+    statistics["chunking"]["grid"] = itsMetadata.chunkingGrid;
+    statistics["chunking"]["mergingThreshold"] = itsMetadata.mergingThreshold;
+
+    statistics["subsampling"]["grid"] = itsMetadata.subsamplingGrid;
+    switch(itsMetadata.strategy) {
+        case FIRST_POINT:
+            statistics["subsampling"]["strategy"] = "FIRST POINT";
+            break;
+        default:
+            statistics["subsampling"]["strategy"] = "RANDOM POINT";
+            break;
+    }
 
     statistics["resultNodes"]["octreeNodes"] = itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount;
     statistics["resultNodes"]["leafNodeAmount"] = itsMetadata.leafNodeAmount;

@@ -14,7 +14,14 @@ class SparseOctree {
 
 public:
 
-    SparseOctree(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold, PointCloudMetadata cloudMetadata, unique_ptr<CudaArray<uint8_t>> cloudData);
+    SparseOctree(
+            GridSize chunkingGrid,
+            GridSize subsamplingGrid,
+            uint32_t mergingThreshold,
+            PointCloudMetadata cloudMetadata,
+            unique_ptr<CudaArray<uint8_t>> cloudData,
+            SubsamplingStrategy strategy);
+
     SparseOctree(const SparseOctree&) = delete;
     void operator=(const SparseOctree&) = delete;
 

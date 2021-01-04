@@ -22,7 +22,11 @@ public:
     void setDevice() const;
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
-    void setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold);
+    void setOctreeProperties(
+            GridSize chunkingGrid,
+            GridSize subsamplingGrid,
+            uint32_t mergingThreshold,
+            SubsamplingStrategy strategy);
     void generateOctree();
     void configureOctreeExport(const string &directory);
     void configureMemoryReport(const std::string &filename);

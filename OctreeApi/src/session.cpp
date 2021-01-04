@@ -49,9 +49,19 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
     spdlog::debug("copied point cloud from host to device");
 }
 
-void Session::setOctreeProperties(GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold) {
-    itsOctree = make_unique<SparseOctree>(chunkingGrid, subsamplingGrid, mergingThreshold, itsMetadata, move(data));
+void Session::setOctreeProperties(
+        GridSize chunkingGrid,
+        GridSize subsamplingGrid,
+        uint32_t mergingThreshold,
+        SubsamplingStrategy strategy) {
 
+    itsOctree = make_unique<SparseOctree>(
+            chunkingGrid,
+            subsamplingGrid,
+            mergingThreshold,
+            itsMetadata,
+            move(data),
+            strategy);
     spdlog::debug("set octree properties");
 }
 
