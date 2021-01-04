@@ -24,7 +24,9 @@ add_library( ${PROJECT_NAME} STATIC
         src/kernel/point_count_propagation.cuh
         src/kernel/hierarchical_merging.cuh
         src/kernel/point_distributing.cuh
-        src/kernel/random_subsampling.cuh)
+        src/kernel/random_subsampling.cuh
+        src/kernel/first_point_subsampling.cuh
+        src/kernel/subsample_evaluating.cuh)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)

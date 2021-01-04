@@ -12,6 +12,7 @@
 #include <point_distributing.cuh>
 
 // Includes for subsampling
+#include <subsample_evaluating.cuh>
 #include <random_subsampling.cuh>
 
 
@@ -245,7 +246,7 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::subsample<float>(
+                accumulatedTime += subsampling::evaluateSubsamples<float>(
                         itsCloudData,
                         child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
                         child.isParent ? 0 : child.chunkDataIndex,
@@ -280,10 +281,10 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::distributeSubsamples<float>(
+                accumulatedTime += subsampling::randomPointSubsample<float>(
                         itsCloudData,
                         child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                        child.isParent ? 0: child.chunkDataIndex,
+                        child.isParent ? 0 : child.chunkDataIndex,
                         itsSubsampleLUTs[sparseVoxelIndex],
                         subsampleCountingGrid,
                         subsampleDenseToSparseLUT,
