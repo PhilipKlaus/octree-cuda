@@ -11,6 +11,7 @@
 
 namespace chunking {
 
+    template <typename coordinateType>
     __global__ void kernelDistributePoints (
             Chunk *octree,
             uint8_t *cloud,
@@ -25,9 +26,11 @@ namespace chunking {
         if(index >= metadata.pointAmount) {
             return;
         }
-        Vector3 *point = reinterpret_cast<Vector3 *>(cloud + index * metadata.pointDataStride);
 
-        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSize);
+        CoordinateVector<coordinateType> *point =
+                reinterpret_cast<CoordinateVector<coordinateType>*>(cloud + index * metadata.pointDataStride);
+
+        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSize);
         auto sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
 
         bool isFinished = octree[sparseVoxelIndex].isFinished;
@@ -41,6 +44,7 @@ namespace chunking {
         dataLUT[octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk] = index;
     }
 
+    template <typename coordinateType>
     float distributePoints(
             unique_ptr<CudaArray<Chunk>> &octree,
             unique_ptr<CudaArray<uint8_t>> &cloud,
@@ -58,7 +62,7 @@ namespace chunking {
         // Call distribution kernel
         tools::KernelTimer timer;
         timer.start();
-        chunking::kernelDistributePoints <<<  grid, block >>> (
+        chunking::kernelDistributePoints<coordinateType> <<<  grid, block >>> (
                 octree->devicePointer(),
                         cloud->devicePointer(),
                         dataLUT->devicePointer(),

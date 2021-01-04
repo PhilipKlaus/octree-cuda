@@ -12,6 +12,7 @@
 namespace subsampling {
 
     // Move point indices from old (child LUT) to new (parent LUT)
+    template <typename coordinateType>
     __global__ void kernelDistributeSubsamples(
             uint8_t *cloud,
             uint32_t *childDataLUT,
@@ -29,11 +30,12 @@ namespace subsampling {
             return;
         }
 
-        auto *point = reinterpret_cast<Vector3 *>(cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
-
+        CoordinateVector<coordinateType> *point =
+                reinterpret_cast<CoordinateVector<coordinateType>*>(
+                        cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the subsample
-        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSideLength);
 
         // 2. We are only interested in the last point within a node -> Implicitly reset the countingGrid
         auto oldIndex = atomicSub((countingGrid + denseVoxelIndex), 1);
@@ -90,6 +92,7 @@ namespace subsampling {
         }
     }
 
+    template <typename coordinateType>
     __global__ void kernelSubsample(
             uint8_t *cloud,
             uint32_t *cloudDataLUT,
@@ -105,11 +108,12 @@ namespace subsampling {
             return;
         }
 
-        //Vector3 point = cloud[cloudDataLUT[dataLUTStartIndex + index]];
-        auto *point = reinterpret_cast<Vector3 *>(cloud + cloudDataLUT[dataLUTStartIndex + index] * metadata.pointDataStride);
+        CoordinateVector<coordinateType> *point =
+                reinterpret_cast<CoordinateVector<coordinateType>*>(
+                        cloud + cloudDataLUT[dataLUTStartIndex + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the subsample
-        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
+        auto denseVoxelIndex = tools::calculateGridIndexTmp(point, metadata, gridSideLength);
 
         // 2. We are only interested in the first point within a cell
         auto oldIndex = atomicAdd((densePointCount + denseVoxelIndex), 1);
@@ -121,6 +125,7 @@ namespace subsampling {
         }
     }
 
+    template <typename coordinateType>
     float distributeSubsamples(
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &childDataLUT,
@@ -140,7 +145,7 @@ namespace subsampling {
         // Initial point counting
         tools::KernelTimer timer;
         timer.start();
-        kernelDistributeSubsamples <<<  grid, block >>> (
+        kernelDistributeSubsamples<coordinateType> <<<  grid, block >>> (
                 cloud->devicePointer(),
                         childDataLUT->devicePointer(),
                         childDataLUTStart,
@@ -158,6 +163,7 @@ namespace subsampling {
         return timer.getMilliseconds();
     }
 
+    template <typename coordinateType>
     float subsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
@@ -177,7 +183,7 @@ namespace subsampling {
         timer.start();
 
 
-        kernelSubsample << < grid, block >> > (
+        kernelSubsample<coordinateType> << < grid, block >> > (
                 cloud->devicePointer(),
                         cloudDataLUT->devicePointer(),
                         dataLUTStartIndex,

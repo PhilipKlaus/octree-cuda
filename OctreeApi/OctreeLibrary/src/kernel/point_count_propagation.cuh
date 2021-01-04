@@ -30,7 +30,7 @@ namespace chunking {
         }
 
         // 1. Calculate the actual dense coordinates in the octree
-        Vector3i coords{};
+        CoordinateVector<uint32_t> coords{};
         tools::mapFromDenseIdxToDenseCoordinates(coords, index, newGridSize);
 
         auto oldXY = oldGridSize * oldGridSize;

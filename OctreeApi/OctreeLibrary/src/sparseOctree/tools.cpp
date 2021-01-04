@@ -4,7 +4,7 @@
 
 #include <sparseOctree.h>
 
-void SparseOctree::calculateVoxelBB(BoundingBox &bb, Vector3i &coords, uint32_t denseVoxelIndex, uint32_t level) {
+void SparseOctree::calculateVoxelBB(BoundingBox &bb, CoordinateVector<uint32_t> &coords, uint32_t denseVoxelIndex, uint32_t level) {
 
     // 1. Calculate coordinates of voxel within the actual level
     //spdlog::error("level:{} | offset: {} | gridSide: {} ",level, itsLinearizedDenseVoxelOffset[level], itsGridSideLengthPerLevel[level]);

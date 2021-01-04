@@ -59,7 +59,7 @@ void SparseOctree::distributePoints() {
     auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
 
-    float time = chunking::distributePoints(
+    float time = chunking::distributePoints<float>(
             itsOctreeSparse,
             itsCloudData,
             itsDataLUT,
@@ -226,7 +226,7 @@ float SparseOctree::hierarchicalSubsampling(
 
         // 3. Calculate the dense coordinates of the voxel
         BoundingBox bb{};
-        Vector3i coords{};
+        CoordinateVector<uint32_t> coords{};
         auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB(bb, coords, denseVoxelIndex, level);
 
@@ -241,7 +241,7 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::subsample(
+                accumulatedTime += subsampling::subsample<float>(
                         itsCloudData,
                         child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
                         child.isParent ? 0 : child.chunkDataIndex,
@@ -276,7 +276,7 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::distributeSubsamples(
+                accumulatedTime += subsampling::distributeSubsamples<float>(
                         itsCloudData,
                         child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
                         child.isParent ? 0: child.chunkDataIndex,

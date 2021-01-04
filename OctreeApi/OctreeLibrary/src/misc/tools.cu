@@ -178,7 +178,7 @@ namespace tools {
     }
 
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(
-            Vector3i &coordinates,
+            CoordinateVector<uint32_t> &coordinates,
             uint32_t denseVoxelIdx,
             uint32_t gridSizeLength) {
 

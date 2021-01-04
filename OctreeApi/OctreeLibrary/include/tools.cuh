@@ -24,7 +24,7 @@ namespace tools {
     __device__ uint32_t calculateGridIndex(const Vector3 *point, PointCloudMetadata const &metadata, uint32_t gridSize);
 
     __host__ __device__ Vector3 subtract(const Vector3 &a,const Vector3 &b);
-    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(Vector3i &coordinates, uint32_t denseVoxelIdx, uint32_t level);
+    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(CoordinateVector<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
     template <typename coordinateType>
 
