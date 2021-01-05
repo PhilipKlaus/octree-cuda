@@ -214,6 +214,9 @@ void SparseOctree::performSubsampling() {
     std::tuple<float, float> time;
 
     if(itsMetadata.strategy == RANDOM_POINT) {
+        auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
+        auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
+
         time = randomSubsampling(
                 h_octreeSparse,
                 h_sparseToDenseLUT,
@@ -221,7 +224,9 @@ void SparseOctree::performSubsampling() {
                 itsMetadata.depth,
                 pointCountGrid,
                 denseToSpareLUT,
-                voxelCount);
+                voxelCount,
+                randomStates,
+                randomIndices);
     }
     else {
         time = firstPointSubsampling(

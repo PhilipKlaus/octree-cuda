@@ -89,7 +89,7 @@ namespace subsampling {
         int sparseIndex = denseToSparseLUT[index];
 
         if(sparseIndex > -1) {
-            randomIndices[sparseIndex] = static_cast<uint32_t>(ceil(curand_uniform(&states[sparseIndex]) * countingGrid[index]));
+            randomIndices[sparseIndex] = static_cast<uint32_t>(ceil(curand_uniform(&states[threadIdx.x]) * countingGrid[index]));
         }
     }
 

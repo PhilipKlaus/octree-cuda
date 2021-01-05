@@ -10,7 +10,9 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         uint32_t level,
         unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
         unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount) {
+        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+        unique_ptr<CudaArray<curandState_t >> &randomStates,
+        unique_ptr<CudaArray<uint32_t >> &randomIndices) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     std::tuple<float, float> accumulatedTime = {0,0};
@@ -25,7 +27,9 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
                     level - 1,
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount);
+                    subsampleSparseVoxelCount,
+                    randomStates,
+                    randomIndices);
 
             get<0>(accumulatedTime) += get<0>(childTime);
             get<1>(accumulatedTime) += get<1>(childTime);
@@ -68,14 +72,8 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
         //---------- GENERATE RANDOM INDICES FOR SUBSAMPLING ----------------
-        auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
-        auto randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
-
-        // ToDo: Pre-calculate 1024 random states
-        get<1>(accumulatedTime) += subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
         get<1>(accumulatedTime) += subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
 
-        //-------------------------------------------------------------------
 
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
