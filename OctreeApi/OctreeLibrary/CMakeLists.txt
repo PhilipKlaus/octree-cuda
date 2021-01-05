@@ -17,8 +17,10 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/tools.cpp
         src/sparseOctree/debugging.cpp
 
-        # Cuda kernels
+        src/sparseOctree/pipeline/random_subsampling.cu
+        src/sparseOctree/pipeline/first_point_subsampling.cu
 
+        # Cuda kernels
         src/kernel/point_counting.cuh
         src/kernel/octree_initialization.cuh
         src/kernel/point_count_propagation.cuh
