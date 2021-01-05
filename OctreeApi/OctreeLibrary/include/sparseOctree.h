@@ -59,7 +59,7 @@ private:
     void initLowestOctreeHierarchy();
 
     // Subsampling
-    float hierarchicalSubsampling(const unique_ptr<Chunk[]> &h_octreeSparse,
+    std::tuple<float, float> hierarchicalSubsampling(const unique_ptr<Chunk[]> &h_octreeSparse,
                                  const unique_ptr<int[]> &h_sparseToDenseLUT,
                                  uint32_t sparseVoxelIndex,
                                  uint32_t level,

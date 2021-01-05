@@ -14,6 +14,9 @@
 // Includes for subsampling
 #include <subsample_evaluating.cuh>
 #include <random_subsampling.cuh>
+#include <first_point_subsampling.cuh>
+#include "../../include/sparseOctree.h"
+#include "../../include/types.h"
 
 
 SparseOctree::SparseOctree(
@@ -200,7 +203,7 @@ void SparseOctree::distributePoints() {
 }
 
 
-float SparseOctree::hierarchicalSubsampling(
+std::tuple<float, float> SparseOctree::hierarchicalSubsampling(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         const unique_ptr<int[]> &h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -210,12 +213,12 @@ float SparseOctree::hierarchicalSubsampling(
         unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
-    float accumulatedTime = 0;
+    std::tuple<float, float> accumulatedTime = {0,0};
 
     // 1. Depth first traversal
     for(int childIndex : voxel.childrenChunks) {
         if(childIndex != -1) {
-            accumulatedTime += hierarchicalSubsampling(
+            std::tuple<float, float> childTime = hierarchicalSubsampling(
                     h_octreeSparse,
                     h_sparseToDenseLUT,
                     childIndex,
@@ -223,6 +226,9 @@ float SparseOctree::hierarchicalSubsampling(
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
                     subsampleSparseVoxelCount);
+
+            get<0>(accumulatedTime) += get<0>(childTime);
+            get<1>(accumulatedTime) += get<1>(childTime);
         }
     }
 
@@ -246,7 +252,7 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::evaluateSubsamples<float>(
+                get<0>(accumulatedTime) += subsampling::evaluateSubsamples<float>(
                         itsCloudData,
                         child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
                         child.isParent ? 0 : child.chunkDataIndex,
@@ -261,15 +267,20 @@ float SparseOctree::hierarchicalSubsampling(
         // 5. Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
-        //---------- GENERATE RANDOM INDICES FOR SUBSAMPLING ----------------
-        auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
-        auto randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
+        unique_ptr<CudaArray<uint32_t>> randomIndices;
 
-        // ToDo: Pre-calculate 1024 random states
-        subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
-        subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
+        if(itsMetadata.strategy == RANDOM_POINT) {
+            //---------- GENERATE RANDOM INDICES FOR SUBSAMPLING ----------------
+            auto randomStates = make_unique<CudaArray<curandState_t >>(amountUsedVoxels, "randomStates_" + to_string(sparseVoxelIndex));
+            randomIndices = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "randomIndices_" + to_string(sparseVoxelIndex));
 
-        //-------------------------------------------------------------------
+            // ToDo: Pre-calculate 1024 random states
+            subsampling::initRandoms(time(0), randomStates, amountUsedVoxels);
+            subsampling::generateRandoms(randomStates, randomIndices, subsampleDenseToSparseLUT, subsampleCountingGrid, subsampleDenseToSparseLUT->pointCount());
+
+            //-------------------------------------------------------------------
+        }
+
 
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
@@ -281,18 +292,31 @@ float SparseOctree::hierarchicalSubsampling(
                 Chunk child = h_octreeSparse[childIndex];
                 metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
 
-                accumulatedTime += subsampling::randomPointSubsample<float>(
-                        itsCloudData,
-                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                        child.isParent ? 0 : child.chunkDataIndex,
-                        itsSubsampleLUTs[sparseVoxelIndex],
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        subsampleSparseVoxelCount,
-                        metadata,
-                        itsMetadata.subsamplingGrid,
-                        randomIndices
-                );
+                if(itsMetadata.strategy == RANDOM_POINT) {
+                    get<1>(accumulatedTime) += subsampling::randomPointSubsample<float>(
+                            itsCloudData,
+                            child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                            child.isParent ? 0 : child.chunkDataIndex,
+                            itsSubsampleLUTs[sparseVoxelIndex],
+                            subsampleCountingGrid,
+                            subsampleDenseToSparseLUT,
+                            subsampleSparseVoxelCount,
+                            metadata,
+                            itsMetadata.subsamplingGrid,
+                            randomIndices);
+                }
+                else {
+                    get<1>(accumulatedTime) += subsampling::firstPointSubsample<float>(
+                            itsCloudData,
+                            child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
+                            child.isParent ? 0 : child.chunkDataIndex,
+                            itsSubsampleLUTs[sparseVoxelIndex],
+                            subsampleCountingGrid,
+                            subsampleDenseToSparseLUT,
+                            subsampleSparseVoxelCount,
+                            metadata,
+                            itsMetadata.subsamplingGrid);
+                }
             }
         }
     }
@@ -316,7 +340,7 @@ void SparseOctree::performSubsampling() {
     gpuErrchk(cudaMemset (voxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Perform the actual subsampling
-    float time = hierarchicalSubsampling(
+    std::tuple<float, float> time = hierarchicalSubsampling(
             h_octreeSparse,
             h_sparseToDenseLUT,
             getRootIndex(),
@@ -325,7 +349,9 @@ void SparseOctree::performSubsampling() {
             denseToSpareLUT,
             voxelCount);
 
-    itsTimeMeasurement.emplace_back("subsampling", time);
-    spdlog::info("subsampling with gridSize of {} took {}[ms]", itsMetadata.subsamplingGrid, time);
+    itsTimeMeasurement.emplace_back("subsampleEvaluation", get<0>(time));
+    itsTimeMeasurement.emplace_back("subsampling", get<1>(time));
+    spdlog::info("subsample evaluation took {}[ms]", get<0>(time));
+    spdlog::info("subsampling took {}[ms]", get<1>(time));
 }
 

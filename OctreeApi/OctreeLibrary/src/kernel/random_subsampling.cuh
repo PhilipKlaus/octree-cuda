@@ -46,15 +46,14 @@ namespace subsampling {
 
         int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
-        if(oldIndex == randomIndices[sparseIndex]) {
-            parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
-            childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
+        if(sparseIndex == -1 || oldIndex != randomIndices[sparseIndex]) {
+            return;
         }
-        if(oldIndex == 1) {
-            // Reset data structures
-            denseToSparseLUT[denseVoxelIndex] = -1;
-            *sparseIndexCounter = 0;
-        }
+
+        parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
+        childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
+        denseToSparseLUT[denseVoxelIndex] = -1;
+        *sparseIndexCounter = 0;
     }
 
     // http://ianfinlayson.net/class/cpsc425/notes/cuda-random
