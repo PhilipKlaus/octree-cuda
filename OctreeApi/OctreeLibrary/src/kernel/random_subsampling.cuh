@@ -45,7 +45,6 @@ namespace subsampling {
         // 3. If the thread is the first one ->
         //      3.1 store the child lut table index in the parent lut
         //      3.2 'delete' the point within the child lut by invalidating its index entry
-
         int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
         if(sparseIndex == -1 || oldIndex != randomIndices[sparseIndex]) {
@@ -88,9 +87,11 @@ namespace subsampling {
 
         int sparseIndex = denseToSparseLUT[index];
 
-        if(sparseIndex > -1) {
-            randomIndices[sparseIndex] = static_cast<uint32_t>(ceil(curand_uniform(&states[threadIdx.x]) * countingGrid[index]));
+        if(sparseIndex == -1) {
+            return;
         }
+
+        randomIndices[sparseIndex] = static_cast<uint32_t>(ceil(curand_uniform(&states[threadIdx.x]) * countingGrid[index]));
     }
 
     template <typename coordinateType>
