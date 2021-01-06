@@ -83,3 +83,9 @@ struct Chunk {
 };
 #pragma pack(pop)
 
+struct SubsampleData {
+    uint32_t *lutAdress;
+    uint32_t  lutStartIndex;
+    uint32_t pointOffsetLower;
+    uint32_t pointOffsetUpper;
+};

@@ -17,19 +17,32 @@ namespace subsampling {
     template <typename coordinateType>
     __global__ void kernelRandomPointSubsample(
             uint8_t *cloud,
-            uint32_t *childDataLUT,
-            uint32_t childDataLUTStart,
+            SubsampleData *subsampleData,
             uint32_t *parentDataLUT,
             uint32_t *countingGrid,
             int *denseToSparseLUT,
             uint32_t *sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
-            uint32_t *randomIndices) {
+            uint32_t *randomIndices,
+            uint32_t accumulatedPoints) {
+
 
         int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-        if(index >= metadata.pointAmount) {
+        if(index >= accumulatedPoints) {
             return;
+        }
+
+        uint32_t *childDataLUT = nullptr;
+        uint32_t childDataLUTStart = 0;
+
+        for(int i = 0; i < 8; ++i) {
+            if(index < subsampleData[i].pointOffsetUpper) {
+                childDataLUT = subsampleData[i].lutAdress;
+                childDataLUTStart = subsampleData[i].lutStartIndex;
+                index -= subsampleData[i].pointOffsetLower;
+                break;
+            }
         }
 
         CoordinateVector<coordinateType> *point =
@@ -97,34 +110,34 @@ namespace subsampling {
     template <typename coordinateType>
     float randomPointSubsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<uint32_t>> &childDataLUT,
-            uint32_t childDataLUTStart,
+            unique_ptr<CudaArray<SubsampleData>> &subsampleData,
             unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
-            unique_ptr<CudaArray<uint32_t>> &randomIndices) {
+            unique_ptr<CudaArray<uint32_t>> &randomIndices,
+            uint32_t accumulatedPoints) {
 
         // Calculate kernel dimensions
         dim3 grid, block;
-        tools::create1DKernel(block, grid, metadata.pointAmount);
+        tools::create1DKernel(block, grid, accumulatedPoints);
 
         // Initial point counting
         tools::KernelTimer timer;
         timer.start();
         kernelRandomPointSubsample < coordinateType > << < grid, block >> > (
                 cloud->devicePointer(),
-                        childDataLUT->devicePointer(),
-                        childDataLUTStart,
+                        subsampleData->devicePointer(),
                         parentDataLUT->devicePointer(),
                         countingGrid->devicePointer(),
                         denseToSparseLUT->devicePointer(),
                         sparseIndexCounter->devicePointer(),
                         metadata,
                         gridSideLength,
-                        randomIndices->devicePointer());
+                        randomIndices->devicePointer(),
+                        accumulatedPoints);
         timer.stop();
         gpuErrchk(cudaGetLastError());
 

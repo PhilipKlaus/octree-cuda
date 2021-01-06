@@ -216,6 +216,7 @@ void SparseOctree::performSubsampling() {
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
+        auto subsampleData = make_unique<CudaArray<SubsampleData>>(8, "subsampleData");
 
         time = randomSubsampling(
                 h_octreeSparse,
@@ -226,7 +227,8 @@ void SparseOctree::performSubsampling() {
                 denseToSpareLUT,
                 voxelCount,
                 randomStates,
-                randomIndices);
+                randomIndices,
+                subsampleData);
     }
     else {
         time = firstPointSubsampling(

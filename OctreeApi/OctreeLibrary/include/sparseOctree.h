@@ -90,7 +90,8 @@ private:
             unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
             unique_ptr<CudaArray<curandState_t >> &randomStates,
-            unique_ptr<CudaArray<uint32_t >> &randomIndices);
+            unique_ptr<CudaArray<uint32_t >> &randomIndices,
+            unique_ptr<CudaArray<SubsampleData>> &subsampleData);
 
     // Exporting
     uint32_t exportTreeNode(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse,
