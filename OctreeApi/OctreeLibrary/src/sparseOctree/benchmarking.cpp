@@ -146,9 +146,13 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
     statistics["cloud"]["scale"]["y"] = itsMetadata.cloudMetadata.scale.y;
     statistics["cloud"]["scale"]["z"] = itsMetadata.cloudMetadata.scale.z;
 
+    float accumulatedTime = 0;
     for (auto const& timeEntry : itsTimeMeasurement) {
         statistics["timeMeasurements"][get<0>(timeEntry)] = get<1>(timeEntry);
+        accumulatedTime += get<1>(timeEntry);
     }
+    statistics["timeMeasurements"]["accumulatedGPUTime"] = accumulatedTime;
+
 
     EventWatcher& watcher = EventWatcher::getInstance();
     statistics["memory"]["peak"] = watcher.getMemoryPeak();

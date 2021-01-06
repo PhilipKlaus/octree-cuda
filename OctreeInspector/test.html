@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+    <style>
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity .5s;
+        }
+        .fade-enter, .fade-leave-to /* .fade-leave-active below version 2.1.8 */ {
+            opacity: 0;
+        }
+    </style>
+</head>
+<body>
+    
+    <div id="app">
+        {{ message }}
+    </div>
+
+    <div id="app-2">
+        <span v-bind:title="message">
+            Hover your mouse to see the dynamic change
+        </span>
+    </div>
+
+    <div id="app-3">
+        <transition name="fade">
+            <span v-if="seen">Now you see me</span>
+        </transition>
+    </div>
+
+    <div id="app-4">
+        <ol>
+            <li v-for="todo in todos">
+                {{ todo.text }}
+            </li>
+        </ol>
+    </div>
+
+    <div id="app-5">
+        <p> {{ message }} </p>
+        <button v-on:click="reverseMessage">Reverse Message</button>
+    </div>
+ 
+    <script>
+        var app = new Vue({
+            el: "#app",
+            data: {
+                message: "Hello Vue!"
+            }
+        });
+
+        var app2 = new Vue({
+            el: "#app-2",
+            data: {
+                message: "Page loaded on " + new Date().toLocaleString()
+            }
+        });
+
+        var app3 = new Vue({
+            el: "#app-3",
+            data: {
+                seen: true
+            }
+        });
+
+        var app4 = new Vue({
+            el: "#app-4",
+            data: {
+                todos: [
+                    { text: "Learn vue" },
+                    { text: "Fix light" },
+                    { text: "Do master thesis" }
+                ]
+            }
+        });
+
+        var app5 = new Vue({
+            el: "#app-5",
+            data: {
+                message: "Hello Vue.js"
+            },
+            methods: {
+                reverseMessage: function() {
+                    this.message = this.message.split("").reverse().join("");
+                }
+            }
+        });
+    </script>
+</body>
+</html>
