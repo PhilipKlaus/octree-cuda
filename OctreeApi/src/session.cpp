@@ -30,7 +30,6 @@ void Session::setDevice() const {
     gpuErrchk (cudaSetDevice (itsDevice));
     cudaDeviceProp props{};
     gpuErrchk(cudaGetDeviceProperties(&props, itsDevice));
-    gpuErrchk(cudaDeviceSetLimit(cudaLimitPrintfFifoSize, 10000000));
     spdlog::info("Using GPU device: {}", props.name);
 }
 

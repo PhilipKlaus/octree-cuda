@@ -216,7 +216,7 @@ void SparseOctree::performSubsampling() {
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
-        auto subsampleData = make_unique<CudaArray<SubsampleData>>(8, "subsampleData");
+        auto subsampleData = make_unique<CudaArray<SubsampleConfig>>(8, "subsampleData");
 
         time = randomSubsampling(
                 h_octreeSparse,
@@ -248,3 +248,26 @@ void SparseOctree::performSubsampling() {
     spdlog::info("subsampling took {}[ms]", get<1>(time));
 }
 
+void SparseOctree::prepareSubsampleConfig(
+        Chunk &voxel,
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+        uint32_t &accumulatedPoints) {
+
+    // Prepare subsample data and copy it to the GPU
+    SubsampleConfig newSubsampleData[8];
+    uint32_t i = 0;
+    for(int childIndex : voxel.childrenChunks) {
+
+        if(childIndex != -1) {
+            Chunk child = h_octreeSparse[childIndex];
+            newSubsampleData[i].lutAdress = child.isParent ? itsSubsampleLUTs[childIndex]->devicePointer() : itsDataLUT->devicePointer();
+            newSubsampleData[i].lutStartIndex = child.isParent ? 0 : child.chunkDataIndex;
+            newSubsampleData[i].pointOffsetLower = accumulatedPoints;
+            accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
+            newSubsampleData[i].pointOffsetUpper = accumulatedPoints;
+            ++i;
+        }
+    }
+    subsampleData->toGPU(reinterpret_cast<uint8_t *>(newSubsampleData));
+}

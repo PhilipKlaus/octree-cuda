@@ -16,7 +16,7 @@ namespace subsampling {
     template <typename coordinateType>
     __global__ void kernelEvaluateSubsamples(
             uint8_t *cloud,
-            SubsampleData *subsampleData,
+            SubsampleConfig *subsampleData,
             uint32_t *densePointCount,
             int *denseToSparseLUT,
             uint32_t *sparseIndexCounter,
@@ -63,7 +63,7 @@ namespace subsampling {
     template <typename coordinateType>
     float evaluateSubsamples(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleData>> &subsampleData,
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,

@@ -17,7 +17,7 @@ namespace subsampling {
     template <typename coordinateType>
     __global__ void kernelRandomPointSubsample(
             uint8_t *cloud,
-            SubsampleData *subsampleData,
+            SubsampleConfig *subsampleData,
             uint32_t *parentDataLUT,
             uint32_t *countingGrid,
             int *denseToSparseLUT,
@@ -111,7 +111,7 @@ namespace subsampling {
     template <typename coordinateType>
     float randomPointSubsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleData>> &subsampleData,
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
             unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,

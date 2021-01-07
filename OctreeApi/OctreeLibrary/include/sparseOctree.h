@@ -45,7 +45,7 @@ public:
 
     // Calculation tools
     void
-    calculateVoxelBB(BoundingBox &bb, CoordinateVector<uint32_t> &coords, uint32_t denseVoxelIndex, uint32_t level);
+    calculateVoxelBB(PointCloudMetadata &metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes(const string &folderPath);
@@ -91,7 +91,13 @@ private:
             unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
             unique_ptr<CudaArray<curandState_t >> &randomStates,
             unique_ptr<CudaArray<uint32_t >> &randomIndices,
-            unique_ptr<CudaArray<SubsampleData>> &subsampleData);
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData);
+
+    void SparseOctree::prepareSubsampleConfig(
+            Chunk &voxel,
+            const unique_ptr<Chunk[]> &h_octreeSparse,
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+            uint32_t &accumulatedPoints);
 
     // Exporting
     uint32_t exportTreeNode(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse,
