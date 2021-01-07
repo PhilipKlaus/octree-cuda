@@ -33,6 +33,12 @@ struct PointCloudMetadata {
 };
 
 
+enum SubsamplingStrategy {
+    FIRST_POINT,
+    RANDOM_POINT
+};
+
+
 struct OctreeMetadata {
 
     uint32_t depth;                     // The depth of the octree // ToDo: -1
@@ -46,9 +52,10 @@ struct OctreeMetadata {
     uint32_t absorbedNodes;             // Nodes completely absorbed during subsampling
     float meanPointsPerLeafNode;        // Mean points per leaf node
     float stdevPointsPerLeafNode;       // Standard deviation of points per leaf node
-    uint32_t minPointsPerNode;
-    uint32_t maxPointsPerNode;
+    uint32_t minPointsPerNode;          // Minimum amount of points in a node
+    uint32_t maxPointsPerNode;          // Maximum amount of points in a node
     PointCloudMetadata cloudMetadata;   // The cloud metadata;
+    SubsamplingStrategy strategy;       // The subsampling strategy
 };
 
 enum GridSize {
@@ -76,3 +83,10 @@ struct Chunk {
 };
 #pragma pack(pop)
 
+
+struct SubsampleConfig {
+    uint32_t *lutAdress;
+    uint32_t  lutStartIndex;
+    uint32_t pointOffsetLower;
+    uint32_t pointOffsetUpper;
+};

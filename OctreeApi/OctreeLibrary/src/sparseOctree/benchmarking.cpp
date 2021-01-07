@@ -101,8 +101,18 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
     nlohmann::ordered_json statistics;
     statistics["depth"] = itsMetadata.depth;
 
-    statistics["grids"]["chunkingGrid"] = itsMetadata.chunkingGrid;
-    statistics["grids"]["subsamplingGrid"] = itsMetadata.subsamplingGrid;
+    statistics["chunking"]["grid"] = itsMetadata.chunkingGrid;
+    statistics["chunking"]["mergingThreshold"] = itsMetadata.mergingThreshold;
+
+    statistics["subsampling"]["grid"] = itsMetadata.subsamplingGrid;
+    switch(itsMetadata.strategy) {
+        case FIRST_POINT:
+            statistics["subsampling"]["strategy"] = "FIRST POINT";
+            break;
+        default:
+            statistics["subsampling"]["strategy"] = "RANDOM POINT";
+            break;
+    }
 
     statistics["resultNodes"]["octreeNodes"] = itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount;
     statistics["resultNodes"]["leafNodeAmount"] = itsMetadata.leafNodeAmount;
@@ -136,8 +146,21 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
     statistics["cloud"]["scale"]["y"] = itsMetadata.cloudMetadata.scale.y;
     statistics["cloud"]["scale"]["z"] = itsMetadata.cloudMetadata.scale.z;
 
+    float accumulatedTime = 0;
     for (auto const& timeEntry : itsTimeMeasurement) {
         statistics["timeMeasurements"][get<0>(timeEntry)] = get<1>(timeEntry);
+        accumulatedTime += get<1>(timeEntry);
+    }
+    statistics["timeMeasurements"]["accumulatedGPUTime"] = accumulatedTime;
+
+
+    EventWatcher& watcher = EventWatcher::getInstance();
+    statistics["memory"]["peak"] = watcher.getMemoryPeak();
+    statistics["memory"]["reserveEvents"] = watcher.getMemoryReserveEvents();
+    statistics["memory"]["cumulatedReserved"] = watcher.getCumulatedMemoryReservation();
+
+    for (auto const& event : watcher.getMemoryEvents()) {
+        statistics["memory"]["events"][get<0>(event)] = get<1>(event);
     }
 
     std::ofstream file(filePath);

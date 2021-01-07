@@ -45,19 +45,24 @@ void ocpi_load_point_cloud_from_host(void* session, uint8_t *pointCloud) {
     s->setPointCloudHost(pointCloud);
 }
 
-void ocpi_configure_octree(void* session, GridSize chunkingGrid, GridSize subsamplingGrid, uint32_t mergingThreshold) {
-    auto s = Session::ToSession (session);
-    s->setOctreeProperties(chunkingGrid, subsamplingGrid, mergingThreshold);
-}
-
 void ocpi_generate_octree(void *session) {
     auto s = Session::ToSession (session);
     s->generateOctree();
 }
 
-void ocpi_export_ply_nodes(void *session, const char *filename) {
+void ocpi_configure_octree_export(void *session, const char *filename) {
     auto s = Session::ToSession (session);
-    s->exportPlyNodes(filename);
+    s->configureOctreeExport(filename);
+}
+
+void ocpi_configure_chunking(void* session, GridSize chunkingGrid, uint32_t mergingThreshold) {
+    auto s = Session::ToSession (session);
+    s->configureChunking(chunkingGrid, mergingThreshold);
+}
+
+void ocpi_configure_subsampling(void* session, GridSize subsamplingGrid, SubsamplingStrategy strategy) {
+    auto s = Session::ToSession (session);
+    s->configureSubsampling(subsamplingGrid, strategy);
 }
 
 void ocpi_configure_memory_report(void *session, const char *filename) {
@@ -65,9 +70,9 @@ void ocpi_configure_memory_report(void *session, const char *filename) {
     s->configureMemoryReport(filename);
 }
 
-void ocpi_export_octree_statistics(void *session, const char *filename) {
+void ocpi_configure_json_report(void *session, const char *filename) {
     auto s = Session::ToSession (session);
-    s->exportOctreeStatistics(filename);
+    s->configureJsonReport(filename);
 }
 
 void ocpi_configure_point_distribution_report(void *session, const char *filename, uint32_t binWidth) {
