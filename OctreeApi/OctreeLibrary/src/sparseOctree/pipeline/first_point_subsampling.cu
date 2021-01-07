@@ -10,12 +10,13 @@ std::tuple<float, float> SparseOctree::firstPointSubsampling(
         uint32_t level,
         unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
         unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount) {
+        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+        unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     std::tuple<float, float> accumulatedTime = {0,0};
-/*
-    // 1. Depth first traversal
+
+    // Depth first traversal
     for(int childIndex : voxel.childrenChunks) {
         if(childIndex != -1) {
             std::tuple<float, float> childTime = firstPointSubsampling(
@@ -25,70 +26,54 @@ std::tuple<float, float> SparseOctree::firstPointSubsampling(
                     level - 1,
                     subsampleCountingGrid,
                     subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount);
+                    subsampleSparseVoxelCount,
+                    subsampleConfig);
 
             get<0>(accumulatedTime) += get<0>(childTime);
             get<1>(accumulatedTime) += get<1>(childTime);
         }
     }
 
-    // 2. Now we can assure that all direct children have subsamples
+    // Now we can assure that all direct children have subsamples
     if(voxel.isParent) {
 
-        // 3. Calculate the dense coordinates of the voxel
-        BoundingBox bb{};
-        CoordinateVector<uint32_t> coords{};
-        auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
-        calculateVoxelBB(bb, coords, denseVoxelIndex, level);
+        // Prepare and update the SubsampleConfig on the GPU
+        uint32_t accumulatedPoints = 0;
+        prepareSubsampleConfig(voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
+        // Parent bounding box calculation
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
-        metadata.boundingBox = bb;
-        metadata.cloudOffset = bb.minimum;
+        auto denseVoxelIndex = h_sparseToDenseLUT[sparseVoxelIndex];
+        calculateVoxelBB(metadata, denseVoxelIndex, level);
 
-        // 4. Pre-calculate the subsamples and count the subsampled points
-        for(int childIndex : voxel.childrenChunks) {
+        // Evaluate the subsample points in parallel for all child nodes
+        get<0>(accumulatedTime) += subsampling::evaluateSubsamples<float>(
+                itsCloudData,
+                subsampleConfig,
+                subsampleCountingGrid,
+                subsampleDenseToSparseLUT,
+                subsampleSparseVoxelCount,
+                metadata,
+                itsMetadata.subsamplingGrid,
+                accumulatedPoints);
 
-            if(childIndex != -1) {
-                Chunk child = h_octreeSparse[childIndex];
-                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-                get<0>(accumulatedTime) += subsampling::evaluateSubsamples<float>(
-                        itsCloudData,
-                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                        child.isParent ? 0 : child.chunkDataIndex,
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        subsampleSparseVoxelCount,
-                        metadata,
-                        itsMetadata.subsamplingGrid);
-            }
-        }
-
-        // 5. Reserve memory for a data LUT for the parent node
+        // Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
-        // 6. Distribute points to the parent data LUT
-        for(int childIndex : voxel.childrenChunks) {
-
-            if(childIndex != -1) {
-                Chunk child = h_octreeSparse[childIndex];
-                metadata.pointAmount = child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
-
-                get<1>(accumulatedTime) += subsampling::firstPointSubsample<float>(
-                        itsCloudData,
-                        child.isParent ? itsSubsampleLUTs[childIndex] : itsDataLUT,
-                        child.isParent ? 0 : child.chunkDataIndex,
-                        itsSubsampleLUTs[sparseVoxelIndex],
-                        subsampleCountingGrid,
-                        subsampleDenseToSparseLUT,
-                        subsampleSparseVoxelCount,
-                        metadata,
-                        itsMetadata.subsamplingGrid);
-            }
-        }
-    }*/
+        // Distribute the subsampled points in parallel for all child nodes
+        get<1>(accumulatedTime) += subsampling::firstPointSubsample<float>(
+                itsCloudData,
+                subsampleConfig,
+                itsSubsampleLUTs[sparseVoxelIndex],
+                subsampleCountingGrid,
+                subsampleDenseToSparseLUT,
+                subsampleSparseVoxelCount,
+                metadata,
+                itsMetadata.subsamplingGrid,
+                accumulatedPoints);
+    }
     return accumulatedTime;
 }

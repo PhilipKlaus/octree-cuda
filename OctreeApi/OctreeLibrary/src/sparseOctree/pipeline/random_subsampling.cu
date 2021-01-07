@@ -13,7 +13,7 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
         unique_ptr<CudaArray<curandState_t >> &randomStates,
         unique_ptr<CudaArray<uint32_t >> &randomIndices,
-        unique_ptr<CudaArray<SubsampleConfig>> &subsampleData) {
+        unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     std::tuple<float, float> accumulatedTime = {0,0};
@@ -31,7 +31,7 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
                     subsampleSparseVoxelCount,
                     randomStates,
                     randomIndices,
-                    subsampleData);
+                    subsampleConfig);
 
             get<0>(accumulatedTime) += get<0>(childTime);
             get<1>(accumulatedTime) += get<1>(childTime);
@@ -43,7 +43,7 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
 
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
-        prepareSubsampleConfig(voxel, h_octreeSparse, subsampleData, accumulatedPoints);
+        prepareSubsampleConfig(voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
@@ -53,7 +53,7 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         // Evaluate the subsample points in parallel for all child nodes
         get<0>(accumulatedTime) += subsampling::evaluateSubsamples<float>(
                 itsCloudData,
-                subsampleData,
+                subsampleConfig,
                 subsampleCountingGrid,
                 subsampleDenseToSparseLUT,
                 subsampleSparseVoxelCount,
@@ -79,7 +79,7 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         // Distribute the subsampled points in parallel for all child nodes
         get<1>(accumulatedTime) += subsampling::randomPointSubsample<float>(
                 itsCloudData,
-                subsampleData,
+                subsampleConfig,
                 itsSubsampleLUTs[sparseVoxelIndex],
                 subsampleCountingGrid,
                 subsampleDenseToSparseLUT,

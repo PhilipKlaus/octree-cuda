@@ -206,6 +206,7 @@ void SparseOctree::performSubsampling() {
     auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
     auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
+    auto subsampleData = make_unique<CudaArray<SubsampleConfig>>(8, "subsampleData");
 
     gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
     gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), -1, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
@@ -216,7 +217,6 @@ void SparseOctree::performSubsampling() {
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
-        auto subsampleData = make_unique<CudaArray<SubsampleConfig>>(8, "subsampleData");
 
         time = randomSubsampling(
                 h_octreeSparse,
@@ -238,7 +238,8 @@ void SparseOctree::performSubsampling() {
                 itsMetadata.depth,
                 pointCountGrid,
                 denseToSpareLUT,
-                voxelCount);
+                voxelCount,
+                subsampleData);
     }
 
 

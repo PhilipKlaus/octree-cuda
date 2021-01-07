@@ -79,7 +79,8 @@ private:
                                                    uint32_t level,
                                                    unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
                                                    unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-                                                   unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount);
+                                                   unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+                                                   unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig);
 
     std::tuple<float, float> randomSubsampling(
             const unique_ptr<Chunk[]> &h_octreeSparse,
@@ -91,7 +92,7 @@ private:
             unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
             unique_ptr<CudaArray<curandState_t >> &randomStates,
             unique_ptr<CudaArray<uint32_t >> &randomIndices,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData);
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig);
 
     void SparseOctree::prepareSubsampleConfig(
             Chunk &voxel,
