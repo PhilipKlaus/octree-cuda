@@ -16,22 +16,35 @@ namespace subsampling {
     template <typename coordinateType>
     __global__ void kernelEvaluateSubsamples(
             uint8_t *cloud,
-            uint32_t *cloudDataLUT,
-            uint32_t dataLUTStartIndex,
+            SubsampleData *subsampleData,
             uint32_t *densePointCount,
             int *denseToSparseLUT,
             uint32_t *sparseIndexCounter,
             PointCloudMetadata metadata,
-            uint32_t gridSideLength) {
+            uint32_t gridSideLength,
+            uint32_t accumulatedPoints) {
 
         int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-        if(index >= metadata.pointAmount) {
+        if(index >= accumulatedPoints) {
             return;
+        }
+
+        // Determine child index and pick appropriate LUT data
+        uint32_t *childDataLUT = nullptr;
+        uint32_t childDataLUTStart = 0;
+
+        for(int i = 0; i < 8; ++i) {
+            if(index < subsampleData[i].pointOffsetUpper) {
+                childDataLUT = subsampleData[i].lutAdress;
+                childDataLUTStart = subsampleData[i].lutStartIndex;
+                index -= subsampleData[i].pointOffsetLower;
+                break;
+            }
         }
 
         CoordinateVector<coordinateType> *point =
                 reinterpret_cast<CoordinateVector<coordinateType>*>(
-                        cloud + cloudDataLUT[dataLUTStartIndex + index] * metadata.pointDataStride);
+                        cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the evaluateSubsamples
         auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -50,17 +63,17 @@ namespace subsampling {
     template <typename coordinateType>
     float evaluateSubsamples(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<uint32_t>> &cloudDataLUT,
-            uint32_t dataLUTStartIndex,
+            unique_ptr<CudaArray<SubsampleData>> &subsampleData,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
             PointCloudMetadata metadata,
-            uint32_t gridSideLength) {
+            uint32_t gridSideLength,
+            uint32_t accumulatedPoints) {
 
         // Calculate kernel dimensions
         dim3 grid, block;
-        tools::create1DKernel(block, grid, metadata.pointAmount);
+        tools::create1DKernel(block, grid, accumulatedPoints);
 
         // Initial point counting
         tools::KernelTimer timer;
@@ -69,13 +82,13 @@ namespace subsampling {
 
         kernelEvaluateSubsamples<coordinateType> << < grid, block >> > (
                 cloud->devicePointer(),
-                        cloudDataLUT->devicePointer(),
-                        dataLUTStartIndex,
+                        subsampleData->devicePointer(),
                         countingGrid->devicePointer(),
                         denseToSparseLUT->devicePointer(),
                         sparseIndexCounter->devicePointer(),
                         metadata,
-                        gridSideLength);
+                        gridSideLength,
+                        accumulatedPoints);
         timer.stop();
         gpuErrchk(cudaGetLastError());
 

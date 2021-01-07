@@ -14,7 +14,7 @@ std::tuple<float, float> SparseOctree::firstPointSubsampling(
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
     std::tuple<float, float> accumulatedTime = {0,0};
-
+/*
     // 1. Depth first traversal
     for(int childIndex : voxel.childrenChunks) {
         if(childIndex != -1) {
@@ -89,6 +89,6 @@ std::tuple<float, float> SparseOctree::firstPointSubsampling(
                         itsMetadata.subsamplingGrid);
             }
         }
-    }
+    }*/
     return accumulatedTime;
 }

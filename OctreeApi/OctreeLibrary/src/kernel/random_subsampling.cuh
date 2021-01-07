@@ -33,6 +33,7 @@ namespace subsampling {
             return;
         }
 
+        // Determine child index and pick appropriate LUT data
         uint32_t *childDataLUT = nullptr;
         uint32_t childDataLUTStart = 0;
 
