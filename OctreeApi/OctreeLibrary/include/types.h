@@ -89,4 +89,10 @@ struct SubsampleConfig {
     uint32_t  lutStartIndex;
     uint32_t pointOffsetLower;
     uint32_t pointOffsetUpper;
+    bool isParent;
+};
+
+struct Averaging {
+    float r, g, b;
+    uint32_t pointCount;
 };

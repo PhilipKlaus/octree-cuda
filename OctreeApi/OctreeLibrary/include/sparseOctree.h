@@ -2,8 +2,7 @@
 // Created by KlausP on 02.11.2020.
 //
 
-#ifndef OCTREE_LIBRARY_SPARSE_OCTREE_H
-#define OCTREE_LIBRARY_SPARSE_OCTREE_H
+#pragma once
 
 #include <types.h>
 #include <cudaArray.h>
@@ -100,6 +99,10 @@ private:
             unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
             uint32_t &accumulatedPoints);
 
+    float initRandomStates( unsigned int seed,
+                            unique_ptr<CudaArray<curandState_t>> &states,
+                            uint32_t nodeAmount);
+
     // Exporting
     uint32_t exportTreeNode(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse,
                             const unique_ptr<uint32_t[]> &dataLUT, const string &level, uint32_t index,
@@ -145,10 +148,9 @@ private:
 
     // Subsampling
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
+    unordered_map<uint32_t, unique_ptr<CudaArray<Averaging>>> itsAveragingData;
 
     // Benchmarking
     std::vector<std::tuple<std::string, float>> itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)
 
 };
-
-#endif //OCTREE_LIBRARY_SPARSE_OCTREE_H

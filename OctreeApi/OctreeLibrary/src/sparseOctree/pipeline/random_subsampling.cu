@@ -2,6 +2,14 @@
 
 #include <subsample_evaluating.cuh>
 #include <random_subsampling.cuh>
+#include "../../../include/sparseOctree.h"
+
+float SparseOctree::initRandomStates( unsigned int seed,
+                        unique_ptr<CudaArray<curandState_t>> &states,
+                        uint32_t nodeAmount) {
+
+    return subsampling::initRandoms(seed, states, nodeAmount);
+}
 
 std::tuple<float, float> SparseOctree::randomSubsampling(
         const unique_ptr<Chunk[]> &h_octreeSparse,
@@ -74,13 +82,18 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
 
         // Create additional LUT for parent node
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
+        auto averagingData = make_unique<CudaArray<Averaging >>(amountUsedVoxels, "averagingData_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
+        itsAveragingData.insert(make_pair(sparseVoxelIndex, move(averagingData)));
 
-        // Distribute the subsampled points in parallel for all child nodes
+        //get<1>(accumulatedTime) += subsampling::resetAveragingData<float>(itsAveragingData);
+
+                // Distribute the subsampled points in parallel for all child nodes
         get<1>(accumulatedTime) += subsampling::randomPointSubsample<float>(
                 itsCloudData,
                 subsampleConfig,
                 itsSubsampleLUTs[sparseVoxelIndex],
+                itsAveragingData[sparseVoxelIndex],
                 subsampleCountingGrid,
                 subsampleDenseToSparseLUT,
                 subsampleSparseVoxelCount,

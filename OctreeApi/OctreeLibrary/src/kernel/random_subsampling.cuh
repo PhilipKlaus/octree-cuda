@@ -10,6 +10,7 @@
 #include <tools.cuh>
 
 #include <curand_kernel.h>
+#include "../../include/types.h"
 
 namespace subsampling {
 
@@ -19,6 +20,7 @@ namespace subsampling {
             uint8_t *cloud,
             SubsampleConfig *subsampleData,
             uint32_t *parentDataLUT,
+            Averaging *averagingData,
             uint32_t *countingGrid,
             int *denseToSparseLUT,
             uint32_t *sparseIndexCounter,
@@ -46,6 +48,7 @@ namespace subsampling {
             }
         }
 
+        // Get the point within the point cloud
         CoordinateVector<coordinateType> *point =
                 reinterpret_cast<CoordinateVector<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
@@ -53,20 +56,21 @@ namespace subsampling {
         // 1. Calculate the index within the dense grid of the evaluateSubsamples
         auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
 
+        int sparseIndex = denseToSparseLUT[denseVoxelIndex];
+
         // 2. We are only interested in the last point within a node -> Implicitly reset the countingGrid
         auto oldIndex = atomicSub((countingGrid + denseVoxelIndex), 1);
-
-        // 3. If the thread is the first one ->
-        //      3.1 store the child lut table index in the parent lut
-        //      3.2 'delete' the point within the child lut by invalidating its index entry
-        int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
         if(sparseIndex == -1 || oldIndex != randomIndices[sparseIndex]) {
             return;
         }
 
+        // ToDo: replacement strategy
+        // Move subsampled point to parent
         parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
         childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
+
+        // Reset all subsampling data data
         denseToSparseLUT[denseVoxelIndex] = -1;
         *sparseIndexCounter = 0;
     }
@@ -113,6 +117,7 @@ namespace subsampling {
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
             unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
+            unique_ptr<CudaArray<Averaging>> &averagingData,
             unique_ptr<CudaArray<uint32_t>> &countingGrid,
             unique_ptr<CudaArray<int>> &denseToSparseLUT,
             unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
@@ -132,6 +137,7 @@ namespace subsampling {
                 cloud->devicePointer(),
                         subsampleData->devicePointer(),
                         parentDataLUT->devicePointer(),
+                        averagingData->devicePointer(),
                         countingGrid->devicePointer(),
                         denseToSparseLUT->devicePointer(),
                         sparseIndexCounter->devicePointer(),
@@ -189,4 +195,5 @@ namespace subsampling {
         return timer.getMilliseconds();
     }
 
+    //float resetAveragingData()
 }

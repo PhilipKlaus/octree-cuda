@@ -10,6 +10,7 @@
 #include <point_count_propagation.cuh>
 #include <hierarchical_merging.cuh>
 #include <point_distributing.cuh>
+#include "../../include/types.h"
 
 
 SparseOctree::SparseOctree(
@@ -216,6 +217,7 @@ void SparseOctree::performSubsampling() {
 
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
+        initRandomStates(std::time(0), randomStates, 1024);
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
 
         time = randomSubsampling(
@@ -267,6 +269,7 @@ void SparseOctree::prepareSubsampleConfig(
             newSubsampleData[i].pointOffsetLower = accumulatedPoints;
             accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
             newSubsampleData[i].pointOffsetUpper = accumulatedPoints;
+            newSubsampleData[i].isParent = child.isParent;
             ++i;
         }
     }
