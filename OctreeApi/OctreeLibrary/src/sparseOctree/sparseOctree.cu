@@ -217,7 +217,10 @@ void SparseOctree::performSubsampling() {
 
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
+
+        // ToDo: Time measurement
         initRandomStates(std::time(0), randomStates, 1024);
+
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
 
         time = randomSubsampling(
@@ -249,6 +252,20 @@ void SparseOctree::performSubsampling() {
     itsTimeMeasurement.emplace_back("subsampling", get<1>(time));
     spdlog::info("subsample evaluation took {}[ms]", get<0>(time));
     spdlog::info("subsampling took {}[ms]", get<1>(time));
+
+    /*
+    auto test = itsAveragingData[getRootIndex()]->toHost();
+    uint32_t acc = 0;
+    int nonZero = 0;
+    for(int i = 0; i < itsAveragingData[getRootIndex()]->pointCount(); ++i) {
+        if(test[i].pointCount > 0) {
+            ++nonZero;
+        }
+        acc += test[i].pointCount;
+    }
+    spdlog::error("Non zero: {}", nonZero);
+    spdlog::error("Accumulated points: {}", acc);
+    */
 }
 
 void SparseOctree::prepareSubsampleConfig(
@@ -265,11 +282,11 @@ void SparseOctree::prepareSubsampleConfig(
         if(childIndex != -1) {
             Chunk child = h_octreeSparse[childIndex];
             newSubsampleData[i].lutAdress = child.isParent ? itsSubsampleLUTs[childIndex]->devicePointer() : itsDataLUT->devicePointer();
+            newSubsampleData[i].averagingAdress = child.isParent ? itsAveragingData[childIndex]->devicePointer() : nullptr;
             newSubsampleData[i].lutStartIndex = child.isParent ? 0 : child.chunkDataIndex;
             newSubsampleData[i].pointOffsetLower = accumulatedPoints;
             accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
             newSubsampleData[i].pointOffsetUpper = accumulatedPoints;
-            newSubsampleData[i].isParent = child.isParent;
             ++i;
         }
     }

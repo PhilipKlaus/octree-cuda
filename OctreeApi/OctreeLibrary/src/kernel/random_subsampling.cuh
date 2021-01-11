@@ -14,6 +14,58 @@
 
 namespace subsampling {
 
+    template <typename coordinateType, typename colorType>
+    __global__ void kernelPerformAveraging(
+            uint8_t *cloud,
+            SubsampleConfig *subsampleData,
+            Averaging *parentAveragingData,
+            int *denseToSparseLUT,
+            PointCloudMetadata metadata,
+            uint32_t gridSideLength,
+            uint32_t accumulatedPoints) {
+
+
+        int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+        if(index >= accumulatedPoints) {
+            return;
+        }
+
+        // Determine child index and pick appropriate LUT data
+        uint32_t *childDataLUT = nullptr;
+        Averaging *childAveraging = nullptr;
+        uint32_t childDataLUTStart = 0;
+
+        for(int i = 0; i < 8; ++i) {
+            if(index < subsampleData[i].pointOffsetUpper) {
+                childDataLUT = subsampleData[i].lutAdress;
+                childAveraging = subsampleData[i].averagingAdress;
+                childDataLUTStart = subsampleData[i].lutStartIndex;
+                index -= subsampleData[i].pointOffsetLower;
+                break;
+            }
+        }
+
+        // Get the point within the point cloud
+        CoordinateVector<coordinateType> *point =
+                reinterpret_cast<CoordinateVector<coordinateType>*>(
+                        cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
+
+        // 1. Calculate the index within the dense grid of the evaluateSubsamples
+        auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
+
+        int sparseIndex = denseToSparseLUT[denseVoxelIndex];
+
+        bool hasAveragingData = (childAveraging != nullptr);
+        atomicAdd(&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ?  childAveraging[index].pointCount : 1);
+
+        // ToDo evaluate real color
+        atomicAdd(&(parentAveragingData[sparseIndex].r), hasAveragingData ?  childAveraging[index].r : 1);
+        atomicAdd(&(parentAveragingData[sparseIndex].g), hasAveragingData ?  childAveraging[index].g : 1);
+        atomicAdd(&(parentAveragingData[sparseIndex].b), hasAveragingData ?  childAveraging[index].b : 1);
+
+    }
+
+
     // Move point indices from old (child LUT) to new (parent LUT)
     template <typename coordinateType>
     __global__ void kernelRandomPointSubsample(
@@ -94,6 +146,7 @@ namespace subsampling {
             curandState_t* states,
             uint32_t *randomIndices,
             const int *denseToSparseLUT,
+            Averaging *averagingData,
             const uint32_t *countingGrid,
             uint32_t gridNodes) {
 
@@ -109,9 +162,47 @@ namespace subsampling {
             return;
         }
 
+        // Generate random value for point picking
         randomIndices[sparseIndex] = static_cast<uint32_t>(ceil(curand_uniform(&states[threadIdx.x]) * countingGrid[index]));
+
+        // Reset Averaging data
+        averagingData[sparseIndex].r = 0.f;
+        averagingData[sparseIndex].g = 0.f;
+        averagingData[sparseIndex].b = 0.f;
+        averagingData[sparseIndex].pointCount = 0;
     }
 
+    template <typename coordinateType, typename colorType>
+    float performAveraging(
+            unique_ptr<CudaArray<uint8_t>> &cloud,
+            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+            unique_ptr<CudaArray<Averaging>>& parentAveragingData,
+            unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            PointCloudMetadata metadata,
+            uint32_t gridSideLength,
+            uint32_t accumulatedPoints) {
+
+        // Calculate kernel dimensions
+        dim3 grid, block;
+        tools::create1DKernel(block, grid, accumulatedPoints);
+
+        // Initial point counting
+        tools::KernelTimer timer;
+        timer.start();
+        kernelPerformAveraging < coordinateType, colorType > << < grid, block >> > (
+                        cloud->devicePointer(),
+                        subsampleData->devicePointer(),
+                        parentAveragingData->devicePointer(),
+                        denseToSparseLUT->devicePointer(),
+                        metadata,
+                        gridSideLength,
+                        accumulatedPoints);
+        timer.stop();
+        gpuErrchk(cudaGetLastError());
+
+        spdlog::debug("'kernelPerformAveraging' took {:f} [ms]", timer.getMilliseconds());
+        return timer.getMilliseconds();
+    }
     template <typename coordinateType>
     float randomPointSubsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
@@ -177,6 +268,7 @@ namespace subsampling {
             const unique_ptr<CudaArray<curandState_t>> &states,
             unique_ptr<CudaArray<uint32_t>> &randomIndices,
             const unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            const unique_ptr<CudaArray<Averaging>> &averagingData,
             const unique_ptr<CudaArray<uint32_t>> &countingGrid,
             uint32_t gridNodes) {
 
@@ -187,7 +279,13 @@ namespace subsampling {
         // Initial point counting
         tools::KernelTimer timer;
         timer.start();
-        kernelGenerateRandoms << < grid, block >> > (states->devicePointer(), randomIndices->devicePointer(), denseToSparseLUT->devicePointer(), countingGrid->devicePointer(), gridNodes);
+        kernelGenerateRandoms << < grid, block >> > (
+                states->devicePointer(),
+                randomIndices->devicePointer(),
+                denseToSparseLUT->devicePointer(),
+                averagingData->devicePointer(),
+                countingGrid->devicePointer(),
+                gridNodes);
         timer.stop();
         gpuErrchk(cudaGetLastError());
 

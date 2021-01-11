@@ -72,23 +72,33 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
         // Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
-        // Prepare random point indices
-        get<1>(accumulatedTime) += subsampling::generateRandoms(
-                randomStates,
-                randomIndices,
-                subsampleDenseToSparseLUT,
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT->pointCount());
-
-        // Create additional LUT for parent node
+        // Create LUT and averaging data for parent node
         auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         auto averagingData = make_unique<CudaArray<Averaging >>(amountUsedVoxels, "averagingData_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
         itsAveragingData.insert(make_pair(sparseVoxelIndex, move(averagingData)));
 
-        //get<1>(accumulatedTime) += subsampling::resetAveragingData<float>(itsAveragingData);
+        // Prepare random point indices and reset averaging data
+        get<1>(accumulatedTime) += subsampling::generateRandoms(
+                randomStates,
+                randomIndices,
+                subsampleDenseToSparseLUT,
+                itsAveragingData[sparseVoxelIndex],
+                subsampleCountingGrid,
+                subsampleDenseToSparseLUT->pointCount());
 
-                // Distribute the subsampled points in parallel for all child nodes
+        // Perform averaging in parallel for all child nodes
+        get<1>(accumulatedTime) += subsampling::performAveraging<float, uint8_t>(
+                itsCloudData,
+                subsampleConfig,
+                itsAveragingData[sparseVoxelIndex],
+                subsampleDenseToSparseLUT,
+                metadata,
+                itsMetadata.subsamplingGrid,
+                accumulatedPoints
+        );
+
+        // Distribute the subsampled points in parallel for all child nodes
         get<1>(accumulatedTime) += subsampling::randomPointSubsample<float>(
                 itsCloudData,
                 subsampleConfig,
@@ -102,5 +112,6 @@ std::tuple<float, float> SparseOctree::randomSubsampling(
                 randomIndices,
                 accumulatedPoints);
     }
+
     return accumulatedTime;
 }
