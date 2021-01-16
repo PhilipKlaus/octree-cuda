@@ -122,10 +122,9 @@ namespace subsampling {
             return;
         }
 
-        // ToDo: replacement strategy
         // Move subsampled point to parent
         parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
-        childDataLUT[childDataLUTStart + index] = INVALID_INDEX;
+        //childDataLUT[childDataLUTStart + index] = INVALID_INDEX; // Replacement strategy
 
         // Reset all subsampling data data
         denseToSparseLUT[denseVoxelIndex] = -1;

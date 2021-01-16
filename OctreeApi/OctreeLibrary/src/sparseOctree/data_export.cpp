@@ -18,8 +18,11 @@ uint32_t SparseOctree::exportTreeNode(
     uint32_t validPoints = count;
 
     std::unique_ptr<uint32_t[]> lut;
+    std::unique_ptr<Averaging[]> averaging;
+
     if(octreeSparse[index].isParent) {
         lut = itsSubsampleLUTs[index]->toHost();
+        averaging = itsAveragingData[index]->toHost();
     }
 
     for (uint32_t u = 0; u < count; ++u)
@@ -60,9 +63,15 @@ uint32_t SparseOctree::exportTreeNode(
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride])), sizeof (float));
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 4])), sizeof (float));
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 8])), sizeof (float));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 12])), sizeof (uint8_t));
+                    uint8_t r = static_cast<uint8_t>(averaging[u].r / averaging[u].pointCount);
+                    ply.write (reinterpret_cast<const char*>(&r), sizeof (uint8_t));
+                    uint8_t g = static_cast<uint8_t>(averaging[u].g / averaging[u].pointCount);
+                    ply.write (reinterpret_cast<const char*>(&g), sizeof (uint8_t));
+                    uint8_t b = static_cast<uint8_t>(averaging[u].b / averaging[u].pointCount);
+                    ply.write (reinterpret_cast<const char*>(&b), sizeof (uint8_t));
+                    /*ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 12])), sizeof (uint8_t));
                     ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 13])), sizeof (uint8_t));
-                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 14])), sizeof (uint8_t));
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 14])), sizeof (uint8_t));*/
                 }
             }
             else {
