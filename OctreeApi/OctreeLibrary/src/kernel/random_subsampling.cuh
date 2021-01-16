@@ -45,10 +45,17 @@ namespace subsampling {
             }
         }
 
-        // Get the point within the point cloud
+        // Get the coordinates from the point within the point cloud
         CoordinateVector<coordinateType> *point =
                 reinterpret_cast<CoordinateVector<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
+
+        // Get the color from the point within the point cloud
+        CoordinateVector<colorType> *color =
+                reinterpret_cast<CoordinateVector<colorType>*>(
+                        cloud +
+                        childDataLUT[childDataLUTStart + index] * metadata.pointDataStride
+                        + sizeof(coordinateType) * 3);
 
         // 1. Calculate the index within the dense grid of the evaluateSubsamples
         auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSideLength);
@@ -58,11 +65,9 @@ namespace subsampling {
         bool hasAveragingData = (childAveraging != nullptr);
         atomicAdd(&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ?  childAveraging[index].pointCount : 1);
 
-        // ToDo evaluate real color
-        atomicAdd(&(parentAveragingData[sparseIndex].r), hasAveragingData ?  childAveraging[index].r : 1);
-        atomicAdd(&(parentAveragingData[sparseIndex].g), hasAveragingData ?  childAveraging[index].g : 1);
-        atomicAdd(&(parentAveragingData[sparseIndex].b), hasAveragingData ?  childAveraging[index].b : 1);
-
+        atomicAdd(&(parentAveragingData[sparseIndex].r), hasAveragingData ?  childAveraging[index].r : color->x);
+        atomicAdd(&(parentAveragingData[sparseIndex].g), hasAveragingData ?  childAveraging[index].g : color->y);
+        atomicAdd(&(parentAveragingData[sparseIndex].b), hasAveragingData ?  childAveraging[index].b : color->z);
     }
 
 

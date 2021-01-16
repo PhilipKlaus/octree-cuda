@@ -252,20 +252,6 @@ void SparseOctree::performSubsampling() {
     itsTimeMeasurement.emplace_back("subsampling", get<1>(time));
     spdlog::info("subsample evaluation took {}[ms]", get<0>(time));
     spdlog::info("subsampling took {}[ms]", get<1>(time));
-
-    /*
-    auto test = itsAveragingData[getRootIndex()]->toHost();
-    uint32_t acc = 0;
-    int nonZero = 0;
-    for(int i = 0; i < itsAveragingData[getRootIndex()]->pointCount(); ++i) {
-        if(test[i].pointCount > 0) {
-            ++nonZero;
-        }
-        acc += test[i].pointCount;
-    }
-    spdlog::error("Non zero: {}", nonZero);
-    spdlog::error("Accumulated points: {}", acc);
-    */
 }
 
 void SparseOctree::prepareSubsampleConfig(
