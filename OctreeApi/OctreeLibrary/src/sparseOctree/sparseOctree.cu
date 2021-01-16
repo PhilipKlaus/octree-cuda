@@ -10,6 +10,7 @@
 #include <point_count_propagation.cuh>
 #include <hierarchical_merging.cuh>
 #include <point_distributing.cuh>
+#include "../../include/types.h"
 
 
 SparseOctree::SparseOctree(
@@ -216,6 +217,10 @@ void SparseOctree::performSubsampling() {
 
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
+
+        // ToDo: Time measurement
+        initRandomStates(std::time(0), randomStates, 1024);
+
         auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
 
         time = randomSubsampling(
@@ -263,6 +268,7 @@ void SparseOctree::prepareSubsampleConfig(
         if(childIndex != -1) {
             Chunk child = h_octreeSparse[childIndex];
             newSubsampleData[i].lutAdress = child.isParent ? itsSubsampleLUTs[childIndex]->devicePointer() : itsDataLUT->devicePointer();
+            newSubsampleData[i].averagingAdress = child.isParent ? itsAveragingData[childIndex]->devicePointer() : nullptr;
             newSubsampleData[i].lutStartIndex = child.isParent ? 0 : child.chunkDataIndex;
             newSubsampleData[i].pointOffsetLower = accumulatedPoints;
             accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount() : child.pointCount;
