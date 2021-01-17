@@ -44,7 +44,7 @@ TEST_CASE ("Test node subsampling", "[subsampling]") {
     auto cpuData = cuboid->toHost();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cuboid));
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cuboid), RANDOM_POINT);
 
     octree->initialPointCounting();
     octree->performCellMerging(); // All points reside in the 3th level (8x8x8) of the octree

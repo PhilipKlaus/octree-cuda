@@ -52,7 +52,7 @@ uint32_t SparseOctree<coordinateType, colorType>::getRootIndex() {
     return itsMetadata.nodeAmountSparse - 1;
 }
 
-
+// Template definitions for SparseOctree<float, uint8_t>
 template const OctreeMetadata &SparseOctree<float, uint8_t>::getMetadata() const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDataLUT() const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCountPerVoxel() const;

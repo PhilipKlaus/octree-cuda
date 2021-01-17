@@ -14,7 +14,7 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]") {
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cloud), RANDOM_POINT);
 
     octree->initialPointCounting();
     octree->performCellMerging();

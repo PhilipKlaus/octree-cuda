@@ -21,7 +21,7 @@ void SparseOctree<coordinateType, colorType>::calculatePointVarianceInLeafNoes(
 
     // Leaf node
     if(!chunk.isParent) {
-        sumVariance += pow(static_cast<float>(chunk.pointCount) - mean, 2);
+        sumVariance += pow(static_cast<float>(chunk.pointCount) - mean, 2.f);
     }
 
     // Parent node

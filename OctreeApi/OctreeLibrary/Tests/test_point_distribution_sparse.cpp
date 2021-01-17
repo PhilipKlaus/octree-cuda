@@ -57,7 +57,7 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     auto cpuData = cloud->toHost();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cloud), RANDOM_POINT);
 
     octree->initialPointCounting();
     octree->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
