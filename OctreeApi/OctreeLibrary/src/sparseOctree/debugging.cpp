@@ -5,34 +5,59 @@
 #include <sparseOctree.h>
 
 
-const OctreeMetadata &SparseOctree::getMetadata() const {
+template <typename coordinateType, typename colorType>
+const OctreeMetadata &SparseOctree<coordinateType, colorType>::getMetadata() const {
     return itsMetadata;
 }
 
-unique_ptr<uint32_t[]> SparseOctree::getDataLUT() const {
+
+template <typename coordinateType, typename colorType>
+unique_ptr<uint32_t[]> SparseOctree<coordinateType, colorType>::getDataLUT() const {
     return itsDataLUT->toHost();
 }
 
-unique_ptr<uint32_t[]> SparseOctree::getDensePointCountPerVoxel() const {
+
+template <typename coordinateType, typename colorType>
+unique_ptr<uint32_t[]> SparseOctree<coordinateType, colorType>::getDensePointCountPerVoxel() const {
     return itsDensePointCountPerVoxel->toHost();
 }
 
-unique_ptr<int[]> SparseOctree::getDenseToSparseLUT() const {
+
+template <typename coordinateType, typename colorType>
+unique_ptr<int[]> SparseOctree<coordinateType, colorType>::getDenseToSparseLUT() const {
     return itsDenseToSparseLUT->toHost();
 }
 
-unique_ptr<int[]> SparseOctree::getSparseToDenseLUT() const {
+
+template <typename coordinateType, typename colorType>
+unique_ptr<int[]> SparseOctree<coordinateType, colorType>::getSparseToDenseLUT() const {
     return itsSparseToDenseLUT->toHost();
 }
 
-unique_ptr<Chunk[]> SparseOctree::getOctreeSparse() const {
+
+template <typename coordinateType, typename colorType>
+unique_ptr<Chunk[]> SparseOctree<coordinateType, colorType>::getOctreeSparse() const {
     return itsOctreeSparse->toHost();
 }
 
-unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree::getSubsampleLUT() const {
+
+template <typename coordinateType, typename colorType>
+unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<coordinateType, colorType>::getSubsampleLUT() const {
     return itsSubsampleLUTs;
 }
 
-uint32_t SparseOctree::getRootIndex() {
+
+template <typename coordinateType, typename colorType>
+uint32_t SparseOctree<coordinateType, colorType>::getRootIndex() {
     return itsMetadata.nodeAmountSparse - 1;
 }
+
+
+template const OctreeMetadata &SparseOctree<float, uint8_t>::getMetadata() const;
+template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDataLUT() const;
+template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCountPerVoxel() const;
+template unique_ptr<int[]> SparseOctree<float, uint8_t>::getDenseToSparseLUT() const;
+template unique_ptr<int[]> SparseOctree<float, uint8_t>::getSparseToDenseLUT() const;
+template unique_ptr<Chunk[]> SparseOctree<float, uint8_t>::getOctreeSparse() const;
+template unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<float, uint8_t>::getSubsampleLUT() const;
+template uint32_t SparseOctree<float, uint8_t>::getRootIndex();

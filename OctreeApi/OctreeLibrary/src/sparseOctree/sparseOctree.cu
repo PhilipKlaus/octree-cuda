@@ -13,7 +13,8 @@
 #include "../../include/types.h"
 
 
-SparseOctree::SparseOctree(
+template <typename coordinateType, typename colorType>
+SparseOctree<coordinateType, colorType>::SparseOctree(
         GridSize chunkingGrid,
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
@@ -52,7 +53,8 @@ SparseOctree::SparseOctree(
 //#     Pipeline    #
 //###################
 
-void SparseOctree::initialPointCounting() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::initialPointCounting() {
 
     // Allocate the dense point count
     itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountDense, "itsDensePointCountPerVoxel");
@@ -83,7 +85,8 @@ void SparseOctree::initialPointCounting() {
 }
 
 
-void SparseOctree::performCellMerging() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::performCellMerging() {
 
     // Allocate the temporary sparseIndexCounter
     auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
@@ -131,7 +134,8 @@ void SparseOctree::performCellMerging() {
 }
 
 
-void SparseOctree::initLowestOctreeHierarchy() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::initLowestOctreeHierarchy() {
 
     float time = chunking::initOctree(
             itsOctreeSparse,
@@ -145,7 +149,8 @@ void SparseOctree::initLowestOctreeHierarchy() {
 }
 
 
-void SparseOctree::mergeHierarchical() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::mergeHierarchical() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
@@ -177,7 +182,8 @@ void SparseOctree::mergeHierarchical() {
 }
 
 
-void SparseOctree::distributePoints() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
     auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
@@ -197,7 +203,8 @@ void SparseOctree::distributePoints() {
 }
 
 
-void SparseOctree::performSubsampling() {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::performSubsampling() {
 
     auto h_octreeSparse = itsOctreeSparse->toHost();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
@@ -254,7 +261,9 @@ void SparseOctree::performSubsampling() {
     spdlog::info("subsampling took {}[ms]", get<1>(time));
 }
 
-void SparseOctree::prepareSubsampleConfig(
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::prepareSubsampleConfig(
         Chunk &voxel,
         const unique_ptr<Chunk[]> &h_octreeSparse,
         unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
@@ -278,3 +287,24 @@ void SparseOctree::prepareSubsampleConfig(
     }
     subsampleData->toGPU(reinterpret_cast<uint8_t *>(newSubsampleData));
 }
+
+
+// Template definitions for coordinateType: float, colorType: uint8_t
+
+template SparseOctree<float, uint8_t>::SparseOctree(GridSize chunkingGrid,
+                                                    GridSize subsamplingGrid,
+                                                    uint32_t mergingThreshold,
+                                                    PointCloudMetadata cloudMetadata,
+                                                    unique_ptr<CudaArray<uint8_t>> cloudData,
+                                                    SubsamplingStrategy strategy);
+template void SparseOctree<float, uint8_t>::initialPointCounting();
+template void SparseOctree<float, uint8_t>::performCellMerging();
+template void SparseOctree<float, uint8_t>::distributePoints();
+template void SparseOctree<float, uint8_t>::performSubsampling();
+template void SparseOctree<float, uint8_t>::initLowestOctreeHierarchy();
+template void SparseOctree<float, uint8_t>::mergeHierarchical();
+template void SparseOctree<float, uint8_t>::prepareSubsampleConfig(
+        Chunk &voxel,
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+        uint32_t &accumulatedPoints);

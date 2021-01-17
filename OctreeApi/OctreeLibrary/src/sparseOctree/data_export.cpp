@@ -4,7 +4,9 @@
 
 #include <sparseOctree.h>
 
-uint32_t SparseOctree::exportTreeNode(
+
+template <typename coordinateType, typename colorType>
+uint32_t SparseOctree<coordinateType, colorType>::exportTreeNode(
         uint8_t *cpuPointCloud,
         const unique_ptr<Chunk[]> &octreeSparse,
         const unique_ptr<uint32_t[]> &dataLUT,
@@ -103,7 +105,8 @@ uint32_t SparseOctree::exportTreeNode(
 }
 
 
-void SparseOctree::exportPlyNodes(const string &folderPath) {
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::exportPlyNodes(const string &folderPath) {
     auto cpuPointCloud = itsCloudData->toHost();
     auto octreeSparse = itsOctreeSparse->toHost();
     auto dataLUT = itsDataLUT->toHost();
@@ -114,3 +117,14 @@ void SparseOctree::exportPlyNodes(const string &folderPath) {
     spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.cloudMetadata.pointAmount, folderPath);
 }
 
+
+template uint32_t SparseOctree<float, uint8_t>::exportTreeNode(
+        uint8_t *cpuPointCloud,
+        const unique_ptr<Chunk[]> &octreeSparse,
+        const unique_ptr<uint32_t[]> &dataLUT,
+        const string& level,
+        uint32_t index,
+        const string &folder
+);
+
+template void SparseOctree<float, uint8_t>::exportPlyNodes(const string &folderPath);

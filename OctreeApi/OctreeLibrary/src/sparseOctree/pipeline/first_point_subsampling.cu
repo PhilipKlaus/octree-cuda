@@ -3,7 +3,8 @@
 #include <first_point_subsampling.cuh>
 
 
-std::tuple<float, float> SparseOctree::firstPointSubsampling(
+template <typename coordinateType, typename colorType>
+std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubsampling(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         const unique_ptr<int[]> &h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -77,3 +78,12 @@ std::tuple<float, float> SparseOctree::firstPointSubsampling(
     }
     return accumulatedTime;
 }
+
+template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsampling(const unique_ptr<Chunk[]> &h_octreeSparse,
+                                                                                      const unique_ptr<int[]> &h_sparseToDenseLUT,
+                                                                                      uint32_t sparseVoxelIndex,
+                                                                                      uint32_t level,
+                                                                                      unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
+                                                                                      unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
+                                                                                      unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
+                                                                                      unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig);

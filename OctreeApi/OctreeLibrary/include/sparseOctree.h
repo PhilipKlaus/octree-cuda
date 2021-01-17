@@ -10,6 +10,7 @@
 #include <curand_kernel.h>
 
 
+template <typename coordinateType, typename colorType>
 class SparseOctree {
 
 public:

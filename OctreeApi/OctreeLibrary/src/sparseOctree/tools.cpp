@@ -4,7 +4,9 @@
 
 #include <sparseOctree.h>
 
-void SparseOctree::calculateVoxelBB(PointCloudMetadata &metadata, uint32_t denseVoxelIndex, uint32_t level) {
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::calculateVoxelBB(PointCloudMetadata &metadata, uint32_t denseVoxelIndex, uint32_t level) {
 
     CoordinateVector<uint32_t> coords = {};
 
@@ -25,3 +27,6 @@ void SparseOctree::calculateVoxelBB(PointCloudMetadata &metadata, uint32_t dense
     metadata.boundingBox.maximum.z = metadata.boundingBox.minimum.z + cubicWidth;
     metadata.cloudOffset = metadata.boundingBox.minimum;
 }
+
+
+template void SparseOctree<float, uint8_t>::calculateVoxelBB(PointCloudMetadata &metadata, uint32_t denseVoxelIndex, uint32_t level);

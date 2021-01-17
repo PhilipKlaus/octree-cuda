@@ -51,30 +51,39 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
 
 void Session::generateOctree() {
 
-    itsOctree = make_unique<SparseOctree>(
+    SparseOctree<float, uint8_t> octree(
             itsChunkingGrid,
             itsSubsamplingGrid,
             itsMergingThreshold,
             itsMetadata,
             move(data),
-            itsSubsamplingStrategy);
+            itsSubsamplingStrategy
+            );
 
-    itsOctree->initialPointCounting();
-    itsOctree->performCellMerging();
-    itsOctree->distributePoints();
+    /*itsOctree = make_unique<SparseOctree>(
+            itsChunkingGrid,
+            itsSubsamplingGrid,
+            itsMergingThreshold,
+            itsMetadata,
+            move(data),
+            itsSubsamplingStrategy);*/
+
+    octree.initialPointCounting();
+    octree.performCellMerging();
+    octree.distributePoints();
 
     if(!itsPointDistReportFile.empty()) {
-        itsOctree->exportHistogram(itsPointDistReportFile, itsPointDistributionBinWidth);
+        octree.exportHistogram(itsPointDistReportFile, itsPointDistributionBinWidth);
     }
 
-    itsOctree->performSubsampling();
+    octree.performSubsampling();
 
     if(!itsOctreeExportDirectory.empty()) {
-        itsOctree->exportPlyNodes(itsOctreeExportDirectory);
+        octree.exportPlyNodes(itsOctreeExportDirectory);
     }
 
     if(!itsJsonReportFile.empty()) {
-        itsOctree->exportOctreeStatistics(itsJsonReportFile);
+        octree.exportOctreeStatistics(itsJsonReportFile);
     }
     spdlog::debug("octree generated");
 }
