@@ -5,12 +5,12 @@
 #include <timing.cuh>
 
 #include <cstdint>
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 
 #include <curand_kernel.h>
-#include "../../include/types.h"
+#include "../../include/global_types.h"
 
 namespace subsampling {
 
@@ -46,13 +46,13 @@ namespace subsampling {
         }
 
         // Get the coordinates from the point within the point cloud
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // Get the color from the point within the point cloud
-        CoordinateVector<colorType> *color =
-                reinterpret_cast<CoordinateVector<colorType>*>(
+        Vector3<colorType> *color =
+                reinterpret_cast<Vector3<colorType>*>(
                         cloud +
                         childDataLUT[childDataLUTStart + index] * metadata.pointDataStride
                         + sizeof(coordinateType) * 3);
@@ -106,8 +106,8 @@ namespace subsampling {
         }
 
         // Get the point within the point cloud
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the evaluateSubsamples

@@ -8,7 +8,7 @@
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::calculateVoxelBB(PointCloudMetadata &metadata, uint32_t denseVoxelIndex, uint32_t level) {
 
-    CoordinateVector<uint32_t> coords = {};
+    Vector3<uint32_t> coords = {};
 
     // 1. Calculate coordinates of voxel within the actual level
     auto indexInLevel = denseVoxelIndex - itsLinearizedDenseVoxelOffset[level];

@@ -5,7 +5,7 @@
 #include <timing.cuh>
 
 #include <cstdint>
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -27,8 +27,8 @@ namespace chunking {
             return;
         }
 
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(cloud + index * metadata.pointDataStride);
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(cloud + index * metadata.pointDataStride);
 
         auto denseVoxelIndex = tools::calculateGridIndex(point, metadata, gridSize);
         auto sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];

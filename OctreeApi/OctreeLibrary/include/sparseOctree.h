@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 #include <curand_kernel.h>

@@ -10,7 +10,7 @@
 // https://stackoverflow.com/questions/2448242/struct-with-template-variables-in-c
 #pragma pack(push, 1)
 template <typename T>
-struct CoordinateVector {
+struct Vector3 {
     T x, y, z;
 };
 #pragma pack(pop)
@@ -18,8 +18,8 @@ struct CoordinateVector {
 
 // ToDo: Maybe full double support?
 struct BoundingBox {
-    CoordinateVector<float> minimum;
-    CoordinateVector<float> maximum;
+    Vector3<float> minimum;
+    Vector3<float> maximum;
 };
 
 
@@ -28,8 +28,8 @@ struct PointCloudMetadata {
     uint32_t pointAmount;
     uint32_t pointDataStride;
     BoundingBox boundingBox;
-    CoordinateVector<float> cloudOffset;
-    CoordinateVector<float> scale;
+    Vector3<float> cloudOffset;
+    Vector3<float> scale;
 };
 
 

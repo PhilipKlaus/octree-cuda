@@ -5,7 +5,7 @@
 #include <timing.cuh>
 
 #include <memory>
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 

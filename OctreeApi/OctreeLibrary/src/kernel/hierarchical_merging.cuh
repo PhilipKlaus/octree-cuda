@@ -5,7 +5,7 @@
 #include <timing.cuh>
 
 #include <cstdint>
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -32,7 +32,7 @@ namespace chunking {
         }
 
         // 1. Calculate the actual dense coordinates in the octree
-        CoordinateVector<uint32_t> coords{};
+        Vector3<uint32_t> coords{};
         tools::mapFromDenseIdxToDenseCoordinates(coords, index, newGridSize);
 
         auto oldXY = oldGridSize * oldGridSize;

@@ -10,7 +10,7 @@
 #include <point_count_propagation.cuh>
 #include <hierarchical_merging.cuh>
 #include <point_distributing.cuh>
-#include "../../include/types.h"
+#include "../../include/global_types.h"
 
 
 template <typename coordinateType, typename colorType>

@@ -5,7 +5,7 @@
 #include <cuda.h>
 #include <memory>
 #include "cudaArray.h"
-#include "types.h"
+#include "global_types.h"
 
 using namespace std;
 
@@ -21,12 +21,12 @@ namespace tools {
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(CoordinateVector<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
+    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(Vector3<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
 
     // See OctreeConverter : chunker_countsort_laszip.cpp :131
     template <typename coordinateType>
-    __device__ uint32_t calculateGridIndex(const CoordinateVector<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
+    __device__ uint32_t calculateGridIndex(const Vector3<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
 
         double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
         double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;

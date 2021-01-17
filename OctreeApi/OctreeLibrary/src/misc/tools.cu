@@ -1,6 +1,6 @@
 #include "tools.cuh"
 #include "defines.cuh"
-#include "../../include/types.h"
+#include "../../include/global_types.h"
 
 
 __global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t side) {
@@ -14,9 +14,9 @@ __global__ void kernel_point_cloud_cuboid(uint8_t *out, uint32_t n, uint32_t sid
     auto y = (index - (z * xy)) / side;
     auto x = (index - (z * xy)) % side;
 
-    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->x = x + 0.5;
-    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->y = y + 0.5;
-    reinterpret_cast<CoordinateVector<float>*>(out + index * 12)->z = z + 0.5;
+    reinterpret_cast<Vector3<float>*>(out + index * 12)->x = x + 0.5;
+    reinterpret_cast<Vector3<float>*>(out + index * 12)->y = y + 0.5;
+    reinterpret_cast<Vector3<float>*>(out + index * 12)->z = z + 0.5;
 }
 
 
@@ -121,9 +121,9 @@ namespace tools {
 
         float boundingBoxMax = static_cast<float>(sideLength) - 0.5f;
         metadata.pointAmount = static_cast<uint32_t>(pow(sideLength, 3.f));
-        metadata.boundingBox.minimum = CoordinateVector<float> {0.5, 0.5, 0.5};
-        metadata.boundingBox.maximum = CoordinateVector<float> {boundingBoxMax, boundingBoxMax, boundingBoxMax};
-        metadata.cloudOffset = CoordinateVector<float> {0.5, 0.5, 0.5};
+        metadata.boundingBox.minimum = Vector3<float> {0.5, 0.5, 0.5};
+        metadata.boundingBox.maximum = Vector3<float> {boundingBoxMax, boundingBoxMax, boundingBoxMax};
+        metadata.cloudOffset = Vector3<float> {0.5, 0.5, 0.5};
         metadata.scale = {1.f, 1.f, 1.f};
         metadata.pointDataStride = 12;
 
@@ -151,7 +151,7 @@ namespace tools {
     }
 
     __host__ __device__ void mapFromDenseIdxToDenseCoordinates(
-            CoordinateVector<uint32_t> &coordinates,
+            Vector3<uint32_t> &coordinates,
             uint32_t denseVoxelIdx,
             uint32_t gridSizeLength) {
 

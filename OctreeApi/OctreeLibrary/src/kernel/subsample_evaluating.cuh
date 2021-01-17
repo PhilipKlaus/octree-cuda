@@ -5,7 +5,7 @@
 #include <timing.cuh>
 
 #include <cstdint>
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -42,8 +42,8 @@ namespace subsampling {
             }
         }
 
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the evaluateSubsamples
