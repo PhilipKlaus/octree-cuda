@@ -14,13 +14,11 @@ struct SubsampleConfig {
 };
 
 
-template <typename type>
-using GpuArray = unique_ptr<CudaArray<type>>;
-
+template <typename gpuType>
+using GpuArray = unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8 = GpuArray<uint8_t>;
 using GpuArrayU32 = GpuArray<uint32_t>;
 using GpuArrayI32 = GpuArray<int>;
-
 using GpuOctree = GpuArray<Chunk>;
 using GpuSubsample = GpuArray<SubsampleConfig>;
 using GpuAveraging = GpuArray<Averaging>;

@@ -9,15 +9,15 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         const unique_ptr<int[]> &h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
-        unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
-        unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
-        unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig) {
+        GpuArrayU32 &subsampleCountingGrid,
+        GpuArrayI32 &subsampleDenseToSparseLUT,
+        GpuArrayU32 &subsampleSparseVoxelCount,
+        GpuSubsample &subsampleConfig) {
 
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
-    std::tuple<float, float> accumulatedTime = {0,0};
+    std::tuple<float, float> accumulatedTime(0.f ,0.f);
 
-    // Depth first traversal
+  // Depth first traversal
     for(int childIndex : voxel.childrenChunks) {
         if(childIndex != -1) {
             std::tuple<float, float> childTime = firstPointSubsampling(

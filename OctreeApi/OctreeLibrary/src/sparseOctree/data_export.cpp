@@ -111,7 +111,6 @@ void SparseOctree<coordinateType, colorType>::exportPlyNodes(const string &folde
     auto octreeSparse = itsOctree->toHost();
     auto dataLUT = itsDataLUT->toHost();
 
-    // ToDo: Remove .get() -> pass unique_ptr by reference
     uint32_t exportedPoints = exportTreeNode(cpuPointCloud.get(), octreeSparse, dataLUT, string("r"), getRootIndex(), folderPath);
     assert(exportedPoints == itsMetadata.cloudMetadata.pointAmount);
     spdlog::info("Sparse octree ({}/{} points) exported to: {}", exportedPoints, itsMetadata.cloudMetadata.pointAmount, folderPath);

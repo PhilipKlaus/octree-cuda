@@ -265,7 +265,7 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::prepareSubsampleConfig(
         Chunk &voxel,
         const unique_ptr<Chunk[]> &h_octreeSparse,
-        unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+        GpuSubsample &subsampleData,
         uint32_t &accumulatedPoints) {
 
     // Prepare subsample data and copy it to the GPU
@@ -305,5 +305,5 @@ template void SparseOctree<float, uint8_t>::mergeHierarchical();
 template void SparseOctree<float, uint8_t>::prepareSubsampleConfig(
         Chunk &voxel,
         const unique_ptr<Chunk[]> &h_octreeSparse,
-        unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+        GpuSubsample &subsampleData,
         uint32_t &accumulatedPoints);
