@@ -2,8 +2,7 @@
 // Created by KlausP on 28.10.2020.
 //
 
-#ifndef OCTREE_LIBRARY_CUDAARRAY_H
-#define OCTREE_LIBRARY_CUDAARRAY_H
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -59,6 +58,3 @@ private:
     dataType *itsData;
     EventWatcher& itsWatcher = EventWatcher::getInstance();
 };
-
-
-#endif //OCTREE_LIBRARY_CUDAARRAY_H

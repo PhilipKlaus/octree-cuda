@@ -43,7 +43,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree(
     }
 
     // Create data LUT
-    itsDataLUT = make_unique<CudaArray<uint32_t>>(cloudMetadata.pointAmount, "Data LUT");
+    itsDataLUT = createGpuU32(cloudMetadata.pointAmount, "Data LUT");
 
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
@@ -57,15 +57,15 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::initialPointCounting() {
 
     // Allocate the dense point count
-    itsDensePointCountPerVoxel = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountDense, "itsDensePointCountPerVoxel");
+    itsDensePointCountPerVoxel = createGpuU32(itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
     gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsMetadata.nodeAmountDense * sizeof(uint32_t)));
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountDense, "denseToSparseLUT");
+    itsDenseToSparseLUT = createGpuI32(itsMetadata.nodeAmountDense, "DenseToSparseLUT");
     gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsMetadata.nodeAmountDense * sizeof(int)));
 
     // Allocate the temporary sparseIndexCounter
-    auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
+    auto nodeAmountSparse = createGpuU32(1, "nodeAmountSparse");
     gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     float time = chunking::initialPointCounting<float>(
@@ -89,7 +89,7 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::performCellMerging() {
 
     // Allocate the temporary sparseIndexCounter
-    auto nodeAmountSparse = make_unique<CudaArray<uint32_t>>(1, "nodeAmountSparse");
+    auto nodeAmountSparse = createGpuU32(1, "nodeAmountSparse");
     // !IMPORTANT! initialize it with the current sparse node counts (from base level)
     gpuErrchk(cudaMemcpy(nodeAmountSparse->devicePointer(), &itsMetadata.nodeAmountSparse, 1 * sizeof(uint32_t), cudaMemcpyHostToDevice));
 
@@ -116,7 +116,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
-    itsOctree = make_unique<CudaArray<Chunk>>(itsMetadata.nodeAmountSparse, "octreeSparse");
+    itsOctree = createGpuOctree(itsMetadata.nodeAmountSparse, "octreeSparse");
 
     spdlog::info(
             "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
@@ -126,7 +126,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
     );
 
     // Allocate the conversion LUT from sparse to dense
-    itsSparseToDenseLUT = make_unique<CudaArray<int>>(itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
+    itsSparseToDenseLUT = createGpuI32(itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, itsMetadata.nodeAmountSparse * sizeof(int)));
 
     initLowestOctreeHierarchy();
@@ -152,7 +152,7 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::mergeHierarchical() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
-    auto globalChunkCounter = make_unique<CudaArray<uint32_t>>(1, "globalChunkCounter");
+    auto globalChunkCounter = createGpuU32(1, "globalChunkCounter");
     gpuErrchk(cudaMemset (globalChunkCounter->devicePointer(), 0, 1 * sizeof(uint32_t)));
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
@@ -185,7 +185,7 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto tmpIndexRegister = make_unique<CudaArray<uint32_t>>(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
+    auto tmpIndexRegister = createGpuU32(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
 
     float time = chunking::distributePoints<float>(
@@ -210,10 +210,10 @@ void SparseOctree<coordinateType, colorType>::performSubsampling() {
     auto nodesBaseLevel = static_cast<uint32_t>(pow(itsMetadata.subsamplingGrid, 3.f));
 
     // Prepare data strucutres for the subsampling
-    auto pointCountGrid = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "pointCountGrid");
-    auto denseToSpareLUT = make_unique<CudaArray<int >>(nodesBaseLevel, "denseToSpareLUT");
-    auto voxelCount = make_unique<CudaArray<uint32_t >>(1, "voxelCount");
-    auto subsampleData = make_unique<CudaArray<SubsampleConfig>>(8, "subsampleData");
+    auto pointCountGrid = createGpuU32(nodesBaseLevel, "pointCountGrid");
+    auto denseToSpareLUT = createGpuI32(nodesBaseLevel, "denseToSpareLUT");
+    auto voxelCount = createGpuU32(1, "voxelCount");
+    auto subsampleData = createGpuSubsample(8, "subsampleData");
 
     gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
     gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), -1, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
@@ -222,12 +222,12 @@ void SparseOctree<coordinateType, colorType>::performSubsampling() {
     std::tuple<float, float> time;
 
     if(itsMetadata.strategy == RANDOM_POINT) {
-        auto randomStates = make_unique<CudaArray<curandState_t >>(1024, "randomStates");
+        auto randomStates = createGpuRandom(1024, "randomStates");
 
         // ToDo: Time measurement
         initRandomStates(std::time(0), randomStates, 1024);
 
-        auto randomIndices = make_unique<CudaArray<uint32_t >>(nodesBaseLevel, "randomIndices");
+        auto randomIndices = createGpuU32(nodesBaseLevel, "randomIndices");
 
         time = randomSubsampling(
                 h_octreeSparse,
