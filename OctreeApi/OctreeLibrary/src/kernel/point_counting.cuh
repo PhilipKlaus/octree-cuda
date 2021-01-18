@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -46,9 +47,9 @@ namespace chunking {
     template <typename coordinateType>
     float initialPointCounting(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<uint32_t>> &densePointCount,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            GpuArrayU32 &densePointCount,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength
     ) {

@@ -64,9 +64,9 @@ namespace subsampling {
     float evaluateSubsamples(
             unique_ptr<CudaArray<uint8_t>> &cloud,
             unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            GpuArrayU32 &countingGrid,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
             uint32_t accumulatedPoints) {

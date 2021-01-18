@@ -108,7 +108,7 @@ uint32_t SparseOctree<coordinateType, colorType>::exportTreeNode(
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::exportPlyNodes(const string &folderPath) {
     auto cpuPointCloud = itsCloudData->toHost();
-    auto octreeSparse = itsOctreeSparse->toHost();
+    auto octreeSparse = itsOctree->toHost();
     auto dataLUT = itsDataLUT->toHost();
 
     // ToDo: Remove .get() -> pass unique_ptr by reference

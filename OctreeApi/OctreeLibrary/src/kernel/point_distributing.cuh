@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -46,11 +47,11 @@ namespace chunking {
 
     template <typename coordinateType>
     float distributePoints(
-            unique_ptr<CudaArray<Chunk>> &octree,
+            GpuOctree &octree,
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<uint32_t>> &dataLUT,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &tmpIndexRegister,
+            GpuArrayU32 &dataLUT,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &tmpIndexRegister,
             PointCloudMetadata metadata,
             uint32_t gridSize
     ) {

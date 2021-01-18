@@ -6,6 +6,7 @@
 
 #include <memory>
 #include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -51,10 +52,10 @@ namespace chunking {
     }
 
     float initOctree(
-            unique_ptr<CudaArray<Chunk>> &octree,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<int>> &sparseToDenseLUT,
+            GpuOctree &octree,
+            GpuArrayU32 &countingGrid,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayI32 &sparseToDenseLUT,
             uint32_t lowestGridSize
     ) {
 

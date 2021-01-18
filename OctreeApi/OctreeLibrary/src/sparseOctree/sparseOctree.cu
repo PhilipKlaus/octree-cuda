@@ -116,7 +116,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
-    itsOctreeSparse = make_unique<CudaArray<Chunk>>(itsMetadata.nodeAmountSparse, "octreeSparse");
+    itsOctree = make_unique<CudaArray<Chunk>>(itsMetadata.nodeAmountSparse, "octreeSparse");
 
     spdlog::info(
             "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
@@ -137,8 +137,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::initLowestOctreeHierarchy() {
 
-    float time = chunking::initOctree(
-            itsOctreeSparse,
+    float time = chunking::initOctree(itsOctree,
             itsDensePointCountPerVoxel,
             itsDenseToSparseLUT,
             itsSparseToDenseLUT,
@@ -161,7 +160,7 @@ void SparseOctree<coordinateType, colorType>::mergeHierarchical() {
     for(uint32_t i = 0; i < itsMetadata.depth; ++i) {
 
         float time = chunking::mergeHierarchical(
-                itsOctreeSparse,
+          itsOctree,
                 itsDensePointCountPerVoxel,
                 itsDenseToSparseLUT,
                 itsSparseToDenseLUT,
@@ -190,7 +189,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
     gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
 
     float time = chunking::distributePoints<float>(
-            itsOctreeSparse,
+        itsOctree,
             itsCloudData,
             itsDataLUT,
             itsDenseToSparseLUT,
@@ -206,7 +205,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::performSubsampling() {
 
-    auto h_octreeSparse = itsOctreeSparse->toHost();
+    auto h_octreeSparse = itsOctree->toHost();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost();
     auto nodesBaseLevel = static_cast<uint32_t>(pow(itsMetadata.subsamplingGrid, 3.f));
 

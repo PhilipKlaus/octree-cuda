@@ -8,6 +8,7 @@
 #include <cudaArray.h>
 #include <tools.cuh>
 #include <curand_kernel.h>
+#include <types.cuh>
 
 
 template <typename coordinateType, typename colorType>
@@ -126,26 +127,22 @@ private:
 private:
 
     // Point cloud
-    unique_ptr<CudaArray<uint8_t>> itsCloudData;                // The cloud data
+    unique_ptr<CudaArray<uint8_t>> itsCloudData;
 
     // Required data structures for calculation
-    unique_ptr<CudaArray<uint32_t>> itsDataLUT;                 // LUT for accessing point cloud data from the octree
-    unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel; // Holds all point counts in dense form
-    unique_ptr<CudaArray<int>> itsDenseToSparseLUT;             // LUT for mapping from dense to sparse
-    unique_ptr<CudaArray<int>> itsSparseToDenseLUT;             // LUT for mapping from sparse to dense
-    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;               // Holds the sparse octree
+    GpuArrayU32 itsDataLUT;
+    GpuArrayU32 itsDensePointCountPerVoxel;
+    GpuArrayI32 itsDenseToSparseLUT;
+    GpuArrayI32 itsSparseToDenseLUT;
+    GpuOctree itsOctree;
 
     // Octree Metadata
-    OctreeMetadata itsMetadata;                                 // The octree metadata
+    OctreeMetadata itsMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;                        // Holds the voxel amount per level (dense)
     vector<uint32_t> itsGridSideLengthPerLevel;                 // Holds the side length of the grid per level
-    // E.g.: level 0 -> 128x128x128 -> side length: 128
     vector<uint32_t> itsLinearizedDenseVoxelOffset;             // Holds the linear voxel offset for each level (dense)
-    // Level 0 is e.g. 128x128x128
-    // Offset for level 0 = 0
-    // Offset for level 1 = level 0 + 128 x 128 x128
 
     // Subsampling
     unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;

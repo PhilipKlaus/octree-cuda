@@ -82,17 +82,3 @@ struct Chunk {
     bool isParent;                  // Denotes if Chunk is a parent or a leaf node
 };
 #pragma pack(pop)
-
-struct Averaging {
-    float r, g, b;
-    uint32_t pointCount;
-};
-
-struct SubsampleConfig {
-    uint32_t *lutAdress;
-    Averaging *averagingAdress;
-    uint32_t  lutStartIndex;
-    uint32_t pointOffsetLower;
-    uint32_t pointOffsetUpper;
-};
-

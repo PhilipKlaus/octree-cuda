@@ -37,7 +37,7 @@ unique_ptr<int[]> SparseOctree<coordinateType, colorType>::getSparseToDenseLUT()
 
 template <typename coordinateType, typename colorType>
 unique_ptr<Chunk[]> SparseOctree<coordinateType, colorType>::getOctreeSparse() const {
-    return itsOctreeSparse->toHost();
+    return itsOctree->toHost();
 }
 
 

@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -179,9 +180,9 @@ namespace subsampling {
     template <typename coordinateType, typename colorType>
     float performAveraging(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<Averaging>>& parentAveragingData,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
+            GpuSubsample &subsampleData,
+            GpuAveraging  &parentAveragingData,
+            GpuArrayI32 &denseToSparseLUT,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
             uint32_t accumulatedPoints) {
@@ -210,15 +211,15 @@ namespace subsampling {
     template <typename coordinateType>
     float randomPointSubsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
-            unique_ptr<CudaArray<Averaging>> &averagingData,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            GpuSubsample &subsampleData,
+            GpuArrayU32 &parentDataLUT,
+            GpuAveraging &averagingData,
+            GpuArrayU32 &countingGrid,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
-            unique_ptr<CudaArray<uint32_t>> &randomIndices,
+            GpuArrayU32 &randomIndices,
             uint32_t accumulatedPoints) {
 
         // Calculate kernel dimensions
@@ -269,11 +270,11 @@ namespace subsampling {
     }
 
     float generateRandoms(
-            const unique_ptr<CudaArray<curandState_t>> &states,
-            unique_ptr<CudaArray<uint32_t>> &randomIndices,
-            const unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            const unique_ptr<CudaArray<Averaging>> &averagingData,
-            const unique_ptr<CudaArray<uint32_t>> &countingGrid,
+            const GpuRanomState &states,
+            GpuArrayU32 &randomIndices,
+            GpuArrayI32 &denseToSparseLUT,
+            const GpuAveraging &averagingData,
+            GpuArrayU32 &countingGrid,
             uint32_t gridNodes) {
 
         // Calculate kernel dimensions

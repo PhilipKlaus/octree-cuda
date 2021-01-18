@@ -6,6 +6,7 @@
 
 #include <cstdint>
 #include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -93,9 +94,9 @@ namespace chunking {
     }
 
     float propagatePointCounts(
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            GpuArrayU32 &countingGrid,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &sparseIndexCounter,
             uint32_t newCellAmount,
             uint32_t newGridSize,
             uint32_t oldGridSize,
