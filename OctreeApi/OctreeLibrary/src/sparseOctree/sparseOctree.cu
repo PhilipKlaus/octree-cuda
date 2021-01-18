@@ -11,6 +11,7 @@
 #include <hierarchical_merging.cuh>
 #include <point_distributing.cuh>
 #include "../../include/global_types.h"
+#include <kernel_executor.cuh>
 
 
 template <typename coordinateType, typename colorType>
@@ -67,17 +68,19 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting() {
     auto nodeAmountSparse = createGpuU32(1, "nodeAmountSparse");
     nodeAmountSparse->memset(0);
 
-    float time = chunking::initialPointCounting<float>(
-            itsCloudData,
-            itsDensePointCountPerVoxel,
-            itsDenseToSparseLUT,
-            nodeAmountSparse,
-            itsMetadata.cloudMetadata,
-            itsGridSideLengthPerLevel[0]
-    );
+    float time = executeKernel(
+        chunking::kernelInitialPointCounting<float>,
+        itsMetadata.cloudMetadata.pointAmount,
+        itsCloudData->devicePointer(),
+        itsDensePointCountPerVoxel->devicePointer(),
+        itsDenseToSparseLUT->devicePointer(),
+        nodeAmountSparse->devicePointer(),
+        itsMetadata.cloudMetadata,
+        itsGridSideLengthPerLevel[0]);
 
     // Store the current amount of sparse nodes
-    // !IMPORTANT! At this time the amount of sparse node just holds the amount of sparse nodes in the base level
+    // !IMPORTANT! At this time nodeAmountSparse holds just the amount of nodes
+    // in the lowest level
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost()[0];
     itsTimeMeasurement.emplace_back("initialPointCount", time);
     spdlog::info("'initialPointCounting' took {:f} [ms]", time);

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <cstdint>
 #include <string>
 #include <memory>
 #include "eventWatcher.h"
@@ -24,7 +23,7 @@ public:
         itsMemory = memoryToReserve;
         itsWatcher.reservedMemoryEvent(memoryToReserve, itsName);
         gpuErrchk(cudaMalloc((void**)&itsData, memoryToReserve));
-        spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
+        spdlog::debug("Reserved GPU memory: {} bytes, {} elements", elements, memoryToReserve);
     }
 
     ~CudaArray() {

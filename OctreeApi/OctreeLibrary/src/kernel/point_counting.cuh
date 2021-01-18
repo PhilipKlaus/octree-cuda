@@ -42,34 +42,4 @@ namespace chunking {
             denseToSparseLUT[denseVoxelIndex] = sparseVoxelIndex;
         }
     }
-
-
-    template <typename coordinateType>
-    float initialPointCounting(
-            unique_ptr<CudaArray<uint8_t>> &cloud,
-            GpuArrayU32 &densePointCount,
-            GpuArrayI32 &denseToSparseLUT,
-            GpuArrayU32 &sparseIndexCounter,
-            PointCloudMetadata metadata,
-            uint32_t gridSideLength
-    ) {
-
-        // Calculate kernel dimensions
-        dim3 grid, block;
-        tools::create1DKernel(block, grid, metadata.pointAmount);
-
-        // Initial point counting
-        tools::KernelTimer timer;
-        timer.start();
-        chunking::kernelInitialPointCounting<coordinateType> <<<  grid, block >>> (
-                cloud->devicePointer(),
-                        densePointCount->devicePointer(),
-                        denseToSparseLUT->devicePointer(),
-                        sparseIndexCounter->devicePointer(),
-                        metadata,
-                        gridSideLength);
-        timer.stop();
-        gpuErrchk(cudaGetLastError());
-        return timer.getMilliseconds();
-    }
 }
