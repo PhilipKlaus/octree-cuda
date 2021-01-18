@@ -61,7 +61,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         // Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
-        auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
+        auto subsampleLUT = createGpuU32(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes

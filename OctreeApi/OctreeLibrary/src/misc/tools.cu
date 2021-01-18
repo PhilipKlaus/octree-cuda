@@ -1,5 +1,6 @@
 #include "tools.cuh"
 #include "defines.cuh"
+#include <types.cuh>
 #include "../../include/global_types.h"
 
 
@@ -128,7 +129,7 @@ namespace tools {
         metadata.pointDataStride = 12;
 
         auto pointAmount = sideLength * sideLength * sideLength;
-        auto data = std::make_unique<CudaArray<uint8_t>>(pointAmount * 12, "cuboid");
+        auto data = createGpuU8(pointAmount * 12, "cuboid");
 
         auto blocks = ceil(pointAmount / 1024.f);
         auto gridX = blocks < GRID_SIZE_MAX ? blocks : ceil(blocks / GRID_SIZE_MAX);

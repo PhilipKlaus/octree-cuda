@@ -77,8 +77,8 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
 
         // Create LUT and averaging data for parent node
-        auto subsampleLUT = make_unique<CudaArray<uint32_t >>(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
-        auto averagingData = make_unique<CudaArray<Averaging >>(amountUsedVoxels, "averagingData_" + to_string(sparseVoxelIndex));
+        auto subsampleLUT = createGpuU32(amountUsedVoxels, "subsampleLUT_" + to_string(sparseVoxelIndex));
+        auto averagingData = createGpuAveraging(amountUsedVoxels, "averagingData_" + to_string(sparseVoxelIndex));
         itsSubsampleLUTs.insert(make_pair(sparseVoxelIndex, move(subsampleLUT)));
         itsAveragingData.insert(make_pair(sparseVoxelIndex, move(averagingData)));
 

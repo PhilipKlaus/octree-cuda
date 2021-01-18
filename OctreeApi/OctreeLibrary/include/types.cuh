@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <curand_kernel.h>
 
 struct Averaging {
   float r, g, b;
@@ -60,4 +61,9 @@ return createGpu<SubsampleConfig>(std::forward<Args>(args)...);
 template <typename ... Args>
 std::unique_ptr<CudaArray<curandState_t>> createGpuRandom(Args&& ... args){
   return createGpu<curandState_t>(std::forward<Args>(args)...);
+}
+
+template <typename ... Args>
+std::unique_ptr<CudaArray<Averaging>> createGpuAveraging(Args&& ... args){
+  return createGpu<Averaging>(std::forward<Args>(args)...);
 }

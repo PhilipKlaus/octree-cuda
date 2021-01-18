@@ -51,6 +51,10 @@ public:
         return itsElements;
     }
 
+    void memset(dataType value) {
+      gpuErrchk(cudaMemset (itsData, value, itsElements * sizeof(dataType)));
+    }
+
 private:
     std::string itsName;
     uint64_t itsMemory;
