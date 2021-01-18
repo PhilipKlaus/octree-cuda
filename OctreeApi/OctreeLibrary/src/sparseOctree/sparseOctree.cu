@@ -44,7 +44,6 @@ SparseOctree<coordinateType, colorType>::SparseOctree(
 
     // Create data LUT
     itsDataLUT = createGpuU32(cloudMetadata.pointAmount, "Data LUT");
-
     spdlog::info("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
 
@@ -58,15 +57,15 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting() {
 
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32(itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
-    gpuErrchk(cudaMemset (itsDensePointCountPerVoxel->devicePointer(), 0, itsMetadata.nodeAmountDense * sizeof(uint32_t)));
+    itsDensePointCountPerVoxel->memset(0);
 
     // Allocate the conversion LUT from dense to sparse
     itsDenseToSparseLUT = createGpuI32(itsMetadata.nodeAmountDense, "DenseToSparseLUT");
-    gpuErrchk(cudaMemset (itsDenseToSparseLUT->devicePointer(), -1, itsMetadata.nodeAmountDense * sizeof(int)));
+    itsDenseToSparseLUT->memset(-1);
 
     // Allocate the temporary sparseIndexCounter
     auto nodeAmountSparse = createGpuU32(1, "nodeAmountSparse");
-    gpuErrchk(cudaMemset (nodeAmountSparse->devicePointer(), 0, 1 * sizeof(uint32_t)));
+    nodeAmountSparse->memset(0);
 
     float time = chunking::initialPointCounting<float>(
             itsCloudData,
@@ -127,7 +126,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
 
     // Allocate the conversion LUT from sparse to dense
     itsSparseToDenseLUT = createGpuI32(itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
-    gpuErrchk(cudaMemset (itsSparseToDenseLUT->devicePointer(), -1, itsMetadata.nodeAmountSparse * sizeof(int)));
+    itsSparseToDenseLUT->memset(-1);
 
     initLowestOctreeHierarchy();
     mergeHierarchical();
@@ -153,7 +152,7 @@ void SparseOctree<coordinateType, colorType>::mergeHierarchical() {
 
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = createGpuU32(1, "globalChunkCounter");
-    gpuErrchk(cudaMemset (globalChunkCounter->devicePointer(), 0, 1 * sizeof(uint32_t)));
+    globalChunkCounter->memset(0);
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     float timeAccumulated = 0;
@@ -186,7 +185,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
 
     // Create temporary indexRegister for assigning an index for each point within its chunk area
     auto tmpIndexRegister = createGpuU32(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
-    gpuErrchk(cudaMemset (tmpIndexRegister->devicePointer(), 0, itsMetadata.nodeAmountSparse * sizeof(uint32_t)));
+    tmpIndexRegister->memset(0);
 
     float time = chunking::distributePoints<float>(
         itsOctree,
@@ -215,9 +214,9 @@ void SparseOctree<coordinateType, colorType>::performSubsampling() {
     auto voxelCount = createGpuU32(1, "voxelCount");
     auto subsampleData = createGpuSubsample(8, "subsampleData");
 
-    gpuErrchk(cudaMemset (pointCountGrid->devicePointer(), 0, pointCountGrid->pointCount() * sizeof(uint32_t)));
-    gpuErrchk(cudaMemset (denseToSpareLUT->devicePointer(), -1, denseToSpareLUT->pointCount() * sizeof(uint32_t)));
-    gpuErrchk(cudaMemset (voxelCount->devicePointer(), 0, 1 * sizeof(uint32_t)));
+    pointCountGrid->memset(0);
+    denseToSpareLUT->memset(-1);
+    voxelCount->memset(0);
 
     std::tuple<float, float> time;
 
