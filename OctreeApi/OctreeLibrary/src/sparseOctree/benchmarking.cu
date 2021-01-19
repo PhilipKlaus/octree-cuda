@@ -9,7 +9,8 @@
 using json = nlohmann::json;
 
 
-void SparseOctree::calculatePointVarianceInLeafNoes(
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::calculatePointVarianceInLeafNoes(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         float &sumVariance,
         float &mean,
@@ -20,7 +21,7 @@ void SparseOctree::calculatePointVarianceInLeafNoes(
 
     // Leaf node
     if(!chunk.isParent) {
-        sumVariance += pow(static_cast<float>(chunk.pointCount) - mean, 2);
+        sumVariance += pow(static_cast<float>(chunk.pointCount) - mean, 2.f);
     }
 
     // Parent node
@@ -34,7 +35,9 @@ void SparseOctree::calculatePointVarianceInLeafNoes(
     }
 }
 
-void SparseOctree::evaluateOctreeProperties(
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::evaluateOctreeProperties(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         uint32_t &leafNodes,
         uint32_t &parentNodes,
@@ -66,7 +69,9 @@ void SparseOctree::evaluateOctreeProperties(
     }
 }
 
-void SparseOctree::updateOctreeStatistics() {
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::updateOctreeStatistics() {
     // Reset Octree statistics
     itsMetadata.leafNodeAmount = 0;
     itsMetadata.parentNodeAmount = 0;
@@ -94,7 +99,9 @@ void SparseOctree::updateOctreeStatistics() {
     itsMetadata.stdevPointsPerLeafNode = sqrt(sumVariance / itsMetadata.leafNodeAmount);
 }
 
-void SparseOctree::exportOctreeStatistics(const string &filePath) {
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::exportOctreeStatistics(const string &filePath) {
 
     updateOctreeStatistics();
 
@@ -168,7 +175,9 @@ void SparseOctree::exportOctreeStatistics(const string &filePath) {
     file.close();
 }
 
-void SparseOctree::histogramBinning(
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::histogramBinning(
         const unique_ptr<Chunk[]> &h_octreeSparse,
         std::vector<uint32_t> &counts,
         uint32_t min,
@@ -195,7 +204,9 @@ void SparseOctree::histogramBinning(
     }
 }
 
-void SparseOctree::exportHistogram(const string &filePath, uint32_t binWidth) {
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::exportHistogram(const string &filePath, uint32_t binWidth) {
     updateOctreeStatistics();
 
     if(binWidth == 0) {
@@ -267,3 +278,35 @@ void SparseOctree::exportHistogram(const string &filePath, uint32_t binWidth) {
     htmlData << itsHtmlPart2;
     htmlData.close();
 };
+
+
+// Template definitions for coordinateType: float, colorType: uint8_t
+
+template void SparseOctree<float, uint8_t>::calculatePointVarianceInLeafNoes(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        float &sumVariance,
+        float &mean,
+        uint32_t nodeIndex
+) const ;
+
+template void SparseOctree<float, uint8_t>::evaluateOctreeProperties(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        uint32_t &leafNodes,
+        uint32_t &parentNodes,
+        uint32_t &pointSum,
+        uint32_t &min,
+        uint32_t &max,
+        uint32_t nodeIndex
+) const;
+
+template void SparseOctree<float, uint8_t>::updateOctreeStatistics();
+template void SparseOctree<float, uint8_t>::exportOctreeStatistics(const string &filePath);
+template void SparseOctree<float, uint8_t>::histogramBinning(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        std::vector<uint32_t> &counts,
+        uint32_t min,
+        uint32_t binWidth,
+        uint32_t nodeIndex
+) const;
+
+template void SparseOctree<float, uint8_t>::exportHistogram(const string &filePath, uint32_t binWidth);

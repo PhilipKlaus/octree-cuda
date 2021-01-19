@@ -1,16 +1,5 @@
 #pragma once
 
-#include <cuda_runtime.h>
-#include <cuda.h>
-#include <timing.cuh>
-
-#include <cstdint>
-#include <types.h>
-#include <cudaArray.h>
-#include <tools.cuh>
-
-#include <curand_kernel.h>
-#include "../../include/types.h"
 
 namespace subsampling {
 
@@ -46,13 +35,13 @@ namespace subsampling {
         }
 
         // Get the coordinates from the point within the point cloud
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // Get the color from the point within the point cloud
-        CoordinateVector<colorType> *color =
-                reinterpret_cast<CoordinateVector<colorType>*>(
+        Vector3<colorType> *color =
+                reinterpret_cast<Vector3<colorType>*>(
                         cloud +
                         childDataLUT[childDataLUTStart + index] * metadata.pointDataStride
                         + sizeof(coordinateType) * 3);
@@ -106,8 +95,8 @@ namespace subsampling {
         }
 
         // Get the point within the point cloud
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType>*>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType>*>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the evaluateSubsamples
@@ -149,9 +138,9 @@ namespace subsampling {
     __global__ void kernelGenerateRandoms(
             curandState_t* states,
             uint32_t *randomIndices,
-            const int *denseToSparseLUT,
+            int *denseToSparseLUT,
             Averaging *averagingData,
-            const uint32_t *countingGrid,
+            uint32_t *countingGrid,
             uint32_t gridNodes) {
 
         int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
@@ -175,127 +164,4 @@ namespace subsampling {
         averagingData[sparseIndex].b = 0.f;
         averagingData[sparseIndex].pointCount = 0;
     }
-
-    template <typename coordinateType, typename colorType>
-    float performAveraging(
-            unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<Averaging>>& parentAveragingData,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            PointCloudMetadata metadata,
-            uint32_t gridSideLength,
-            uint32_t accumulatedPoints) {
-
-        // Calculate kernel dimensions
-        dim3 grid, block;
-        tools::create1DKernel(block, grid, accumulatedPoints);
-
-        // Initial point counting
-        tools::KernelTimer timer;
-        timer.start();
-        kernelPerformAveraging < coordinateType, colorType > << < grid, block >> > (
-                        cloud->devicePointer(),
-                        subsampleData->devicePointer(),
-                        parentAveragingData->devicePointer(),
-                        denseToSparseLUT->devicePointer(),
-                        metadata,
-                        gridSideLength,
-                        accumulatedPoints);
-        timer.stop();
-        gpuErrchk(cudaGetLastError());
-
-        spdlog::debug("'kernelPerformAveraging' took {:f} [ms]", timer.getMilliseconds());
-        return timer.getMilliseconds();
-    }
-    template <typename coordinateType>
-    float randomPointSubsample(
-            unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
-            unique_ptr<CudaArray<Averaging>> &averagingData,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
-            PointCloudMetadata metadata,
-            uint32_t gridSideLength,
-            unique_ptr<CudaArray<uint32_t>> &randomIndices,
-            uint32_t accumulatedPoints) {
-
-        // Calculate kernel dimensions
-        dim3 grid, block;
-        tools::create1DKernel(block, grid, accumulatedPoints);
-
-        // Initial point counting
-        tools::KernelTimer timer;
-        timer.start();
-        kernelRandomPointSubsample < coordinateType > << < grid, block >> > (
-                cloud->devicePointer(),
-                        subsampleData->devicePointer(),
-                        parentDataLUT->devicePointer(),
-                        averagingData->devicePointer(),
-                        countingGrid->devicePointer(),
-                        denseToSparseLUT->devicePointer(),
-                        sparseIndexCounter->devicePointer(),
-                        metadata,
-                        gridSideLength,
-                        randomIndices->devicePointer(),
-                        accumulatedPoints);
-        timer.stop();
-        gpuErrchk(cudaGetLastError());
-
-        spdlog::debug("'kernelRandomPointSubsample' took {:f} [ms]", timer.getMilliseconds());
-        return timer.getMilliseconds();
-    }
-
-
-    float initRandoms(
-            unsigned int seed,
-            unique_ptr<CudaArray<curandState_t>> &states,
-            uint32_t nodeAmount) {
-
-        // Calculate kernel dimensions
-        dim3 grid, block;
-        tools::create1DKernel(block, grid, nodeAmount);
-
-        // Initial point counting
-        tools::KernelTimer timer;
-        timer.start();
-        kernelInitRandoms << < grid, block >> > (seed, states->devicePointer(), nodeAmount);
-        timer.stop();
-        gpuErrchk(cudaGetLastError());
-
-        spdlog::debug("'kernelInitRandoms' took {:f} [ms]", timer.getMilliseconds());
-        return timer.getMilliseconds();
-    }
-
-    float generateRandoms(
-            const unique_ptr<CudaArray<curandState_t>> &states,
-            unique_ptr<CudaArray<uint32_t>> &randomIndices,
-            const unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            const unique_ptr<CudaArray<Averaging>> &averagingData,
-            const unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            uint32_t gridNodes) {
-
-        // Calculate kernel dimensions
-        dim3 grid, block;
-        tools::create1DKernel(block, grid, gridNodes);
-
-        // Initial point counting
-        tools::KernelTimer timer;
-        timer.start();
-        kernelGenerateRandoms << < grid, block >> > (
-                states->devicePointer(),
-                randomIndices->devicePointer(),
-                denseToSparseLUT->devicePointer(),
-                averagingData->devicePointer(),
-                countingGrid->devicePointer(),
-                gridNodes);
-        timer.stop();
-        gpuErrchk(cudaGetLastError());
-
-        spdlog::debug("'kernelGenerateRandoms' took {:f} [ms]", timer.getMilliseconds());
-        return timer.getMilliseconds();
-    }
-
-    //float resetAveragingData()
 }

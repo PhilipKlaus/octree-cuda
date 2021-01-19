@@ -33,7 +33,7 @@ public:
 private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
-    unique_ptr<SparseOctree> itsOctree;
+    //unique_ptr<SparseOctree> itsOctree;
     unique_ptr<CudaArray<uint8_t>> data;
 
     GridSize itsChunkingGrid = GRID_128;

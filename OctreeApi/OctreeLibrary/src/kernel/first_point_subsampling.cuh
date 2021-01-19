@@ -5,7 +5,8 @@
 #include <timing.cuh>
 
 #include <cstdint>
-#include <types.h>
+#include <global_types.h>
+#include <types.cuh>
 #include <cudaArray.h>
 #include <tools.cuh>
 
@@ -42,8 +43,8 @@ namespace subsampling {
             }
         }
 
-        CoordinateVector<coordinateType> *point =
-                reinterpret_cast<CoordinateVector<coordinateType> *>(
+        Vector3<coordinateType> *point =
+                reinterpret_cast<Vector3<coordinateType> *>(
                         cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
 
         // 1. Calculate the index within the dense grid of the subsample
@@ -69,11 +70,11 @@ namespace subsampling {
     template<typename coordinateType>
     float firstPointSubsample(
             unique_ptr<CudaArray<uint8_t>> &cloud,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
-            unique_ptr<CudaArray<uint32_t>> &parentDataLUT,
-            unique_ptr<CudaArray<uint32_t>> &countingGrid,
-            unique_ptr<CudaArray<int>> &denseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &sparseIndexCounter,
+            GpuSubsample &subsampleData,
+            GpuArrayU32 &parentDataLUT,
+            GpuArrayU32 &countingGrid,
+            GpuArrayI32 &denseToSparseLUT,
+            GpuArrayU32 &sparseIndexCounter,
             PointCloudMetadata metadata,
             uint32_t gridSideLength,
             uint32_t accumulatedPoints) {

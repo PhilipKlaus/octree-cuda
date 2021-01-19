@@ -4,12 +4,14 @@
 
 #pragma once
 
-#include <types.h>
+#include <global_types.h>
 #include <cudaArray.h>
 #include <tools.cuh>
 #include <curand_kernel.h>
+#include <types.cuh>
 
 
+template <typename coordinateType, typename colorType>
 class SparseOctree {
 
 public:
@@ -76,79 +78,91 @@ private:
                                                    const unique_ptr<int[]> &h_sparseToDenseLUT,
                                                    uint32_t sparseVoxelIndex,
                                                    uint32_t level,
-                                                   unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
-                                                   unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-                                                   unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
-                                                   unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig);
+                                                   GpuArrayU32 &subsampleCountingGrid,
+                                                   GpuArrayI32 &subsampleDenseToSparseLUT,
+                                                   GpuArrayU32 &subsampleSparseVoxelCount,
+                                                   GpuSubsample &subsampleConfig);
 
     std::tuple<float, float> randomSubsampling(
             const unique_ptr<Chunk[]> &h_octreeSparse,
             const unique_ptr<int[]> &h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
             uint32_t level,
-            unique_ptr<CudaArray<uint32_t>> &subsampleCountingGrid,
-            unique_ptr<CudaArray<int>> &subsampleDenseToSparseLUT,
-            unique_ptr<CudaArray<uint32_t>> &subsampleSparseVoxelCount,
-            unique_ptr<CudaArray<curandState_t >> &randomStates,
-            unique_ptr<CudaArray<uint32_t >> &randomIndices,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleConfig);
+            GpuArrayU32 &subsampleCountingGrid,
+            GpuArrayI32 &subsampleDenseToSparseLUT,
+            GpuArrayU32 &subsampleSparseVoxelCount,
+            GpuRanomState &randomStates,
+            GpuArrayU32 &randomIndices,
+            GpuSubsample &subsampleConfig);
 
     void SparseOctree::prepareSubsampleConfig(
             Chunk &voxel,
             const unique_ptr<Chunk[]> &h_octreeSparse,
-            unique_ptr<CudaArray<SubsampleConfig>> &subsampleData,
+            GpuSubsample &subsampleData,
             uint32_t &accumulatedPoints);
 
     float initRandomStates( unsigned int seed,
-                            unique_ptr<CudaArray<curandState_t>> &states,
+                            GpuRanomState &states,
                             uint32_t nodeAmount);
 
     // Exporting
-    uint32_t exportTreeNode(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octreeSparse,
-                            const unique_ptr<uint32_t[]> &dataLUT, const string &level, uint32_t index,
-                            const string &folder);
+    uint32_t exportTreeNode(
+        uint8_t *cpuPointCloud,
+        const unique_ptr<Chunk[]> &octreeSparse,
+        const unique_ptr<uint32_t[]> &dataLUT,
+        const string &level, uint32_t index,
+        const string &folder);
 
     // Benchmarking
     uint32_t getRootIndex();
 
     void updateOctreeStatistics();
 
-    void evaluateOctreeProperties(const unique_ptr<Chunk[]> &h_octreeSparse, uint32_t &leafNodes, uint32_t &parentNodes,
-                                  uint32_t &pointSum, uint32_t &min, uint32_t &max, uint32_t nodeIndex) const;
+    void evaluateOctreeProperties(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        uint32_t &leafNodes,
+        uint32_t &parentNodes,
+        uint32_t &pointSum,
+        uint32_t &min,
+        uint32_t &max,
+        uint32_t nodeIndex) const;
 
-    void calculatePointVarianceInLeafNoes(const unique_ptr<Chunk[]> &h_octreeSparse, float &sumVariance, float &ean,
-                                          uint32_t nodeIndex) const;
+    void calculatePointVarianceInLeafNoes(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        float &sumVariance,
+        float &ean,
+        uint32_t nodeIndex) const;
 
-    void histogramBinning(const unique_ptr<Chunk[]> &h_octreeSparse, std::vector<uint32_t> &counts, uint32_t min,
-                          uint32_t binWidth, uint32_t nodeIndex) const;
+    void histogramBinning(
+        const unique_ptr<Chunk[]> &h_octreeSparse,
+        std::vector<uint32_t> &counts,
+        uint32_t min,
+        uint32_t binWidth,
+        uint32_t nodeIndex) const;
 
 private:
 
     // Point cloud
-    unique_ptr<CudaArray<uint8_t>> itsCloudData;                // The cloud data
+    unique_ptr<CudaArray<uint8_t>> itsCloudData;
 
     // Required data structures for calculation
-    unique_ptr<CudaArray<uint32_t>> itsDataLUT;                 // LUT for accessing point cloud data from the octree
-    unique_ptr<CudaArray<uint32_t>> itsDensePointCountPerVoxel; // Holds all point counts in dense form
-    unique_ptr<CudaArray<int>> itsDenseToSparseLUT;             // LUT for mapping from dense to sparse
-    unique_ptr<CudaArray<int>> itsSparseToDenseLUT;             // LUT for mapping from sparse to dense
-    unique_ptr<CudaArray<Chunk>> itsOctreeSparse;               // Holds the sparse octree
+    GpuArrayU32 itsDataLUT;
+    GpuArrayU32 itsDensePointCountPerVoxel;
+    GpuArrayI32 itsDenseToSparseLUT;
+    GpuArrayI32 itsSparseToDenseLUT;
+    GpuOctree itsOctree;
 
     // Octree Metadata
-    OctreeMetadata itsMetadata;                                 // The octree metadata
+    OctreeMetadata itsMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;                        // Holds the voxel amount per level (dense)
     vector<uint32_t> itsGridSideLengthPerLevel;                 // Holds the side length of the grid per level
-    // E.g.: level 0 -> 128x128x128 -> side length: 128
     vector<uint32_t> itsLinearizedDenseVoxelOffset;             // Holds the linear voxel offset for each level (dense)
-    // Level 0 is e.g. 128x128x128
-    // Offset for level 0 = 0
-    // Offset for level 1 = level 0 + 128 x 128 x128
 
     // Subsampling
-    unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> itsSubsampleLUTs;
-    unordered_map<uint32_t, unique_ptr<CudaArray<Averaging>>> itsAveragingData;
+    unordered_map<uint32_t, GpuArrayU32> itsSubsampleLUTs;
+    unordered_map<uint32_t, GpuAveraging> itsAveragingData;
 
     // Benchmarking
     std::vector<std::tuple<std::string, float>> itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)

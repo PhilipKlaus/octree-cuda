@@ -1,18 +1,18 @@
-#ifndef OCTREE_TOOLS
-#define OCTREE_TOOLS
+#pragma once
+
 
 #include <cuda_runtime_api.h>
 #include <cuda.h>
 #include <memory>
 #include "cudaArray.h"
-#include "types.h"
+#include "global_types.h"
 
 using namespace std;
 
 
 namespace tools {
 
-    uint32_t getOctreeLevel(GridSize gridSize);
+uint32_t getOctreeLevel(GridSize gridSize);
     uint32_t getOctreeGrid(uint32_t octreeLevel);
     uint32_t getNodeAmount(uint32_t octreeLevel);
     uint32_t getNodeOffset(uint32_t octreeLevel, uint32_t octreeDepth);
@@ -21,12 +21,12 @@ namespace tools {
     void printKernelDimensions(dim3 block, dim3 grid);
     void create1DKernel(dim3 &block, dim3 &grid, uint32_t pointCount);
 
-    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(CoordinateVector<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
+    __host__ __device__ void mapFromDenseIdxToDenseCoordinates(Vector3<uint32_t> &coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
 
     // See OctreeConverter : chunker_countsort_laszip.cpp :131
     template <typename coordinateType>
-    __device__ uint32_t calculateGridIndex(const CoordinateVector<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
+    __device__ uint32_t calculateGridIndex(const Vector3<coordinateType> *point, PointCloudMetadata const &metadata, uint32_t gridSize) {
 
         double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
         double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
@@ -42,7 +42,4 @@ namespace tools {
 
         return static_cast<uint32_t >(ix + iy * gridSize + iz * gridSize * gridSize);
     }
-
 };
-
-#endif

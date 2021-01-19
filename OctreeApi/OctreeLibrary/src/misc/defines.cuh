@@ -2,11 +2,11 @@
 // Created by KlausP on 16.10.2020.
 //
 
-#ifndef OCTREECUDA_DEFINES_CUH
-#define OCTREECUDA_DEFINES_CUH
+#pragma once
 
-#include <cstdint>
 #include "cuda_runtime.h"
+#include <cstdint>
+
 
 constexpr uint32_t BLOCK_SIZE_MAX = 1024;
 constexpr uint32_t GRID_SIZE_MAX = 65535;
@@ -22,5 +22,3 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
         if (abort) exit(code);
     }
 }
-
-#endif //OCTREECUDA_DEFINES_CUH

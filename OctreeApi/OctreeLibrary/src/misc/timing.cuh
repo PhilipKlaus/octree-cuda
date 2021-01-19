@@ -1,9 +1,6 @@
-#ifndef OCTREE_TIMING
-#define OCTREE_TIMING
+#pragma once
 
-
-#include <cuda.h>
-
+#include <tools.cuh>
 
 namespace tools {
 
@@ -35,5 +32,3 @@ namespace tools {
     };
 
 };
-
-#endif

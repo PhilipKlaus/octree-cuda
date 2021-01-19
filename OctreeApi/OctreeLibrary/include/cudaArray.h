@@ -2,10 +2,8 @@
 // Created by KlausP on 28.10.2020.
 //
 
-#ifndef OCTREE_LIBRARY_CUDAARRAY_H
-#define OCTREE_LIBRARY_CUDAARRAY_H
+#pragma once
 
-#include <cstdint>
 #include <string>
 #include <memory>
 #include "eventWatcher.h"
@@ -25,7 +23,7 @@ public:
         itsMemory = memoryToReserve;
         itsWatcher.reservedMemoryEvent(memoryToReserve, itsName);
         gpuErrchk(cudaMalloc((void**)&itsData, memoryToReserve));
-        spdlog::debug("Reserved memory on GPU for {} elements with a size of {} bytes", elements, memoryToReserve);
+        spdlog::debug("Reserved GPU memory: {} bytes, {} elements", elements, memoryToReserve);
     }
 
     ~CudaArray() {
@@ -34,11 +32,11 @@ public:
         spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
 
-    dataType* devicePointer() {
+    dataType* devicePointer() const {
         return itsData;
     }
 
-    std::unique_ptr<dataType[]> toHost() {
+    std::unique_ptr<dataType[]> toHost() const {
         unique_ptr<dataType[]> host (new dataType[itsElements]);
         gpuErrchk(cudaMemcpy(host.get(), itsData, sizeof(dataType) * itsElements, cudaMemcpyDeviceToHost));
         return host;
@@ -48,9 +46,14 @@ public:
         gpuErrchk(cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice));
     }
 
-    uint32_t pointCount() {
+    uint32_t pointCount() const{
         return itsElements;
     }
+
+    void memset(dataType value) {
+      gpuErrchk(cudaMemset (itsData, value, itsElements * sizeof(dataType)));
+    }
+
 
 private:
     std::string itsName;
@@ -59,6 +62,3 @@ private:
     dataType *itsData;
     EventWatcher& itsWatcher = EventWatcher::getInstance();
 };
-
-
-#endif //OCTREE_LIBRARY_CUDAARRAY_H

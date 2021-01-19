@@ -2,8 +2,7 @@
 // Created by KlausP on 20.10.2020.
 //
 
-#ifndef OCTREECUDA_EVENTWATCHER_H
-#define OCTREECUDA_EVENTWATCHER_H
+#pragma once
 
 // Standard library
 #include <fstream>
@@ -166,5 +165,3 @@ private:
             "    </body>\n"
             "</html>";
 };
-
-#endif //OCTREECUDA_EVENTWATCHER_H

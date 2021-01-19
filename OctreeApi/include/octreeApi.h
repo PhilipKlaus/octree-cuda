@@ -7,7 +7,7 @@
 
 
 #include <cstdint>
-#include "../OctreeLibrary/include/types.h"
+#include "../OctreeLibrary/include/global_types.h"
 
 #ifdef __cplusplus
 #define EXPORTED_PRE extern "C"

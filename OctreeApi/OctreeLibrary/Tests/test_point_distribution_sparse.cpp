@@ -19,7 +19,7 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
         previousChunks += static_cast<uint32_t>(pow(pow(2, i), 3));
     }
 
-    CoordinateVector<uint32_t > coord{};
+    Vector3<uint32_t > coord{};
     auto indexInVoxel = denseIndex - previousChunks;
     tools::mapFromDenseIdxToDenseCoordinates(coord, indexInVoxel, newGridSize);
 
@@ -28,7 +28,7 @@ uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> 
         count = octree[index].pointCount;
         for (uint32_t u = 0; u < octree[index].pointCount; ++u)
         {
-            auto *point = reinterpret_cast<CoordinateVector<float>*>(cpuPointCloud + dataLUT[octree[index].chunkDataIndex + u] * 12);
+            auto *point = reinterpret_cast<Vector3<float>*>(cpuPointCloud + dataLUT[octree[index].chunkDataIndex + u] * 12);
             REQUIRE(point->x > (coord.x * voxelSize));
             REQUIRE(point->x < ((coord.x + 1) * voxelSize));
             REQUIRE(point->y > (coord.y * voxelSize));
@@ -57,7 +57,7 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     auto cpuData = cloud->toHost();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(OctreeTypes::GRID_128, OctreeTypes::GRID_128, 10000, metadata, move(cloud));
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cloud), RANDOM_POINT);
 
     octree->initialPointCounting();
     octree->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
