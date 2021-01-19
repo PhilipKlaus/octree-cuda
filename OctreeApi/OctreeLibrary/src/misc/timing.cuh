@@ -4,31 +4,35 @@
 
 namespace tools {
 
-    class KernelTimer {
+class KernelTimer
+{
+public:
+    KernelTimer ()
+    {
+        cudaEventCreate (&itsStart);
+        cudaEventCreate (&itsStop);
+    }
 
-    public:
-        KernelTimer() {
-            cudaEventCreate(&itsStart);
-            cudaEventCreate(&itsStop);
-        }
+    void start ()
+    {
+        cudaEventRecord (itsStart);
+    }
 
-        void start() {
-            cudaEventRecord(itsStart);
-        }
+    void stop ()
+    {
+        cudaEventRecord (itsStop);
+        cudaEventSynchronize (itsStop);
+    }
 
-        void stop() {
-            cudaEventRecord(itsStop);
-            cudaEventSynchronize(itsStop);
-        }
+    float getMilliseconds ()
+    {
+        float milliseconds = 0;
+        cudaEventElapsedTime (&milliseconds, itsStart, itsStop);
+        return milliseconds;
+    }
 
-        float getMilliseconds() {
-            float milliseconds = 0;
-            cudaEventElapsedTime(&milliseconds, itsStart, itsStop);
-            return milliseconds;
-        }
-
-    private:
-        cudaEvent_t itsStart, itsStop;
-    };
-
+private:
+    cudaEvent_t itsStart, itsStop;
 };
+
+}; // namespace tools

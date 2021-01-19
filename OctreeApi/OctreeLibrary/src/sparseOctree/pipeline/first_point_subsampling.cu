@@ -69,13 +69,15 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes
-        get<1> (accumulatedTime) += subsampling::firstPointSubsample<float> (
-                itsCloudData,
-                subsampleConfig,
-                itsSubsampleLUTs[sparseVoxelIndex],
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT,
-                subsampleSparseVoxelCount,
+        get<1> (accumulatedTime) += executeKernel (
+                subsampling::kernelFirstPointSubsample<float>,
+                accumulatedPoints,
+                itsCloudData->devicePointer (),
+                subsampleConfig->devicePointer (),
+                itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),
+                subsampleCountingGrid->devicePointer (),
+                subsampleDenseToSparseLUT->devicePointer (),
+                subsampleSparseVoxelCount->devicePointer (),
                 metadata,
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints);
