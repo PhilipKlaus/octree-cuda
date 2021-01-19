@@ -17,22 +17,20 @@ struct Vector3
 #pragma pack(pop)
 
 
-// ToDo: Maybe full double support?
 struct BoundingBox
 {
-    Vector3<float> minimum;
-    Vector3<float> maximum;
+    Vector3<double> minimum;
+    Vector3<double> maximum;
 };
 
 
-// ToDo: Maybe full double support?
 struct PointCloudMetadata
 {
     uint32_t pointAmount;
     uint32_t pointDataStride;
     BoundingBox boundingBox;
-    Vector3<float> cloudOffset;
-    Vector3<float> scale;
+    Vector3<double> cloudOffset;
+    Vector3<double> scale;
 };
 
 

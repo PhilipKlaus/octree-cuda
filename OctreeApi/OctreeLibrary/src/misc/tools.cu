@@ -130,12 +130,12 @@ void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount)
 
 GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata)
 {
-    float boundingBoxMax         = static_cast<float> (sideLength) - 0.5f;
-    metadata.pointAmount         = static_cast<uint32_t> (pow (sideLength, 3.f));
-    metadata.boundingBox.minimum = Vector3<float>{0.5, 0.5, 0.5};
-    metadata.boundingBox.maximum = Vector3<float>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
-    metadata.cloudOffset         = Vector3<float>{0.5, 0.5, 0.5};
-    metadata.scale               = {1.f, 1.f, 1.f};
+    double boundingBoxMax         = static_cast<double> (sideLength) - 0.5;
+    metadata.pointAmount         = static_cast<uint32_t> (pow (sideLength, 3.0));
+    metadata.boundingBox.minimum = Vector3<double>{0.5, 0.5, 0.5};
+    metadata.boundingBox.maximum = Vector3<double>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
+    metadata.cloudOffset         = Vector3<double>{0.5, 0.5, 0.5};
+    metadata.scale               = {1.0, 1.0, 1.0};
     metadata.pointDataStride     = 12;
 
     auto pointAmount = sideLength * sideLength * sideLength;
