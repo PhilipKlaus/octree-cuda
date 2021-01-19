@@ -20,7 +20,7 @@ public:
             GridSize subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            unique_ptr<CudaArray<uint8_t>> cloudData,
+            GpuArrayU8 cloudData,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
@@ -61,7 +61,7 @@ public:
 
     unique_ptr<Chunk[]> getOctreeSparse () const;
 
-    unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& getSubsampleLUT () const;
+    unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
 private:
     // Merging
@@ -88,7 +88,7 @@ private:
             GpuArrayU32& subsampleCountingGrid,
             GpuArrayI32& subsampleDenseToSparseLUT,
             GpuArrayU32& subsampleSparseVoxelCount,
-            GpuRanomState& randomStates,
+            GpuRandomState& randomStates,
             GpuArrayU32& randomIndices,
             GpuSubsample& subsampleConfig);
 
@@ -98,7 +98,7 @@ private:
             GpuSubsample& subsampleData,
             uint32_t& accumulatedPoints);
 
-    float initRandomStates (unsigned int seed, GpuRanomState& states, uint32_t nodeAmount);
+    float initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
 
     // Exporting
     uint32_t exportTreeNode (
@@ -135,7 +135,7 @@ private:
 
 private:
     // Point cloud
-    unique_ptr<CudaArray<uint8_t>> itsCloudData;
+    GpuArrayU8 itsCloudData;
 
     // Required data structures for calculation
     GpuArrayU32 itsDataLUT;

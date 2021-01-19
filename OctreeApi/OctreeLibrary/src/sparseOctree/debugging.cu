@@ -48,7 +48,7 @@ unique_ptr<Chunk[]> SparseOctree<coordinateType, colorType>::getOctreeSparse () 
 
 
 template <typename coordinateType, typename colorType>
-unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<coordinateType, colorType>::
+unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<coordinateType, colorType>::
         getSubsampleLUT () const
 {
     return itsSubsampleLUTs;
@@ -72,7 +72,7 @@ template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCount
 template unique_ptr<int[]> SparseOctree<float, uint8_t>::getDenseToSparseLUT () const;
 template unique_ptr<int[]> SparseOctree<float, uint8_t>::getSparseToDenseLUT () const;
 template unique_ptr<Chunk[]> SparseOctree<float, uint8_t>::getOctreeSparse () const;
-template unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<float, uint8_t>::
+template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<float, uint8_t>::
         getSubsampleLUT () const;
 template uint32_t SparseOctree<float, uint8_t>::getRootIndex ();
 
@@ -86,6 +86,6 @@ template unique_ptr<uint32_t[]> SparseOctree<double, uint16_t>::getDensePointCou
 template unique_ptr<int[]> SparseOctree<double, uint16_t>::getDenseToSparseLUT () const;
 template unique_ptr<int[]> SparseOctree<double, uint16_t>::getSparseToDenseLUT () const;
 template unique_ptr<Chunk[]> SparseOctree<double, uint16_t>::getOctreeSparse () const;
-template unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<double, uint16_t>::
+template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<double, uint16_t>::
         getSubsampleLUT () const;
 template uint32_t SparseOctree<double, uint16_t>::getRootIndex ();

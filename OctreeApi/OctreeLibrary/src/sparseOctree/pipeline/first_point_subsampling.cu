@@ -95,10 +95,10 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsam
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
-        unique_ptr<CudaArray<uint32_t>>& subsampleCountingGrid,
-        unique_ptr<CudaArray<int>>& subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>>& subsampleSparseVoxelCount,
-        unique_ptr<CudaArray<SubsampleConfig>>& subsampleConfig);
+        GpuArrayU32& subsampleCountingGrid,
+        GpuArrayI32& subsampleDenseToSparseLUT,
+        GpuArrayU32& subsampleSparseVoxelCount,
+        GpuSubsample& subsampleConfig);
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<double, uint16_t>
@@ -109,7 +109,7 @@ template std::tuple<float, float> SparseOctree<double, uint16_t>::firstPointSubs
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
-        unique_ptr<CudaArray<uint32_t>>& subsampleCountingGrid,
-        unique_ptr<CudaArray<int>>& subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>>& subsampleSparseVoxelCount,
-        unique_ptr<CudaArray<SubsampleConfig>>& subsampleConfig);
+        GpuArrayU32& subsampleCountingGrid,
+        GpuArrayI32& subsampleDenseToSparseLUT,
+        GpuArrayU32& subsampleSparseVoxelCount,
+        GpuSubsample& subsampleConfig);

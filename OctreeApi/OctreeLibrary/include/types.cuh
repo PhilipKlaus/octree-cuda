@@ -26,7 +26,7 @@ using GpuArrayI32   = GpuArray<int>;
 using GpuOctree     = GpuArray<Chunk>;
 using GpuSubsample  = GpuArray<SubsampleConfig>;
 using GpuAveraging  = GpuArray<Averaging>;
-using GpuRanomState = GpuArray<curandState_t>;
+using GpuRandomState = GpuArray<curandState_t>;
 
 template <typename T, typename... Args>
 std::unique_ptr<CudaArray<T>> createGpu (Args&&... args)

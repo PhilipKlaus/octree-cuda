@@ -18,7 +18,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        unique_ptr<CudaArray<uint8_t>> cloudData,
+        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy) :
 
         itsCloudData (move (cloudData))
@@ -337,7 +337,7 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        unique_ptr<CudaArray<uint8_t>> cloudData,
+        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
@@ -361,7 +361,7 @@ template SparseOctree<double, uint16_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        unique_ptr<CudaArray<uint8_t>> cloudData,
+        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<double, uint16_t>::initialPointCounting ();
 template void SparseOctree<double, uint16_t>::performCellMerging ();

@@ -128,7 +128,7 @@ void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount)
     printKernelDimensions (block, grid);
 }
 
-unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata)
+GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata)
 {
     float boundingBoxMax         = static_cast<float> (sideLength) - 0.5f;
     metadata.pointAmount         = static_cast<uint32_t> (pow (sideLength, 3.f));
