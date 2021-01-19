@@ -32,11 +32,11 @@ public:
         spdlog::debug("Freed GPU memory: {} bytes", itsElements * sizeof(dataType));
     }
 
-    dataType* devicePointer() {
+    dataType* devicePointer() const {
         return itsData;
     }
 
-    std::unique_ptr<dataType[]> toHost() {
+    std::unique_ptr<dataType[]> toHost() const {
         unique_ptr<dataType[]> host (new dataType[itsElements]);
         gpuErrchk(cudaMemcpy(host.get(), itsData, sizeof(dataType) * itsElements, cudaMemcpyDeviceToHost));
         return host;
@@ -46,7 +46,7 @@ public:
         gpuErrchk(cudaMemcpy(itsData, host, sizeof(dataType) * itsElements, cudaMemcpyHostToDevice));
     }
 
-    uint32_t pointCount() {
+    uint32_t pointCount() const{
         return itsElements;
     }
 

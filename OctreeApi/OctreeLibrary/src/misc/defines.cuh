@@ -2,8 +2,7 @@
 // Created by KlausP on 16.10.2020.
 //
 
-#ifndef OCTREECUDA_DEFINES_CUH
-#define OCTREECUDA_DEFINES_CUH
+#pragma once
 
 #include "cuda_runtime.h"
 #include <cstdint>
@@ -23,5 +22,3 @@ inline void gpuAssert(cudaError_t code, const char *file, int line, bool abort=t
         if (abort) exit(code);
     }
 }
-
-#endif //OCTREECUDA_DEFINES_CUH

@@ -100,10 +100,12 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     for(uint32_t i = 0; i < itsMetadata.depth; ++i) {
 
-        float time = chunking::propagatePointCounts (
-                itsDensePointCountPerVoxel,
-                itsDenseToSparseLUT,
-                nodeAmountSparse,
+        float time = executeKernel(
+                chunking::kernelPropagatePointCounts,
+                itsVoxelsPerLevel[i + 1],
+                itsDensePointCountPerVoxel->devicePointer(),
+                itsDenseToSparseLUT->devicePointer(),
+                nodeAmountSparse->devicePointer(),
                 itsVoxelsPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i],
@@ -139,10 +141,13 @@ void SparseOctree<coordinateType, colorType>::performCellMerging() {
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::initLowestOctreeHierarchy() {
 
-    float time = chunking::initOctree(itsOctree,
-            itsDensePointCountPerVoxel,
-            itsDenseToSparseLUT,
-            itsSparseToDenseLUT,
+    float time = executeKernel(
+            chunking::kernelOctreeInitialization,
+            itsVoxelsPerLevel[0],
+            itsOctree->devicePointer(),
+            itsDensePointCountPerVoxel->devicePointer(),
+            itsDenseToSparseLUT->devicePointer(),
+            itsSparseToDenseLUT->devicePointer(),
             itsVoxelsPerLevel[0]);
 
     itsTimeMeasurement.emplace_back("initLowestOctreeHierarchy", time);
@@ -161,12 +166,14 @@ void SparseOctree<coordinateType, colorType>::mergeHierarchical() {
     float timeAccumulated = 0;
     for(uint32_t i = 0; i < itsMetadata.depth; ++i) {
 
-        float time = chunking::mergeHierarchical(
-          itsOctree,
-                itsDensePointCountPerVoxel,
-                itsDenseToSparseLUT,
-                itsSparseToDenseLUT,
-                globalChunkCounter,
+        float time = executeKernel(
+                chunking::kernelMergeHierarchical,
+                itsVoxelsPerLevel[i + 1],
+                itsOctree->devicePointer(),
+                itsDensePointCountPerVoxel->devicePointer(),
+                itsDenseToSparseLUT->devicePointer(),
+                itsSparseToDenseLUT->devicePointer(),
+                globalChunkCounter->devicePointer(),
                 itsMetadata.mergingThreshold,
                 itsVoxelsPerLevel[i + 1],
                 itsGridSideLengthPerLevel[i + 1],
@@ -190,12 +197,14 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
     auto tmpIndexRegister = createGpuU32(itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset(0);
 
-    float time = chunking::distributePoints<float>(
-        itsOctree,
-            itsCloudData,
-            itsDataLUT,
-            itsDenseToSparseLUT,
-            tmpIndexRegister,
+    float time = executeKernel(
+            chunking::kernelDistributePoints<float>,
+            itsMetadata.cloudMetadata.pointAmount,
+            itsOctree->devicePointer(),
+            itsCloudData->devicePointer(),
+            itsDataLUT->devicePointer(),
+            itsDenseToSparseLUT->devicePointer(),
+            tmpIndexRegister->devicePointer(),
             itsMetadata.cloudMetadata,
             itsGridSideLengthPerLevel[0]);
 
@@ -203,6 +212,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
     spdlog::info("'distributePoints' took {:f} [ms]", time);
 }
 
+//#include <random_subsampling.cuh>
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::performSubsampling() {
@@ -221,13 +231,14 @@ void SparseOctree<coordinateType, colorType>::performSubsampling() {
     denseToSpareLUT->memset(-1);
     voxelCount->memset(0);
 
-    std::tuple<float, float> time;
+    std::tuple<float, float> time(0.f ,0.f);
 
     if(itsMetadata.strategy == RANDOM_POINT) {
         auto randomStates = createGpuRandom(1024, "randomStates");
 
         // ToDo: Time measurement
         initRandomStates(std::time(0), randomStates, 1024);
+        //executeKernel(subsampling::kernelInitRandoms, 1024 /*std::time(0), randomStates->devicePointer(),1024*/ );
 
         auto randomIndices = createGpuU32(nodesBaseLevel, "randomIndices");
 

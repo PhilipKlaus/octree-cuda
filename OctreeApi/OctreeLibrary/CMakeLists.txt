@@ -21,14 +21,15 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/pipeline/first_point_subsampling.cu
 
         # Cuda kernels
-        src/kernel/point_counting.cuh
-        src/kernel/octree_initialization.cuh
-        src/kernel/point_count_propagation.cuh
-        src/kernel/hierarchical_merging.cuh
-        src/kernel/point_distributing.cuh
-        src/kernel/random_subsampling.cuh
-        src/kernel/first_point_subsampling.cuh
-        src/kernel/subsample_evaluating.cuh)
+        #src/kernel/point_counting.cuh
+        #src/kernel/octree_initialization.cuh
+        #src/kernel/point_count_propagation.cuh
+        #src/kernel/hierarchical_merging.cuh
+        #src/kernel/point_distributing.cuh
+        #src/kernel/random_subsampling.cuh
+        #src/kernel/first_point_subsampling.cuh
+        #src/kernel/subsample_evaluating.cuh)
+        )
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)

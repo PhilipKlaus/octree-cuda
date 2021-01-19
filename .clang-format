@@ -1,0 +1,36 @@
+---
+Language: Cpp
+BasedOnStyle: Microsoft
+TabWidth: 4
+IndentWidth: 4
+ConstructorInitializerIndentWidth: 8
+ContinuationIndentWidth: 8
+AccessModifierOffset: -4  # indentation of public: / private: modifiers
+ColumnLimit: 120
+UseTab: Never
+AlignAfterOpenBracket: AlwaysBreak
+AlignEscapedNewlines: Right
+AlignConsecutiveMacros: true
+AlignConsecutiveAssignments: true
+AllowAllArgumentsOnNextLine: true
+AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: false
+BinPackParameters: false
+BraceWrapping:
+  AfterCaseLabel: true    # when a case statement is followed by a curly bracket, put the bracket on the next line
+  AfterExternBlock: false # don't indent code after extern "C" statement
+  AfterNamespace: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: AfterColon
+FixNamespaceComments: true
+IndentPPDirectives: BeforeHash
+IndentWrappedFunctionNames: true
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+PointerAlignment: Left
+ReflowComments: true
+SortUsingDeclarations: true
+SpaceBeforeParens: Always
