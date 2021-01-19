@@ -2,7 +2,7 @@
 
 #include <subsample_evaluating.cuh>
 #include <random_subsampling.cuh>
-#include "../../../include/sparseOctree.h"
+#include <kernel_executor.cuh>
 
 
 template <typename coordinateType, typename colorType>
@@ -63,15 +63,18 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
         calculateVoxelBB(metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        get<0>(accumulatedTime) += subsampling::evaluateSubsamples<float>(
-                itsCloudData,
-                subsampleConfig,
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT,
-                subsampleSparseVoxelCount,
+        get<0>(accumulatedTime) += executeKernel(
+                subsampling::kernelEvaluateSubsamples<float>,
+                accumulatedPoints,
+                itsCloudData->devicePointer(),
+                subsampleConfig->devicePointer(),
+                subsampleCountingGrid->devicePointer(),
+                subsampleDenseToSparseLUT->devicePointer(),
+                subsampleSparseVoxelCount->devicePointer(),
                 metadata,
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints);
+
 
         // Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost()[0];
