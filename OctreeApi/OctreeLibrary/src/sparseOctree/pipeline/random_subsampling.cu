@@ -1,16 +1,16 @@
 #include <sparseOctree.h>
 
-#include <subsample_evaluating.cuh>
-#include <random_subsampling.cuh>
+#include <cstdint>
 #include <kernel_executor.cuh>
-
+#include <random_subsampling.cuh>
+#include <subsample_evaluating.cuh>
 
 template <typename coordinateType, typename colorType>
 float SparseOctree<coordinateType, colorType>::initRandomStates( unsigned int seed,
                         unique_ptr<CudaArray<curandState_t>> &states,
                         uint32_t nodeAmount) {
 
-    return subsampling::initRandoms(seed, states, nodeAmount);
+    return executeKernel(subsampling::kernelInitRandoms, nodeAmount, seed, states->devicePointer(), nodeAmount);
 }
 
 
@@ -86,37 +86,44 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
         itsAveragingData.insert(make_pair(sparseVoxelIndex, move(averagingData)));
 
         // Prepare random point indices and reset averaging data
-        get<1>(accumulatedTime) += subsampling::generateRandoms(
-                randomStates,
-                randomIndices,
-                subsampleDenseToSparseLUT,
-                itsAveragingData[sparseVoxelIndex],
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT->pointCount());
+        uint32_t threads = subsampleDenseToSparseLUT->pointCount();
+        get<1>(accumulatedTime) += executeKernel(
+                subsampling::kernelGenerateRandoms,
+                threads,
+                randomStates->devicePointer(),
+                randomIndices->devicePointer(),
+                subsampleDenseToSparseLUT->devicePointer(),
+                itsAveragingData[sparseVoxelIndex]->devicePointer(),
+                subsampleCountingGrid->devicePointer(),
+                threads);
 
         // Perform averaging in parallel for all child nodes
-        get<1>(accumulatedTime) += subsampling::performAveraging<float, uint8_t>(
-                itsCloudData,
-                subsampleConfig,
-                itsAveragingData[sparseVoxelIndex],
-                subsampleDenseToSparseLUT,
+        get<1>(accumulatedTime) += executeKernel(
+                subsampling::kernelPerformAveraging<float, uint8_t>,
+                accumulatedPoints,
+                itsCloudData->devicePointer(),
+                subsampleConfig->devicePointer(),
+                itsAveragingData[sparseVoxelIndex]->devicePointer(),
+                subsampleDenseToSparseLUT->devicePointer(),
                 metadata,
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints
         );
 
         // Distribute the subsampled points in parallel for all child nodes
-        get<1>(accumulatedTime) += subsampling::randomPointSubsample<float>(
-                itsCloudData,
-                subsampleConfig,
-                itsSubsampleLUTs[sparseVoxelIndex],
-                itsAveragingData[sparseVoxelIndex],
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT,
-                subsampleSparseVoxelCount,
+        get<1>(accumulatedTime) += executeKernel(
+                subsampling::kernelRandomPointSubsample<float>,
+                accumulatedPoints,
+                itsCloudData->devicePointer(),
+                subsampleConfig->devicePointer(),
+                itsSubsampleLUTs[sparseVoxelIndex]->devicePointer(),
+                itsAveragingData[sparseVoxelIndex]->devicePointer(),
+                subsampleCountingGrid->devicePointer(),
+                subsampleDenseToSparseLUT->devicePointer(),
+                subsampleSparseVoxelCount->devicePointer(),
                 metadata,
                 itsMetadata.subsamplingGrid,
-                randomIndices,
+                randomIndices->devicePointer(),
                 accumulatedPoints);
     }
 

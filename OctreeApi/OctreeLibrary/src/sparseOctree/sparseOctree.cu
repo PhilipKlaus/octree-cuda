@@ -212,7 +212,6 @@ void SparseOctree<coordinateType, colorType>::distributePoints() {
     spdlog::info("'distributePoints' took {:f} [ms]", time);
 }
 
-//#include <random_subsampling.cuh>
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::performSubsampling() {
@@ -238,8 +237,6 @@ void SparseOctree<coordinateType, colorType>::performSubsampling() {
 
         // ToDo: Time measurement
         initRandomStates(std::time(0), randomStates, 1024);
-        //executeKernel(subsampling::kernelInitRandoms, 1024 /*std::time(0), randomStates->devicePointer(),1024*/ );
-
         auto randomIndices = createGpuU32(nodesBaseLevel, "randomIndices");
 
         time = randomSubsampling(
