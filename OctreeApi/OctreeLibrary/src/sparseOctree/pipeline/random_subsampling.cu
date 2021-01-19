@@ -148,3 +148,21 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::randomSubsamplin
         unique_ptr<CudaArray<curandState_t>>& randomStates,
         unique_ptr<CudaArray<uint32_t>>& randomIndices,
         unique_ptr<CudaArray<SubsampleConfig>>& subsampleConfig);
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                           SparseOctree<double, uint16_t>
+//----------------------------------------------------------------------------------------------------------------------
+
+template float SparseOctree<double, uint16_t>::initRandomStates (
+        unsigned int seed, unique_ptr<CudaArray<curandState_t>>& states, uint32_t nodeAmount);
+template std::tuple<float, float> SparseOctree<double, uint16_t>::randomSubsampling (
+        const unique_ptr<Chunk[]>& h_octreeSparse,
+        const unique_ptr<int[]>& h_sparseToDenseLUT,
+        uint32_t sparseVoxelIndex,
+        uint32_t level,
+        unique_ptr<CudaArray<uint32_t>>& subsampleCountingGrid,
+        unique_ptr<CudaArray<int>>& subsampleDenseToSparseLUT,
+        unique_ptr<CudaArray<uint32_t>>& subsampleSparseVoxelCount,
+        unique_ptr<CudaArray<curandState_t>>& randomStates,
+        unique_ptr<CudaArray<uint32_t>>& randomIndices,
+        unique_ptr<CudaArray<SubsampleConfig>>& subsampleConfig);

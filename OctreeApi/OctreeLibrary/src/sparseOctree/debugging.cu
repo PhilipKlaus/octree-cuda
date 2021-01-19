@@ -52,7 +52,11 @@ uint32_t SparseOctree<coordinateType, colorType>::getRootIndex() {
     return itsMetadata.nodeAmountSparse - 1;
 }
 
-// Template definitions for SparseOctree<float, uint8_t>
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                           SparseOctree<float, uint8_t>
+//----------------------------------------------------------------------------------------------------------------------
+
 template const OctreeMetadata &SparseOctree<float, uint8_t>::getMetadata() const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDataLUT() const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCountPerVoxel() const;
@@ -61,3 +65,16 @@ template unique_ptr<int[]> SparseOctree<float, uint8_t>::getSparseToDenseLUT() c
 template unique_ptr<Chunk[]> SparseOctree<float, uint8_t>::getOctreeSparse() const;
 template unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<float, uint8_t>::getSubsampleLUT() const;
 template uint32_t SparseOctree<float, uint8_t>::getRootIndex();
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                           SparseOctree<double, uint16_t>
+//----------------------------------------------------------------------------------------------------------------------
+
+template const OctreeMetadata &SparseOctree<double, uint16_t>::getMetadata() const;
+template unique_ptr<uint32_t[]> SparseOctree<double, uint16_t>::getDataLUT() const;
+template unique_ptr<uint32_t[]> SparseOctree<double, uint16_t>::getDensePointCountPerVoxel() const;
+template unique_ptr<int[]> SparseOctree<double, uint16_t>::getDenseToSparseLUT() const;
+template unique_ptr<int[]> SparseOctree<double, uint16_t>::getSparseToDenseLUT() const;
+template unique_ptr<Chunk[]> SparseOctree<double, uint16_t>::getOctreeSparse() const;
+template unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& SparseOctree<double, uint16_t>::getSubsampleLUT() const;
+template uint32_t SparseOctree<double, uint16_t>::getRootIndex();
