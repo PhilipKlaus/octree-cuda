@@ -151,12 +151,12 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::randomSubsamplin
         GpuSubsample& subsampleConfig);
 
 //----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint16_t>
+//                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template float SparseOctree<double, uint16_t>::initRandomStates (
+template float SparseOctree<double, uint8_t>::initRandomStates (
         unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
-template std::tuple<float, float> SparseOctree<double, uint16_t>::randomSubsampling (
+template std::tuple<float, float> SparseOctree<double, uint8_t>::randomSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,

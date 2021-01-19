@@ -5,7 +5,7 @@
 
 struct Averaging
 {
-    float r, g, b;
+    uint64_t r, g, b;
     uint32_t pointCount;
 };
 

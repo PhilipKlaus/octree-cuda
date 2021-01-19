@@ -101,10 +101,10 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsam
         GpuSubsample& subsampleConfig);
 
 //----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint16_t>
+//                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template std::tuple<float, float> SparseOctree<double, uint16_t>::firstPointSubsampling (
+template std::tuple<float, float> SparseOctree<double, uint8_t>::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,

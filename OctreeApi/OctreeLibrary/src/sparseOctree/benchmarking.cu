@@ -325,13 +325,13 @@ template void SparseOctree<float, uint8_t>::histogramBinning (
 template void SparseOctree<float, uint8_t>::exportHistogram (const string& filePath, uint32_t binWidth);
 
 //----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint16_t>
+//                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template void SparseOctree<double, uint16_t>::calculatePointVarianceInLeafNoes (
+template void SparseOctree<double, uint8_t>::calculatePointVarianceInLeafNoes (
         const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const;
 
-template void SparseOctree<double, uint16_t>::evaluateOctreeProperties (
+template void SparseOctree<double, uint8_t>::evaluateOctreeProperties (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
@@ -340,13 +340,13 @@ template void SparseOctree<double, uint16_t>::evaluateOctreeProperties (
         uint32_t& max,
         uint32_t nodeIndex) const;
 
-template void SparseOctree<double, uint16_t>::updateOctreeStatistics ();
-template void SparseOctree<double, uint16_t>::exportOctreeStatistics (const string& filePath);
-template void SparseOctree<double, uint16_t>::histogramBinning (
+template void SparseOctree<double, uint8_t>::updateOctreeStatistics ();
+template void SparseOctree<double, uint8_t>::exportOctreeStatistics (const string& filePath);
+template void SparseOctree<double, uint8_t>::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
         uint32_t binWidth,
         uint32_t nodeIndex) const;
 
-template void SparseOctree<double, uint16_t>::exportHistogram (const string& filePath, uint32_t binWidth);
+template void SparseOctree<double, uint8_t>::exportHistogram (const string& filePath, uint32_t binWidth);
