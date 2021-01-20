@@ -22,6 +22,7 @@ public:
     void setDevice() const;
     void setPointCloudHost(uint8_t *pointCloud);
     void setMetadata(const PointCloudMetadata &metadata);
+
     void generateOctree();
     void configureChunking(GridSize chunkingGrid, uint32_t mergingThreshold);
     void configureSubsampling(GridSize subsamplingGrid, SubsamplingStrategy strategy);
@@ -31,9 +32,12 @@ public:
     void configurePointDistributionReport(const std::string &filename, uint32_t);
 
 private:
+    template <typename coordinateType, typename colorType>
+    void generateOctreeTemplated();
+
+private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
-    //unique_ptr<SparseOctree> itsOctree;
     unique_ptr<CudaArray<uint8_t>> data;
 
     GridSize itsChunkingGrid = GRID_128;

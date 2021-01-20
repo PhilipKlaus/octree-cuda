@@ -3,21 +3,6 @@
 #include <curand_kernel.h>
 #include <memory>
 
-struct Averaging
-{
-    uint32_t r, g, b;
-    uint32_t pointCount;
-};
-
-struct SubsampleConfig
-{
-    uint32_t* lutAdress;
-    Averaging* averagingAdress;
-    uint32_t lutStartIndex;
-    uint32_t pointOffsetLower;
-    uint32_t pointOffsetUpper;
-};
-
 template <typename gpuType>
 using GpuArray      = unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8    = GpuArray<uint8_t>;

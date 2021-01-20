@@ -51,7 +51,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
 
         // Evaluate the subsample points in parallel for all child nodes
         get<0> (accumulatedTime) += executeKernel (
-                subsampling::kernelEvaluateSubsamples<float>,
+                subsampling::kernelEvaluateSubsamples<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
@@ -69,13 +69,15 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes
-        get<1> (accumulatedTime) += subsampling::firstPointSubsample<float> (
-                itsCloudData,
-                subsampleConfig,
-                itsSubsampleLUTs[sparseVoxelIndex],
-                subsampleCountingGrid,
-                subsampleDenseToSparseLUT,
-                subsampleSparseVoxelCount,
+        get<1> (accumulatedTime) += executeKernel (
+                subsampling::kernelFirstPointSubsample<coordinateType>,
+                accumulatedPoints,
+                itsCloudData->devicePointer (),
+                subsampleConfig->devicePointer (),
+                itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),
+                subsampleCountingGrid->devicePointer (),
+                subsampleDenseToSparseLUT->devicePointer (),
+                subsampleSparseVoxelCount->devicePointer (),
                 metadata,
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints);
@@ -93,7 +95,21 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsam
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
-        unique_ptr<CudaArray<uint32_t>>& subsampleCountingGrid,
-        unique_ptr<CudaArray<int>>& subsampleDenseToSparseLUT,
-        unique_ptr<CudaArray<uint32_t>>& subsampleSparseVoxelCount,
-        unique_ptr<CudaArray<SubsampleConfig>>& subsampleConfig);
+        GpuArrayU32& subsampleCountingGrid,
+        GpuArrayI32& subsampleDenseToSparseLUT,
+        GpuArrayU32& subsampleSparseVoxelCount,
+        GpuSubsample& subsampleConfig);
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                           SparseOctree<double, uint8_t>
+//----------------------------------------------------------------------------------------------------------------------
+
+template std::tuple<float, float> SparseOctree<double, uint8_t>::firstPointSubsampling (
+        const unique_ptr<Chunk[]>& h_octreeSparse,
+        const unique_ptr<int[]>& h_sparseToDenseLUT,
+        uint32_t sparseVoxelIndex,
+        uint32_t level,
+        GpuArrayU32& subsampleCountingGrid,
+        GpuArrayI32& subsampleDenseToSparseLUT,
+        GpuArrayU32& subsampleSparseVoxelCount,
+        GpuSubsample& subsampleConfig);

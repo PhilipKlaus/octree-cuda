@@ -7,17 +7,39 @@ project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library( ${PROJECT_NAME} STATIC
 
+        # Headers
+        include/api_types.h
+        include/sparseOctree.h
+        include/cudaArray.h
+        include/eventWatcher.h
+        include/global_types.h
+        include/tools.cuh
+        include/types.cuh
+
+        # Kernel
+        src/kernel/kernel_executor.cuh
+        src/kernel/first_point_subsampling.cuh
+        src/kernel/hierarchical_merging.cuh
+        src/kernel/octree_initialization.cuh
+        src/kernel/point_count_propagation.cuh
+        src/kernel/point_counting.cuh
+        src/kernel/point_distributing.cuh
+        src/kernel/random_subsampling.cuh
+        src/kernel/subsample_evaluating.cuh
+
         # Misc
         src/misc/tools.cu
+        src/misc/defines.cuh
+        src/misc/timing.cuh
 
         # Sparse octree
-        src/sparseOctree/sparseOctree.cu
+        src/sparseOctree/pipeline/first_point_subsampling.cu
+        src/sparseOctree/pipeline/random_subsampling.cu
         src/sparseOctree/benchmarking.cu
         src/sparseOctree/data_export.cu
         src/sparseOctree/debugging.cu
-
-        src/sparseOctree/pipeline/random_subsampling.cu
-        src/sparseOctree/pipeline/first_point_subsampling.cu)
+        src/sparseOctree/sparseOctree.cu
+        src/sparseOctree/dummy.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)

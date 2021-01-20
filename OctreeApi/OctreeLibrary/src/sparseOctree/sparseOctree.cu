@@ -18,7 +18,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        unique_ptr<CudaArray<uint8_t>> cloudData,
+        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy) :
 
         itsCloudData (move (cloudData))
@@ -68,7 +68,7 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting ()
     nodeAmountSparse->memset (0);
 
     float time = executeKernel (
-            chunking::kernelInitialPointCounting<float>,
+            chunking::kernelInitialPointCounting<coordinateType>,
             itsMetadata.cloudMetadata.pointAmount,
             itsCloudData->devicePointer (),
             itsDensePointCountPerVoxel->devicePointer (),
@@ -200,7 +200,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints ()
     tmpIndexRegister->memset (0);
 
     float time = executeKernel (
-            chunking::kernelDistributePoints<float>,
+            chunking::kernelDistributePoints<coordinateType>,
             itsMetadata.cloudMetadata.pointAmount,
             itsOctree->devicePointer (),
             itsCloudData->devicePointer (),
@@ -316,8 +316,10 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    float side      = itsMetadata.cloudMetadata.boundingBox.maximum.x - itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    auto cubicWidth = side / static_cast<float> (itsGridSideLengthPerLevel[level]);
+    double min = itsMetadata.cloudMetadata.boundingBox.minimum.x;
+    double max = itsMetadata.cloudMetadata.boundingBox.maximum.x;
+    double side      = max - min;
+    auto cubicWidth = side / static_cast<double> (itsGridSideLengthPerLevel[level]);
 
     metadata.boundingBox.minimum.x = itsMetadata.cloudMetadata.boundingBox.minimum.x + coords.x * cubicWidth;
     metadata.boundingBox.minimum.y = itsMetadata.cloudMetadata.boundingBox.minimum.y + coords.y * cubicWidth;
@@ -337,7 +339,7 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        unique_ptr<CudaArray<uint8_t>> cloudData,
+        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
@@ -351,4 +353,28 @@ template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
         GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints);
 template void SparseOctree<float, uint8_t>::calculateVoxelBB (
+        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
+
+//----------------------------------------------------------------------------------------------------------------------
+//                                           SparseOctree<double, uint8_t>
+//----------------------------------------------------------------------------------------------------------------------
+template SparseOctree<double, uint8_t>::SparseOctree (
+        GridSize chunkingGrid,
+        GridSize subsamplingGrid,
+        uint32_t mergingThreshold,
+        PointCloudMetadata cloudMetadata,
+        GpuArrayU8 cloudData,
+        SubsamplingStrategy strategy);
+template void SparseOctree<double, uint8_t>::initialPointCounting ();
+template void SparseOctree<double, uint8_t>::performCellMerging ();
+template void SparseOctree<double, uint8_t>::distributePoints ();
+template void SparseOctree<double, uint8_t>::performSubsampling ();
+template void SparseOctree<double, uint8_t>::initLowestOctreeHierarchy ();
+template void SparseOctree<double, uint8_t>::mergeHierarchical ();
+template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (
+        Chunk& voxel,
+        const unique_ptr<Chunk[]>& h_octreeSparse,
+        GpuSubsample& subsampleData,
+        uint32_t& accumulatedPoints);
+template void SparseOctree<double, uint8_t>::calculateVoxelBB (
         PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);

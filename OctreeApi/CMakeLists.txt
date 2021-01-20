@@ -43,6 +43,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 
 add_subdirectory(OctreeLibrary)
-target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLibrary)
+target_link_libraries(${PROJECT_NAME} PUBLIC OctreeLibrary)
 
 

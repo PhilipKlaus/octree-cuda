@@ -6,8 +6,8 @@
 
 #include <memory>
 #include "spdlog/spdlog.h"
-
 #include <iostream>
+
 Session* Session::ToSession (void* session)
 {
     auto s = static_cast<Session*> (session);
@@ -48,10 +48,19 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
     spdlog::debug("copied point cloud from host to device");
 }
 
-
 void Session::generateOctree() {
+    if(itsMetadata.cloudType == CloudType::CLOUD_FLOAT_UINT8_T) {
+        generateOctreeTemplated<float, uint8_t>();
+    }
+    else {
+        generateOctreeTemplated<double, uint8_t>();
+    }
+}
 
-    SparseOctree<float, uint8_t> octree(
+template <typename coordinateType, typename colorType>
+void Session::generateOctreeTemplated() {
+
+    SparseOctree<coordinateType, colorType> octree(
             itsChunkingGrid,
             itsSubsamplingGrid,
             itsMergingThreshold,
@@ -59,14 +68,6 @@ void Session::generateOctree() {
             move(data),
             itsSubsamplingStrategy
             );
-
-    /*itsOctree = make_unique<SparseOctree>(
-            itsChunkingGrid,
-            itsSubsamplingGrid,
-            itsMergingThreshold,
-            itsMetadata,
-            move(data),
-            itsSubsamplingStrategy);*/
 
     octree.initialPointCounting();
     octree.performCellMerging();

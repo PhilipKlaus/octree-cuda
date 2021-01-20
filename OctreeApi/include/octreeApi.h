@@ -5,9 +5,8 @@
 #ifndef OCTREE_API_H
 #define OCTREE_API_H
 
+#include <api_types.h>
 
-#include <cstdint>
-#include "../OctreeLibrary/include/global_types.h"
 
 #ifdef __cplusplus
 #define EXPORTED_PRE extern "C"
