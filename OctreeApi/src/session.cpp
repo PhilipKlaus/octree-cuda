@@ -51,7 +51,7 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
 
 void Session::generateOctree() {
 
-    SparseOctree<double, uint8_t> octree(
+    SparseOctree<float, uint8_t> octree(
             itsChunkingGrid,
             itsSubsamplingGrid,
             itsMergingThreshold,
