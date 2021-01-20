@@ -58,6 +58,20 @@ public:
         gpuErrchk (cudaMemset (itsData, value, itsElements * sizeof (dataType)));
     }
 
+    template <typename dataType>
+    static unique_ptr<CudaArray<dataType>> fromDevicePtr (dataType* device, uint32_t elements, const std::string& name)
+    {
+        return std::make_unique<CudaArray<dataType>> (device, elements, name);
+    }
+
+private:
+    explicit CudaArray (dataType* device, uint32_t elements, const std::string& name) :
+            itsElements (elements), itsName (name), itsData (device)
+    {
+        auto memoryToReserve = itsElements * sizeof (dataType);
+        itsMemory            = memoryToReserve;
+        spdlog::debug ("Importe GPU memory: {} bytes, {} elements", elements, memoryToReserve);
+    }
 
 private:
     std::string itsName;
