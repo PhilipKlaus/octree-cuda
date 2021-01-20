@@ -15,6 +15,12 @@ struct Vector3
 };
 #pragma pack(pop)
 
+
+enum CloudType {
+    CLOUD_FLOAT_UINT8_T,
+    CLOUD_DOUBLE_UINT8_T
+};
+
 struct BoundingBox
 {
     Vector3<double> minimum;
@@ -28,6 +34,7 @@ struct PointCloudMetadata
     BoundingBox boundingBox;
     Vector3<double> cloudOffset;
     Vector3<double> scale;
+    CloudType cloudType;
 };
 
 enum SubsamplingStrategy

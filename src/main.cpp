@@ -70,6 +70,7 @@ int main() {
     metadata.pointAmount = 25836417;
     metadata.pointDataStride = 15;
     metadata.scale = {1.f, 1.f, 1.f };
+    metadata.cloudType = CloudType::CLOUD_FLOAT_UINT8_T;
 
     // Read in ply
     ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);

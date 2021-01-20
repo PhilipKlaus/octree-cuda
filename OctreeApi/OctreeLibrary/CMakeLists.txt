@@ -8,6 +8,7 @@ project(OctreeLibrary LANGUAGES CUDA CXX)
 add_library( ${PROJECT_NAME} STATIC
 
         # Headers
+        include/api_types.h
         include/sparseOctree.h
         include/cudaArray.h
         include/eventWatcher.h
