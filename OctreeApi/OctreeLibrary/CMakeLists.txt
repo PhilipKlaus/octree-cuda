@@ -10,11 +10,11 @@ add_library( ${PROJECT_NAME} STATIC
         # Headers
         include/api_types.h
         include/sparseOctree.h
-        include/cudaArray.h
-        include/eventWatcher.h
-        include/global_types.h
-        include/tools.cuh
-        include/types.cuh
+        src/include/cudaArray.h
+        src/include/eventWatcher.h
+        src/include/global_types.h
+        src/include/tools.cuh
+        src/include/types.cuh
 
         # Kernel
         src/kernel/kernel_executor.cuh
@@ -42,7 +42,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/dummy.cpp)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc)
+target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc src/include)
 
 ####################
 # ADD CUDA SUPPORT #

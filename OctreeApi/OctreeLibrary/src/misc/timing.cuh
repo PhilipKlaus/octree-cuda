@@ -1,6 +1,6 @@
 #pragma once
 
-#include <tools.cuh>
+#include "../include/tools.cuh"
 
 namespace tools {
 

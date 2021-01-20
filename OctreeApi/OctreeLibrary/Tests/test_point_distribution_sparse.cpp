@@ -2,9 +2,9 @@
 // Created by KlausP on 04.11.2020.
 //
 
-#include <sparseOctree.h>
+#include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include "tools.cuh"
+#include <sparseOctree.h>
 
 
 uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {

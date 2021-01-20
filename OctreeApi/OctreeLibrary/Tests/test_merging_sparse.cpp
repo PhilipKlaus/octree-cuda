@@ -2,8 +2,8 @@
 // Created by KlausP on 29.10.2020.
 //
 
+#include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include "tools.cuh"
 #include "sparseOctree.h"
 
 

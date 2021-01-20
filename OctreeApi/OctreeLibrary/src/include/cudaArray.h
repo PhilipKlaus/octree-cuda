@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../src/misc/defines.cuh"
+#include "../misc/defines.cuh"
 #include "eventWatcher.h"
 #include <memory>
 #include <string>

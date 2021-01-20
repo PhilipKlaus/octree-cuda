@@ -2,9 +2,10 @@
 // Created by KlausP on 28.10.2020.
 //
 
-#include <sparseOctree.h>
-#include "catch2/catch.hpp"
 #include "tools.cuh"
+#include "catch2/catch.hpp"
+#include <sparseOctree.h>
+
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 
