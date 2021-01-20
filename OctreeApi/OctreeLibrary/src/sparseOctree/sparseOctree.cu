@@ -18,10 +18,8 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
-        SubsamplingStrategy strategy) :
-
-        itsCloudData (move (cloudData))
+        uint8_t *pointCloud,
+        SubsamplingStrategy strategy)
 {
     // Initialize octree metadata
     itsMetadata                  = {};
@@ -31,6 +29,11 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
     itsMetadata.strategy         = strategy;
+
+    // Copy point cloud from host to device
+    itsCloudData = createGpuU8(cloudMetadata.pointAmount * cloudMetadata.pointDataStride, "pointcloud");
+    itsCloudData->toGPU(pointCloud);
+    spdlog::info("Copied point cloud from host->device");
 
     // Pre calculate often-used octree metrics
     auto sideLength = static_cast<uint32_t> (pow (2, itsMetadata.depth));
@@ -44,7 +47,6 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
 
     // Create data LUT
     itsDataLUT = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
-    spdlog::info ("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
 }
 
 
@@ -339,7 +341,7 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
+        uint8_t *cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
@@ -363,7 +365,7 @@ template SparseOctree<double, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
+        uint8_t *cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<double, uint8_t>::initialPointCounting ();
 template void SparseOctree<double, uint8_t>::performCellMerging ();

@@ -40,7 +40,7 @@ void ocpi_set_point_cloud_metadata (void* session, const PointCloudMetadata &met
     s->setMetadata(metadata);
 }
 
-void ocpi_load_point_cloud_from_host(void* session, uint8_t *pointCloud) {
+void ocpi_set_point_cloud_host(void* session, uint8_t *pointCloud) {
     auto s = Session::ToSession (session);
     s->setPointCloudHost(pointCloud);
 }

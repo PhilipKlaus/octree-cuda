@@ -38,7 +38,7 @@ private:
 private:
     int itsDevice;
     PointCloudMetadata itsMetadata{};
-    unique_ptr<CudaArray<uint8_t>> data;
+    uint8_t *itsPointCloud;
 
     GridSize itsChunkingGrid = GRID_128;
     uint32_t itsMergingThreshold = 0;

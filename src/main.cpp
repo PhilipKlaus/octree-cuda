@@ -86,7 +86,7 @@ int main() {
 
     // Configurate and create octree
     ocpi_set_point_cloud_metadata(session, metadata);
-    ocpi_load_point_cloud_from_host(session, pChars);
+    ocpi_set_point_cloud_host(session, pChars);
     ocpi_configure_chunking(session, GRID_512, 10000);
     ocpi_configure_subsampling(session, GRID_128, RANDOM_POINT);
 

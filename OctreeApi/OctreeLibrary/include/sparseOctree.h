@@ -20,7 +20,7 @@ public:
             GridSize subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            GpuArrayU8 cloudData,
+            uint8_t *pointCloud,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
