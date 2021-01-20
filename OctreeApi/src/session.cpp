@@ -64,9 +64,10 @@ void Session::generateOctreeTemplated() {
             itsSubsamplingGrid,
             itsMergingThreshold,
             itsMetadata,
-            itsPointCloud,
             itsSubsamplingStrategy
             );
+
+    octree.setPointCloudHost(itsPointCloud);
 
     octree.initialPointCounting();
     octree.performCellMerging();

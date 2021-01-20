@@ -58,7 +58,6 @@ public:
         gpuErrchk (cudaMemset (itsData, value, itsElements * sizeof (dataType)));
     }
 
-    template <typename dataType>
     static unique_ptr<CudaArray<dataType>> fromDevicePtr (dataType* device, uint32_t elements, const std::string& name)
     {
         return std::make_unique<CudaArray<dataType>> (device, elements, name);

@@ -20,7 +20,6 @@ public:
             GridSize subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            uint8_t *pointCloud,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
@@ -28,6 +27,11 @@ public:
     void operator= (const SparseOctree&) = delete;
 
 public:
+    // Set point cloud
+    void setPointCloudHost(uint8_t *pointCloud);
+    void setPointCloudDevice(uint8_t *pointCloud);
+    void setPointCloudDevice(GpuArrayU8 pointCloud);
+
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
 
