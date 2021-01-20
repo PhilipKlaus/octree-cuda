@@ -24,11 +24,12 @@ int main() {
     ocpi_create_session(&session, 0);
 
     PointCloudMetadata metadata = {};
-    metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 15;
-    metadata.scale = {1.f, 1.f, 1.f};
+    metadata.pointAmount = 119701547;
+    metadata.pointDataStride = 27;
+    //metadata.scale = {pow(10,-250), pow(10,-250), pow(10,-250)};
+    metadata.scale = {1.f, 1.f, 1.f };
 
-    ifstream ifs("heidentor_color_raw.ply", ios::binary|ios::ate);
+    ifstream ifs("morrobay_fused_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -36,27 +37,24 @@ int main() {
     ifs.read(reinterpret_cast<char *>(pChars), length);
     ifs.close();
 
-    Vector3<float> minimum {INFINITY, INFINITY, INFINITY};
-    Vector3<float> maximum {-INFINITY, -INFINITY, -INFINITY};
+    Vector3<double> minimum {INFINITY, INFINITY, INFINITY};
+    Vector3<double> maximum {-INFINITY, -INFINITY, -INFINITY};
 
     // Calculate bounding box on CPU
     for(uint32_t i = 0; i < metadata.pointAmount; ++i) {
-        minimum.x = fmin(minimum.x, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride));
-        minimum.y = fmin(minimum.y, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 4));
-        minimum.z = fmin(minimum.z, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 8));
-        maximum.x = fmax(maximum.x, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride));
-        maximum.y = fmax(maximum.y, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 4));
-        maximum.z = fmax(maximum.z, *reinterpret_cast<float*>(pChars + i * metadata.pointDataStride + 8));
+        minimum.x = fmin(minimum.x, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride)) * metadata.scale.x);
+        minimum.y = fmin(minimum.y, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride + 8)) * metadata.scale.y);
+        minimum.z = fmin(minimum.z, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride + 16)) * metadata.scale.z);
+        maximum.x = fmax(maximum.x, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride)) * metadata.scale.x);
+        maximum.y = fmax(maximum.y, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride + 8)) * metadata.scale.y);
+        maximum.z = fmax(maximum.z, (*reinterpret_cast<double*>(pChars + i * metadata.pointDataStride + 16)) * metadata.scale.z);
     }
-    spdlog::info(
-            "Cloud dimensions: width: {}, height: {}, depth: {}",
-            maximum.x-minimum.x, maximum.y-minimum.y, maximum.z-minimum.z);
 
-    Vector3<float> dimension{};
+    Vector3<double> dimension{};
     dimension.x = maximum.x - minimum.x;
     dimension.y = maximum.y - minimum.y;
     dimension.z = maximum.z - minimum.z;
-    float cubicSideLength = max(max(dimension.x, dimension.y), dimension.z);
+    double cubicSideLength = max(max(dimension.x, dimension.y), dimension.z);
     spdlog::info("Cloud dimensions: width: {}, height: {}, depth: {}", dimension.x, dimension.y, dimension.z);
     spdlog::info("Cubic BB sidelength: {}", cubicSideLength);
 

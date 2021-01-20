@@ -34,9 +34,9 @@ __device__ uint32_t
     double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
     double sizeZ = metadata.boundingBox.maximum.z - metadata.boundingBox.minimum.z;
 
-    double uX = (point->x - metadata.boundingBox.minimum.x) / (sizeX / gridSize);
-    double uY = (point->y - metadata.boundingBox.minimum.y) / (sizeY / gridSize);
-    double uZ = (point->z - metadata.boundingBox.minimum.z) / (sizeZ / gridSize);
+    double uX = (point->x * metadata.scale.x - metadata.boundingBox.minimum.x) / (sizeX / gridSize);
+    double uY = (point->y * metadata.scale.y - metadata.boundingBox.minimum.y) / (sizeY / gridSize);
+    double uZ = (point->z * metadata.scale.z - metadata.boundingBox.minimum.z) / (sizeZ / gridSize);
 
     uint64_t ix = static_cast<int64_t> (fmin (uX, gridSize - 1.0));
     uint64_t iy = static_cast<int64_t> (fmin (uY, gridSize - 1.0));

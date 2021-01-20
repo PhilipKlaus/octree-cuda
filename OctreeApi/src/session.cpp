@@ -51,7 +51,7 @@ void Session::setPointCloudHost(uint8_t *pointCloud) {
 
 void Session::generateOctree() {
 
-    SparseOctree<float, uint8_t> octree(
+    SparseOctree<double, uint8_t> octree(
             itsChunkingGrid,
             itsSubsamplingGrid,
             itsMergingThreshold,
@@ -59,14 +59,6 @@ void Session::generateOctree() {
             move(data),
             itsSubsamplingStrategy
             );
-
-    /*itsOctree = make_unique<SparseOctree>(
-            itsChunkingGrid,
-            itsSubsamplingGrid,
-            itsMergingThreshold,
-            itsMetadata,
-            move(data),
-            itsSubsamplingStrategy);*/
 
     octree.initialPointCounting();
     octree.performCellMerging();

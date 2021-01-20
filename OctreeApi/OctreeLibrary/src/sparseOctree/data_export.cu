@@ -258,31 +258,31 @@ uint32_t SparseOctree<double, uint8_t>::exportTreeNode (
                             reinterpret_cast<const char*> (&(cpuPointCloud
                             [dataLUT[octreeSparse[index].chunkDataIndex + u] *
                              metadata.pointDataStride +
-                             4])),
-                            sizeof (double));
-                    ply.write (
-                            reinterpret_cast<const char*> (&(cpuPointCloud
-                            [dataLUT[octreeSparse[index].chunkDataIndex + u] *
-                             metadata.pointDataStride +
                              8])),
                             sizeof (double));
                     ply.write (
                             reinterpret_cast<const char*> (&(cpuPointCloud
                             [dataLUT[octreeSparse[index].chunkDataIndex + u] *
                              metadata.pointDataStride +
-                             12])),
+                             16])),
+                            sizeof (double));
+                    ply.write (
+                            reinterpret_cast<const char*> (&(cpuPointCloud
+                            [dataLUT[octreeSparse[index].chunkDataIndex + u] *
+                             metadata.pointDataStride +
+                             24])),
                             sizeof (uint8_t));
                     ply.write (
                             reinterpret_cast<const char*> (&(cpuPointCloud
                             [dataLUT[octreeSparse[index].chunkDataIndex + u] *
                              metadata.pointDataStride +
-                             13])),
+                             25])),
                             sizeof (uint8_t));
                     ply.write (
                             reinterpret_cast<const char*> (&(cpuPointCloud
                             [dataLUT[octreeSparse[index].chunkDataIndex + u] *
                              metadata.pointDataStride +
-                             14])),
+                             26])),
                             sizeof (uint8_t));
                 }
             }

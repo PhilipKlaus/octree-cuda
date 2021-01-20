@@ -66,7 +66,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
 
         // Evaluate the subsample points in parallel for all child nodes
         get<0> (accumulatedTime) += executeKernel (
-                subsampling::kernelEvaluateSubsamples<float>,
+                subsampling::kernelEvaluateSubsamples<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
@@ -101,7 +101,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
 
         // Perform averaging in parallel for all child nodes
         get<1> (accumulatedTime) += executeKernel (
-                subsampling::kernelPerformAveraging<float, uint8_t>,
+                subsampling::kernelPerformAveraging<coordinateType, colorType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
@@ -113,7 +113,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
 
         // Distribute the subsampled points in parallel for all child nodes
         get<1> (accumulatedTime) += executeKernel (
-                subsampling::kernelRandomPointSubsample<float>,
+                subsampling::kernelRandomPointSubsample<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),

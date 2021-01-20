@@ -51,7 +51,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
 
         // Evaluate the subsample points in parallel for all child nodes
         get<0> (accumulatedTime) += executeKernel (
-                subsampling::kernelEvaluateSubsamples<float>,
+                subsampling::kernelEvaluateSubsamples<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
@@ -70,7 +70,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
 
         // Distribute the subsampled points in parallel for all child nodes
         get<1> (accumulatedTime) += executeKernel (
-                subsampling::kernelFirstPointSubsample<float>,
+                subsampling::kernelFirstPointSubsample<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
