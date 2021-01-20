@@ -18,10 +18,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
-        SubsamplingStrategy strategy) :
-
-        itsCloudData (move (cloudData))
+        SubsamplingStrategy strategy)
 {
     // Initialize octree metadata
     itsMetadata                  = {};
@@ -44,9 +41,31 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
 
     // Create data LUT
     itsDataLUT = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
-    spdlog::info ("Instantiated sparse octree for {} points", cloudMetadata.pointAmount);
+    spdlog::info ("Prepared empty SparseOctree");
 }
 
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::setPointCloudHost (uint8_t* pointCloud)
+{
+    itsCloudData = createGpuU8 (
+            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
+    itsCloudData->toGPU (pointCloud);
+    spdlog::info ("Copied point cloud from host->device");
+}
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::setPointCloudDevice (uint8_t* pointCloud)
+{
+    itsCloudData = CudaArray<coordinateType>::fromDevicePtr (
+            pointCloud, itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
+    spdlog::info ("Imported point cloud from device");
+}
+
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::setPointCloudDevice (GpuArrayU8 pointCloud)
+{
+    itsCloudData = std::move(pointCloud);
+}
 
 //###################
 //#     Pipeline    #
@@ -316,9 +335,9 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    double min = itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    double max = itsMetadata.cloudMetadata.boundingBox.maximum.x;
-    double side      = max - min;
+    double min      = itsMetadata.cloudMetadata.boundingBox.minimum.x;
+    double max      = itsMetadata.cloudMetadata.boundingBox.maximum.x;
+    double side     = max - min;
     auto cubicWidth = side / static_cast<double> (itsGridSideLengthPerLevel[level]);
 
     metadata.boundingBox.minimum.x = itsMetadata.cloudMetadata.boundingBox.minimum.x + coords.x * cubicWidth;
@@ -339,7 +358,6 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
@@ -347,6 +365,8 @@ template void SparseOctree<float, uint8_t>::distributePoints ();
 template void SparseOctree<float, uint8_t>::performSubsampling ();
 template void SparseOctree<float, uint8_t>::initLowestOctreeHierarchy ();
 template void SparseOctree<float, uint8_t>::mergeHierarchical ();
+template void SparseOctree<float, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
+template void SparseOctree<float, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
 template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
@@ -363,7 +383,6 @@ template SparseOctree<double, uint8_t>::SparseOctree (
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        GpuArrayU8 cloudData,
         SubsamplingStrategy strategy);
 template void SparseOctree<double, uint8_t>::initialPointCounting ();
 template void SparseOctree<double, uint8_t>::performCellMerging ();
@@ -371,6 +390,8 @@ template void SparseOctree<double, uint8_t>::distributePoints ();
 template void SparseOctree<double, uint8_t>::performSubsampling ();
 template void SparseOctree<double, uint8_t>::initLowestOctreeHierarchy ();
 template void SparseOctree<double, uint8_t>::mergeHierarchical ();
+template void SparseOctree<double, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
+template void SparseOctree<double, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
 template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,

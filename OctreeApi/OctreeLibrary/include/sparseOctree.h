@@ -4,11 +4,11 @@
 
 #pragma once
 
-#include <cudaArray.h>
+#include "../src/include/cudaArray.h"
+#include "../src/include/global_types.h"
+#include "../src/include/tools.cuh"
+#include "../src/include/types.cuh"
 #include <curand_kernel.h>
-#include <global_types.h>
-#include <tools.cuh>
-#include <types.cuh>
 
 
 template <typename coordinateType, typename colorType>
@@ -20,7 +20,6 @@ public:
             GridSize subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            GpuArrayU8 cloudData,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
@@ -28,6 +27,11 @@ public:
     void operator= (const SparseOctree&) = delete;
 
 public:
+    // Set point cloud
+    void setPointCloudHost(uint8_t *pointCloud);
+    void setPointCloudDevice(uint8_t *pointCloud);
+    void setPointCloudDevice(GpuArrayU8 pointCloud);
+
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
 

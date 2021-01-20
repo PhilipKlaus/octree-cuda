@@ -1,11 +1,11 @@
 #pragma once
 
+#include "../include/tools.cuh"
 #include <timing.cuh>
-#include <tools.cuh>
 
 // https://developer.nvidia.com/blog/cplusplus-11-in-cuda-variadic-templates/
-template <typename... Arguments>
-float executeKernel (void (*kernel) (Arguments... args), uint32_t threads, Arguments... args)
+template <typename FunctType, typename... Arguments>
+float executeKernel (FunctType kernel, uint32_t threads, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;

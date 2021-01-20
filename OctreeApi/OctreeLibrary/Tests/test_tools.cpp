@@ -2,8 +2,8 @@
 // Created by KlausP on 04.10.2020.
 //
 
+#include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include "tools.cuh"
 
 
 TEST_CASE ("Test cuboid sample generation", "[cuboid]") {

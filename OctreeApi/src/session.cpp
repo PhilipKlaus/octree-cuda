@@ -2,11 +2,12 @@
 // Created by KlausP on 01.11.2020.
 //
 
-#include "session.h"
+#include <session.h>
 
 #include <memory>
-#include "spdlog/spdlog.h"
 #include <iostream>
+#include "spdlog/spdlog.h"
+#include <sparseOctree.h>
 
 Session* Session::ToSession (void* session)
 {
@@ -43,9 +44,8 @@ void Session::setMetadata(const PointCloudMetadata &metadata) {
 };
 
 void Session::setPointCloudHost(uint8_t *pointCloud) {
-    data = createGpuU8(itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
-    data->toGPU(pointCloud);
-    spdlog::debug("copied point cloud from host to device");
+    itsPointCloud = pointCloud;
+    spdlog::debug("set point cloud data from host");
 }
 
 void Session::generateOctree() {
@@ -65,9 +65,10 @@ void Session::generateOctreeTemplated() {
             itsSubsamplingGrid,
             itsMergingThreshold,
             itsMetadata,
-            move(data),
             itsSubsamplingStrategy
             );
+
+    octree.setPointCloudHost(itsPointCloud);
 
     octree.initialPointCounting();
     octree.performCellMerging();

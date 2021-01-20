@@ -2,9 +2,10 @@
 // Created by KlausP on 28.10.2020.
 //
 
-#include <sparseOctree.h>
-#include "catch2/catch.hpp"
 #include "tools.cuh"
+#include "catch2/catch.hpp"
+#include <sparseOctree.h>
+
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
 
@@ -13,7 +14,8 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]") {
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid(128, metadata);
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cloud), RANDOM_POINT);
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, RANDOM_POINT);
+    octree->setPointCloudDevice(move(cloud));
 
     // Perform initial point counting
     octree->initialPointCounting();

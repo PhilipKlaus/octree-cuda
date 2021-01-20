@@ -2,9 +2,9 @@
 // Created by KlausP on 04.11.2020.
 //
 
-#include <sparseOctree.h>
+#include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include "tools.cuh"
+#include <sparseOctree.h>
 
 
 uint32_t testOctreenodeSparse(uint8_t *cpuPointCloud, const unique_ptr<Chunk[]> &octree, const unique_ptr<uint32_t[]> &dataLUT, const unique_ptr<int[]> &sparseToDense, uint32_t level, uint32_t index) {
@@ -57,7 +57,8 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]") {
     auto cpuData = cloud->toHost();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, move(cloud), RANDOM_POINT);
+    auto octree = make_unique<SparseOctree<float, uint8_t>>(GRID_128, GRID_128, 10000, metadata, RANDOM_POINT);
+    octree->setPointCloudDevice(move(cloud));
 
     octree->initialPointCounting();
     octree->performCellMerging(); // All points reside in the 4th level (8x8x8) of the octree
