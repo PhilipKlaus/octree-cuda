@@ -2,11 +2,12 @@
 // Created by KlausP on 01.11.2020.
 //
 
-#include "session.h"
+#include <session.h>
 
 #include <memory>
-#include "spdlog/spdlog.h"
 #include <iostream>
+#include "spdlog/spdlog.h"
+#include <sparseOctree.h>
 
 Session* Session::ToSession (void* session)
 {
