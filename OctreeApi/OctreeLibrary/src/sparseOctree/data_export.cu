@@ -79,6 +79,7 @@ uint32_t SparseOctree<float, uint8_t>::exportTreeNode (
                     ply.write (
                             reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 8])),
                             sizeof (float));
+
                     uint8_t r = static_cast<uint8_t> (averaging[u].r / averaging[u].pointCount);
                     ply.write (reinterpret_cast<const char*> (&r), sizeof (uint8_t));
                     uint8_t g = static_cast<uint8_t> (averaging[u].g / averaging[u].pointCount);
@@ -231,6 +232,7 @@ uint32_t SparseOctree<double, uint8_t>::exportTreeNode (
                     ply.write (
                             reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 16])),
                             sizeof (double));
+
                     uint8_t r = static_cast<uint8_t> (averaging[u].r / averaging[u].pointCount);
                     ply.write (reinterpret_cast<const char*> (&r), sizeof (uint8_t));
                     uint8_t g = static_cast<uint8_t> (averaging[u].g / averaging[u].pointCount);
@@ -240,9 +242,13 @@ uint32_t SparseOctree<double, uint8_t>::exportTreeNode (
 
                     // ToDo: Let user switch between averaged and normal color export
                     /*ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] * metadata.pointDataStride +
-                    12])), sizeof (uint8_t)); ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] *
-                    metadata.pointDataStride + 13])), sizeof (uint8_t)); ply.write (reinterpret_cast<const char*>
-                    (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 14])), sizeof (uint8_t));*/
+                    24])), sizeof (uint8_t));
+
+                    ply.write (reinterpret_cast<const char*> (&(cpuPointCloud[lut[u] *
+                    metadata.pointDataStride + 25])), sizeof (uint8_t));
+
+                    ply.write (reinterpret_cast<const char*>
+                    (&(cpuPointCloud[lut[u] * metadata.pointDataStride + 26])), sizeof (uint8_t));*/
                 }
             }
             else

@@ -67,13 +67,13 @@ int main() {
 
     // Setup cloud properties
     PointCloudMetadata metadata = {};
-    metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 15;
+    metadata.pointAmount = 47111095;
+    metadata.pointDataStride = 27;
     metadata.scale = {1.f, 1.f, 1.f };
-    metadata.cloudType = CloudType::CLOUD_FLOAT_UINT8_T;
+    metadata.cloudType = CloudType::CLOUD_DOUBLE_UINT8_T;
 
     // Read in ply
-    ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);
+    ifstream ifs(   "lifeboat_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -82,7 +82,7 @@ int main() {
     ifs.close();
 
     // Calculate BB
-    calculateBB<float>(pChars, metadata);
+    calculateBB<double>(pChars, metadata);
 
     // Configurate and create octree
     ocpi_set_point_cloud_metadata(session, metadata);
