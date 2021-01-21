@@ -2,7 +2,7 @@
 // Created by KlausP on 14.11.2020.
 //
 
-#include <sparseOctree.h>
+#include "sparseOctree.h"
 
 
 template <typename coordinateType, typename colorType>

@@ -4,9 +4,11 @@
 
 #pragma once
 
+#include <cstdint>
+
 #include "cuda_runtime.h"
 #include "spdlog/spdlog.h"
-#include <cstdint>
+
 
 
 constexpr uint32_t BLOCK_SIZE_MAX = 1024;

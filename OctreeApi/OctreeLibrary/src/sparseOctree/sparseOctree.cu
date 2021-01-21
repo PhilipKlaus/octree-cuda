@@ -2,14 +2,13 @@
 // Created by KlausP on 04.11.2020.
 //
 
-#include <sparseOctree.h>
-
-#include <hierarchical_merging.cuh>
-#include <kernel_executor.cuh>
-#include <octree_initialization.cuh>
-#include <point_count_propagation.cuh>
-#include <point_counting.cuh>
-#include <point_distributing.cuh>
+#include "sparseOctree.h"
+#include "hierarchical_merging.cuh"
+#include "kernel_executor.cuh"
+#include "octree_initialization.cuh"
+#include "point_count_propagation.cuh"
+#include "point_counting.cuh"
+#include "point_distributing.cuh"
 
 
 template <typename coordinateType, typename colorType>

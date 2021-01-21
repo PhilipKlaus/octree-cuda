@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../include/tools.cuh"
+#include <cuda_runtime_api.h>
+
 
 namespace tools {
 

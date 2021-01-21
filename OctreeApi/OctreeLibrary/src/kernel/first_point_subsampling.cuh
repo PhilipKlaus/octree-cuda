@@ -1,14 +1,8 @@
 #pragma once
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <timing.cuh>
-
-#include "../include/cudaArray.h"
-#include "../include/global_types.h"
-#include "../include/tools.cuh"
-#include "../include/types.cuh"
-#include <cstdint>
+#include "octree_metadata.h"
+#include "types.cuh"
+#include "tools.cuh"
 
 namespace subsampling {
 

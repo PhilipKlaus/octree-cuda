@@ -1,10 +1,8 @@
-#include <sparseOctree.h>
+#include "sparseOctree.h"
+#include "kernel_executor.cuh"
+#include "random_subsampling.cuh"
+#include "subsample_evaluating.cuh"
 
-#include "../../include/types.cuh"
-#include <cstdint>
-#include <kernel_executor.cuh>
-#include <random_subsampling.cuh>
-#include <subsample_evaluating.cuh>
 
 template <typename coordinateType, typename colorType>
 float SparseOctree<coordinateType, colorType>::initRandomStates (

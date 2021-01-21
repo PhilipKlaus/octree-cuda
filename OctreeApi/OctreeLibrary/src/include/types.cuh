@@ -3,12 +3,18 @@
 #include <curand_kernel.h>
 #include <memory>
 
+#include "cudaArray.h"
+
+
+#pragma pack(push, 1)
 struct Averaging
 {
     uint32_t r, g, b;
     uint32_t pointCount;
 };
+#pragma pack(pop)
 
+#pragma pack(push, 1)
 struct SubsampleConfig
 {
     uint32_t* lutAdress;
@@ -17,9 +23,23 @@ struct SubsampleConfig
     uint32_t pointOffsetLower;
     uint32_t pointOffsetUpper;
 };
+#pragma pack(pop)
+
+#pragma pack(push, 1)
+struct Chunk
+{
+    uint32_t pointCount;       // How many points does this chunk have
+    uint32_t parentChunkIndex; // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
+    bool isFinished;           // Is this chunk finished (= not mergeable anymore)
+    uint32_t chunkDataIndex;   // Determines the INDEX in the chunk data array -> for storing point data
+    int childrenChunks[8];     // The INDICES of the children chunks in the GRID
+    bool isParent;             // Denotes if Chunk is a parent or a leaf node
+};
+#pragma pack(pop)
+
 
 template <typename gpuType>
-using GpuArray      = unique_ptr<CudaArray<gpuType>>;
+using GpuArray      = std::unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8    = GpuArray<uint8_t>;
 using GpuArrayU32   = GpuArray<uint32_t>;
 using GpuArrayI32   = GpuArray<int>;

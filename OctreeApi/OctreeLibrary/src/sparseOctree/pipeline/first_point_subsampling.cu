@@ -1,7 +1,8 @@
-#include <first_point_subsampling.cuh>
-#include <kernel_executor.cuh>
-#include <sparseOctree.h>
-#include <subsample_evaluating.cuh>
+#include "first_point_subsampling.cuh"
+#include "kernel_executor.cuh"
+#include "sparseOctree.h"
+#include "subsample_evaluating.cuh"
+
 
 template <typename coordinateType, typename colorType>
 std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubsampling (

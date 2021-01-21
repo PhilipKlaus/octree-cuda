@@ -4,11 +4,8 @@
 
 #pragma once
 
-#include "../src/include/cudaArray.h"
-#include "../src/include/global_types.h"
-#include "../src/include/tools.cuh"
-#include "../src/include/types.cuh"
-#include <curand_kernel.h>
+#include "octree_metadata.h"
+#include "types.cuh"
 
 
 template <typename coordinateType, typename colorType>

@@ -12,7 +12,7 @@ add_library( ${PROJECT_NAME} STATIC
         include/sparseOctree.h
         src/include/cudaArray.h
         src/include/eventWatcher.h
-        src/include/global_types.h
+        src/include/octree_metadata.h
         src/include/tools.cuh
         src/include/types.cuh
 
@@ -39,10 +39,20 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/data_export.cu
         src/sparseOctree/debugging.cu
         src/sparseOctree/sparseOctree.cu
-        src/sparseOctree/dummy.cpp)
+        src/sparseOctree/dummy.cpp
+
+        # Data export
+        src/export/ply_exporter.cuh
+        src/export/ply_exporter.cu
+        src/export/potree_exporter.cuh
+        src/export/potree_exporter.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc src/include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        src/kernel
+        src/misc
+        src/include
+        src/export)
 
 ####################
 # ADD CUDA SUPPORT #

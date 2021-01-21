@@ -2,7 +2,8 @@
 // Created by KlausP on 06.11.2020.
 //
 
-#include <sparseOctree.h>
+#include "sparseOctree.h"
+#include "tools.cuh"
 #include "catch2/catch.hpp"
 
 void testSubsampleTree(

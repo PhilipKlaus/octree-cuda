@@ -4,10 +4,11 @@
 
 #pragma once
 
-#include "../misc/defines.cuh"
-#include "eventWatcher.h"
 #include <memory>
 #include <string>
+
+#include "defines.cuh"
+#include "eventWatcher.h"
 
 using namespace std;
 

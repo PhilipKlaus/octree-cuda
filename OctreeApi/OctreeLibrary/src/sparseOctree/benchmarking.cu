@@ -4,7 +4,7 @@
 
 #include <iomanip>
 #include <json.hpp>
-#include <sparseOctree.h>
+#include "sparseOctree.h"
 
 using json = nlohmann::json;
 

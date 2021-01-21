@@ -2,7 +2,7 @@
 // Created by KlausP on 13.11.2020.
 //
 
-#include <sparseOctree.h>
+#include "sparseOctree.h"
 
 
 template <>

@@ -1,11 +1,12 @@
 #pragma once
 
 
-#include "cudaArray.h"
-#include "global_types.h"
-#include <cuda.h>
 #include <cuda_runtime_api.h>
 #include <memory>
+
+#include "types.cuh"
+#include "octree_metadata.h"
+
 
 using namespace std;
 
