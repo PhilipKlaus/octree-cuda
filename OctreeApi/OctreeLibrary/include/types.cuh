@@ -3,7 +3,7 @@
 #include <curand_kernel.h>
 #include <memory>
 
-#include "cudaArray.h"
+#include "../src/include/cudaArray.h"
 
 
 #pragma pack(push, 1)

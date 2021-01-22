@@ -3,6 +3,7 @@
 //
 
 #include "sparseOctree.h"
+#include "ply_exporter.cuh"
 
 
 template <>
@@ -319,6 +320,11 @@ uint32_t SparseOctree<double, uint8_t>::exportTreeNode (
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& folderPath)
 {
+
+    PlyExporter<coordinateType, colorType> plyExporter(itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    plyExporter.exportOctree(folderPath);
+    return;
+
     auto cpuPointCloud = itsCloudData->toHost ();
     auto octreeSparse  = itsOctree->toHost ();
     auto dataLUT       = itsDataLUT->toHost ();

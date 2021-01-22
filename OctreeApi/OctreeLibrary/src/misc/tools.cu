@@ -1,7 +1,7 @@
 #include "../include/tools.cuh"
-#include "../include/types.cuh"
 #include "defines.cuh"
 #include "octree_metadata.h"
+#include "types.cuh"
 
 
 __global__ void kernel_point_cloud_cuboid (uint8_t* out, uint32_t n, uint32_t side)

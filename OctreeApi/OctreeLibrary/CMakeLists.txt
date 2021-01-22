@@ -12,9 +12,9 @@ add_library( ${PROJECT_NAME} STATIC
         include/sparseOctree.h
         src/include/cudaArray.h
         src/include/eventWatcher.h
-        src/include/octree_metadata.h
+        include/octree_metadata.h
         src/include/tools.cuh
-        src/include/types.cuh
+        include/types.cuh
 
         # Kernel
         src/kernel/kernel_executor.cuh
@@ -29,7 +29,7 @@ add_library( ${PROJECT_NAME} STATIC
 
         # Misc
         src/misc/tools.cu
-        src/misc/defines.cuh
+        include/defines.cuh
         src/misc/timing.cuh
 
         # Sparse octree
@@ -42,6 +42,7 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/dummy.cpp
 
         # Data export
+        src/export/octree_exporter.cuh
         src/export/ply_exporter.cuh
         src/export/ply_exporter.cu
         src/export/potree_exporter.cuh

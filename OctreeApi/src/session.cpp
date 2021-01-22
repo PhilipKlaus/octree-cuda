@@ -7,7 +7,7 @@
 #include <memory>
 #include <iostream>
 #include "spdlog/spdlog.h"
-#include <sparseOctree.h>
+#include "sparseOctree.h"
 
 Session* Session::ToSession (void* session)
 {
