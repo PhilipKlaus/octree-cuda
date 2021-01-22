@@ -9,6 +9,7 @@
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
 #include "point_distributing.cuh"
+#include "ply_exporter.cuh"
 
 
 template <typename coordinateType, typename colorType>
@@ -348,6 +349,14 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
     metadata.cloudOffset           = metadata.boundingBox.minimum;
 }
 
+template <typename coordinateType, typename colorType>
+void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& folderPath)
+{
+    PlyExporter<coordinateType, colorType> plyExporter (
+            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    plyExporter.exportOctree (folderPath);
+    return;
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>
@@ -364,6 +373,7 @@ template void SparseOctree<float, uint8_t>::distributePoints ();
 template void SparseOctree<float, uint8_t>::performSubsampling ();
 template void SparseOctree<float, uint8_t>::initLowestOctreeHierarchy ();
 template void SparseOctree<float, uint8_t>::mergeHierarchical ();
+template void SparseOctree<float, uint8_t>::exportPlyNodes (const string& folderPath);
 template void SparseOctree<float, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
 template void SparseOctree<float, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
 template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
@@ -389,6 +399,7 @@ template void SparseOctree<double, uint8_t>::distributePoints ();
 template void SparseOctree<double, uint8_t>::performSubsampling ();
 template void SparseOctree<double, uint8_t>::initLowestOctreeHierarchy ();
 template void SparseOctree<double, uint8_t>::mergeHierarchical ();
+template void SparseOctree<double, uint8_t>::exportPlyNodes (const string& folderPath);
 template void SparseOctree<double, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
 template void SparseOctree<double, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
 template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (

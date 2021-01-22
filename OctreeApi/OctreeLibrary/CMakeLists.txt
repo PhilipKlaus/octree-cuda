@@ -36,7 +36,6 @@ add_library( ${PROJECT_NAME} STATIC
         src/sparseOctree/pipeline/first_point_subsampling.cu
         src/sparseOctree/pipeline/random_subsampling.cu
         src/sparseOctree/benchmarking.cu
-        src/sparseOctree/data_export.cu
         src/sparseOctree/debugging.cu
         src/sparseOctree/sparseOctree.cu
         src/sparseOctree/dummy.cpp

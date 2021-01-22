@@ -24,31 +24,30 @@ template <typename coordinateType, typename colorType>
 void PlyExporter<coordinateType, colorType>::exportNode (
         uint32_t nodeIndex, const string& octreeLevel, const std::string& path)
 {
-    bool isParent = this->itsOctree[nodeIndex].isParent;
-    bool isFinished = this->itsOctree[nodeIndex].isFinished;
+    bool isParent    = this->itsOctree[nodeIndex].isParent;
+    bool isFinished  = this->itsOctree[nodeIndex].isFinished;
+
+    // ToDo: read from config + change in kernel;
     bool isAveraging = true;
+    bool isReplacement = true;
 
     PointCloudMetadata cloudMetadata = this->itsMetadata.cloudMetadata;
     uint32_t pointsToExport = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
     const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
-    // ToDo: Only neccessary in additive mode
-    //pointsToExport      = getValidPointAmount (nodeIndex, pointsToExport);
-    uint32_t dataStride = cloudMetadata.pointDataStride;
+    if(!isReplacement) {
+        pointsToExport      = getValidPointAmount (nodeIndex, pointsToExport);
+    }
 
-    uint32_t coordinateSize = sizeof (coordinateType);
-    uint32_t colorSize      = sizeof (colorType);
+    uint32_t dataStride = cloudMetadata.pointDataStride;
 
     if (isFinished && pointsToExport > 0)
     {
         std::ofstream ply;
         ply.open (path + R"(/)" + octreeLevel + ".ply", std::ios::binary);
-
         string header;
         createPlyHeader (header, pointsToExport);
-
         ply << header;
-
 
         for (uint32_t u = 0; u < pointsToExport; ++u)
         {
@@ -56,46 +55,18 @@ void PlyExporter<coordinateType, colorType>::exportNode (
             {
                 if (lut[u] != INVALID_INDEX)
                 {
-                    uint32_t pointIndex = lut[u] * dataStride;
-                    uint32_t byteOffset = 0;
-
-                    ply.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex])), coordinateSize);
-
-                    byteOffset += coordinateSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += coordinateSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += coordinateSize;
+                    uint32_t pointByteIndex = lut[u] * dataStride;
+                    writePointCoordinates (ply, pointByteIndex);
 
                     if (isAveraging)
                     {
-                        uint32_t sumPointCount = this->itsAveraging[nodeIndex][u].pointCount;
-
-                        auto r = static_cast<colorType> (this->itsAveraging[nodeIndex][u].r / sumPointCount);
-                        ply.write (reinterpret_cast<const char*> (&r), colorSize);
-                        auto g = static_cast<colorType> (this->itsAveraging[nodeIndex][u].g / sumPointCount);
-                        ply.write (reinterpret_cast<const char*> (&g), colorSize);
-                        auto b = static_cast<colorType> (this->itsAveraging[nodeIndex][u].b / sumPointCount);
-                        ply.write (reinterpret_cast<const char*> (&b), colorSize);
+                        const std::unique_ptr<Averaging[]>& averaging = this->itsAveraging[nodeIndex];
+                        writeColorAveraged (ply, nodeIndex, u);
                     }
 
                     else
                     {
-
-                        ply.write (
-                                reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), colorSize);
-
-                        byteOffset += colorSize;
-                        ply.write (
-                                reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), colorSize);
-
-                        byteOffset += colorSize;
-                        ply.write (
-                                reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), colorSize);
+                        writeColorNonAveraged(ply, pointByteIndex);
                     }
                 }
             }
@@ -103,31 +74,9 @@ void PlyExporter<coordinateType, colorType>::exportNode (
             {
                 if (lut[this->itsOctree[nodeIndex].chunkDataIndex + u] != INVALID_INDEX)
                 {
-                    uint32_t byteOffset = 0;
-                    uint32_t pointIndex = lut[this->itsOctree[nodeIndex].chunkDataIndex + u] * dataStride;
-
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex])), coordinateSize);
-
-                    byteOffset += coordinateSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += coordinateSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += coordinateSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += colorSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
-
-                    byteOffset += colorSize;
-                    ply.write (
-                            reinterpret_cast<const char*> (&(this->itsPointCloud[pointIndex + byteOffset])), coordinateSize);
+                    uint32_t pointByteIndex = lut[this->itsOctree[nodeIndex].chunkDataIndex + u] * dataStride;
+                    writePointCoordinates(ply, pointByteIndex);
+                    writeColorNonAveraged(ply, pointByteIndex);
                 }
             }
         }
@@ -145,7 +94,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
         int childIndex = this->itsOctree[nodeIndex].childrenChunks[i];
         if (childIndex != -1)
         {
-            exportNode(childIndex, octreeLevel + std::to_string (i), path);
+            exportNode (childIndex, octreeLevel + std::to_string (i), path);
         }
     }
     this->itsPointsExported += pointsToExport;
@@ -222,11 +171,53 @@ void PlyExporter<coordinateType, colorType>::createPlyHeader (string& header, ui
               "end_header\n";
 }
 
+template <typename coordinateType, typename colorType>
+void PlyExporter<coordinateType, colorType>::writePointCoordinates (std::ofstream& file, uint32_t pointByteIndex)
+{
+    uint32_t coordinateSize = sizeof (coordinateType);
+
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), coordinateSize);
+
+    pointByteIndex += coordinateSize;
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), coordinateSize);
+
+    pointByteIndex += coordinateSize;
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), coordinateSize);
+}
+
+template <typename coordinateType, typename colorType>
+void PlyExporter<coordinateType, colorType>::writeColorAveraged (
+        std::ofstream& file, uint32_t nodeIndex, uint32_t pointIndex)
+{
+    uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
+
+    auto r = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    file.write (reinterpret_cast<const char*> (&r), sizeof (colorType));
+    auto g = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    file.write (reinterpret_cast<const char*> (&g), sizeof (colorType));
+    auto b = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    file.write (reinterpret_cast<const char*> (&b), sizeof (colorType));
+}
+
+template <typename coordinateType, typename colorType>
+void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (std::ofstream& file, uint32_t pointByteIndex)
+{
+    pointByteIndex += sizeof (coordinateType) * 3;
+    uint32_t colorSize = sizeof (colorType);
+
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), colorSize);
+
+    pointByteIndex += colorSize;
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), colorSize);
+
+    pointByteIndex += colorSize;
+    file.write (reinterpret_cast<const char*> (&(this->itsPointCloud[pointByteIndex])), colorSize);
+}
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
-template PlyExporter<float, uint8_t>::PlyExporter(
+template PlyExporter<float, uint8_t>::PlyExporter (
         const GpuArrayU8& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
@@ -234,12 +225,12 @@ template PlyExporter<float, uint8_t>::PlyExporter(
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata);
 
-template void PlyExporter<float, uint8_t>::exportOctree(const std::string& path);
+template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path);
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
-template PlyExporter<double, uint8_t>::PlyExporter(
+template PlyExporter<double, uint8_t>::PlyExporter (
         const GpuArrayU8& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
@@ -247,4 +238,4 @@ template PlyExporter<double, uint8_t>::PlyExporter(
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata);
 
-template void PlyExporter<double, uint8_t>::exportOctree(const std::string& path);
+template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);
