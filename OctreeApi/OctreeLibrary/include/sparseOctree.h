@@ -71,7 +71,7 @@ private:
     void initLowestOctreeHierarchy ();
 
     // Subsampling
-    std::tuple<float, float> firstPointSubsampling (
+    SubsamplingTimings firstPointSubsampling (
             const unique_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
@@ -81,7 +81,7 @@ private:
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuSubsample& subsampleConfig);
 
-    std::tuple<float, float> randomSubsampling (
+    SubsamplingTimings randomSubsampling (
             const unique_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,

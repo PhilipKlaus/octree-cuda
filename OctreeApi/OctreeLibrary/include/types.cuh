@@ -31,6 +31,13 @@ struct Chunk
     bool isParent;             // Denotes if Chunk is a parent or a leaf node
 };
 
+struct SubsamplingTimings {
+    float subsampleEvaluation;
+    float generateRandoms;
+    float averaging;
+    float subsampling;
+};
+
 
 template <typename gpuType>
 using GpuArray      = std::unique_ptr<CudaArray<gpuType>>;

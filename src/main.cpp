@@ -66,14 +66,14 @@ int main() {
     ocpi_create_session(&session, 0);
 
     // Setup cloud properties
-    PointCloudMetadata< float> metadata = {};
-    metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 15;
+    PointCloudMetadata<double> metadata = {};
+    metadata.pointAmount = 119701547;
+    metadata.pointDataStride = 27;
     metadata.scale = {1.f, 1.f, 1.f };
-    metadata.cloudType = CloudType::CLOUD_FLOAT_UINT8_T;
+    metadata.cloudType = CloudType::CLOUD_DOUBLE_UINT8_T;
 
     // Read in ply
-    ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);
+    ifstream ifs(   "morrobay_fused_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -82,7 +82,7 @@ int main() {
     ifs.close();
 
     // Calculate BB
-    calculateBB<float>(pChars, metadata);
+    calculateBB<double>(pChars, metadata);
 
     // Configurate and create octree
     ocpi_set_cloud_type(session, metadata.cloudType);
@@ -119,7 +119,7 @@ int main() {
     ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 0);
     ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
     ocpi_configure_json_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
-    ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
+    //ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
 
     ocpi_generate_octree(session);
 

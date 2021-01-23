@@ -259,7 +259,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     denseToSpareLUT->memset (-1);
     voxelCount->memset (0);
 
-    std::tuple<float, float> time (0.f, 0.f);
+    SubsamplingTimings timings = {};
 
     if (itsMetadata.strategy == RANDOM_POINT)
     {
@@ -269,7 +269,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
         initRandomStates (std::time (0), randomStates, 1024);
         auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
 
-        time = randomSubsampling (
+        timings = randomSubsampling (
                 h_octreeSparse,
                 h_sparseToDenseLUT,
                 getRootIndex (),
@@ -283,7 +283,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     }
     else
     {
-        time = firstPointSubsampling (
+        timings = firstPointSubsampling (
                 h_octreeSparse,
                 h_sparseToDenseLUT,
                 getRootIndex (),
@@ -295,10 +295,14 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     }
 
 
-    itsTimeMeasurement.emplace_back ("subsampleEvaluation", get<0> (time));
-    itsTimeMeasurement.emplace_back ("subsampling", get<1> (time));
-    spdlog::info ("subsample evaluation took {}[ms]", get<0> (time));
-    spdlog::info ("subsampling took {}[ms]", get<1> (time));
+    itsTimeMeasurement.emplace_back ("subsampleEvaluation", timings.subsampleEvaluation);
+    itsTimeMeasurement.emplace_back ("generateRandoms", timings.generateRandoms);
+    itsTimeMeasurement.emplace_back ("averaging", timings.averaging);
+    itsTimeMeasurement.emplace_back ("subsampling", timings.subsampling);
+    spdlog::info ("subsample evaluation took {}[ms]", timings.subsampleEvaluation);
+    spdlog::info ("generateRandoms took {}[ms]", timings.generateRandoms);
+    spdlog::info ("averaging took {}[ms]", timings.averaging);
+    spdlog::info ("subsampling took {}[ms]", timings.subsampling);
 }
 
 
