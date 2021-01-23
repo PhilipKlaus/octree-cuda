@@ -7,6 +7,7 @@
 #include <cstdint>
 
 
+// ToDo: Check if pragma is necessary
 #pragma pack(push, 1)
 template <typename T>
 struct Vector3

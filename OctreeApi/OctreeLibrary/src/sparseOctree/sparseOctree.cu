@@ -363,7 +363,6 @@ void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& fold
     PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);
-    return;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
