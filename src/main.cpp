@@ -10,10 +10,10 @@
 using namespace std;
 
 template <typename coordinateType>
-void calculateBB(const uint8_t *cloud, PointCloudMetadata &metadata) {
+void calculateBB(const uint8_t *cloud, PointCloudMetadata<coordinateType> &metadata) {
 
-    Vector3<double> minimum {INFINITY, INFINITY, INFINITY};
-    Vector3<double> maximum {-INFINITY, -INFINITY, -INFINITY};
+    Vector3<coordinateType> minimum {INFINITY, INFINITY, INFINITY};
+    Vector3<coordinateType> maximum {-INFINITY, -INFINITY, -INFINITY};
     uint8_t byteSize = sizeof (coordinateType);
 
     for(uint32_t i = 0; i < metadata.pointAmount; ++i)
@@ -32,11 +32,11 @@ void calculateBB(const uint8_t *cloud, PointCloudMetadata &metadata) {
                 maximum.z, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize * 2)) * metadata.scale.z);
     }
 
-    Vector3<double> dimension{};
+    Vector3<coordinateType> dimension{};
     dimension.x = maximum.x - minimum.x;
     dimension.y = maximum.y - minimum.y;
     dimension.z = maximum.z - minimum.z;
-    double cubicSideLength = max(max(dimension.x, dimension.y), dimension.z);
+    coordinateType cubicSideLength = max(max(dimension.x, dimension.y), dimension.z);
 
     metadata.boundingBox.minimum = {};
     metadata.boundingBox.minimum.x = minimum.x - ((cubicSideLength - dimension.x) / 2.0f);
@@ -66,7 +66,7 @@ int main() {
     ocpi_create_session(&session, 0);
 
     // Setup cloud properties
-    PointCloudMetadata metadata = {};
+    PointCloudMetadata< float> metadata = {};
     metadata.pointAmount = 25836417;
     metadata.pointDataStride = 15;
     metadata.scale = {1.f, 1.f, 1.f };
@@ -85,7 +85,33 @@ int main() {
     calculateBB<float>(pChars, metadata);
 
     // Configurate and create octree
-    ocpi_set_point_cloud_metadata(session, metadata);
+    ocpi_set_cloud_type(session, metadata.cloudType);
+    ocpi_set_cloud_point_amount(session, metadata.pointAmount);
+    ocpi_set_cloud_data_stride(session, metadata.pointDataStride);
+
+    if(metadata.cloudType == CLOUD_FLOAT_UINT8_T) {
+        ocpi_set_cloud_scale_f(session, metadata.scale.x, metadata.scale.y, metadata.scale.z);
+        ocpi_set_cloud_offset_f(session, metadata.cloudOffset.x, metadata.cloudOffset.y, metadata.cloudOffset.z);
+        ocpi_set_cloud_bb_f(session,
+                metadata.boundingBox.minimum.x,
+                metadata.boundingBox.minimum.y,
+                metadata.boundingBox.minimum.z,
+                metadata.boundingBox.maximum.x,
+                metadata.boundingBox.maximum.y,
+                metadata.boundingBox.maximum.z);
+    }
+    else {
+        ocpi_set_cloud_scale_d(session, metadata.scale.x, metadata.scale.y, metadata.scale.z);
+        ocpi_set_cloud_offset_d(session, metadata.cloudOffset.x, metadata.cloudOffset.y, metadata.cloudOffset.z);
+        ocpi_set_cloud_bb_d(session,
+                            metadata.boundingBox.minimum.x,
+                            metadata.boundingBox.minimum.y,
+                            metadata.boundingBox.minimum.z,
+                            metadata.boundingBox.maximum.x,
+                            metadata.boundingBox.maximum.y,
+                            metadata.boundingBox.maximum.z);
+    }
+
     ocpi_set_point_cloud_host(session, pChars);
     ocpi_configure_chunking(session, GRID_512, 10000);
     ocpi_configure_subsampling(session, GRID_128, RANDOM_POINT);
@@ -93,7 +119,7 @@ int main() {
     ocpi_configure_point_distribution_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\histogram.html)", 0);
     ocpi_configure_memory_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\memory_report.html)");
     ocpi_configure_json_report(session, R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export\statistics.json)");
-    ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
+    //ocpi_configure_octree_export(session,R"(C:\Users\KlausP\Documents\git\master-thesis-klaus\octree_cuda\cmake-build-release\export)");
 
     ocpi_generate_octree(session);
 

@@ -58,7 +58,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::randomSubsampl
         prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 

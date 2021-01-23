@@ -14,7 +14,7 @@ __global__ void kernelEvaluateSubsamples (
         uint32_t* densePointCount,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
+        PointCloudMetadata<coordinateType> metadata,
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {
