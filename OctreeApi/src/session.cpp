@@ -8,6 +8,7 @@
 #include <iostream>
 #include "spdlog/spdlog.h"
 #include "sparseOctree.h"
+#include "json_exporter.h"
 
 Session* Session::ToSession (void* session)
 {
@@ -38,33 +39,42 @@ Session::~Session() {
     spdlog::debug("session destroyed");
 }
 
-void Session::setMetadata(const PointCloudMetadata &metadata) {
-    itsMetadata = metadata;
-    spdlog::debug("set metadata");
-};
-
 void Session::setPointCloudHost(uint8_t *pointCloud) {
     itsPointCloud = pointCloud;
     spdlog::debug("set point cloud data from host");
 }
 
 void Session::generateOctree() {
-    if(itsMetadata.cloudType == CloudType::CLOUD_FLOAT_UINT8_T) {
-        generateOctreeTemplated<float, uint8_t>();
+    if(itsCloudType == CloudType::CLOUD_FLOAT_UINT8_T) {
+        PointCloudMetadata<float> metadata{};
+        metadata.cloudType = itsCloudType;
+        metadata.pointAmount = itsPointAmount;
+        metadata.pointDataStride = itsDataStride;
+        metadata.scale = itsScaleF;
+        metadata.cloudOffset = itsOffsetF;
+        metadata.boundingBox = itsBoundingBoxF;
+        generateOctreeTemplated<float, uint8_t>(metadata);
     }
     else {
-        generateOctreeTemplated<double, uint8_t>();
+        PointCloudMetadata<double> metadata{};
+        metadata.cloudType = itsCloudType;
+        metadata.pointAmount = itsPointAmount;
+        metadata.pointDataStride = itsDataStride;
+        metadata.scale = itsScaleD;
+        metadata.cloudOffset = itsOffsetD;
+        metadata.boundingBox = itsBoundingBoxD;
+        generateOctreeTemplated<double, uint8_t>(metadata);
     }
 }
 
 template <typename coordinateType, typename colorType>
-void Session::generateOctreeTemplated() {
+void Session::generateOctreeTemplated(PointCloudMetadata<coordinateType> metadata) {
 
     SparseOctree<coordinateType, colorType> octree(
             itsChunkingGrid,
             itsSubsamplingGrid,
             itsMergingThreshold,
-            itsMetadata,
+            metadata,
             itsSubsamplingStrategy
             );
 
@@ -85,8 +95,10 @@ void Session::generateOctreeTemplated() {
     }
 
     if(!itsJsonReportFile.empty()) {
-        octree.exportOctreeStatistics(itsJsonReportFile);
+        octree.updateOctreeStatistics();
+        export_json_data(itsJsonReportFile, octree.getMetadata(), octree.getTimings());
     }
+
     spdlog::debug("octree generated");
 }
 
@@ -119,4 +131,55 @@ void Session::configureChunking(GridSize chunkingGrid, uint32_t mergingThreshold
 void Session::configureSubsampling(GridSize subsamplingGrid, SubsamplingStrategy strategy) {
     itsSubsamplingGrid = subsamplingGrid;
     itsSubsamplingStrategy = strategy;
+}
+void Session::setCloudType (CloudType cloudType)
+{
+    itsCloudType = cloudType;
+}
+
+void Session::setCloudBoundingBoxF (
+        float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
+{
+    itsBoundingBoxF = {
+            {minX, minY, minZ},
+            {maxX, maxY, maxZ}
+    };
+}
+
+void Session::setCloudBoundingBoxD (
+        double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+{
+    itsBoundingBoxD = {
+            {minX, minY, minZ},
+            {maxX, maxY, maxZ}
+    };
+}
+void Session::setCloudPointAmount (uint32_t pointAmount)
+{
+    itsPointAmount = pointAmount;
+}
+
+void Session::setCloudDataStride (uint32_t dataStride)
+{
+    itsDataStride = dataStride;
+}
+
+void Session::setCloudScaleF (float x, float y, float z)
+{
+    itsScaleF = { x, y, z};
+}
+
+void Session::setCloudOffsetF (float x, float y, float z)
+{
+    itsOffsetF = { x, y, z};
+}
+
+void Session::setCloudScaleD (double x, double y, double z)
+{
+    itsScaleD = { x, y, z};
+}
+
+void Session::setCloudOffsetD (double x, double y, double z)
+{
+    itsOffsetD = { x, y, z};
 }

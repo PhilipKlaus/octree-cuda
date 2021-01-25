@@ -6,15 +6,12 @@
 #include "../src/include/cudaArray.h"
 
 
-#pragma pack(push, 1)
 struct Averaging
 {
-    uint32_t r, g, b;
+    float r, g, b;
     uint32_t pointCount;
 };
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 struct SubsampleConfig
 {
     uint32_t* lutAdress;
@@ -23,9 +20,7 @@ struct SubsampleConfig
     uint32_t pointOffsetLower;
     uint32_t pointOffsetUpper;
 };
-#pragma pack(pop)
 
-#pragma pack(push, 1)
 struct Chunk
 {
     uint32_t pointCount;       // How many points does this chunk have
@@ -35,7 +30,13 @@ struct Chunk
     int childrenChunks[8];     // The INDICES of the children chunks in the GRID
     bool isParent;             // Denotes if Chunk is a parent or a leaf node
 };
-#pragma pack(pop)
+
+struct SubsamplingTimings {
+    float subsampleEvaluation;
+    float generateRandoms;
+    float averaging;
+    float subsampling;
+};
 
 
 template <typename gpuType>

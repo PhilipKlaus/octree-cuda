@@ -7,6 +7,7 @@
 #include <cstdint>
 
 
+// ToDo: Check if pragma is necessary
 #pragma pack(push, 1)
 template <typename T>
 struct Vector3
@@ -21,19 +22,21 @@ enum CloudType {
     CLOUD_DOUBLE_UINT8_T
 };
 
+template <typename coordinateType>
 struct BoundingBox
 {
-    Vector3<double> minimum;
-    Vector3<double> maximum;
+    Vector3<coordinateType> minimum;
+    Vector3<coordinateType> maximum;
 };
 
+template <typename coordinateType>
 struct PointCloudMetadata
 {
     uint32_t pointAmount;
     uint32_t pointDataStride;
-    BoundingBox boundingBox;
-    Vector3<double> cloudOffset;
-    Vector3<double> scale;
+    BoundingBox<coordinateType> boundingBox;
+    Vector3<coordinateType> cloudOffset;
+    Vector3<coordinateType> scale;
     CloudType cloudType;
 };
 

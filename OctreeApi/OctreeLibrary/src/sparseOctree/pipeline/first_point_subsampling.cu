@@ -5,7 +5,7 @@
 
 
 template <typename coordinateType, typename colorType>
-std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubsampling (
+SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -16,14 +16,14 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         GpuSubsample& subsampleConfig)
 {
     Chunk voxel = h_octreeSparse[sparseVoxelIndex];
-    std::tuple<float, float> accumulatedTime (0.f, 0.f);
+    SubsamplingTimings timings = {};
 
     // Depth first traversal
     for (int childIndex : voxel.childrenChunks)
     {
         if (childIndex != -1)
         {
-            std::tuple<float, float> childTime = firstPointSubsampling (
+            SubsamplingTimings childTiming = firstPointSubsampling (
                     h_octreeSparse,
                     h_sparseToDenseLUT,
                     childIndex,
@@ -33,8 +33,10 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
                     subsampleSparseVoxelCount,
                     subsampleConfig);
 
-            get<0> (accumulatedTime) += get<0> (childTime);
-            get<1> (accumulatedTime) += get<1> (childTime);
+            timings.subsampleEvaluation += childTiming.subsampleEvaluation;
+            timings.generateRandoms += childTiming.generateRandoms;
+            timings.averaging += childTiming.averaging;
+            timings.subsampling += childTiming.subsampling;
         }
     }
 
@@ -46,12 +48,12 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        get<0> (accumulatedTime) += executeKernel (
+        timings.subsampleEvaluation += executeKernel (
                 subsampling::kernelEvaluateSubsamples<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
@@ -70,7 +72,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
         itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes
-        get<1> (accumulatedTime) += executeKernel (
+        timings.subsampling += executeKernel (
                 subsampling::kernelFirstPointSubsample<coordinateType>,
                 accumulatedPoints,
                 itsCloudData->devicePointer (),
@@ -83,7 +85,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints);
     }
-    return accumulatedTime;
+    return timings;
 }
 
 
@@ -91,7 +93,7 @@ std::tuple<float, float> SparseOctree<coordinateType, colorType>::firstPointSubs
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsampling (
+template SubsamplingTimings SparseOctree<float, uint8_t>::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -105,7 +107,7 @@ template std::tuple<float, float> SparseOctree<float, uint8_t>::firstPointSubsam
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template std::tuple<float, float> SparseOctree<double, uint8_t>::firstPointSubsampling (
+template SubsamplingTimings SparseOctree<double, uint8_t>::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,

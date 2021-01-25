@@ -8,7 +8,7 @@ PlyExporter<coordinateType, colorType>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata) :
+        OctreeMetadata<coordinateType> metadata) :
         OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata),
         itsPointsExported (0)
 {}
@@ -31,25 +31,28 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     bool isAveraging = true;
     bool isReplacement = true;
 
-    PointCloudMetadata cloudMetadata = this->itsMetadata.cloudMetadata;
-    uint32_t pointsToExport = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
+    PointCloudMetadata<coordinateType> cloudMetadata = this->itsMetadata.cloudMetadata;
+    uint32_t pointsInNode = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
+    uint32_t validPoints = pointsInNode;
     const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
     if(!isReplacement) {
-        pointsToExport      = getValidPointAmount (nodeIndex, pointsToExport);
+        validPoints      = getValidPointAmount (nodeIndex, validPoints);
     }
 
     uint32_t dataStride = cloudMetadata.pointDataStride;
 
-    if (isFinished && pointsToExport > 0)
+    if (isFinished && validPoints > 0)
     {
         std::ofstream ply;
         ply.open (path + R"(/)" + octreeLevel + ".ply", std::ios::binary);
         string header;
-        createPlyHeader (header, pointsToExport);
+        createPlyHeader (header, validPoints);
         ply << header;
 
-        for (uint32_t u = 0; u < pointsToExport; ++u)
+        this->itsPointsExported += validPoints;
+
+        for (uint32_t u = 0; u < pointsInNode; ++u)
         {
             if (this->itsOctree[nodeIndex].isParent)
             {
@@ -97,7 +100,6 @@ void PlyExporter<coordinateType, colorType>::exportNode (
             exportNode (childIndex, octreeLevel + std::to_string (i), path);
         }
     }
-    this->itsPointsExported += pointsToExport;
 }
 
 template <typename coordinateType, typename colorType>
@@ -107,16 +109,16 @@ uint32_t PlyExporter<coordinateType, colorType>::getValidPointAmount (uint32_t n
 
     for (uint32_t u = 0; u < pointAmount; ++u)
     {
-        if (itsOctree[nodeIndex].isParent)
+        if (this->itsOctree[nodeIndex].isParent)
         {
-            if (itsParentLut[nodeIndex][u] == INVALID_INDEX)
+            if (this->itsParentLut[nodeIndex][u] == INVALID_INDEX)
             {
                 --validPoints;
             }
         }
         else
         {
-            if (itsLeafeLut[itsOctree[nodeIndex].chunkDataIndex + u] == INVALID_INDEX)
+            if (this->itsLeafeLut[this->itsOctree[nodeIndex].chunkDataIndex + u] == INVALID_INDEX)
             {
                 --validPoints;
             }
@@ -223,7 +225,7 @@ template PlyExporter<float, uint8_t>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata<float> metadata);
 
 template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -236,6 +238,6 @@ template PlyExporter<double, uint8_t>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata<double> metadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);

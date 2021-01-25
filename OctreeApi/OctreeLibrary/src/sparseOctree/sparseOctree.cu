@@ -17,7 +17,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         GridSize chunkingGrid,
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata cloudMetadata,
+        PointCloudMetadata<coordinateType> cloudMetadata,
         SubsamplingStrategy strategy)
 {
     // Initialize octree metadata
@@ -27,6 +27,14 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
     itsMetadata.subsamplingGrid  = subsamplingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
+
+    spdlog::info("pointAmount: {}", cloudMetadata.pointAmount);
+    spdlog::info("pointDataStride: {}", cloudMetadata.pointDataStride);
+    spdlog::info("scale: {}, {}, {}", cloudMetadata.scale.x, cloudMetadata.scale.y, cloudMetadata.scale.z);
+    spdlog::info("offset: {}, {}, {}", cloudMetadata.cloudOffset.x, cloudMetadata.cloudOffset.y, cloudMetadata.cloudOffset.z);
+    spdlog::info("bb min: {}, {}, {}", cloudMetadata.boundingBox.minimum.x, cloudMetadata.boundingBox.minimum.y, cloudMetadata.boundingBox.minimum.z);
+    spdlog::info("bb max: {}, {}, {}", cloudMetadata.boundingBox.maximum.x, cloudMetadata.boundingBox.maximum.y, cloudMetadata.boundingBox.maximum.z);
+
     itsMetadata.strategy         = strategy;
 
     // Pre calculate often-used octree metrics
@@ -251,7 +259,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     denseToSpareLUT->memset (-1);
     voxelCount->memset (0);
 
-    std::tuple<float, float> time (0.f, 0.f);
+    SubsamplingTimings timings = {};
 
     if (itsMetadata.strategy == RANDOM_POINT)
     {
@@ -261,7 +269,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
         initRandomStates (std::time (0), randomStates, 1024);
         auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
 
-        time = randomSubsampling (
+        timings = randomSubsampling (
                 h_octreeSparse,
                 h_sparseToDenseLUT,
                 getRootIndex (),
@@ -275,7 +283,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     }
     else
     {
-        time = firstPointSubsampling (
+        timings = firstPointSubsampling (
                 h_octreeSparse,
                 h_sparseToDenseLUT,
                 getRootIndex (),
@@ -287,10 +295,14 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
     }
 
 
-    itsTimeMeasurement.emplace_back ("subsampleEvaluation", get<0> (time));
-    itsTimeMeasurement.emplace_back ("subsampling", get<1> (time));
-    spdlog::info ("subsample evaluation took {}[ms]", get<0> (time));
-    spdlog::info ("subsampling took {}[ms]", get<1> (time));
+    itsTimeMeasurement.emplace_back ("subsampleEvaluation", timings.subsampleEvaluation);
+    itsTimeMeasurement.emplace_back ("generateRandoms", timings.generateRandoms);
+    itsTimeMeasurement.emplace_back ("averaging", timings.averaging);
+    itsTimeMeasurement.emplace_back ("subsampling", timings.subsampling);
+    spdlog::info ("subsample evaluation took {}[ms]", timings.subsampleEvaluation);
+    spdlog::info ("generateRandoms took {}[ms]", timings.generateRandoms);
+    spdlog::info ("averaging took {}[ms]", timings.averaging);
+    spdlog::info ("subsampling took {}[ms]", timings.subsampling);
 }
 
 
@@ -325,7 +337,7 @@ void SparseOctree<coordinateType, colorType>::prepareSubsampleConfig (
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
-        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
+        PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -335,10 +347,10 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    double min      = itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    double max      = itsMetadata.cloudMetadata.boundingBox.maximum.x;
-    double side     = max - min;
-    auto cubicWidth = side / static_cast<double> (itsGridSideLengthPerLevel[level]);
+    coordinateType min      = itsMetadata.cloudMetadata.boundingBox.minimum.x;
+    coordinateType max      = itsMetadata.cloudMetadata.boundingBox.maximum.x;
+    coordinateType side     = max - min;
+    auto cubicWidth = side / static_cast<coordinateType> (itsGridSideLengthPerLevel[level]);
 
     metadata.boundingBox.minimum.x = itsMetadata.cloudMetadata.boundingBox.minimum.x + coords.x * cubicWidth;
     metadata.boundingBox.minimum.y = itsMetadata.cloudMetadata.boundingBox.minimum.y + coords.y * cubicWidth;
@@ -355,7 +367,6 @@ void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& fold
     PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);
-    return;
 }
 
 //----------------------------------------------------------------------------------------------------------------------
@@ -365,14 +376,12 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         GridSize chunkingGrid,
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata cloudMetadata,
+        PointCloudMetadata<float> cloudMetadata,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
 template void SparseOctree<float, uint8_t>::distributePoints ();
 template void SparseOctree<float, uint8_t>::performSubsampling ();
-template void SparseOctree<float, uint8_t>::initLowestOctreeHierarchy ();
-template void SparseOctree<float, uint8_t>::mergeHierarchical ();
 template void SparseOctree<float, uint8_t>::exportPlyNodes (const string& folderPath);
 template void SparseOctree<float, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
 template void SparseOctree<float, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
@@ -382,7 +391,7 @@ template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
         GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints);
 template void SparseOctree<float, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
+        PointCloudMetadata<float>& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<double, uint8_t>
@@ -391,14 +400,12 @@ template SparseOctree<double, uint8_t>::SparseOctree (
         GridSize chunkingGrid,
         GridSize subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata cloudMetadata,
+        PointCloudMetadata<double> cloudMetadata,
         SubsamplingStrategy strategy);
 template void SparseOctree<double, uint8_t>::initialPointCounting ();
 template void SparseOctree<double, uint8_t>::performCellMerging ();
 template void SparseOctree<double, uint8_t>::distributePoints ();
 template void SparseOctree<double, uint8_t>::performSubsampling ();
-template void SparseOctree<double, uint8_t>::initLowestOctreeHierarchy ();
-template void SparseOctree<double, uint8_t>::mergeHierarchical ();
 template void SparseOctree<double, uint8_t>::exportPlyNodes (const string& folderPath);
 template void SparseOctree<double, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
 template void SparseOctree<double, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
@@ -408,4 +415,4 @@ template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (
         GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints);
 template void SparseOctree<double, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
+        PointCloudMetadata<double>& metadata, uint32_t denseVoxelIndex, uint32_t level);
