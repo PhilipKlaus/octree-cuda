@@ -117,7 +117,7 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled point to parent
     parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
-    // childDataLUT[childDataLUTStart + index] = INVALID_INDEX; // Additive strategy
+    //childDataLUT[childDataLUTStart + index] = INVALID_INDEX; // Additive strategy
 
     // Reset all subsampling data data
     denseToSparseLUT[denseVoxelIndex] = -1;
