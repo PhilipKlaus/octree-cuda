@@ -8,6 +8,7 @@
 #include <iostream>
 #include "spdlog/spdlog.h"
 #include "sparseOctree.h"
+#include "json_exporter.h"
 
 Session* Session::ToSession (void* session)
 {
@@ -94,8 +95,10 @@ void Session::generateOctreeTemplated(PointCloudMetadata<coordinateType> metadat
     }
 
     if(!itsJsonReportFile.empty()) {
-        octree.exportOctreeStatistics(itsJsonReportFile);
+        octree.updateOctreeStatistics();
+        export_json_data(itsJsonReportFile, octree.getMetadata(), octree.getTimings());
     }
+
     spdlog::debug("octree generated");
 }
 

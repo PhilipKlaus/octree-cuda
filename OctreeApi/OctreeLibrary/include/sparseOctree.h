@@ -52,6 +52,8 @@ public:
     // Debugging methods
     const OctreeMetadata<coordinateType>& getMetadata () const;
 
+    void updateOctreeStatistics ();
+
     unique_ptr<uint32_t[]> getDataLUT () const;
 
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel () const;
@@ -63,6 +65,8 @@ public:
     unique_ptr<Chunk[]> getOctreeSparse () const;
 
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
+
+    const std::vector<std::tuple<std::string, float>>& getTimings() const;
 
 private:
     // Merging
@@ -112,8 +116,6 @@ private:
 
     // Benchmarking
     uint32_t getRootIndex ();
-
-    void updateOctreeStatistics ();
 
     void evaluateOctreeProperties (
             const unique_ptr<Chunk[]>& h_octreeSparse,

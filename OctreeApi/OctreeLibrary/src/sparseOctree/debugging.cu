@@ -61,6 +61,13 @@ uint32_t SparseOctree<coordinateType, colorType>::getRootIndex ()
     return itsMetadata.nodeAmountSparse - 1;
 }
 
+template <typename coordinateType, typename colorType>
+const std::vector<std::tuple<std::string, float>>& SparseOctree<coordinateType, colorType>::getTimings () const
+{
+    return itsTimeMeasurement;
+}
+
+
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>
@@ -75,6 +82,8 @@ template unique_ptr<Chunk[]> SparseOctree<float, uint8_t>::getOctreeSparse () co
 template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<float, uint8_t>::
         getSubsampleLUT () const;
 template uint32_t SparseOctree<float, uint8_t>::getRootIndex ();
+template const std::vector<std::tuple<std::string, float>>& SparseOctree<float, uint8_t>::getTimings () const;
+
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<double, uint8_t>
@@ -89,3 +98,4 @@ template unique_ptr<Chunk[]> SparseOctree<double, uint8_t>::getOctreeSparse () c
 template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<double, uint8_t>::
         getSubsampleLUT () const;
 template uint32_t SparseOctree<double, uint8_t>::getRootIndex ();
+template const std::vector<std::tuple<std::string, float>>& SparseOctree<double, uint8_t>::getTimings () const;

@@ -2,11 +2,7 @@
 // Created by KlausP on 13.11.2020.
 //
 
-#include <iomanip>
-#include <json.hpp>
 #include "sparseOctree.h"
-
-using json = nlohmann::json;
 
 
 template <typename coordinateType, typename colorType>
@@ -101,85 +97,6 @@ void SparseOctree<coordinateType, colorType>::updateOctreeStatistics ()
 
     calculatePointVarianceInLeafNoes (octree, sumVariance, itsMetadata.meanPointsPerLeafNode, getRootIndex ());
     itsMetadata.stdevPointsPerLeafNode = sqrt (sumVariance / itsMetadata.leafNodeAmount);
-}
-
-
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::exportOctreeStatistics (const string& filePath)
-{
-    updateOctreeStatistics ();
-
-    nlohmann::ordered_json statistics;
-    statistics["depth"] = itsMetadata.depth;
-
-    statistics["chunking"]["grid"]             = itsMetadata.chunkingGrid;
-    statistics["chunking"]["mergingThreshold"] = itsMetadata.mergingThreshold;
-
-    statistics["subsampling"]["grid"] = itsMetadata.subsamplingGrid;
-    switch (itsMetadata.strategy)
-    {
-    case FIRST_POINT:
-        statistics["subsampling"]["strategy"] = "FIRST POINT";
-        break;
-    default:
-        statistics["subsampling"]["strategy"] = "RANDOM POINT";
-        break;
-    }
-
-    statistics["resultNodes"]["octreeNodes"]      = itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount;
-    statistics["resultNodes"]["leafNodeAmount"]   = itsMetadata.leafNodeAmount;
-    statistics["resultNodes"]["parentNodeAmount"] = itsMetadata.parentNodeAmount;
-    statistics["resultNodes"]["absorbedNodes"]    = itsMetadata.absorbedNodes;
-
-    statistics["overallNodes"]["sparseOctreeNodes"] = itsMetadata.nodeAmountSparse;
-    statistics["overallNodes"]["denseOctreeNodes"]  = itsMetadata.nodeAmountDense;
-    statistics["overallNodes"]["memorySaving"] =
-            (1 - (static_cast<float> (itsMetadata.nodeAmountSparse) / itsMetadata.nodeAmountDense)) * 100;
-
-    statistics["pointDistribution"]["meanPointsPerLeafNode"]  = itsMetadata.meanPointsPerLeafNode;
-    statistics["pointDistribution"]["stdevPointsPerLeafNode"] = itsMetadata.stdevPointsPerLeafNode;
-    statistics["pointDistribution"]["minPointsPerNode"]       = itsMetadata.minPointsPerNode;
-    statistics["pointDistribution"]["maxPointsPerNode"]       = itsMetadata.maxPointsPerNode;
-
-    statistics["cloud"]["pointAmount"]             = itsMetadata.cloudMetadata.pointAmount;
-    statistics["cloud"]["pointDataStride"]         = itsMetadata.cloudMetadata.pointDataStride;
-    statistics["cloud"]["boundingBox"]["min"]["x"] = itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    statistics["cloud"]["boundingBox"]["min"]["y"] = itsMetadata.cloudMetadata.boundingBox.minimum.y;
-    statistics["cloud"]["boundingBox"]["min"]["z"] = itsMetadata.cloudMetadata.boundingBox.minimum.z;
-    statistics["cloud"]["boundingBox"]["max"]["x"] = itsMetadata.cloudMetadata.boundingBox.maximum.x;
-    statistics["cloud"]["boundingBox"]["max"]["y"] = itsMetadata.cloudMetadata.boundingBox.maximum.y;
-    statistics["cloud"]["boundingBox"]["max"]["z"] = itsMetadata.cloudMetadata.boundingBox.maximum.z;
-    statistics["cloud"]["boundingBox"]["sideLength"] =
-            itsMetadata.cloudMetadata.boundingBox.maximum.x - itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    statistics["cloud"]["offset"]["x"] = itsMetadata.cloudMetadata.cloudOffset.x;
-    statistics["cloud"]["offset"]["y"] = itsMetadata.cloudMetadata.cloudOffset.y;
-    statistics["cloud"]["offset"]["z"] = itsMetadata.cloudMetadata.cloudOffset.z;
-    statistics["cloud"]["scale"]["x"]  = itsMetadata.cloudMetadata.scale.x;
-    statistics["cloud"]["scale"]["y"]  = itsMetadata.cloudMetadata.scale.y;
-    statistics["cloud"]["scale"]["z"]  = itsMetadata.cloudMetadata.scale.z;
-
-    float accumulatedTime = 0;
-    for (auto const& timeEntry : itsTimeMeasurement)
-    {
-        statistics["timeMeasurements"][get<0> (timeEntry)] = get<1> (timeEntry);
-        accumulatedTime += get<1> (timeEntry);
-    }
-    statistics["timeMeasurements"]["accumulatedGPUTime"] = accumulatedTime;
-
-
-    EventWatcher& watcher                     = EventWatcher::getInstance ();
-    statistics["memory"]["peak"]              = watcher.getMemoryPeak ();
-    statistics["memory"]["reserveEvents"]     = watcher.getMemoryReserveEvents ();
-    statistics["memory"]["cumulatedReserved"] = watcher.getCumulatedMemoryReservation ();
-
-    for (auto const& event : watcher.getMemoryEvents ())
-    {
-        statistics["memory"]["events"][get<0> (event)] = get<1> (event);
-    }
-
-    std::ofstream file (filePath);
-    file << std::setw (4) << statistics;
-    file.close ();
 }
 
 
@@ -314,7 +231,6 @@ template void SparseOctree<float, uint8_t>::evaluateOctreeProperties (
         uint32_t nodeIndex) const;
 
 template void SparseOctree<float, uint8_t>::updateOctreeStatistics ();
-template void SparseOctree<float, uint8_t>::exportOctreeStatistics (const string& filePath);
 template void SparseOctree<float, uint8_t>::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
@@ -341,7 +257,6 @@ template void SparseOctree<double, uint8_t>::evaluateOctreeProperties (
         uint32_t nodeIndex) const;
 
 template void SparseOctree<double, uint8_t>::updateOctreeStatistics ();
-template void SparseOctree<double, uint8_t>::exportOctreeStatistics (const string& filePath);
 template void SparseOctree<double, uint8_t>::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
