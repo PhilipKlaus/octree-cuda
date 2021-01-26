@@ -17,11 +17,13 @@ public:
 
 private:
     void exportNode (uint32_t nodeIndex, const string& octreeLevel, const std::string& path);
-    uint32_t getValidPointAmount(uint32_t nodeIndex, uint32_t pointAmount);
-    void createPlyHeader(string &header, uint32_t pointsToExport);
-    void writePointCoordinates(std::ofstream &file, uint32_t pointByteIndex);
-    void writeColorAveraged(std::ofstream &file, uint32_t nodeIndex, uint32_t pointIndex);
-    void writeColorNonAveraged(std::ofstream &file, uint32_t pointByteIndex);
+    void createPlyHeader (string& header, uint32_t pointsToExport);
+    void writePointCoordinates (
+            const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
+    void writeColorAveraged (
+            const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex);
+    void writeColorNonAveraged (
+            const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
 
 private:
     uint32_t itsPointsExported;

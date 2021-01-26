@@ -67,13 +67,13 @@ int main() {
 
     // Setup cloud properties
     PointCloudMetadata<float> metadata = {};
-    metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 15;
+    metadata.pointAmount = 5138448;
+    metadata.pointDataStride = 43;
     metadata.scale = {1.f, 1.f, 1.f };
     metadata.cloudType = CloudType::CLOUD_FLOAT_UINT8_T;
 
     // Read in ply
-    ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);
+    ifstream ifs(   "coin_2320x9x2x4000_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
