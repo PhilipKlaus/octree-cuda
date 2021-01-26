@@ -25,6 +25,4 @@ private:
     void writeColorNonAveraged (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
 
-private:
-    uint32_t itsPointsExported;
 };

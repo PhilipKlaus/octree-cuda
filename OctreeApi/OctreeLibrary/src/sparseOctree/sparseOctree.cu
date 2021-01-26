@@ -10,6 +10,7 @@
 #include "point_counting.cuh"
 #include "point_distributing.cuh"
 #include "ply_exporter.cuh"
+#include "potree_exporter.cuh"
 
 
 template <typename coordinateType, typename colorType>
@@ -364,9 +365,12 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& folderPath)
 {
-    PlyExporter<coordinateType, colorType> plyExporter (
+    /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
-    plyExporter.exportOctree (folderPath);
+    plyExporter.exportOctree (folderPath);*/
+    PotreeExporter<coordinateType, colorType> potreeExporter (
+            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    potreeExporter.exportOctree (folderPath);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

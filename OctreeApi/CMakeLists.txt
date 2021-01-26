@@ -40,7 +40,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 ############################
 # Add Lohmann JSON library #
 ############################
-target_include_directories(${PROJECT_NAME} PRIVATE External/nlohmann)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/nlohmann)
 
 ######################
 # ADD SPDLOG LIBRARY #

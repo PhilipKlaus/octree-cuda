@@ -76,10 +76,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 
-######################
-# Add LASZIP library #
-######################
-target_include_directories(${PROJECT_NAME} PRIVATE External/laszip)
+############################
+# Add Lohmann JSON library #
+############################
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/nlohmann)
 
 ######################
 # ADD SPDLOG LIBRARY #
