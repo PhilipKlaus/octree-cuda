@@ -28,4 +28,16 @@ private:
     uint8_t getChildMask(uint32_t nodeIndex);
 
     void createMetadataFile ();
+
+private:
+
+    #pragma pack(push, 1)
+    struct HierarchyFileEntry {
+        uint8_t type;
+        uint8_t bitmask;
+        uint32_t points;
+        uint64_t byteOffset;
+        uint64_t byteSize;
+    };
+    #pragma pack(pop)
 };

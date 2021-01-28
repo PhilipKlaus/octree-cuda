@@ -103,11 +103,10 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
         pointFile.write (reinterpret_cast<const char*> (&buffer[0]), nodeByteSize);
 
         // Export hierarchy to hierarchyFile
-        hierarchyFile.write(reinterpret_cast<const char*>(&type), sizeof (uint8_t));
-        hierarchyFile.write(reinterpret_cast<const char*>(&bitmask), sizeof (uint8_t));
-        hierarchyFile.write(reinterpret_cast<const char*>(&validPoints), sizeof (uint32_t));
-        hierarchyFile.write(reinterpret_cast<const char*>(&byteOffset), sizeof (uint64_t));
-        hierarchyFile.write(reinterpret_cast<const char*>(&nodeByteSize), sizeof (uint64_t));
+        HierarchyFileEntry entry {
+            type, bitmask, validPoints, byteOffset, nodeByteSize
+        };
+        hierarchyFile.write(reinterpret_cast<const char*>(&entry), sizeof (HierarchyFileEntry));
     }
     return nodeByteSize;
 }
@@ -122,6 +121,9 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream
 
     discoveredNodes[this->getRootIndex()] = true;
     toVisit.push(this->getRootIndex());
+
+    //uint32_t nodesToExport = this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount;
+    //auto hierarchFileBuffer = std::make_unique<HierarchyFileEntry[]> (nodesToExport);
 
     auto start = std::chrono::high_resolution_clock::now();
 
