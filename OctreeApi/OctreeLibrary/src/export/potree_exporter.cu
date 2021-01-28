@@ -56,6 +56,9 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
         uint32_t validPoints = 0;
         uint32_t dataStride = this->itsMetadata.cloudMetadata.pointDataStride;
 
+        uint64_t bufferOffset = 0;
+        auto buffer = std::make_unique<uint8_t[]> (pointsInNode * (3 * (sizeof (int32_t) + sizeof (uint16_t))));
+
         // Export all point to pointFile
         for (uint64_t u = 0; u < pointsInNode; ++u)
         {
@@ -65,16 +68,16 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
                 {
                     ++validPoints;
                     uint64_t pointByteIndex = lut[u] * dataStride;
-                    writePointCoordinates (pointFile, pointByteIndex);
+                    bufferOffset += writePointCoordinates (buffer, bufferOffset, pointByteIndex);
 
                     if (isAveraging)
                     {
-                        writeColorAveraged (pointFile, nodeIndex, u);
+                        bufferOffset += writeColorAveraged (buffer, bufferOffset, nodeIndex, u);
                     }
 
                     else
                     {
-                        writeColorNonAveraged (pointFile, pointByteIndex);
+                        bufferOffset += writeColorNonAveraged (buffer, bufferOffset, pointByteIndex);
                     }
                 }
             }
@@ -84,19 +87,22 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
                 {
                     ++validPoints;
                     uint32_t pointByteIndex = lut[this->itsOctree[nodeIndex].chunkDataIndex + u] * dataStride;
-                    writePointCoordinates (pointFile, pointByteIndex);
+                    bufferOffset += writePointCoordinates (buffer, bufferOffset, pointByteIndex);
                     pointByteIndex += sizeof (coordinateType) * 3;
-                    writeColorNonAveraged (pointFile, pointByteIndex);
+                    bufferOffset += writeColorNonAveraged (buffer, bufferOffset, pointByteIndex);
                 }
             }
         }
         this->itsPointsExported += validPoints;
 
-        // Export hierarchy to hierarchyFile
         uint8_t bitmask = getChildMask(nodeIndex);
         uint8_t type = bitmask == 0 ? 1 : 0;
         nodeByteSize = validPoints * 3 * (sizeof(int32_t) + sizeof (uint16_t));
 
+        // Export buffered coordinates and colors
+        pointFile.write (reinterpret_cast<const char*> (&buffer[0]), nodeByteSize);
+
+        // Export hierarchy to hierarchyFile
         hierarchyFile.write(reinterpret_cast<const char*>(&type), sizeof (uint8_t));
         hierarchyFile.write(reinterpret_cast<const char*>(&bitmask), sizeof (uint8_t));
         hierarchyFile.write(reinterpret_cast<const char*>(&validPoints), sizeof (uint32_t));
@@ -143,42 +149,49 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream
 
 // ToDo: divide by scale
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::writePointCoordinates (
-        std::ofstream & pointFile, uint64_t pointByteIndex)
+uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates (
+        const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     auto* point = reinterpret_cast<Vector3<coordinateType>*> (this->itsPointCloud.get() + pointByteIndex);
+
+    uint8_t byteAmount = 3 * sizeof (int32_t);
     int32_t coords[3];
     coords[0] = static_cast<int32_t>(floor(point->x / 0.001));
     coords[1] = static_cast<int32_t>(floor(point->y / 0.001));
     coords[2] = static_cast<int32_t>(floor(point->z/ 0.001));
 
-    pointFile.write(reinterpret_cast<const char*>(&coords), 3 * sizeof (int32_t));
+    std::memcpy (buffer.get () + bufferOffset, &coords, byteAmount);
+    return byteAmount;
 }
 
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::writeColorAveraged (std::ofstream & pointFile, uint32_t nodeIndex, uint32_t pointIndex)
+uint8_t PotreeExporter<coordinateType, colorType>::writeColorAveraged (const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
     uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
 
+    uint8_t byteAmount = 3 * sizeof (uint16_t);
     uint16_t colors[3];
     colors[0] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
     colors[1] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
     colors[2] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
 
-    pointFile.write(reinterpret_cast<const char*>(&colors), 3 * sizeof (uint16_t));
+    std::memcpy (buffer.get () + bufferOffset, &colors, byteAmount);
+    return byteAmount;
 }
 
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (std::ofstream & pointFile, uint64_t pointByteIndex)
+uint8_t PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     uint32_t colorSize = sizeof (colorType);
 
+    uint8_t byteAmount = 3 * sizeof (uint16_t);
     uint16_t colors[3];
     colors[0] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
     colors[1] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex + colorSize]);
     colors[2] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex + colorSize * 2]);
 
-    pointFile.write(reinterpret_cast<const char*>(&colors), 3 * sizeof (uint16_t));
+    std::memcpy (buffer.get () + bufferOffset, &colors, byteAmount);
+    return byteAmount;
 }
 
 template <typename coordinateType, typename colorType>
