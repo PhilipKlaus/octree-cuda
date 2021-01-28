@@ -10,7 +10,7 @@ PlyExporter<coordinateType, colorType>::PlyExporter (
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata<coordinateType> metadata) :
         OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
-                {}
+{}
 
 template <typename coordinateType, typename colorType>
 void PlyExporter<coordinateType, colorType>::exportOctree (const std::string& path)
@@ -91,6 +91,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
         ply.write (
                 reinterpret_cast<const char*> (&buffer[0]),
                 validPoints * (3 * (sizeof (coordinateType) + sizeof (colorType))));
+        ply.close ();
     }
     else
     {

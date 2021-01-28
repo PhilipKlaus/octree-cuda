@@ -1,6 +1,9 @@
 #include "potree_exporter.cuh"
+#include <iomanip>
+#include <iostream>
 #include <json.hpp>
-
+#include <queue>
+#include <unordered_map>
 
 template <typename coordinateType, typename colorType>
 PotreeExporter<coordinateType, colorType>::PotreeExporter (
@@ -16,48 +19,64 @@ PotreeExporter<coordinateType, colorType>::PotreeExporter (
 template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::exportOctree (const std::string& path)
 {
-    createBinaryFile();
-    createHierarchyFile();
-    createMetadataFile();
+    this->itsPointsExported = 0;
+    itsExportFolder         = path;
+    createBinaryHierarchyFiles ();
+    createMetadataFile ();
 }
 
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::createBinaryFile ()
+void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
 {
-    traverseNode(this->getRootIndex());
+    std::ofstream pointFile;
+    pointFile.open (itsExportFolder + R"(/octree.bin)", std::ios::binary);
+    std::ofstream hierarchyFile;
+    hierarchyFile.open (itsExportFolder + R"(/hierarchy.bin)", std::ios::binary);
+
+    //exportNode(this->getRootIndex(), 0, pointFile, hierarchyFile);
+    breathFirstExport(pointFile, hierarchyFile);
+
+    pointFile.close();
+    hierarchyFile.close();
 }
 
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::createHierarchyFile ()
-{}
-
-template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
+uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
+        uint32_t nodeIndex, uint64_t byteOffset, std::ofstream& pointFile, std::ofstream& hierarchyFile)
 {
-    spdlog::info("TEST: {}", this->itsPointsExported);
-}
+    bool isFinished = this->isFinishedNode (nodeIndex);
+    uint64_t nodeByteSize = 0;
 
+    if(isFinished) {
+        bool isAveraging = true;
+        bool isParent   = this->isParentNode (nodeIndex);
+        auto pointsInNode = this->getPointsInNode (nodeIndex);
+        const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
-template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::traverseNode (uint32_t nodeIndex)
-{
-    bool isParent   = this->isParentNode(nodeIndex);
-    bool isFinished = this->isFinishedNode(nodeIndex);
+        uint32_t validPoints = 0;
+        uint32_t dataStride = this->itsMetadata.cloudMetadata.pointDataStride;
 
-    auto pointsInNode = this->getPointsInNode(nodeIndex);
-    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
-
-    if (isFinished)
-    {
-        uint32_t validPoints  = 0;
-
-        for (uint32_t u = 0; u < pointsInNode; ++u)
+        // Export all point to pointFile
+        for (uint64_t u = 0; u < pointsInNode; ++u)
         {
             if (isParent)
             {
                 if (lut[u] != INVALID_INDEX)
                 {
                     ++validPoints;
+                    uint64_t pointByteIndex = lut[u] * dataStride;
+                    writePointCoordinates (pointFile, pointByteIndex);
+
+                    if (isAveraging)
+                    {
+                        const std::unique_ptr<Averaging[]>& averaging = this->itsAveraging[nodeIndex];
+                        writeColorAveraged (pointFile, nodeIndex, u);
+                    }
+
+                    else
+                    {
+                        writeColorNonAveraged (pointFile, pointByteIndex);
+                    }
                 }
             }
             else
@@ -65,21 +84,194 @@ void PotreeExporter<coordinateType, colorType>::traverseNode (uint32_t nodeIndex
                 if (lut[this->itsOctree[nodeIndex].chunkDataIndex + u] != INVALID_INDEX)
                 {
                     ++validPoints;
+                    uint32_t pointByteIndex = lut[this->itsOctree[nodeIndex].chunkDataIndex + u] * dataStride;
+                    writePointCoordinates (pointFile, pointByteIndex);
+                    pointByteIndex += sizeof (coordinateType) * 3;
+                    writeColorNonAveraged (pointFile, pointByteIndex);
                 }
             }
         }
         this->itsPointsExported += validPoints;
-    }
 
-    for (auto i = 0; i < 8; ++i)
-    {
-        int childNodeIndex = this->getChildNodeIndex(nodeIndex, i);
-        if (childNodeIndex != -1)
-        {
-            traverseNode (childNodeIndex);
+        // Export hierarchy to hierarchyFile
+        uint8_t bitmask = getChildMask(nodeIndex);
+        uint8_t type = bitmask == 0 ? 1 : 0;
+        nodeByteSize = validPoints * 3 * (sizeof(int32_t) + sizeof (uint16_t));
+
+        hierarchyFile.write(reinterpret_cast<const char*>(&type), sizeof (uint8_t));
+        hierarchyFile.write(reinterpret_cast<const char*>(&bitmask), sizeof (uint8_t));
+        hierarchyFile.write(reinterpret_cast<const char*>(&validPoints), sizeof (uint32_t));
+        hierarchyFile.write(reinterpret_cast<const char*>(&byteOffset), sizeof (uint64_t));
+        hierarchyFile.write(reinterpret_cast<const char*>(&nodeByteSize), sizeof (uint64_t));
+    }
+    return nodeByteSize;
+}
+
+template <typename coordinateType, typename colorType>
+void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile)
+{
+    uint32_t exportedNodes = 0;
+    uint64_t byteOffset = 0;
+    std::unordered_map<uint32_t, bool> discoveredNodes;
+    std::queue<uint32_t> toVisit;
+
+    discoveredNodes[this->getRootIndex()] = true;
+    toVisit.push(this->getRootIndex());
+
+    while(!toVisit.empty()) {
+        auto node = toVisit.front();
+        toVisit.pop();
+        byteOffset += exportNode(node, byteOffset, pointFile, hierarchyFile);
+        ++exportedNodes;
+
+        for(auto i = 0; i < 8; ++i) {
+            int childNode = this->getChildNodeIndex (node, i);
+            if (childNode != -1 && discoveredNodes.find(childNode) == discoveredNodes.end() && this->isFinishedNode(childNode))
+            {
+                discoveredNodes[childNode] = true;
+                toVisit.push(childNode);
+            }
         }
     }
+
+    spdlog::info("Exported: {}", exportedNodes);
 }
+
+// ToDo: divide by scale
+template <typename coordinateType, typename colorType>
+void PotreeExporter<coordinateType, colorType>::writePointCoordinates (
+        std::ofstream & pointFile, uint64_t pointByteIndex)
+{
+    auto metadata = this->itsMetadata.cloudMetadata;
+
+    auto* point = reinterpret_cast<Vector3<coordinateType>*> (this->itsPointCloud.get() + pointByteIndex);
+    auto x =  static_cast<int32_t>(floor(point->x / 0.001));
+    auto y =  static_cast<int32_t>(floor(point->y / 0.001));
+    auto z =  static_cast<int32_t>(floor(point->z/ 0.001));
+
+    pointFile.write(reinterpret_cast<const char*>(&x), sizeof (int32_t));
+    pointFile.write(reinterpret_cast<const char*>(&y), sizeof (int32_t));
+    pointFile.write(reinterpret_cast<const char*>(&z), sizeof (int32_t));
+}
+
+template <typename coordinateType, typename colorType>
+void PotreeExporter<coordinateType, colorType>::writeColorAveraged (std::ofstream & pointFile, uint32_t nodeIndex, uint32_t pointIndex)
+{
+    uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
+
+    auto r = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    pointFile.write(reinterpret_cast<const char*>(&r), sizeof (uint16_t));
+
+    auto g = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    pointFile.write(reinterpret_cast<const char*>(&g), sizeof (uint16_t));
+
+    auto b = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    pointFile.write(reinterpret_cast<const char*>(&b), sizeof (uint16_t));
+}
+
+template <typename coordinateType, typename colorType>
+void PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (std::ofstream & pointFile, uint64_t pointByteIndex)
+{
+    uint32_t colorSize = sizeof (colorType);
+
+    auto r = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
+    pointFile.write(reinterpret_cast<const char*>(&r), sizeof (uint16_t));
+
+    pointByteIndex += colorSize;
+    auto g = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
+    pointFile.write(reinterpret_cast<const char*>(&g), sizeof (uint16_t));
+
+    pointByteIndex += colorSize;
+    auto b = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
+    pointFile.write(reinterpret_cast<const char*>(&b), sizeof (uint16_t));
+}
+
+template <typename coordinateType, typename colorType>
+uint8_t PotreeExporter<coordinateType, colorType>::getChildMask (uint32_t nodeIndex)
+{
+    uint8_t bitmask = 0;
+    for(auto i = 0; i < 8; i++){
+        int childNodeIndex = this->getChildNodeIndex (nodeIndex, i);
+        if (childNodeIndex != -1 && this->isFinishedNode(childNodeIndex))
+        {
+            bitmask = bitmask | (1 << i);
+        }
+    }
+    return bitmask;
+}
+
+template <typename coordinateType, typename colorType>
+void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
+{
+    nlohmann::ordered_json metadata;
+    metadata["version"]     = "2.0";
+    metadata["name"]        = "GpuPotreeConverter";
+    metadata["description"] = "AIT Austrian Institute of Technology";
+    metadata["points"]      = this->itsPointsExported;
+    metadata["projection"]  = "";
+    metadata["hierarchy"]["firstChunkSize"] =
+            (this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount) * 22;
+    metadata["hierarchy"]["stepSize"] = 100;
+    metadata["hierarchy"]["depth"]    = 20;
+
+    auto offset = this->itsMetadata.cloudMetadata.cloudOffset; // ToDo: evtl. 0, 0, 0
+    metadata["offset"].push_back (offset.x);
+    metadata["offset"].push_back (offset.y);
+    metadata["offset"].push_back (offset.z);
+
+    auto scale = this->itsMetadata.cloudMetadata.scale;
+    metadata["scale"].push_back (0.001);
+    metadata["scale"].push_back (0.001);
+    metadata["scale"].push_back (0.001);
+
+    auto spacing = (this->itsMetadata.cloudMetadata.boundingBox.maximum.x -
+                    this->itsMetadata.cloudMetadata.boundingBox.minimum.x) /
+                   this->itsMetadata.subsamplingGrid;
+    metadata["spacing"] = spacing;
+
+    auto bb = this->itsMetadata.cloudMetadata.boundingBox;
+    metadata["boundingBox"]["min"].push_back (bb.minimum.x);
+    metadata["boundingBox"]["min"].push_back (bb.minimum.y);
+    metadata["boundingBox"]["min"].push_back (bb.minimum.z);
+    metadata["boundingBox"]["max"].push_back (bb.maximum.x);
+    metadata["boundingBox"]["max"].push_back (bb.maximum.y);
+    metadata["boundingBox"]["max"].push_back (bb.maximum.z);
+
+    metadata["encoding"] = "DEFAULT";
+
+
+    metadata["attributes"][0]["name"]        = "position";
+    metadata["attributes"][0]["description"] = "";
+    metadata["attributes"][0]["size"]        = sizeof (coordinateType) * 3; // ToDo: check if correct
+    metadata["attributes"][0]["numElements"] = 3;
+    metadata["attributes"][0]["elementSize"] = 4;
+    metadata["attributes"][0]["type"]        = "int32"; // ToDo: from config
+    metadata["attributes"][0]["min"].push_back (bb.minimum.x);
+    metadata["attributes"][0]["min"].push_back (bb.minimum.y);
+    metadata["attributes"][0]["min"].push_back (bb.minimum.z);
+    metadata["attributes"][0]["max"].push_back (bb.maximum.x);
+    metadata["attributes"][0]["max"].push_back (bb.maximum.y);
+    metadata["attributes"][0]["max"].push_back (bb.maximum.z);
+
+    metadata["attributes"][1]["name"]        = "rgb";
+    metadata["attributes"][1]["description"] = "";
+    metadata["attributes"][1]["size"]        = 6;
+    metadata["attributes"][1]["numElements"] = 3;
+    metadata["attributes"][1]["elementSize"] = 2;
+    metadata["attributes"][1]["type"]        = "uint16";
+    metadata["attributes"][1]["min"].push_back (0);
+    metadata["attributes"][1]["min"].push_back (0);
+    metadata["attributes"][1]["min"].push_back (0);
+    metadata["attributes"][1]["max"].push_back (65024);
+    metadata["attributes"][1]["max"].push_back (65280);
+    metadata["attributes"][1]["max"].push_back (65280);
+
+
+    std::ofstream file (itsExportFolder + R"(/metadata.json)");
+    file << std::setw (4) << metadata;
+    file.close ();
+}
+
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>

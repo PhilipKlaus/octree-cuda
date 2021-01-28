@@ -18,8 +18,14 @@ public:
     void exportOctree (const std::string& path) override;
 
 private:
-    void createBinaryFile();
-    void createHierarchyFile();
-    void createMetadataFile();
-    void traverseNode (uint32_t nodeIndex);
+    std::string itsExportFolder;
+    void createBinaryHierarchyFiles ();
+    uint64_t exportNode (uint32_t nodeIndex, uint64_t bytesWritten, std::ofstream& pointFile, std::ofstream& hierarchyFile);
+    void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
+    void writePointCoordinates (std::ofstream & pointFile, uint64_t pointByteIndex);
+    void writeColorAveraged (std::ofstream & pointFile, uint32_t nodeIndex, uint32_t pointIndex);
+    void writeColorNonAveraged (std::ofstream & pointFile, uint64_t pointByteIndex);
+    uint8_t getChildMask(uint32_t nodeIndex);
+
+    void createMetadataFile ();
 };
