@@ -69,7 +69,6 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
 
                     if (isAveraging)
                     {
-                        const std::unique_ptr<Averaging[]>& averaging = this->itsAveraging[nodeIndex];
                         writeColorAveraged (pointFile, nodeIndex, u);
                     }
 
@@ -118,6 +117,8 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream
     discoveredNodes[this->getRootIndex()] = true;
     toVisit.push(this->getRootIndex());
 
+    auto start = std::chrono::high_resolution_clock::now();
+
     while(!toVisit.empty()) {
         auto node = toVisit.front();
         toVisit.pop();
@@ -134,7 +135,10 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream
         }
     }
 
-    spdlog::info("Exported: {}", exportedNodes);
+    auto finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = finish - start;
+
+    spdlog::info("Exported {} nodes in {} seconds", exportedNodes, elapsed.count());
 }
 
 // ToDo: divide by scale
@@ -142,16 +146,13 @@ template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::writePointCoordinates (
         std::ofstream & pointFile, uint64_t pointByteIndex)
 {
-    auto metadata = this->itsMetadata.cloudMetadata;
-
     auto* point = reinterpret_cast<Vector3<coordinateType>*> (this->itsPointCloud.get() + pointByteIndex);
-    auto x =  static_cast<int32_t>(floor(point->x / 0.001));
-    auto y =  static_cast<int32_t>(floor(point->y / 0.001));
-    auto z =  static_cast<int32_t>(floor(point->z/ 0.001));
+    int32_t coords[3];
+    coords[0] = static_cast<int32_t>(floor(point->x / 0.001));
+    coords[1] = static_cast<int32_t>(floor(point->y / 0.001));
+    coords[2] = static_cast<int32_t>(floor(point->z/ 0.001));
 
-    pointFile.write(reinterpret_cast<const char*>(&x), sizeof (int32_t));
-    pointFile.write(reinterpret_cast<const char*>(&y), sizeof (int32_t));
-    pointFile.write(reinterpret_cast<const char*>(&z), sizeof (int32_t));
+    pointFile.write(reinterpret_cast<const char*>(&coords), 3 * sizeof (int32_t));
 }
 
 template <typename coordinateType, typename colorType>
@@ -159,14 +160,12 @@ void PotreeExporter<coordinateType, colorType>::writeColorAveraged (std::ofstrea
 {
     uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
 
-    auto r = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
-    pointFile.write(reinterpret_cast<const char*>(&r), sizeof (uint16_t));
+    uint16_t colors[3];
+    colors[0] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    colors[1] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    colors[2] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
 
-    auto g = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
-    pointFile.write(reinterpret_cast<const char*>(&g), sizeof (uint16_t));
-
-    auto b = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
-    pointFile.write(reinterpret_cast<const char*>(&b), sizeof (uint16_t));
+    pointFile.write(reinterpret_cast<const char*>(&colors), 3 * sizeof (uint16_t));
 }
 
 template <typename coordinateType, typename colorType>
@@ -174,16 +173,12 @@ void PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (std::ofst
 {
     uint32_t colorSize = sizeof (colorType);
 
-    auto r = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
-    pointFile.write(reinterpret_cast<const char*>(&r), sizeof (uint16_t));
+    uint16_t colors[3];
+    colors[0] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
+    colors[1] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex + colorSize]);
+    colors[2] = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex + colorSize * 2]);
 
-    pointByteIndex += colorSize;
-    auto g = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
-    pointFile.write(reinterpret_cast<const char*>(&g), sizeof (uint16_t));
-
-    pointByteIndex += colorSize;
-    auto b = static_cast<uint16_t >(this->itsPointCloud[pointByteIndex]);
-    pointFile.write(reinterpret_cast<const char*>(&b), sizeof (uint16_t));
+    pointFile.write(reinterpret_cast<const char*>(&colors), 3 * sizeof (uint16_t));
 }
 
 template <typename coordinateType, typename colorType>
