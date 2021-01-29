@@ -15,7 +15,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
         GpuArrayU32& subsampleSparseVoxelCount,
         GpuSubsample& subsampleConfig)
 {
-    Chunk voxel = h_octreeSparse[sparseVoxelIndex];
+    Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
 
     // Depth first traversal
@@ -49,7 +49,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
 
         // Parent bounding box calculation
         PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
-        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
+        auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes

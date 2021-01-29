@@ -5,7 +5,7 @@
 
 project(OctreeApi LANGUAGES CUDA CXX)
 
-add_library( ${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} SHARED
         src/octreeApi.cpp
         src/session.h
         src/session.cpp src/json_exporter.h

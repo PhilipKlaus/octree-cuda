@@ -10,7 +10,6 @@
 #include "spdlog/spdlog.h"
 
 
-
 constexpr uint32_t BLOCK_SIZE_MAX = 1024;
 constexpr uint32_t GRID_SIZE_MAX  = 65535;
 

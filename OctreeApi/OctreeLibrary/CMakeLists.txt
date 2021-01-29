@@ -5,7 +5,7 @@
 
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
-add_library( ${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} STATIC
 
         # Headers
         include/api_types.h
@@ -94,4 +94,4 @@ option(BUILD_TESTS "build automated tests" ON)
 if (BUILD_TESTS)
     message(STATUS "OctreeCuda build includes automated tests...")
     add_subdirectory(Tests)
-endif()
+endif ()

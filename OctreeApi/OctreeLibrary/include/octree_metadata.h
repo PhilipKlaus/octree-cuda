@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include <api_types.h>
+#include <cstdint>
 
 
 template <typename coordinateType>
@@ -25,5 +25,5 @@ struct OctreeMetadata
     uint32_t minPointsPerNode;    // Minimum amount of points in a node
     uint32_t maxPointsPerNode;    // Maximum amount of points in a node
     PointCloudMetadata<coordinateType> cloudMetadata; // The cloud metadata;
-    SubsamplingStrategy strategy;     // The subsampling strategy
+    SubsamplingStrategy strategy;                     // The subsampling strategy
 };

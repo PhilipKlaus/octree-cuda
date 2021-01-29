@@ -1,8 +1,8 @@
 #pragma once
 
 #include "octree_metadata.h"
-#include "types.cuh"
 #include "tools.cuh"
+#include "types.cuh"
 
 namespace chunking {
 

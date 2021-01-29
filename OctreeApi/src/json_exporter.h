@@ -10,8 +10,11 @@
 
 
 template <typename coordinateType>
-void export_json_data(const std::string filePath, OctreeMetadata<coordinateType> metadata, const std::vector<std::tuple<std::string, float>>& timings) {
-
+void export_json_data (
+        const std::string filePath,
+        OctreeMetadata<coordinateType> metadata,
+        const std::vector<std::tuple<std::string, float>>& timings)
+{
     nlohmann::ordered_json statistics;
     statistics["depth"] = metadata.depth;
 
@@ -44,8 +47,8 @@ void export_json_data(const std::string filePath, OctreeMetadata<coordinateType>
     statistics["pointDistribution"]["minPointsPerNode"]       = metadata.minPointsPerNode;
     statistics["pointDistribution"]["maxPointsPerNode"]       = metadata.maxPointsPerNode;
 
-    statistics["cloud"]["pointAmount"]             = metadata.cloudMetadata.pointAmount;
-    statistics["cloud"]["pointDataStride"]         = metadata.cloudMetadata.pointDataStride;
+    statistics["cloud"]["pointAmount"]         = metadata.cloudMetadata.pointAmount;
+    statistics["cloud"]["pointDataStride"]     = metadata.cloudMetadata.pointDataStride;
     statistics["cloud"]["bbCubic"]["min"]["x"] = metadata.cloudMetadata.bbCubic.min.x;
     statistics["cloud"]["bbCubic"]["min"]["y"] = metadata.cloudMetadata.bbCubic.min.y;
     statistics["cloud"]["bbCubic"]["min"]["z"] = metadata.cloudMetadata.bbCubic.min.z;

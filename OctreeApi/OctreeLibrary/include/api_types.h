@@ -17,7 +17,8 @@ struct Vector3
 #pragma pack(pop)
 
 
-enum CloudType {
+enum CloudType
+{
     CLOUD_FLOAT_UINT8_T,
     CLOUD_DOUBLE_UINT8_T
 };
