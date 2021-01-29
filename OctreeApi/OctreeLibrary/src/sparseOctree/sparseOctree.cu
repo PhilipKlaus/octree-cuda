@@ -2,14 +2,15 @@
 // Created by KlausP on 04.11.2020.
 //
 
-#include "sparseOctree.h"
 #include "hierarchical_merging.cuh"
 #include "kernel_executor.cuh"
 #include "octree_initialization.cuh"
+#include "ply_exporter.cuh"
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
 #include "point_distributing.cuh"
-#include "ply_exporter.cuh"
+#include "potree_exporter.cuh"
+#include "sparseOctree.h"
 
 
 template <typename coordinateType, typename colorType>
@@ -28,14 +29,26 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
 
-    spdlog::info("pointAmount: {}", cloudMetadata.pointAmount);
-    spdlog::info("pointDataStride: {}", cloudMetadata.pointDataStride);
-    spdlog::info("scale: {}, {}, {}", cloudMetadata.scale.x, cloudMetadata.scale.y, cloudMetadata.scale.z);
-    spdlog::info("offset: {}, {}, {}", cloudMetadata.cloudOffset.x, cloudMetadata.cloudOffset.y, cloudMetadata.cloudOffset.z);
-    spdlog::info("bb min: {}, {}, {}", cloudMetadata.boundingBox.minimum.x, cloudMetadata.boundingBox.minimum.y, cloudMetadata.boundingBox.minimum.z);
-    spdlog::info("bb max: {}, {}, {}", cloudMetadata.boundingBox.maximum.x, cloudMetadata.boundingBox.maximum.y, cloudMetadata.boundingBox.maximum.z);
+    spdlog::info ("pointAmount: {}", cloudMetadata.pointAmount);
+    spdlog::info ("pointDataStride: {}", cloudMetadata.pointDataStride);
+    spdlog::info ("scale: {}, {}, {}", cloudMetadata.scale.x, cloudMetadata.scale.y, cloudMetadata.scale.z);
+    spdlog::info (
+            "offset: {}, {}, {}",
+            cloudMetadata.cloudOffset.x,
+            cloudMetadata.cloudOffset.y,
+            cloudMetadata.cloudOffset.z);
+    spdlog::info (
+            "bb min: {}, {}, {}",
+            cloudMetadata.bbCubic.min.x,
+            cloudMetadata.bbCubic.min.y,
+            cloudMetadata.bbCubic.min.z);
+    spdlog::info (
+            "bb max: {}, {}, {}",
+            cloudMetadata.bbCubic.max.x,
+            cloudMetadata.bbCubic.max.y,
+            cloudMetadata.bbCubic.max.z);
 
-    itsMetadata.strategy         = strategy;
+    itsMetadata.strategy = strategy;
 
     // Pre calculate often-used octree metrics
     auto sideLength = static_cast<uint32_t> (pow (2, itsMetadata.depth));
@@ -65,14 +78,16 @@ template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::setPointCloudDevice (uint8_t* pointCloud)
 {
     itsCloudData = CudaArray<coordinateType>::fromDevicePtr (
-            pointCloud, itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
+            pointCloud,
+            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride,
+            "pointcloud");
     spdlog::info ("Imported point cloud from device");
 }
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::setPointCloudDevice (GpuArrayU8 pointCloud)
 {
-    itsCloudData = std::move(pointCloud);
+    itsCloudData = std::move (pointCloud);
 }
 
 //###################
@@ -347,26 +362,29 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    coordinateType min      = itsMetadata.cloudMetadata.boundingBox.minimum.x;
-    coordinateType max      = itsMetadata.cloudMetadata.boundingBox.maximum.x;
-    coordinateType side     = max - min;
-    auto cubicWidth = side / static_cast<coordinateType> (itsGridSideLengthPerLevel[level]);
+    coordinateType min  = itsMetadata.cloudMetadata.bbCubic.min.x;
+    coordinateType max  = itsMetadata.cloudMetadata.bbCubic.max.x;
+    coordinateType side = max - min;
+    auto cubicWidth     = side / static_cast<coordinateType> (itsGridSideLengthPerLevel[level]);
 
-    metadata.boundingBox.minimum.x = itsMetadata.cloudMetadata.boundingBox.minimum.x + coords.x * cubicWidth;
-    metadata.boundingBox.minimum.y = itsMetadata.cloudMetadata.boundingBox.minimum.y + coords.y * cubicWidth;
-    metadata.boundingBox.minimum.z = itsMetadata.cloudMetadata.boundingBox.minimum.z + coords.z * cubicWidth;
-    metadata.boundingBox.maximum.x = metadata.boundingBox.minimum.x + cubicWidth;
-    metadata.boundingBox.maximum.y = metadata.boundingBox.minimum.y + cubicWidth;
-    metadata.boundingBox.maximum.z = metadata.boundingBox.minimum.z + cubicWidth;
-    metadata.cloudOffset           = metadata.boundingBox.minimum;
+    metadata.bbCubic.min.x = itsMetadata.cloudMetadata.bbCubic.min.x + coords.x * cubicWidth;
+    metadata.bbCubic.min.y = itsMetadata.cloudMetadata.bbCubic.min.y + coords.y * cubicWidth;
+    metadata.bbCubic.min.z = itsMetadata.cloudMetadata.bbCubic.min.z + coords.z * cubicWidth;
+    metadata.bbCubic.max.x = metadata.bbCubic.min.x + cubicWidth;
+    metadata.bbCubic.max.y = metadata.bbCubic.min.y + cubicWidth;
+    metadata.bbCubic.max.z = metadata.bbCubic.min.z + cubicWidth;
+    metadata.cloudOffset   = metadata.bbCubic.min;
 }
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& folderPath)
 {
-    PlyExporter<coordinateType, colorType> plyExporter (
+    /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
-    plyExporter.exportOctree (folderPath);
+    plyExporter.exportOctree (folderPath);*/
+    PotreeExporter<coordinateType, colorType> potreeExporter (
+            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    potreeExporter.exportOctree (folderPath);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

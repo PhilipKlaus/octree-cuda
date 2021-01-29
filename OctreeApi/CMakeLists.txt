@@ -5,7 +5,7 @@
 
 project(OctreeApi LANGUAGES CUDA CXX)
 
-add_library( ${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME} SHARED
         src/octreeApi.cpp
         src/session.h
         src/session.cpp src/json_exporter.h
@@ -40,7 +40,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 ############################
 # Add Lohmann JSON library #
 ############################
-target_include_directories(${PROJECT_NAME} PRIVATE External/nlohmann)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/nlohmann)
 
 ######################
 # ADD SPDLOG LIBRARY #

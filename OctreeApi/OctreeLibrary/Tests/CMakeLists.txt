@@ -34,10 +34,10 @@ target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
 target_link_libraries(${PROJECT_NAME} PRIVATE OctreeLibrary)
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../../../External)
 
-get_target_property (private_include_dirs OctreeLibrary INCLUDE_DIRECTORIES)
-get_target_property (private_link_libraries OctreeLibrary LINK_LIBRARIES)
-target_include_directories (${PROJECT_NAME} PRIVATE ${private_include_dirs})
-target_link_libraries (${PROJECT_NAME} PRIVATE ${private_link_libraries})
+get_target_property(private_include_dirs OctreeLibrary INCLUDE_DIRECTORIES)
+get_target_property(private_link_libraries OctreeLibrary LINK_LIBRARIES)
+target_include_directories(${PROJECT_NAME} PRIVATE ${private_include_dirs})
+target_link_libraries(${PROJECT_NAME} PRIVATE ${private_link_libraries})
 
 
 set_target_properties(${PROJECT_NAME} PROPERTIES

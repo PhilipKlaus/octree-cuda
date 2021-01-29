@@ -25,9 +25,9 @@ public:
 
 public:
     // Set point cloud
-    void setPointCloudHost(uint8_t *pointCloud);
-    void setPointCloudDevice(uint8_t *pointCloud);
-    void setPointCloudDevice(GpuArrayU8 pointCloud);
+    void setPointCloudHost (uint8_t* pointCloud);
+    void setPointCloudDevice (uint8_t* pointCloud);
+    void setPointCloudDevice (GpuArrayU8 pointCloud);
 
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
@@ -66,7 +66,7 @@ public:
 
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
-    const std::vector<std::tuple<std::string, float>>& getTimings() const;
+    const std::vector<std::tuple<std::string, float>>& getTimings () const;
 
 private:
     // Merging

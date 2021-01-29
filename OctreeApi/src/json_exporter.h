@@ -10,8 +10,11 @@
 
 
 template <typename coordinateType>
-void export_json_data(const std::string filePath, OctreeMetadata<coordinateType> metadata, const std::vector<std::tuple<std::string, float>>& timings) {
-
+void export_json_data (
+        const std::string filePath,
+        OctreeMetadata<coordinateType> metadata,
+        const std::vector<std::tuple<std::string, float>>& timings)
+{
     nlohmann::ordered_json statistics;
     statistics["depth"] = metadata.depth;
 
@@ -44,16 +47,16 @@ void export_json_data(const std::string filePath, OctreeMetadata<coordinateType>
     statistics["pointDistribution"]["minPointsPerNode"]       = metadata.minPointsPerNode;
     statistics["pointDistribution"]["maxPointsPerNode"]       = metadata.maxPointsPerNode;
 
-    statistics["cloud"]["pointAmount"]             = metadata.cloudMetadata.pointAmount;
-    statistics["cloud"]["pointDataStride"]         = metadata.cloudMetadata.pointDataStride;
-    statistics["cloud"]["boundingBox"]["min"]["x"] = metadata.cloudMetadata.boundingBox.minimum.x;
-    statistics["cloud"]["boundingBox"]["min"]["y"] = metadata.cloudMetadata.boundingBox.minimum.y;
-    statistics["cloud"]["boundingBox"]["min"]["z"] = metadata.cloudMetadata.boundingBox.minimum.z;
-    statistics["cloud"]["boundingBox"]["max"]["x"] = metadata.cloudMetadata.boundingBox.maximum.x;
-    statistics["cloud"]["boundingBox"]["max"]["y"] = metadata.cloudMetadata.boundingBox.maximum.y;
-    statistics["cloud"]["boundingBox"]["max"]["z"] = metadata.cloudMetadata.boundingBox.maximum.z;
-    statistics["cloud"]["boundingBox"]["sideLength"] =
-            metadata.cloudMetadata.boundingBox.maximum.x - metadata.cloudMetadata.boundingBox.minimum.x;
+    statistics["cloud"]["pointAmount"]         = metadata.cloudMetadata.pointAmount;
+    statistics["cloud"]["pointDataStride"]     = metadata.cloudMetadata.pointDataStride;
+    statistics["cloud"]["bbCubic"]["min"]["x"] = metadata.cloudMetadata.bbCubic.min.x;
+    statistics["cloud"]["bbCubic"]["min"]["y"] = metadata.cloudMetadata.bbCubic.min.y;
+    statistics["cloud"]["bbCubic"]["min"]["z"] = metadata.cloudMetadata.bbCubic.min.z;
+    statistics["cloud"]["bbCubic"]["max"]["x"] = metadata.cloudMetadata.bbCubic.max.x;
+    statistics["cloud"]["bbCubic"]["max"]["y"] = metadata.cloudMetadata.bbCubic.max.y;
+    statistics["cloud"]["bbCubic"]["max"]["z"] = metadata.cloudMetadata.bbCubic.max.z;
+    statistics["cloud"]["bbCubic"]["sideLength"] =
+            metadata.cloudMetadata.bbCubic.max.x - metadata.cloudMetadata.bbCubic.min.x;
     statistics["cloud"]["offset"]["x"] = metadata.cloudMetadata.cloudOffset.x;
     statistics["cloud"]["offset"]["y"] = metadata.cloudMetadata.cloudOffset.y;
     statistics["cloud"]["offset"]["z"] = metadata.cloudMetadata.cloudOffset.z;

@@ -1,7 +1,7 @@
 #pragma once
 
-#include "tools.cuh"
 #include "timing.cuh"
+#include "tools.cuh"
 
 
 // https://developer.nvidia.com/blog/cplusplus-11-in-cuda-variadic-templates/

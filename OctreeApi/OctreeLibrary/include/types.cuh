@@ -31,7 +31,8 @@ struct Chunk
     bool isParent;             // Denotes if Chunk is a parent or a leaf node
 };
 
-struct SubsamplingTimings {
+struct SubsamplingTimings
+{
     float subsampleEvaluation;
     float generateRandoms;
     float averaging;
@@ -40,13 +41,13 @@ struct SubsamplingTimings {
 
 
 template <typename gpuType>
-using GpuArray      = std::unique_ptr<CudaArray<gpuType>>;
-using GpuArrayU8    = GpuArray<uint8_t>;
-using GpuArrayU32   = GpuArray<uint32_t>;
-using GpuArrayI32   = GpuArray<int>;
-using GpuOctree     = GpuArray<Chunk>;
-using GpuSubsample  = GpuArray<SubsampleConfig>;
-using GpuAveraging  = GpuArray<Averaging>;
+using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
+using GpuArrayU8     = GpuArray<uint8_t>;
+using GpuArrayU32    = GpuArray<uint32_t>;
+using GpuArrayI32    = GpuArray<int>;
+using GpuOctree      = GpuArray<Chunk>;
+using GpuSubsample   = GpuArray<SubsampleConfig>;
+using GpuAveraging   = GpuArray<Averaging>;
 using GpuRandomState = GpuArray<curandState_t>;
 
 template <typename T, typename... Args>

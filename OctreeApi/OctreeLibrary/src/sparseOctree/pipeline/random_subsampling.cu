@@ -1,6 +1,6 @@
-#include "sparseOctree.h"
 #include "kernel_executor.cuh"
 #include "random_subsampling.cuh"
+#include "sparseOctree.h"
 #include "subsample_evaluating.cuh"
 
 
@@ -25,7 +25,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
         GpuArrayU32& randomIndices,
         GpuSubsample& subsampleConfig)
 {
-    Chunk voxel                              = h_octreeSparse[sparseVoxelIndex];
+    Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
 
     // Depth first traversal
@@ -61,7 +61,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
 
         // Parent bounding box calculation
         PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
-        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
+        auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes

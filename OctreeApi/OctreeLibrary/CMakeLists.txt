@@ -5,7 +5,7 @@
 
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
-add_library( ${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} STATIC
 
         # Headers
         include/api_types.h
@@ -76,10 +76,10 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 
-######################
-# Add LASZIP library #
-######################
-target_include_directories(${PROJECT_NAME} PRIVATE External/laszip)
+############################
+# Add Lohmann JSON library #
+############################
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/nlohmann)
 
 ######################
 # ADD SPDLOG LIBRARY #
@@ -94,4 +94,4 @@ option(BUILD_TESTS "build automated tests" ON)
 if (BUILD_TESTS)
     message(STATUS "OctreeCuda build includes automated tests...")
     add_subdirectory(Tests)
-endif()
+endif ()

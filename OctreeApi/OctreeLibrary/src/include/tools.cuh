@@ -4,8 +4,8 @@
 #include <cuda_runtime_api.h>
 #include <memory>
 
-#include "types.cuh"
 #include "octree_metadata.h"
+#include "types.cuh"
 
 
 using namespace std;
@@ -19,7 +19,8 @@ uint32_t getNodeAmount (uint32_t octreeLevel);
 uint32_t getNodeOffset (uint32_t octreeLevel, uint32_t octreeDepth);
 
 template <typename coordinateType>
-unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata<coordinateType>& metadata);
+unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (
+        uint32_t sideLength, PointCloudMetadata<coordinateType>& metadata);
 void printKernelDimensions (dim3 block, dim3 grid);
 void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount);
 
@@ -29,16 +30,16 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
 
 // See OctreeConverter : chunker_countsort_laszip.cpp :131
 template <typename coordinateType>
-__device__ uint32_t
-        calculateGridIndex (const Vector3<coordinateType>* point, PointCloudMetadata<coordinateType> const& metadata, uint32_t gridSize)
+__device__ uint32_t calculateGridIndex (
+        const Vector3<coordinateType>* point, PointCloudMetadata<coordinateType> const& metadata, uint32_t gridSize)
 {
-    double sizeX = metadata.boundingBox.maximum.x - metadata.boundingBox.minimum.x;
-    double sizeY = metadata.boundingBox.maximum.y - metadata.boundingBox.minimum.y;
-    double sizeZ = metadata.boundingBox.maximum.z - metadata.boundingBox.minimum.z;
+    double sizeX = metadata.bbCubic.max.x - metadata.bbCubic.min.x;
+    double sizeY = metadata.bbCubic.max.y - metadata.bbCubic.min.y;
+    double sizeZ = metadata.bbCubic.max.z - metadata.bbCubic.min.z;
 
-    double uX = (point->x * metadata.scale.x - metadata.boundingBox.minimum.x) / (sizeX / gridSize);
-    double uY = (point->y * metadata.scale.y - metadata.boundingBox.minimum.y) / (sizeY / gridSize);
-    double uZ = (point->z * metadata.scale.z - metadata.boundingBox.minimum.z) / (sizeZ / gridSize);
+    double uX = (point->x - metadata.bbCubic.min.x) / (sizeX / gridSize);
+    double uY = (point->y - metadata.bbCubic.min.y) / (sizeY / gridSize);
+    double uZ = (point->z - metadata.bbCubic.min.z) / (sizeZ / gridSize);
 
     uint64_t ix = static_cast<int64_t> (fmin (uX, gridSize - 1.0));
     uint64_t iy = static_cast<int64_t> (fmin (uY, gridSize - 1.0));

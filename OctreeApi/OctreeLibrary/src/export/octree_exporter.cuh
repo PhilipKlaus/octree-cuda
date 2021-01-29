@@ -17,7 +17,7 @@ public:
             OctreeMetadata<coordinateType> metadata) :
             itsMetadata (metadata),
             itsPointCloud (pointCloud->toHost ()), itsOctree (octree->toHost ()), itsLeafeLut (leafeLut->toHost ()),
-            itsAbsorbedNodes (0)
+            itsAbsorbedNodes (0), itsPointsExported (0)
     {
         std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
             itsParentLut.insert (make_pair (lutItem.first, lutItem.second->toHost ()));
@@ -37,8 +37,30 @@ protected:
         return itsMetadata.nodeAmountSparse - 1;
     }
 
+    bool isParentNode (uint32_t nodeIndex)
+    {
+        return this->itsOctree[nodeIndex].isParent;
+    }
+
+    bool isFinishedNode (uint32_t nodeIndex)
+    {
+        return this->itsOctree[nodeIndex].isFinished;
+    }
+
+    uint32_t getPointsInNode (uint32_t nodeIndex)
+    {
+        bool isParent = isParentNode (nodeIndex);
+        return (isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount);
+    }
+
+    uint32_t getChildNodeIndex (uint32_t nodeIndex, uint8_t child)
+    {
+        return this->itsOctree[nodeIndex].childrenChunks[child];
+    }
+
 
 protected:
+    uint32_t itsPointsExported;
     uint32_t itsAbsorbedNodes;
     OctreeMetadata<coordinateType> itsMetadata;
     unique_ptr<uint8_t[]> itsPointCloud;

@@ -48,8 +48,7 @@ unique_ptr<Chunk[]> SparseOctree<coordinateType, colorType>::getOctreeSparse () 
 
 
 template <typename coordinateType, typename colorType>
-unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<coordinateType, colorType>::
-        getSubsampleLUT () const
+unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<coordinateType, colorType>::getSubsampleLUT () const
 {
     return itsSubsampleLUTs;
 }
@@ -68,7 +67,6 @@ const std::vector<std::tuple<std::string, float>>& SparseOctree<coordinateType, 
 }
 
 
-
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
@@ -79,8 +77,7 @@ template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCount
 template unique_ptr<int[]> SparseOctree<float, uint8_t>::getDenseToSparseLUT () const;
 template unique_ptr<int[]> SparseOctree<float, uint8_t>::getSparseToDenseLUT () const;
 template unique_ptr<Chunk[]> SparseOctree<float, uint8_t>::getOctreeSparse () const;
-template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<float, uint8_t>::
-        getSubsampleLUT () const;
+template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<float, uint8_t>::getSubsampleLUT () const;
 template uint32_t SparseOctree<float, uint8_t>::getRootIndex ();
 template const std::vector<std::tuple<std::string, float>>& SparseOctree<float, uint8_t>::getTimings () const;
 
@@ -95,7 +92,6 @@ template unique_ptr<uint32_t[]> SparseOctree<double, uint8_t>::getDensePointCoun
 template unique_ptr<int[]> SparseOctree<double, uint8_t>::getDenseToSparseLUT () const;
 template unique_ptr<int[]> SparseOctree<double, uint8_t>::getSparseToDenseLUT () const;
 template unique_ptr<Chunk[]> SparseOctree<double, uint8_t>::getOctreeSparse () const;
-template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<double, uint8_t>::
-        getSubsampleLUT () const;
+template unordered_map<uint32_t, GpuArrayU32> const& SparseOctree<double, uint8_t>::getSubsampleLUT () const;
 template uint32_t SparseOctree<double, uint8_t>::getRootIndex ();
 template const std::vector<std::tuple<std::string, float>>& SparseOctree<double, uint8_t>::getTimings () const;
