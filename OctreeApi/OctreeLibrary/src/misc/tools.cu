@@ -133,8 +133,8 @@ GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata<
 {
     coordinateType boundingBoxMax         = static_cast<coordinateType> (sideLength) - 0.5;
     metadata.pointAmount         = static_cast<uint32_t> (pow (sideLength, 3.0));
-    metadata.boundingBox.minimum = Vector3<coordinateType>{0.5, 0.5, 0.5};
-    metadata.boundingBox.maximum = Vector3<coordinateType>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
+    metadata.bbCubic.min                  = Vector3<coordinateType>{0.5, 0.5, 0.5};
+    metadata.bbCubic.max                  = Vector3<coordinateType>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
     metadata.cloudOffset         = Vector3<coordinateType>{0.5, 0.5, 0.5};
     metadata.scale               = {1.0, 1.0, 1.0};
     metadata.pointDataStride     = 12;

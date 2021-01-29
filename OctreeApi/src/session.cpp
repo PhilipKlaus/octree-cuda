@@ -52,7 +52,7 @@ void Session::generateOctree() {
         metadata.pointDataStride = itsDataStride;
         metadata.scale = itsScaleF;
         metadata.cloudOffset = itsOffsetF;
-        metadata.boundingBox = itsBoundingBoxF;
+        metadata.bbCubic         = itsBoundingBoxF;
         generateOctreeTemplated<float, uint8_t>(metadata);
     }
     else {
@@ -62,7 +62,7 @@ void Session::generateOctree() {
         metadata.pointDataStride = itsDataStride;
         metadata.scale = itsScaleD;
         metadata.cloudOffset = itsOffsetD;
-        metadata.boundingBox = itsBoundingBoxD;
+        metadata.bbCubic         = itsBoundingBoxD;
         generateOctreeTemplated<double, uint8_t>(metadata);
     }
 }

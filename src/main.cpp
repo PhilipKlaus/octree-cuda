@@ -19,17 +19,17 @@ void calculateBB(const uint8_t *cloud, PointCloudMetadata<coordinateType> &metad
     for(uint32_t i = 0; i < metadata.pointAmount; ++i)
     {
         minimum.x =
-                fmin (minimum.x, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride)) * metadata.scale.x);
+                fmin (minimum.x, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride)));
         minimum.y = fmin (
-                minimum.y, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize)) * metadata.scale.y);
+                minimum.y, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize)));
         minimum.z = fmin (
-                minimum.z, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize * 2)) * metadata.scale.z);
+                minimum.z, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize * 2)));
         maximum.x =
-                fmax (maximum.x, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride)) * metadata.scale.x);
+                fmax (maximum.x, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride)));
         maximum.y = fmax (
-                maximum.y, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize)) * metadata.scale.y);
+                maximum.y, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize)));
         maximum.z = fmax (
-                maximum.z, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize * 2)) * metadata.scale.z);
+                maximum.z, (*reinterpret_cast<const coordinateType*> (cloud + i * metadata.pointDataStride + byteSize * 2)));
     }
 
     Vector3<coordinateType> dimension{};
@@ -38,18 +38,19 @@ void calculateBB(const uint8_t *cloud, PointCloudMetadata<coordinateType> &metad
     dimension.z = maximum.z - minimum.z;
     coordinateType cubicSideLength = max(max(dimension.x, dimension.y), dimension.z);
 
-    metadata.boundingBox.minimum = {};
-    metadata.boundingBox.minimum.x = minimum.x - ((cubicSideLength - dimension.x) / 2.0f);
-    metadata.boundingBox.minimum.y = minimum.y - ((cubicSideLength - dimension.y) / 2.0f);
-    metadata.boundingBox.minimum.z = minimum.z - ((cubicSideLength - dimension.z) / 2.0f);
-    metadata.boundingBox.maximum = {};
-    metadata.boundingBox.maximum.x = metadata.boundingBox.minimum.x + cubicSideLength;
-    metadata.boundingBox.maximum.y = metadata.boundingBox.minimum.y + cubicSideLength;
-    metadata.boundingBox.maximum.z = metadata.boundingBox.minimum.z + cubicSideLength;
-    metadata.cloudOffset = metadata.boundingBox.minimum;
+    metadata.bbCubic.min.x = minimum.x - ((cubicSideLength - dimension.x) / 2.0f);
+    metadata.bbCubic.min.y = minimum.y - ((cubicSideLength - dimension.y) / 2.0f);
+    metadata.bbCubic.min.z = minimum.z - ((cubicSideLength - dimension.z) / 2.0f);
+    metadata.bbCubic.max.x = metadata.bbCubic.min.x + cubicSideLength;
+    metadata.bbCubic.max.y = metadata.bbCubic.min.y + cubicSideLength;
+    metadata.bbCubic.max.z = metadata.bbCubic.min.z + cubicSideLength;
+    metadata.cloudOffset = metadata.bbCubic.min;
+
+    metadata.bbReal = { minimum, maximum };
+
     spdlog::info("Original BB: min[x,y,z]=[{},{},{}], max[x,y,z]=[{},{},{}]", minimum.x, minimum.y, minimum.z, maximum.x, maximum.y, maximum.z);
-    spdlog::info("Cubic BB: min[x,y,z]=[{},{},{}], max[x,y,z]=[{},{},{}]", metadata.boundingBox.minimum.x, metadata.boundingBox.minimum.y,
-                 metadata.boundingBox.minimum.z, metadata.boundingBox.maximum.x, metadata.boundingBox.maximum.y, metadata.boundingBox.maximum.z);
+    spdlog::info("Cubic BB: min[x,y,z]=[{},{},{}], max[x,y,z]=[{},{},{}]", metadata.bbCubic.min.x, metadata.bbCubic.min.y,
+                 metadata.bbCubic.min.z, metadata.bbCubic.max.x, metadata.bbCubic.max.y, metadata.bbCubic.max.z);
 }
 
 int main() {
@@ -67,13 +68,16 @@ int main() {
 
     // Setup cloud properties
     PointCloudMetadata<float> metadata = {};
-    metadata.pointAmount = 25836417;
-    metadata.pointDataStride = 15;
-    metadata.scale = {1.f, 1.f, 1.f };
+    //metadata.pointAmount = 25836417;
+    metadata.pointAmount = 5138448;
+    //metadata.pointDataStride = 15;
+    metadata.pointDataStride = 43;
+    metadata.scale = {0.001, 0.001, 0.001 };
     metadata.cloudType = CloudType::CLOUD_FLOAT_UINT8_T;
 
     // Read in ply
-    ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);
+    //ifstream ifs(   "heidentor_color_raw.ply", ios::binary|ios::ate);
+    ifstream ifs(   "coin_2320x9x2x4000_headerless.ply", ios::binary|ios::ate);
     ifstream::pos_type pos = ifs.tellg();
     std::streamoff length = pos;
     auto *pChars = new uint8_t[length];
@@ -93,23 +97,23 @@ int main() {
         ocpi_set_cloud_scale_f(session, metadata.scale.x, metadata.scale.y, metadata.scale.z);
         ocpi_set_cloud_offset_f(session, metadata.cloudOffset.x, metadata.cloudOffset.y, metadata.cloudOffset.z);
         ocpi_set_cloud_bb_f(session,
-                metadata.boundingBox.minimum.x,
-                metadata.boundingBox.minimum.y,
-                metadata.boundingBox.minimum.z,
-                metadata.boundingBox.maximum.x,
-                metadata.boundingBox.maximum.y,
-                metadata.boundingBox.maximum.z);
+                metadata.bbCubic.min.x,
+                metadata.bbCubic.min.y,
+                metadata.bbCubic.min.z,
+                metadata.bbCubic.max.x,
+                metadata.bbCubic.max.y,
+                metadata.bbCubic.max.z);
     }
     else {
         ocpi_set_cloud_scale_d(session, metadata.scale.x, metadata.scale.y, metadata.scale.z);
         ocpi_set_cloud_offset_d(session, metadata.cloudOffset.x, metadata.cloudOffset.y, metadata.cloudOffset.z);
         ocpi_set_cloud_bb_d(session,
-                            metadata.boundingBox.minimum.x,
-                            metadata.boundingBox.minimum.y,
-                            metadata.boundingBox.minimum.z,
-                            metadata.boundingBox.maximum.x,
-                            metadata.boundingBox.maximum.y,
-                            metadata.boundingBox.maximum.z);
+                            metadata.bbCubic.min.x,
+                            metadata.bbCubic.min.y,
+                            metadata.bbCubic.min.z,
+                            metadata.bbCubic.max.x,
+                            metadata.bbCubic.max.y,
+                            metadata.bbCubic.max.z);
     }
 
     ocpi_set_point_cloud_host(session, pChars);

@@ -18,7 +18,7 @@ struct OctreeMetadata
     uint32_t leafNodeAmount;      // The amount of child nodes
     uint32_t parentNodeAmount;    // The amount of parent nodes
     uint32_t nodeAmountDense;     // The theoretical amount of dense nodes
-    uint32_t mergingThreshold;    // Threshold specifying the (theoretical) minimum sum of points in 8 adjacent cells
+    uint32_t mergingThreshold;    // Threshold specifying the (theoretical) min sum of points in 8 adjacent cells
     uint32_t absorbedNodes;       // Nodes completely absorbed during subsampling
     float meanPointsPerLeafNode;  // Mean points per leaf node
     float stdevPointsPerLeafNode; // Standard deviation of points per leaf node

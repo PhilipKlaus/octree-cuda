@@ -5,6 +5,12 @@
 #include <queue>
 #include <unordered_map>
 
+constexpr uint8_t HIERARCHY_NODE_BYTES = 22;
+constexpr uint8_t HIERARCHY_STEP_SIZE = 100;
+constexpr uint8_t HIERARCHY_DEPTH = 20;
+
+constexpr char POTREE_DATA_VERSION[] = "2.0";
+
 template <typename coordinateType, typename colorType>
 PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const GpuArrayU8& pointCloud,
@@ -33,7 +39,6 @@ void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
     std::ofstream hierarchyFile;
     hierarchyFile.open (itsExportFolder + R"(/hierarchy.bin)", std::ios::binary);
 
-    //exportNode(this->getRootIndex(), 0, pointFile, hierarchyFile);
     breathFirstExport(pointFile, hierarchyFile);
 
     pointFile.close();
@@ -153,12 +158,14 @@ uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     auto* point = reinterpret_cast<Vector3<coordinateType>*> (this->itsPointCloud.get() + pointByteIndex);
+    auto realBB = this->itsMetadata.cloudMetadata.bbReal;
+    auto scale = this->itsMetadata.cloudMetadata.scale;
 
     uint8_t byteAmount = 3 * sizeof (int32_t);
     int32_t coords[3];
-    coords[0] = static_cast<int32_t>(floor(point->x / 0.001));
-    coords[1] = static_cast<int32_t>(floor(point->y / 0.001));
-    coords[2] = static_cast<int32_t>(floor(point->z/ 0.001));
+    coords[0] = static_cast<int32_t>(floor(point->x / scale.x));
+    coords[1] = static_cast<int32_t>(floor(point->y / scale.y));
+    coords[2] = static_cast<int32_t>(floor(point->z / scale.z));
 
     std::memcpy (buffer.get () + bufferOffset, &coords, byteAmount);
     return byteAmount;
@@ -211,69 +218,49 @@ uint8_t PotreeExporter<coordinateType, colorType>::getChildMask (uint32_t nodeIn
 template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 {
+    // Prepare metadata for export
+    uint32_t  exportedNodes = this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount;
+    auto bbReal        = this->itsMetadata.cloudMetadata.bbReal;
+    auto bbCubic = this->itsMetadata.cloudMetadata.bbCubic;
+    auto scale = this->itsMetadata.cloudMetadata.scale;
+    auto spacing = (bbCubic.max.x - bbCubic.min.x) / this->itsMetadata.subsamplingGrid;
+
+    // Common metadata
     nlohmann::ordered_json metadata;
-    metadata["version"]     = "2.0";
+    metadata["version"]     = POTREE_DATA_VERSION;
     metadata["name"]        = "GpuPotreeConverter";
     metadata["description"] = "AIT Austrian Institute of Technology";
     metadata["points"]      = this->itsPointsExported;
     metadata["projection"]  = "";
-    metadata["hierarchy"]["firstChunkSize"] =
-            (this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount) * 22;
-    metadata["hierarchy"]["stepSize"] = 100;
-    metadata["hierarchy"]["depth"]    = 20;
-
-    auto offset = this->itsMetadata.cloudMetadata.cloudOffset; // ToDo: evtl. 0, 0, 0
-    metadata["offset"].push_back (0);
-    metadata["offset"].push_back (0);
-    metadata["offset"].push_back (0);
-
-    auto scale = this->itsMetadata.cloudMetadata.scale;
-    metadata["scale"].push_back (0.001);
-    metadata["scale"].push_back (0.001);
-    metadata["scale"].push_back (0.001);
-
-    auto spacing = (this->itsMetadata.cloudMetadata.boundingBox.maximum.x -
-                    this->itsMetadata.cloudMetadata.boundingBox.minimum.x) /
-                   this->itsMetadata.subsamplingGrid;
+    metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
+    metadata["hierarchy"]["stepSize"] = HIERARCHY_STEP_SIZE;
+    metadata["hierarchy"]["depth"]    = HIERARCHY_DEPTH;
+    metadata["offset"] = { bbReal.min.x, bbReal.min.y, bbReal.min.z };
+    metadata["scale"] = { scale.x, scale.y, scale.z };
     metadata["spacing"] = spacing;
-
-    auto bb = this->itsMetadata.cloudMetadata.boundingBox;
-    metadata["boundingBox"]["min"].push_back (bb.minimum.x);
-    metadata["boundingBox"]["min"].push_back (bb.minimum.y);
-    metadata["boundingBox"]["min"].push_back (bb.minimum.z);
-    metadata["boundingBox"]["max"].push_back (bb.maximum.x);
-    metadata["boundingBox"]["max"].push_back (bb.maximum.y);
-    metadata["boundingBox"]["max"].push_back (bb.maximum.z);
-
+    metadata["boundingBox"]["min"] = { bbCubic.min.x, bbCubic.min.y, bbCubic.min.z };
+    metadata["boundingBox"]["max"] = { bbCubic.max.x, bbCubic.max.y, bbCubic.max.z };
     metadata["encoding"] = "DEFAULT";
 
-
+    // POSITION attribute
     metadata["attributes"][0]["name"]        = "position";
     metadata["attributes"][0]["description"] = "";
-    metadata["attributes"][0]["size"]        = sizeof (int32_t) * 3; // ToDo: check if correct
+    metadata["attributes"][0]["size"]        = sizeof (int32_t) * 3;
     metadata["attributes"][0]["numElements"] = 3;
     metadata["attributes"][0]["elementSize"] = sizeof (int32_t);
-    metadata["attributes"][0]["type"]        = "int32"; // ToDo: from config
-    metadata["attributes"][0]["min"].push_back (bb.minimum.x);
-    metadata["attributes"][0]["min"].push_back (bb.minimum.y);
-    metadata["attributes"][0]["min"].push_back (bb.minimum.z);
-    metadata["attributes"][0]["max"].push_back (bb.maximum.x);
-    metadata["attributes"][0]["max"].push_back (bb.maximum.y);
-    metadata["attributes"][0]["max"].push_back (bb.maximum.z);
+    metadata["attributes"][0]["type"]        = "int32";
+    metadata["attributes"][0]["min"] = { bbCubic.min.x, bbCubic.min.y, bbCubic.min.z };
+    metadata["attributes"][0]["max"] = { bbCubic.max.x, bbCubic.max.y, bbCubic.max.z };
 
+    // COLOR attribute
     metadata["attributes"][1]["name"]        = "rgb";
     metadata["attributes"][1]["description"] = "";
     metadata["attributes"][1]["size"]        = sizeof(uint16_t) * 3;
     metadata["attributes"][1]["numElements"] = 3;
     metadata["attributes"][1]["elementSize"] = sizeof(uint16_t);
     metadata["attributes"][1]["type"]        = "uint16";
-    metadata["attributes"][1]["min"].push_back (0);
-    metadata["attributes"][1]["min"].push_back (0);
-    metadata["attributes"][1]["min"].push_back (0);
-    metadata["attributes"][1]["max"].push_back (65024);
-    metadata["attributes"][1]["max"].push_back (65280);
-    metadata["attributes"][1]["max"].push_back (65280);
-
+    metadata["attributes"][1]["min"] = { 0, 0, 0 };
+    metadata["attributes"][1]["max"] = { 65024, 65280, 65280 };
 
     std::ofstream file (itsExportFolder + R"(/metadata.json)");
     file << std::setw (4) << metadata;

@@ -25,8 +25,8 @@ enum CloudType {
 template <typename coordinateType>
 struct BoundingBox
 {
-    Vector3<coordinateType> minimum;
-    Vector3<coordinateType> maximum;
+    Vector3<coordinateType> min;
+    Vector3<coordinateType> max;
 };
 
 template <typename coordinateType>
@@ -34,7 +34,8 @@ struct PointCloudMetadata
 {
     uint32_t pointAmount;
     uint32_t pointDataStride;
-    BoundingBox<coordinateType> boundingBox;
+    BoundingBox<coordinateType> bbCubic;
+    BoundingBox<coordinateType> bbReal;
     Vector3<coordinateType> cloudOffset;
     Vector3<coordinateType> scale;
     CloudType cloudType;
