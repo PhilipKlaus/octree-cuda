@@ -77,6 +77,7 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
 
                     else
                     {
+                        pointByteIndex += (3 * sizeof (coordinateType));
                         bufferOffset += writeColorNonAveraged (buffer, bufferOffset, pointByteIndex);
                     }
                 }
@@ -121,9 +122,6 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (std::ofstream
 
     discoveredNodes[this->getRootIndex()] = true;
     toVisit.push(this->getRootIndex());
-
-    //uint32_t nodesToExport = this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount;
-    //auto hierarchFileBuffer = std::make_unique<HierarchyFileEntry[]> (nodesToExport);
 
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -225,9 +223,9 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     metadata["hierarchy"]["depth"]    = 20;
 
     auto offset = this->itsMetadata.cloudMetadata.cloudOffset; // ToDo: evtl. 0, 0, 0
-    metadata["offset"].push_back (offset.x);
-    metadata["offset"].push_back (offset.y);
-    metadata["offset"].push_back (offset.z);
+    metadata["offset"].push_back (0);
+    metadata["offset"].push_back (0);
+    metadata["offset"].push_back (0);
 
     auto scale = this->itsMetadata.cloudMetadata.scale;
     metadata["scale"].push_back (0.001);
@@ -252,9 +250,9 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 
     metadata["attributes"][0]["name"]        = "position";
     metadata["attributes"][0]["description"] = "";
-    metadata["attributes"][0]["size"]        = sizeof (coordinateType) * 3; // ToDo: check if correct
+    metadata["attributes"][0]["size"]        = sizeof (int32_t) * 3; // ToDo: check if correct
     metadata["attributes"][0]["numElements"] = 3;
-    metadata["attributes"][0]["elementSize"] = 4;
+    metadata["attributes"][0]["elementSize"] = sizeof (int32_t);
     metadata["attributes"][0]["type"]        = "int32"; // ToDo: from config
     metadata["attributes"][0]["min"].push_back (bb.minimum.x);
     metadata["attributes"][0]["min"].push_back (bb.minimum.y);
@@ -265,9 +263,9 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 
     metadata["attributes"][1]["name"]        = "rgb";
     metadata["attributes"][1]["description"] = "";
-    metadata["attributes"][1]["size"]        = 6;
+    metadata["attributes"][1]["size"]        = sizeof(uint16_t) * 3;
     metadata["attributes"][1]["numElements"] = 3;
-    metadata["attributes"][1]["elementSize"] = 2;
+    metadata["attributes"][1]["elementSize"] = sizeof(uint16_t);
     metadata["attributes"][1]["type"]        = "uint16";
     metadata["attributes"][1]["min"].push_back (0);
     metadata["attributes"][1]["min"].push_back (0);
