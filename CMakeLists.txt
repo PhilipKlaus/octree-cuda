@@ -4,14 +4,18 @@
 ########################################################
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(PotreeConverterGPU LANGUAGES CUDA CXX)
+find_package(CUDA)
 set(CMAKE_CXX_STANDARD 14)
 set(CUDA_STANDARD 14)
 
 # Specify the PotreeConverterGPU executable
-set(SOURCES src/main.cpp)
+set(SOURCES
+        src/main.cpp
+        src/boundingbox.h)
+
 add_executable(${PROJECT_NAME} ${SOURCES})
 
-target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/External )
+target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/External ${PROJECT_SOURCE_DIR}/src)
 
 ######################
 # ADD SPDLOG LIBRARY #

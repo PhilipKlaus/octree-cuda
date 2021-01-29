@@ -5,16 +5,16 @@
 
 project(OctreeLibrary LANGUAGES CUDA CXX)
 
-add_library( ${PROJECT_NAME} STATIC
+add_library(${PROJECT_NAME} STATIC
 
         # Headers
         include/api_types.h
         include/sparseOctree.h
         src/include/cudaArray.h
         src/include/eventWatcher.h
-        src/include/global_types.h
+        include/octree_metadata.h
         src/include/tools.cuh
-        src/include/types.cuh
+        include/types.cuh
 
         # Kernel
         src/kernel/kernel_executor.cuh
@@ -29,20 +29,30 @@ add_library( ${PROJECT_NAME} STATIC
 
         # Misc
         src/misc/tools.cu
-        src/misc/defines.cuh
+        include/defines.cuh
         src/misc/timing.cuh
 
         # Sparse octree
         src/sparseOctree/pipeline/first_point_subsampling.cu
         src/sparseOctree/pipeline/random_subsampling.cu
         src/sparseOctree/benchmarking.cu
-        src/sparseOctree/data_export.cu
         src/sparseOctree/debugging.cu
         src/sparseOctree/sparseOctree.cu
-        src/sparseOctree/dummy.cpp)
+        src/sparseOctree/dummy.cpp
+
+        # Data export
+        src/export/octree_exporter.cuh
+        src/export/ply_exporter.cuh
+        src/export/ply_exporter.cu
+        src/export/potree_exporter.cuh
+        src/export/potree_exporter.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
-target_include_directories(${PROJECT_NAME} PRIVATE src/kernel src/misc src/include)
+target_include_directories(${PROJECT_NAME} PRIVATE
+        src/kernel
+        src/misc
+        src/include
+        src/export)
 
 ####################
 # ADD CUDA SUPPORT #
@@ -69,12 +79,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC CUDA_SUPPORT)
 ############################
 # Add Lohmann JSON library #
 ############################
-target_include_directories(${PROJECT_NAME} PRIVATE External/nlohmann)
-
-######################
-# Add LASZIP library #
-######################
-target_include_directories(${PROJECT_NAME} PRIVATE External/laszip)
+target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/nlohmann)
 
 ######################
 # ADD SPDLOG LIBRARY #
@@ -89,4 +94,4 @@ option(BUILD_TESTS "build automated tests" ON)
 if (BUILD_TESTS)
     message(STATUS "OctreeCuda build includes automated tests...")
     add_subdirectory(Tests)
-endif()
+endif ()

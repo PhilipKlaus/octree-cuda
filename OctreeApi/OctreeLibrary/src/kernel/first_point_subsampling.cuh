@@ -1,14 +1,8 @@
 #pragma once
 
-#include <cuda.h>
-#include <cuda_runtime.h>
-#include <timing.cuh>
-
-#include "../include/cudaArray.h"
-#include "../include/global_types.h"
-#include "../include/tools.cuh"
-#include "../include/types.cuh"
-#include <cstdint>
+#include "octree_metadata.h"
+#include "tools.cuh"
+#include "types.cuh"
 
 namespace subsampling {
 
@@ -20,7 +14,7 @@ __global__ void kernelFirstPointSubsample (
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
+        PointCloudMetadata<coordinateType> metadata,
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {

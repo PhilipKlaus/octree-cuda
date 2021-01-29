@@ -2,12 +2,12 @@
 #include "catch2/catch.hpp"
 #include "spdlog/spdlog.h"
 
-int main( int argc, char* argv[] ) {
-
+int main (int argc, char* argv[])
+{
     // global setup...
-    spdlog::set_level(spdlog::level::err);
+    spdlog::set_level (spdlog::level::err);
 
-    int result = Catch::Session().run( argc, argv );
+    int result = Catch::Session ().run (argc, argv);
 
     // global clean-up...
 

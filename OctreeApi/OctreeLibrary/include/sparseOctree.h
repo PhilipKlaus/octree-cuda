@@ -4,11 +4,8 @@
 
 #pragma once
 
-#include "../src/include/cudaArray.h"
-#include "../src/include/global_types.h"
-#include "../src/include/tools.cuh"
-#include "../src/include/types.cuh"
-#include <curand_kernel.h>
+#include "octree_metadata.h"
+#include "types.cuh"
 
 
 template <typename coordinateType, typename colorType>
@@ -19,7 +16,7 @@ public:
             GridSize chunkingGrid,
             GridSize subsamplingGrid,
             uint32_t mergingThreshold,
-            PointCloudMetadata cloudMetadata,
+            PointCloudMetadata<coordinateType> cloudMetadata,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
@@ -28,9 +25,9 @@ public:
 
 public:
     // Set point cloud
-    void setPointCloudHost(uint8_t *pointCloud);
-    void setPointCloudDevice(uint8_t *pointCloud);
-    void setPointCloudDevice(GpuArrayU8 pointCloud);
+    void setPointCloudHost (uint8_t* pointCloud);
+    void setPointCloudDevice (uint8_t* pointCloud);
+    void setPointCloudDevice (GpuArrayU8 pointCloud);
 
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
@@ -47,13 +44,15 @@ public:
     void performSubsampling ();
 
     // Calculation tools
-    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
+    void calculateVoxelBB (PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes (const string& folderPath);
 
     // Debugging methods
-    const OctreeMetadata& getMetadata () const;
+    const OctreeMetadata<coordinateType>& getMetadata () const;
+
+    void updateOctreeStatistics ();
 
     unique_ptr<uint32_t[]> getDataLUT () const;
 
@@ -67,6 +66,8 @@ public:
 
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
+    const std::vector<std::tuple<std::string, float>>& getTimings () const;
+
 private:
     // Merging
     void mergeHierarchical ();
@@ -74,7 +75,7 @@ private:
     void initLowestOctreeHierarchy ();
 
     // Subsampling
-    std::tuple<float, float> firstPointSubsampling (
+    SubsamplingTimings firstPointSubsampling (
             const unique_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
@@ -84,7 +85,7 @@ private:
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuSubsample& subsampleConfig);
 
-    std::tuple<float, float> randomSubsampling (
+    SubsamplingTimings randomSubsampling (
             const unique_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
@@ -115,8 +116,6 @@ private:
 
     // Benchmarking
     uint32_t getRootIndex ();
-
-    void updateOctreeStatistics ();
 
     void evaluateOctreeProperties (
             const unique_ptr<Chunk[]>& h_octreeSparse,
@@ -149,7 +148,7 @@ private:
     GpuOctree itsOctree;
 
     // Octree Metadata
-    OctreeMetadata itsMetadata;
+    OctreeMetadata<coordinateType> itsMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../include/global_types.h"
-#include <cuda_runtime.h>
+#include "octree_metadata.h"
+#include "tools.cuh"
+#include "types.cuh"
 
 
 namespace chunking {
@@ -13,7 +14,7 @@ __global__ void kernelDistributePoints (
         uint32_t* dataLUT,
         int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
-        PointCloudMetadata metadata,
+        PointCloudMetadata<coordinateType> metadata,
         uint32_t gridSize)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);

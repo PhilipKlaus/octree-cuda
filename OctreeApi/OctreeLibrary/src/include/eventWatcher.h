@@ -4,10 +4,8 @@
 
 #pragma once
 
-// Standard library
 #include <fstream>
 
-// Local dependencies
 #include "spdlog/spdlog.h"
 
 

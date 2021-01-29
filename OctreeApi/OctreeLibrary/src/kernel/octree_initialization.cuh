@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../include/global_types.h"
-#include <cuda_runtime.h>
+#include "octree_metadata.h"
+#include "types.cuh"
 
 
 namespace chunking {

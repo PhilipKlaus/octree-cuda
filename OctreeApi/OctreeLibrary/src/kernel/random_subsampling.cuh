@@ -1,5 +1,9 @@
 #pragma once
 
+#include "octree_metadata.h"
+#include "tools.cuh"
+#include "types.cuh"
+
 
 namespace subsampling {
 
@@ -9,7 +13,7 @@ __global__ void kernelPerformAveraging (
         SubsampleConfig* subsampleData,
         Averaging* parentAveragingData,
         int* denseToSparseLUT,
-        PointCloudMetadata metadata,
+        PointCloudMetadata<coordinateType> metadata,
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {
@@ -68,7 +72,7 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
+        PointCloudMetadata<coordinateType> metadata,
         uint32_t gridSideLength,
         uint32_t* randomIndices,
         uint32_t accumulatedPoints)
