@@ -1,10 +1,7 @@
-// Standard library
 #include <fstream>
-#include <iostream>
-
-// Local dependencies
 #include "octreeApi.h"
 #include "spdlog/spdlog.h"
+#include "boundingbox.h"
 
 
 using namespace std;
@@ -102,6 +99,12 @@ int main ()
 
     // Calculate BB
     calculateBB<float> (pChars, metadata);
+
+
+
+    std::vector<float> realBB = calculateRealBB<float>(pChars, metadata.pointAmount, metadata.pointDataStride);
+    std::vector<float> cubicBB = calculateCubicBB<float>(realBB);
+
 
     // Configurate and create octree
     ocpi_set_cloud_type (session, metadata.cloudType);
