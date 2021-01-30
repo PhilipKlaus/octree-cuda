@@ -23,13 +23,13 @@ private:
     uint64_t exportNode (
             uint32_t nodeIndex, uint64_t bytesWritten, std::ofstream& pointFile, std::ofstream& hierarchyFile);
     void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
-    uint8_t writePointCoordinates (
+    inline uint8_t writePointCoordinates (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
-    uint8_t writeColorAveraged (
+    inline uint8_t writeColorAveraged (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex);
-    uint8_t writeColorNonAveraged (
+    inline uint8_t writeColorNonAveraged (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
-    uint8_t getChildMask (uint32_t nodeIndex);
+    inline uint8_t getChildMask (uint32_t nodeIndex);
 
     void createMetadataFile ();
 

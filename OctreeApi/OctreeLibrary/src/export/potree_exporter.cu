@@ -4,6 +4,7 @@
 #include <json.hpp>
 #include <queue>
 #include <unordered_map>
+#include <list>
 
 constexpr char METADATA_FILE_NAME[]    = "/metadata.json";
 constexpr char HIERARCHY_FILE_NAME[]   = "/hierarchy.bin";
@@ -141,17 +142,17 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     uint32_t exportedNodes = 0;
     uint64_t byteOffset    = 0;
     std::unordered_map<uint32_t, bool> discoveredNodes;
-    std::queue<uint32_t> toVisit;
+    std::list<uint32_t> toVisit;
 
     discoveredNodes[this->getRootIndex ()] = true;
-    toVisit.push (this->getRootIndex ());
+    toVisit.push_back (this->getRootIndex ());
 
     auto start = std::chrono::high_resolution_clock::now ();
 
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
-        toVisit.pop ();
+        toVisit.pop_front ();
         byteOffset += exportNode (node, byteOffset, pointFile, hierarchyFile);
         ++exportedNodes;
 
@@ -162,7 +163,7 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
                 this->isFinishedNode (childNode))
             {
                 discoveredNodes[childNode] = true;
-                toVisit.push (childNode);
+                toVisit.push_back (childNode);
             }
         }
     }
@@ -174,57 +175,51 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
 }
 
 template <typename coordinateType, typename colorType>
-uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates (
+inline uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
-    auto* point = reinterpret_cast<Vector3<coordinateType>*> (this->itsPointCloud.get () + pointByteIndex);
+    auto* point = reinterpret_cast<coordinateType*> (this->itsPointCloud.get () + pointByteIndex);
     auto realBB = this->itsMetadata.cloudMetadata.bbReal;
     auto scale  = this->itsMetadata.cloudMetadata.scale;
 
-    uint8_t byteAmount = 3 * sizeof (int32_t);
-    int32_t coords[3];
-    coords[0] = static_cast<int32_t> (floor (point->x / scale.x));
-    coords[1] = static_cast<int32_t> (floor (point->y / scale.y));
-    coords[2] = static_cast<int32_t> (floor (point->z / scale.z));
+    auto *dst = reinterpret_cast<int32_t *>(buffer.get() + bufferOffset);
+    dst[0] = static_cast<int32_t> (std::floor (point[0] / scale.x));
+    dst[1] = static_cast<int32_t> (std::floor (point[1]/ scale.y));
+    dst[2] = static_cast<int32_t> (std::floor (point[2] / scale.z));
 
-    std::memcpy (buffer.get () + bufferOffset, &coords, byteAmount);
-    return byteAmount;
+    return 3 * sizeof (int32_t);
 }
 
 template <typename coordinateType, typename colorType>
-uint8_t PotreeExporter<coordinateType, colorType>::writeColorAveraged (
+inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorAveraged (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
     uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
 
-    uint8_t byteAmount = 3 * sizeof (uint16_t);
-    uint16_t colors[3];
-    colors[0] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
-    colors[1] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
-    colors[2] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    auto *dst = reinterpret_cast<uint16_t *>(buffer.get() + bufferOffset);
+    dst[0] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    dst[1] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    dst[2] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
 
-    std::memcpy (buffer.get () + bufferOffset, &colors, byteAmount);
-    return byteAmount;
+    return 3 * sizeof (uint16_t);
 }
 
 template <typename coordinateType, typename colorType>
-uint8_t PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (
+inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorNonAveraged (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     uint32_t colorSize = sizeof (colorType);
 
-    uint8_t byteAmount = 3 * sizeof (uint16_t);
-    uint16_t colors[3];
-    colors[0] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex]);
-    colors[1] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize]);
-    colors[2] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize * 2]);
+    auto *dst = reinterpret_cast<uint16_t *>(buffer.get() + bufferOffset);
+    dst[0] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex]);
+    dst[1] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize]);
+    dst[2] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize * 2]);
 
-    std::memcpy (buffer.get () + bufferOffset, &colors, byteAmount);
-    return byteAmount;
+    return 3 * sizeof (uint16_t);
 }
 
 template <typename coordinateType, typename colorType>
-uint8_t PotreeExporter<coordinateType, colorType>::getChildMask (uint32_t nodeIndex)
+inline uint8_t PotreeExporter<coordinateType, colorType>::getChildMask (uint32_t nodeIndex)
 {
     uint8_t bitmask = 0;
     for (auto i = 0; i < 8; i++)
