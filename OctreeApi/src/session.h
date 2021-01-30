@@ -29,7 +29,6 @@ public:
     void setCloudScaleF (float x, float y, float z);
     void setCloudOffsetF (float x, float y, float z);
     void setCloudBoundingBoxF (float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-    void setCloudScaleD (double x, double y, double z);
     void setCloudOffsetD (double x, double y, double z);
     void setCloudBoundingBoxD (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 

@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include <vector>
+#include <memory>
+
 template <typename coordinateType>
-std::vector<coordinateType> calculateRealBB (const uint8_t* cloud, uint32_t pointAmount, uint32_t dataStride)
+std::vector<coordinateType> calculateRealBB (const std::unique_ptr<uint8_t[]> &cloud, uint32_t pointAmount, uint32_t dataStride)
 {
     std::vector<coordinateType> bbReal = {
             INFINITY,
@@ -20,9 +23,9 @@ std::vector<coordinateType> calculateRealBB (const uint8_t* cloud, uint32_t poin
 
     for (auto i = 0; i < pointAmount; ++i)
     {
-        coordinateType pointX = *reinterpret_cast<const coordinateType*> (cloud + i * dataStride);
-        coordinateType pointY = *reinterpret_cast<const coordinateType*> (cloud + i * dataStride + positionSize);
-        coordinateType pointZ = *reinterpret_cast<const coordinateType*> (cloud + i * dataStride + positionSize * 2);
+        coordinateType pointX = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride);
+        coordinateType pointY = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride + positionSize);
+        coordinateType pointZ = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride + positionSize * 2);
 
         bbReal[0] = fmin (bbReal[0], pointX);
         bbReal[1] = fmin (bbReal[1], pointY);

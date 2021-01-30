@@ -65,7 +65,7 @@ void Session::generateOctree ()
         metadata.cloudType       = itsCloudType;
         metadata.pointAmount     = itsPointAmount;
         metadata.pointDataStride = itsDataStride;
-        metadata.scale           = itsScaleD;
+        metadata.scale           = itsScaleF;
         metadata.cloudOffset     = itsOffsetD;
         metadata.bbCubic         = itsBoundingBoxD;
         generateOctreeTemplated<double, uint8_t> (metadata);
@@ -173,11 +173,6 @@ void Session::setCloudScaleF (float x, float y, float z)
 void Session::setCloudOffsetF (float x, float y, float z)
 {
     itsOffsetF = {x, y, z};
-}
-
-void Session::setCloudScaleD (double x, double y, double z)
-{
-    itsScaleD = {x, y, z};
 }
 
 void Session::setCloudOffsetD (double x, double y, double z)

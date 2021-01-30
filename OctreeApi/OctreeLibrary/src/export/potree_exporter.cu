@@ -5,9 +5,9 @@
 #include <queue>
 #include <unordered_map>
 
-constexpr char METADATA_FILE_NAME[]    = "//metadata.json";
-constexpr char HIERARCHY_FILE_NAME[]   = "//hierarchy.bin";
-constexpr char POINT_FILE_NAME[]       = "//octree.bin";
+constexpr char METADATA_FILE_NAME[]    = "/metadata.json";
+constexpr char HIERARCHY_FILE_NAME[]   = "/hierarchy.bin";
+constexpr char POINT_FILE_NAME[]       = "/octree.bin";
 constexpr char POTREE_DATA_VERSION[]   = "2.0";
 constexpr char POTREE_DATA_ENCODING[]  = "default";
 constexpr uint8_t HIERARCHY_NODE_BYTES = 22;
@@ -170,10 +170,9 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
 
-    spdlog::info ("Exported {} nodes in {} seconds", exportedNodes, elapsed.count ());
+    spdlog::info ("Exported {} nodes / {} points in {} seconds", exportedNodes, this->itsPointsExported, elapsed.count ());
 }
 
-// ToDo: divide by scale
 template <typename coordinateType, typename colorType>
 uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
@@ -249,6 +248,15 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     auto scale             = this->itsMetadata.cloudMetadata.scale;
     auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsMetadata.subsamplingGrid;
 
+    spdlog::info (
+            "EXPORTED BB: min[x,y,z]=[{},{},{}], max[x,y,z]=[{},{},{}]",
+            bbReal.min.x,
+            bbReal.min.y,
+            bbReal.min.z,
+            bbReal.max.x,
+            bbReal.max.y,
+            bbReal.max.z);
+
     // Common metadata
     nlohmann::ordered_json metadata;
     metadata["version"]                     = POTREE_DATA_VERSION;
@@ -259,7 +267,7 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;
-    metadata["offset"]                      = {bbReal.min.x, bbReal.min.y, bbReal.min.z};
+    metadata["offset"]                      = {bbReal.min.x, bbReal.min.y, bbReal.min.z}; // ToDo: real offset !!! currently 0
     metadata["scale"]                       = {scale.x, scale.y, scale.z};
     metadata["spacing"]                     = spacing;
     metadata["boundingBox"]["min"]          = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};

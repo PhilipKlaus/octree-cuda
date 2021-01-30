@@ -38,7 +38,7 @@ struct PointCloudMetadata
     BoundingBox<coordinateType> bbCubic;
     BoundingBox<coordinateType> bbReal;
     Vector3<coordinateType> cloudOffset;
-    Vector3<coordinateType> scale;
+    Vector3<float> scale;
     CloudType cloudType;
 };
 
