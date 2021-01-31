@@ -43,12 +43,12 @@ void testSubsampleTree (
 TEST_CASE ("Test node subsampling", "[subsampling]")
 {
     // Create test data point cloud
-    PointCloudMetadata metadata{};
+    PointCloudMetadata<float> metadata{};
     unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid (128, metadata);
     auto cpuData                          = cuboid->toHost ();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>> (GRID_128, GRID_128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<SparseOctree<float, uint8_t>> (128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cuboid));
 
     octree->initialPointCounting ();

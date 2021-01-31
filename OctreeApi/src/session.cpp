@@ -130,13 +130,13 @@ void Session::configurePointDistributionReport (const std::string& filename, uin
     spdlog::debug ("Export point dist. report to: {}", filename);
 }
 
-void Session::configureChunking (GridSize chunkingGrid, uint32_t mergingThreshold)
+void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold)
 {
     itsChunkingGrid     = chunkingGrid;
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (GridSize subsamplingGrid, SubsamplingStrategy strategy)
+void Session::configureSubsampling (uint32_t subsamplingGrid, SubsamplingStrategy strategy)
 {
     itsSubsamplingGrid     = subsamplingGrid;
     itsSubsamplingStrategy = strategy;

@@ -25,27 +25,27 @@ __global__ void kernel_point_cloud_cuboid (uint8_t* out, uint32_t n, uint32_t si
 
 namespace tools {
 
-uint32_t getOctreeLevel (GridSize gridSize)
+uint32_t getOctreeLevel (uint32_t gridSize)
 {
     switch (gridSize)
     {
-    case GRID_512:
+    case 512:
         return 9;
-    case GRID_256:
+    case 256:
         return 8;
-    case GRID_128:
+    case 128:
         return 7;
-    case GRID_64:
+    case 64:
         return 6;
-    case GRID_32:
+    case 32:
         return 5;
-    case GRID_16:
+    case 16:
         return 4;
-    case GRID_8:
+    case 8:
         return 3;
-    case GRID_4:
+    case 4:
         return 2;
-    case GRID_2:
+    case 2:
         return 1;
     default:
         return 0;
@@ -175,4 +175,10 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
     coordinates.y = (denseVoxelIdx - (coordinates.z * xy)) / gridSizeLength;
     coordinates.x = (denseVoxelIdx - (coordinates.z * xy)) % gridSizeLength;
 }
+
+template GpuArrayU8 generate_point_cloud_cuboid<float> (uint32_t sideLength, PointCloudMetadata<float>& metadata);
+
 } // namespace tools
+
+
+

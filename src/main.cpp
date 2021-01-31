@@ -66,12 +66,12 @@ int main ()
     }
 
     ocpi_set_point_cloud_host (session, ply.get ());
-    ocpi_configure_chunking (session, GRID_512, 10000);
-    ocpi_configure_subsampling (session, GRID_128, RANDOM_POINT);
+    ocpi_configure_chunking (session, 512, 10000);
+    ocpi_configure_subsampling (session, 128, RANDOM_POINT);
 
     ocpi_configure_point_distribution_report (session, R"(./export/histogram.html)", 0);
     ocpi_configure_memory_report (session, R"(./export/memory_report.html)");
-    ocpi_configure_json_report (session, R"(./statistics.json)");
+    ocpi_configure_json_report (session, R"(./export/statistics.json)");
     ocpi_configure_octree_export (session, R"(./export)");
 
     ocpi_generate_octree (session);

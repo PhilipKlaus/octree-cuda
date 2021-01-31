@@ -15,8 +15,8 @@
 
 template <typename coordinateType, typename colorType>
 SparseOctree<coordinateType, colorType>::SparseOctree (
-        GridSize chunkingGrid,
-        GridSize subsamplingGrid,
+        uint32_t chunkingGrid,
+        uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata<coordinateType> cloudMetadata,
         SubsamplingStrategy strategy)
@@ -29,30 +29,10 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
 
-    spdlog::info ("pointAmount: {}", cloudMetadata.pointAmount);
-    spdlog::info ("pointDataStride: {}", cloudMetadata.pointDataStride);
-    spdlog::info ("scale: {}, {}, {}", cloudMetadata.scale.x, cloudMetadata.scale.y, cloudMetadata.scale.z);
-    spdlog::info (
-            "offset: {}, {}, {}",
-            cloudMetadata.cloudOffset.x,
-            cloudMetadata.cloudOffset.y,
-            cloudMetadata.cloudOffset.z);
-    spdlog::info (
-            "bb min: {}, {}, {}",
-            cloudMetadata.bbCubic.min.x,
-            cloudMetadata.bbCubic.min.y,
-            cloudMetadata.bbCubic.min.z);
-    spdlog::info (
-            "bb max: {}, {}, {}",
-            cloudMetadata.bbCubic.max.x,
-            cloudMetadata.bbCubic.max.y,
-            cloudMetadata.bbCubic.max.z);
-
     itsMetadata.strategy = strategy;
 
     // Pre calculate often-used octree metrics
-    auto sideLength = static_cast<uint32_t> (pow (2, itsMetadata.depth));
-    for (uint32_t gridSize = sideLength; gridSize > 0; gridSize >>= 1)
+    for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
     {
         itsGridSideLengthPerLevel.push_back (gridSize);
         itsLinearizedDenseVoxelOffset.push_back (itsMetadata.nodeAmountDense);
@@ -391,8 +371,8 @@ void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& fold
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template SparseOctree<float, uint8_t>::SparseOctree (
-        GridSize chunkingGrid,
-        GridSize subsamplingGrid,
+        uint32_t chunkingGrid,
+        uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata<float> cloudMetadata,
         SubsamplingStrategy strategy);
@@ -415,8 +395,8 @@ template void SparseOctree<float, uint8_t>::calculateVoxelBB (
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template SparseOctree<double, uint8_t>::SparseOctree (
-        GridSize chunkingGrid,
-        GridSize subsamplingGrid,
+        uint32_t chunkingGrid,
+        uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata<double> cloudMetadata,
         SubsamplingStrategy strategy);

@@ -33,8 +33,8 @@ public:
     void setCloudBoundingBoxD (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
     void generateOctree ();
-    void configureChunking (GridSize chunkingGrid, uint32_t mergingThreshold);
-    void configureSubsampling (GridSize subsamplingGrid, SubsamplingStrategy strategy);
+    void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
+    void configureSubsampling (uint32_t subsamplingGrid, SubsamplingStrategy strategy);
     void configureOctreeExport (const std::string& directory);
     void configureMemoryReport (const std::string& filename);
     void configureJsonReport (const std::string& filename);
@@ -59,10 +59,12 @@ private:
     BoundingBox<float> itsBoundingBoxF  = {};
     BoundingBox<double> itsBoundingBoxD = {};
 
-    GridSize itsChunkingGrid     = GRID_128;
+    // Chunking
+    uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;
 
-    GridSize itsSubsamplingGrid                = GRID_128;
+    // Subsampling
+    uint32_t itsSubsamplingGrid                = 128;
     SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
 
     std::string itsPointDistReportFile    = "";

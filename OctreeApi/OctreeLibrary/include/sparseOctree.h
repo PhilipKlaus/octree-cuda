@@ -13,8 +13,8 @@ class SparseOctree
 {
 public:
     SparseOctree (
-            GridSize chunkingGrid,
-            GridSize subsamplingGrid,
+            uint32_t chunkingGrid,
+            uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata<coordinateType> cloudMetadata,
             SubsamplingStrategy strategy);

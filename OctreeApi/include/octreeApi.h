@@ -55,8 +55,8 @@ EXPORTED void ocpi_set_cloud_bb_d (
 
 EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 
-EXPORTED void ocpi_configure_chunking (void* session, GridSize chunkingGrid, uint32_t mergingThreshold);
-EXPORTED void ocpi_configure_subsampling (void* session, GridSize subsamplingGrid, SubsamplingStrategy strategy);
+EXPORTED void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold);
+EXPORTED void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, SubsamplingStrategy strategy);
 
 EXPORTED void ocpi_configure_memory_report (void* session, const char* filename);
 EXPORTED void ocpi_configure_point_distribution_report (void* session, const char* filename, uint32_t binWidth);

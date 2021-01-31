@@ -55,13 +55,13 @@ void ocpi_configure_octree_export (void* session, const char* filename)
     s->configureOctreeExport (filename);
 }
 
-void ocpi_configure_chunking (void* session, GridSize chunkingGrid, uint32_t mergingThreshold)
+void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold)
 {
     auto s = Session::ToSession (session);
     s->configureChunking (chunkingGrid, mergingThreshold);
 }
 
-void ocpi_configure_subsampling (void* session, GridSize subsamplingGrid, SubsamplingStrategy strategy)
+void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, SubsamplingStrategy strategy)
 {
     auto s = Session::ToSession (session);
     s->configureSubsampling (subsamplingGrid, strategy);
