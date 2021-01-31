@@ -136,14 +136,14 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (uint32_t subsamplingGrid, SubsamplingStrategy strategy)
+void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy)
 {
     itsSubsamplingGrid     = subsamplingGrid;
-    itsSubsamplingStrategy = strategy;
+    itsSubsamplingStrategy = static_cast<SubsamplingStrategy>(strategy);
 }
-void Session::setCloudType (CloudType cloudType)
+void Session::setCloudType (uint8_t cloudType)
 {
-    itsCloudType = cloudType;
+    itsCloudType = static_cast<CloudType>(cloudType);
 }
 
 void Session::setCloudBoundingBoxF (float minX, float minY, float minZ, float maxX, float maxY, float maxZ)

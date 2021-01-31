@@ -5,8 +5,7 @@
 #ifndef OCTREE_API_H
 #define OCTREE_API_H
 
-#include <api_types.h>
-
+#include <cstdint>
 
 #ifdef __cplusplus
     #define EXPORTED_PRE extern "C"
@@ -42,7 +41,7 @@ EXPORTED void ocpi_create_session (void** session, int device);
 EXPORTED void ocpi_destroy_session (void* session);
 EXPORTED void ocpi_set_logging_level (int level);
 
-EXPORTED void ocpi_set_cloud_type (void* session, CloudType cloudType);
+EXPORTED void ocpi_set_cloud_type (void* session, uint8_t cloudType);
 EXPORTED void ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount);
 EXPORTED void ocpi_set_cloud_data_stride (void* session, uint32_t dataStride);
 EXPORTED void ocpi_set_cloud_scale_f (void* session, float x, float y, float z);
@@ -56,7 +55,7 @@ EXPORTED void ocpi_set_cloud_bb_d (
 EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 
 EXPORTED void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold);
-EXPORTED void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, SubsamplingStrategy strategy);
+EXPORTED void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, uint8_t strategy);
 
 EXPORTED void ocpi_configure_memory_report (void* session, const char* filename);
 EXPORTED void ocpi_configure_point_distribution_report (void* session, const char* filename, uint32_t binWidth);

@@ -61,7 +61,7 @@ void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mer
     s->configureChunking (chunkingGrid, mergingThreshold);
 }
 
-void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, SubsamplingStrategy strategy)
+void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, uint8_t strategy)
 {
     auto s = Session::ToSession (session);
     s->configureSubsampling (subsamplingGrid, strategy);
@@ -85,7 +85,7 @@ void ocpi_configure_point_distribution_report (void* session, const char* filena
     s->configurePointDistributionReport (filename, binWidth);
 }
 
-void ocpi_set_cloud_type (void* session, CloudType cloudType)
+void ocpi_set_cloud_type (void* session, uint8_t cloudType)
 {
     auto s = Session::ToSession (session);
     s->setCloudType (cloudType);

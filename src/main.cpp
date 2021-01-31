@@ -38,7 +38,7 @@ int main ()
     float scaleX             = 0.001f;
     float scaleY             = 0.001f;
     float scaleZ             = 0.001f;
-    auto cloudType           = CloudType::CLOUD_DOUBLE_UINT8_T;
+    auto cloudType           = 1;
     std::string plyFile      = "lifeboat_headerless.ply";
 
     // Read in ply
@@ -54,7 +54,7 @@ int main ()
     ocpi_set_cloud_data_stride (session, pointDataStride);
     ocpi_set_cloud_scale_f (session, scaleX, scaleY, scaleZ);
 
-    if (cloudType == CLOUD_FLOAT_UINT8_T)
+    if (cloudType == 1)
     {
         ocpi_set_cloud_offset_f (session, cubicBB[0], cubicBB[1], cubicBB[2]);
         ocpi_set_cloud_bb_f (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
@@ -67,7 +67,7 @@ int main ()
 
     ocpi_set_point_cloud_host (session, ply.get ());
     ocpi_configure_chunking (session, 512, 10000);
-    ocpi_configure_subsampling (session, 128, RANDOM_POINT);
+    ocpi_configure_subsampling (session, 128, 1);
 
     ocpi_configure_point_distribution_report (session, R"(./export/histogram.html)", 0);
     ocpi_configure_memory_report (session, R"(./export/memory_report.html)");

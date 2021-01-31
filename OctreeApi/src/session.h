@@ -23,7 +23,7 @@ public:
     void setDevice () const;
     void setPointCloudHost (uint8_t* pointCloud);
 
-    void setCloudType (CloudType cloudType);
+    void setCloudType (uint8_t cloudType);
     void setCloudPointAmount (uint32_t pointAmount);
     void setCloudDataStride (uint32_t dataStride);
     void setCloudScaleF (float x, float y, float z);
@@ -34,7 +34,7 @@ public:
 
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
-    void configureSubsampling (uint32_t subsamplingGrid, SubsamplingStrategy strategy);
+    void configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy);
     void configureOctreeExport (const std::string& directory);
     void configureMemoryReport (const std::string& filename);
     void configureJsonReport (const std::string& filename);
