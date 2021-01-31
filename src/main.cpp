@@ -54,7 +54,7 @@ int main ()
     ocpi_set_cloud_data_stride (session, pointDataStride);
     ocpi_set_cloud_scale_f (session, scaleX, scaleY, scaleZ);
 
-    if (cloudType == 1)
+    if (cloudType == 0)
     {
         ocpi_set_cloud_offset_f (session, cubicBB[0], cubicBB[1], cubicBB[2]);
         ocpi_set_cloud_bb_f (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
