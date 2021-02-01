@@ -14,7 +14,7 @@ public:
             const GpuArrayU32& leafeLut,
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-            OctreeMetadata<coordinateType> metadata) :
+            OctreeMetadata metadata) :
             itsMetadata (metadata),
             itsPointCloud (pointCloud->toHost ()), itsOctree (octree->toHost ()), itsLeafeLut (leafeLut->toHost ()),
             itsAbsorbedNodes (0), itsPointsExported (0)
@@ -62,7 +62,7 @@ protected:
 protected:
     uint32_t itsPointsExported;
     uint32_t itsAbsorbedNodes;
-    OctreeMetadata<coordinateType> itsMetadata;
+    OctreeMetadata itsMetadata;
     unique_ptr<uint8_t[]> itsPointCloud;
     unique_ptr<Chunk[]> itsOctree;
     unique_ptr<uint32_t[]> itsLeafeLut;

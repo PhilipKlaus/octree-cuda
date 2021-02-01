@@ -60,7 +60,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
         prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 

@@ -14,7 +14,7 @@ __global__ void kernelDistributePoints (
         uint32_t* dataLUT,
         int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
-        PointCloudMetadata<coordinateType> metadata,
+        PointCloudMetadata metadata,
         uint32_t gridSize)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);

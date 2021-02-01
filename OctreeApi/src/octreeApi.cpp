@@ -103,32 +103,20 @@ void ocpi_set_cloud_data_stride (void* session, uint32_t dataStride)
     s->setCloudDataStride (dataStride);
 }
 
-void ocpi_set_cloud_scale_f (void* session, float x, float y, float z)
+void ocpi_set_cloud_scale (void* session, double x, double y, double z)
 {
     auto s = Session::ToSession (session);
-    s->setCloudScaleF (x, y, z);
+    s->setCloudScale (x, y, z);
 }
 
-void ocpi_set_cloud_offset_f (void* session, float x, float y, float z)
+void ocpi_set_cloud_offset (void* session, double x, double y, double z)
 {
     auto s = Session::ToSession (session);
-    s->setCloudOffsetF (x, y, z);
+    s->setCloudOffset (x, y, z);
 }
 
-void ocpi_set_cloud_bb_f (void* session, float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
+void ocpi_set_cloud_bb (void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
     auto s = Session::ToSession (session);
-    s->setCloudBoundingBoxF (minX, minY, minZ, maxX, maxY, maxZ);
-}
-
-void ocpi_set_cloud_offset_d (void* session, double x, double y, double z)
-{
-    auto s = Session::ToSession (session);
-    s->setCloudOffsetD (x, y, z);
-}
-
-void ocpi_set_cloud_bb_d (void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
-{
-    auto s = Session::ToSession (session);
-    s->setCloudBoundingBoxD (minX, minY, minZ, maxX, maxY, maxZ);
+    s->setCloudBoundingBox (minX, minY, minZ, maxX, maxY, maxZ);
 }

@@ -52,18 +52,9 @@ int main ()
     ocpi_set_cloud_type (session, cloudType);
     ocpi_set_cloud_point_amount (session, pointAmount);
     ocpi_set_cloud_data_stride (session, pointDataStride);
-    ocpi_set_cloud_scale_f (session, scaleX, scaleY, scaleZ);
-
-    if (cloudType == 0)
-    {
-        ocpi_set_cloud_offset_f (session, cubicBB[0], cubicBB[1], cubicBB[2]);
-        ocpi_set_cloud_bb_f (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
-    }
-    else
-    {
-        ocpi_set_cloud_offset_d (session, cubicBB[0], cubicBB[1], cubicBB[2]);
-        ocpi_set_cloud_bb_d (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
-    }
+    ocpi_set_cloud_scale (session, scaleX, scaleY, scaleZ);
+    ocpi_set_cloud_offset (session, cubicBB[0], cubicBB[1], cubicBB[2]);
+    ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 
     ocpi_set_point_cloud_host (session, ply.get ());
     ocpi_configure_chunking (session, 512, 10000);

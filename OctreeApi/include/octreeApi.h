@@ -44,12 +44,9 @@ EXPORTED void ocpi_set_logging_level (int level);
 EXPORTED void ocpi_set_cloud_type (void* session, uint8_t cloudType);
 EXPORTED void ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount);
 EXPORTED void ocpi_set_cloud_data_stride (void* session, uint32_t dataStride);
-EXPORTED void ocpi_set_cloud_scale_f (void* session, float x, float y, float z);
-EXPORTED void ocpi_set_cloud_offset_f (void* session, float x, float y, float z);
-EXPORTED void ocpi_set_cloud_bb_f (
-        void* session, float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-EXPORTED void ocpi_set_cloud_offset_d (void* session, double x, double y, double z);
-EXPORTED void ocpi_set_cloud_bb_d (
+EXPORTED void ocpi_set_cloud_scale (void* session, double x, double y, double z);
+EXPORTED void ocpi_set_cloud_offset (void* session, double x, double y, double z);
+EXPORTED void ocpi_set_cloud_bb (
         void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
 EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);

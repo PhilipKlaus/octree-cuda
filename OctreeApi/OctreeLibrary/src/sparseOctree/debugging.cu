@@ -6,7 +6,7 @@
 
 
 template <typename coordinateType, typename colorType>
-const OctreeMetadata<coordinateType>& SparseOctree<coordinateType, colorType>::getMetadata () const
+const OctreeMetadata& SparseOctree<coordinateType, colorType>::getMetadata () const
 {
     return itsMetadata;
 }
@@ -71,7 +71,7 @@ const std::vector<std::tuple<std::string, float>>& SparseOctree<coordinateType, 
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template const OctreeMetadata<float>& SparseOctree<float, uint8_t>::getMetadata () const;
+template const OctreeMetadata& SparseOctree<float, uint8_t>::getMetadata () const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDataLUT () const;
 template unique_ptr<uint32_t[]> SparseOctree<float, uint8_t>::getDensePointCountPerVoxel () const;
 template unique_ptr<int[]> SparseOctree<float, uint8_t>::getDenseToSparseLUT () const;
@@ -86,7 +86,7 @@ template const std::vector<std::tuple<std::string, float>>& SparseOctree<float, 
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 
-template const OctreeMetadata<double>& SparseOctree<double, uint8_t>::getMetadata () const;
+template const OctreeMetadata& SparseOctree<double, uint8_t>::getMetadata () const;
 template unique_ptr<uint32_t[]> SparseOctree<double, uint8_t>::getDataLUT () const;
 template unique_ptr<uint32_t[]> SparseOctree<double, uint8_t>::getDensePointCountPerVoxel () const;
 template unique_ptr<int[]> SparseOctree<double, uint8_t>::getDenseToSparseLUT () const;

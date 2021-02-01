@@ -16,7 +16,7 @@ public:
             uint32_t chunkingGrid,
             uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
-            PointCloudMetadata<coordinateType> cloudMetadata,
+            PointCloudMetadata cloudMetadata,
             SubsamplingStrategy strategy);
 
     SparseOctree (const SparseOctree&) = delete;
@@ -44,13 +44,13 @@ public:
     void performSubsampling ();
 
     // Calculation tools
-    void calculateVoxelBB (PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level);
+    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes (const string& folderPath);
 
     // Debugging methods
-    const OctreeMetadata<coordinateType>& getMetadata () const;
+    const OctreeMetadata& getMetadata () const;
 
     void updateOctreeStatistics ();
 
@@ -148,7 +148,7 @@ private:
     GpuOctree itsOctree;
 
     // Octree Metadata
-    OctreeMetadata<coordinateType> itsMetadata;
+    OctreeMetadata itsMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)

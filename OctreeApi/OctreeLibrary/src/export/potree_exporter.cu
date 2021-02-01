@@ -37,7 +37,7 @@ PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<coordinateType> metadata) :
+        OctreeMetadata metadata) :
         OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
 {}
 
@@ -304,7 +304,7 @@ template PotreeExporter<float, uint8_t>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<float> metadata);
+        OctreeMetadata metadata);
 
 template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -317,6 +317,6 @@ template PotreeExporter<double, uint8_t>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<double> metadata);
+        OctreeMetadata metadata);
 
 template void PotreeExporter<double, uint8_t>::exportOctree (const std::string& path);

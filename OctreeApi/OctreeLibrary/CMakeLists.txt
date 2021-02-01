@@ -11,7 +11,7 @@ add_library(${PROJECT_NAME} STATIC
         include/api_types.h
         include/sparseOctree.h
         src/include/cudaArray.h
-        src/include/eventWatcher.h
+        include/eventWatcher.h
         include/octree_metadata.h
         src/include/tools.cuh
         include/types.cuh

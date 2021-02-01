@@ -21,7 +21,7 @@ std::vector<coordinateType> calculateRealBB (const std::unique_ptr<uint8_t[]> &c
 
     uint8_t positionSize = sizeof (coordinateType);
 
-    for (auto i = 0; i < pointAmount; ++i)
+    for (uint32_t i = 0; i < pointAmount; ++i)
     {
         coordinateType pointX = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride);
         coordinateType pointY = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride + positionSize);

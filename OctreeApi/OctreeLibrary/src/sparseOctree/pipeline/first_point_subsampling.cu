@@ -48,14 +48,16 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
         prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata<coordinateType> metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
         auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        timings.subsampleEvaluation += executeKernel (
-                subsampling::kernelEvaluateSubsamples<coordinateType>,
-                accumulatedPoints,
+        timings.subsampleEvaluation += Kernel::evaluateSubsamples(
+                {
+                        metadata.cloudType,
+                        accumulatedPoints
+                },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
@@ -64,6 +66,7 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
                 metadata,
                 itsMetadata.subsamplingGrid,
                 accumulatedPoints);
+
 
         // Reserve memory for a data LUT for the parent node
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];

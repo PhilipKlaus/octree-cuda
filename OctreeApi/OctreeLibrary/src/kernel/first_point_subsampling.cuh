@@ -14,7 +14,7 @@ __global__ void kernelFirstPointSubsample (
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata<coordinateType> metadata,
+        PointCloudMetadata metadata,
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {

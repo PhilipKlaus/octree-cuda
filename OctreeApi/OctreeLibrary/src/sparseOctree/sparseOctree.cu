@@ -18,7 +18,7 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata<coordinateType> cloudMetadata,
+        PointCloudMetadata cloudMetadata,
         SubsamplingStrategy strategy)
 {
     // Initialize octree metadata
@@ -332,7 +332,7 @@ void SparseOctree<coordinateType, colorType>::prepareSubsampleConfig (
 
 template <typename coordinateType, typename colorType>
 void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
-        PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level)
+        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -374,7 +374,7 @@ template SparseOctree<float, uint8_t>::SparseOctree (
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata<float> cloudMetadata,
+        PointCloudMetadata cloudMetadata,
         SubsamplingStrategy strategy);
 template void SparseOctree<float, uint8_t>::initialPointCounting ();
 template void SparseOctree<float, uint8_t>::performCellMerging ();
@@ -389,7 +389,7 @@ template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
         GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints);
 template void SparseOctree<float, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata<float>& metadata, uint32_t denseVoxelIndex, uint32_t level);
+        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<double, uint8_t>
@@ -398,7 +398,7 @@ template SparseOctree<double, uint8_t>::SparseOctree (
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata<double> cloudMetadata,
+        PointCloudMetadata cloudMetadata,
         SubsamplingStrategy strategy);
 template void SparseOctree<double, uint8_t>::initialPointCounting ();
 template void SparseOctree<double, uint8_t>::performCellMerging ();
@@ -413,4 +413,4 @@ template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (
         GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints);
 template void SparseOctree<double, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata<double>& metadata, uint32_t denseVoxelIndex, uint32_t level);
+        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);

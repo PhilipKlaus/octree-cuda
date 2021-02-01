@@ -48,32 +48,26 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
+    PointCloudMetadata metadata{};
+    metadata.cloudType       = itsCloudType;
+    metadata.pointAmount     = itsPointAmount;
+    metadata.pointDataStride = itsDataStride;
+    metadata.scale           = itsScale;
+    metadata.cloudOffset     = itsOffset;
+    metadata.bbCubic         = itsBoundingBox;
+
     if (itsCloudType == CloudType::CLOUD_FLOAT_UINT8_T)
     {
-        PointCloudMetadata<float> metadata{};
-        metadata.cloudType       = itsCloudType;
-        metadata.pointAmount     = itsPointAmount;
-        metadata.pointDataStride = itsDataStride;
-        metadata.scale           = itsScaleF;
-        metadata.cloudOffset     = itsOffsetF;
-        metadata.bbCubic         = itsBoundingBoxF;
         generateOctreeTemplated<float, uint8_t> (metadata);
     }
     else
     {
-        PointCloudMetadata<double> metadata{};
-        metadata.cloudType       = itsCloudType;
-        metadata.pointAmount     = itsPointAmount;
-        metadata.pointDataStride = itsDataStride;
-        metadata.scale           = itsScaleF;
-        metadata.cloudOffset     = itsOffsetD;
-        metadata.bbCubic         = itsBoundingBoxD;
         generateOctreeTemplated<double, uint8_t> (metadata);
     }
 }
 
 template <typename coordinateType, typename colorType>
-void Session::generateOctreeTemplated (PointCloudMetadata<coordinateType> metadata)
+void Session::generateOctreeTemplated (PointCloudMetadata metadata)
 {
     SparseOctree<coordinateType, colorType> octree (
             itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
@@ -146,15 +140,12 @@ void Session::setCloudType (uint8_t cloudType)
     itsCloudType = static_cast<CloudType>(cloudType);
 }
 
-void Session::setCloudBoundingBoxF (float minX, float minY, float minZ, float maxX, float maxY, float maxZ)
+void Session::setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    itsBoundingBoxF = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
+    itsBoundingBox = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
 }
 
-void Session::setCloudBoundingBoxD (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
-{
-    itsBoundingBoxD = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
-}
+
 void Session::setCloudPointAmount (uint32_t pointAmount)
 {
     itsPointAmount = pointAmount;
@@ -165,17 +156,12 @@ void Session::setCloudDataStride (uint32_t dataStride)
     itsDataStride = dataStride;
 }
 
-void Session::setCloudScaleF (float x, float y, float z)
+void Session::setCloudScale (double x, double y, double z)
 {
-    itsScaleF = {x, y, z};
+    itsScale = {x, y, z};
 }
 
-void Session::setCloudOffsetF (float x, float y, float z)
+void Session::setCloudOffset (double x, double y, double z)
 {
-    itsOffsetF = {x, y, z};
-}
-
-void Session::setCloudOffsetD (double x, double y, double z)
-{
-    itsOffsetD = {x, y, z};
+    itsOffset = {x, y, z};
 }

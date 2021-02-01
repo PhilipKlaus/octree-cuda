@@ -7,12 +7,12 @@
 #include "octree_metadata.h"
 #include <iomanip>
 #include <json.hpp>
+#include "eventWatcher.h"
 
 
-template <typename coordinateType>
 void export_json_data (
         const std::string filePath,
-        OctreeMetadata<coordinateType> metadata,
+        OctreeMetadata metadata,
         const std::vector<std::tuple<std::string, float>>& timings)
 {
     nlohmann::ordered_json statistics;
@@ -67,8 +67,8 @@ void export_json_data (
     float accumulatedTime = 0;
     for (auto const& timeEntry : timings)
     {
-        statistics["timeMeasurements"][get<0> (timeEntry)] = get<1> (timeEntry);
-        accumulatedTime += get<1> (timeEntry);
+        statistics["timeMeasurements"][std::get<0> (timeEntry)] = std::get<1> (timeEntry);
+        accumulatedTime += std::get<1> (timeEntry);
     }
     statistics["timeMeasurements"]["accumulatedGPUTime"] = accumulatedTime;
 
@@ -80,7 +80,7 @@ void export_json_data (
 
     for (auto const& event : watcher.getMemoryEvents ())
     {
-        statistics["memory"]["events"][get<0> (event)] = get<1> (event);
+        statistics["memory"]["events"][std::get<0> (event)] = std::get<1> (event);
     }
 
     std::ofstream file (filePath);

@@ -26,11 +26,9 @@ public:
     void setCloudType (uint8_t cloudType);
     void setCloudPointAmount (uint32_t pointAmount);
     void setCloudDataStride (uint32_t dataStride);
-    void setCloudScaleF (float x, float y, float z);
-    void setCloudOffsetF (float x, float y, float z);
-    void setCloudBoundingBoxF (float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-    void setCloudOffsetD (double x, double y, double z);
-    void setCloudBoundingBoxD (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
+    void setCloudScale (double x, double y, double z);
+    void setCloudOffset (double x, double y, double z);
+    void setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
@@ -42,7 +40,7 @@ public:
 
 private:
     template <typename coordinateType, typename colorType>
-    void generateOctreeTemplated (PointCloudMetadata<coordinateType> metadata);
+    void generateOctreeTemplated (PointCloudMetadata metadata);
 
 private:
     int itsDevice;
@@ -52,12 +50,9 @@ private:
     CloudType itsCloudType              = CloudType::CLOUD_FLOAT_UINT8_T;
     uint32_t itsPointAmount             = 0;
     uint32_t itsDataStride              = 0;
-    Vector3<float> itsScaleF            = {};
-    Vector3<double> itsScaleD           = {};
-    Vector3<float> itsOffsetF           = {};
-    Vector3<double> itsOffsetD          = {};
-    BoundingBox<float> itsBoundingBoxF  = {};
-    BoundingBox<double> itsBoundingBoxD = {};
+    Vector3<double> itsScale            = {};
+    Vector3<double> itsOffset           = {};
+    BoundingBox itsBoundingBox = {};
 
     // Chunking
     uint32_t itsChunkingGrid     = 128;
