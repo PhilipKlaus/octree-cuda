@@ -2,11 +2,10 @@
 // Created by KlausP on 13.11.2020.
 //
 
-#include "sparseOctree.h"
+#include "octree_processor.h"
 
 
-
-void SparseOctree::calculatePointVarianceInLeafNoes (
+void OctreeProcessor::calculatePointVarianceInLeafNoes (
         const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
 {
     Chunk chunk = h_octreeSparse[nodeIndex];
@@ -33,7 +32,7 @@ void SparseOctree::calculatePointVarianceInLeafNoes (
 
 
 
-void SparseOctree::evaluateOctreeProperties (
+void OctreeProcessor::evaluateOctreeProperties (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
@@ -70,7 +69,7 @@ void SparseOctree::evaluateOctreeProperties (
 }
 
 
-void SparseOctree::updateOctreeStatistics ()
+void OctreeProcessor::updateOctreeStatistics ()
 {
     // Reset Octree statistics
     itsMetadata.leafNodeAmount         = 0;
@@ -100,7 +99,7 @@ void SparseOctree::updateOctreeStatistics ()
 
 
 
-void SparseOctree::histogramBinning (
+void OctreeProcessor::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
@@ -132,7 +131,7 @@ void SparseOctree::histogramBinning (
 
 
 
-void SparseOctree::exportHistogram (const string& filePath, uint32_t binWidth)
+void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth)
 {
     updateOctreeStatistics ();
 

@@ -5,15 +5,15 @@
 #include "hierarchical_merging.cuh"
 #include "kernel_executor.cuh"
 #include "octree_initialization.cuh"
+#include "octree_processor.h"
 #include "ply_exporter.cuh"
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
 #include "point_distributing.cuh"
 #include "potree_exporter.cuh"
-#include "sparseOctree.h"
 
 
-SparseOctree::SparseOctree (
+OctreeProcessor::OctreeProcessor (
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
@@ -44,7 +44,7 @@ SparseOctree::SparseOctree (
     spdlog::info ("Prepared empty SparseOctree");
 }
 
-void SparseOctree::setPointCloudHost (uint8_t* pointCloud)
+void OctreeProcessor::setPointCloudHost (uint8_t* pointCloud)
 {
     itsCloudData = createGpuU8 (
             itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
@@ -52,7 +52,7 @@ void SparseOctree::setPointCloudHost (uint8_t* pointCloud)
     spdlog::info ("Copied point cloud from host->device");
 }
 
-void SparseOctree::setPointCloudDevice (uint8_t* pointCloud)
+void OctreeProcessor::setPointCloudDevice (uint8_t* pointCloud)
 {
     itsCloudData = CudaArray<uint8_t>::fromDevicePtr (
             pointCloud,
@@ -61,7 +61,7 @@ void SparseOctree::setPointCloudDevice (uint8_t* pointCloud)
     spdlog::info ("Imported point cloud from device");
 }
 
-void SparseOctree::setPointCloudDevice (GpuArrayU8 pointCloud)
+void OctreeProcessor::setPointCloudDevice (GpuArrayU8 pointCloud)
 {
     itsCloudData = std::move (pointCloud);
 }
@@ -70,7 +70,7 @@ void SparseOctree::setPointCloudDevice (GpuArrayU8 pointCloud)
 //#     Pipeline    #
 //###################
 
-void SparseOctree::initialPointCounting ()
+void OctreeProcessor::initialPointCounting ()
 {
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
@@ -105,7 +105,7 @@ void SparseOctree::initialPointCounting ()
 }
 
 
-void SparseOctree::performCellMerging ()
+void OctreeProcessor::performCellMerging ()
 {
     // Allocate the temporary sparseIndexCounter
     auto nodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
@@ -159,7 +159,7 @@ void SparseOctree::performCellMerging ()
 }
 
 
-void SparseOctree::initLowestOctreeHierarchy ()
+void OctreeProcessor::initLowestOctreeHierarchy ()
 {
     float time = executeKernel (
             chunking::kernelOctreeInitialization,
@@ -175,7 +175,7 @@ void SparseOctree::initLowestOctreeHierarchy ()
 }
 
 
-void SparseOctree::mergeHierarchical ()
+void OctreeProcessor::mergeHierarchical ()
 {
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = createGpuU32 (1, "globalChunkCounter");
@@ -208,7 +208,7 @@ void SparseOctree::mergeHierarchical ()
 }
 
 
-void SparseOctree::distributePoints ()
+void OctreeProcessor::distributePoints ()
 {
     // Create temporary indexRegister for assigning an index for each point within its chunk area
     auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
@@ -232,7 +232,7 @@ void SparseOctree::distributePoints ()
 }
 
 
-void SparseOctree::performSubsampling ()
+void OctreeProcessor::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctree->toHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
@@ -295,7 +295,7 @@ void SparseOctree::performSubsampling ()
 }
 
 
-void SparseOctree::prepareSubsampleConfig (
+void OctreeProcessor::prepareSubsampleConfig (
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
         GpuSubsample& subsampleData,
@@ -323,7 +323,7 @@ void SparseOctree::prepareSubsampleConfig (
     subsampleData->toGPU (reinterpret_cast<uint8_t*> (newSubsampleData));
 }
 
-void SparseOctree::calculateVoxelBB (
+void OctreeProcessor::calculateVoxelBB (
         PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
@@ -348,7 +348,7 @@ void SparseOctree::calculateVoxelBB (
     metadata.cloudOffset   = metadata.bbCubic.min;
 }
 
-void SparseOctree::exportPlyNodes (const string& folderPath)
+void OctreeProcessor::exportPlyNodes (const string& folderPath)
 {
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);

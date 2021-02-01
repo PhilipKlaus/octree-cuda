@@ -5,7 +5,7 @@
 #include <session.h>
 
 #include "json_exporter.h"
-#include "sparseOctree.h"
+#include "octree_processor.h"
 #include "spdlog/spdlog.h"
 #include <iostream>
 #include <memory>
@@ -56,20 +56,20 @@ void Session::generateOctree ()
     metadata.cloudOffset     = itsOffset;
     metadata.bbCubic         = itsBoundingBox;
 
-    itsOctree = std::make_unique<SparseOctree>( itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
-    itsOctree->setPointCloudHost (itsPointCloud);
+    itsProcessor = std::make_unique<OctreeProcessor>( itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
+    itsProcessor->setPointCloudHost (itsPointCloud);
 
-    itsOctree->initialPointCounting ();
-    itsOctree->performCellMerging ();
-    itsOctree->distributePoints ();
-    itsOctree->performSubsampling ();
+    itsProcessor->initialPointCounting ();
+    itsProcessor->performCellMerging ();
+    itsProcessor->distributePoints ();
+    itsProcessor->performSubsampling ();
 
     spdlog::debug ("octree generated");
 }
 
 void Session::exportPotree (const string& directory)
 {
-    itsOctree->exportPlyNodes (directory);
+    itsProcessor->exportPlyNodes (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
@@ -81,14 +81,14 @@ void Session::exportMemoryReport (const std::string& filename)
 
 void Session::exportJsonReport (const std::string& filename)
 {
-    itsOctree->updateOctreeStatistics ();
-    export_json_data (filename, itsOctree->getMetadata (), itsOctree->getTimings ());
+    itsProcessor->updateOctreeStatistics ();
+    export_json_data (filename, itsProcessor->getMetadata (), itsProcessor->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
 void Session::exportDistributionHistogram (const std::string& filename, uint32_t binWidth)
 {
-    itsOctree->exportHistogram (filename, binWidth);
+    itsProcessor->exportHistogram (filename, binWidth);
     spdlog::debug ("Export point dist. report to: {}", filename);
 }
 

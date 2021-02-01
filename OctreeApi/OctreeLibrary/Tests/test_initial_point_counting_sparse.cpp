@@ -4,7 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "tools.cuh"
-#include <sparseOctree.h>
+#include <octree_processor.h>
 
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
@@ -15,7 +15,7 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
     metadata.cloudType = CLOUD_FLOAT_UINT8_T;
 
     // Create the octree
-    auto octree = make_unique<SparseOctree>(128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor>(128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cloud));
 
     // Perform initial point counting

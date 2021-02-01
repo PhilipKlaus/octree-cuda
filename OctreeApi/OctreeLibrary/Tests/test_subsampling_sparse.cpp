@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "sparseOctree.h"
+#include "octree_processor.h"
 #include "tools.cuh"
 
 void testSubsampleTree (
@@ -49,7 +49,7 @@ TEST_CASE ("Test node subsampling", "[subsampling]")
     auto cpuData                          = cuboid->toHost ();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree> (128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cuboid));
 
     octree->initialPointCounting ();

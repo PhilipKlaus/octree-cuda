@@ -8,19 +8,19 @@
 #include "types.cuh"
 
 
-class SparseOctree
+class OctreeProcessor
 {
 public:
-    SparseOctree (
+    OctreeProcessor (
             uint32_t chunkingGrid,
             uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
             SubsamplingStrategy strategy);
 
-    SparseOctree (const SparseOctree&) = delete;
+    OctreeProcessor (const OctreeProcessor&) = delete;
 
-    void operator= (const SparseOctree&) = delete;
+    void operator= (const OctreeProcessor&) = delete;
 
 public:
     // Set point cloud
@@ -96,7 +96,7 @@ private:
             GpuArrayU32& randomIndices,
             GpuSubsample& subsampleConfig);
 
-    void SparseOctree::prepareSubsampleConfig (
+    void OctreeProcessor::prepareSubsampleConfig (
             Chunk& voxel,
             const unique_ptr<Chunk[]>& h_octreeSparse,
             GpuSubsample& subsampleData,

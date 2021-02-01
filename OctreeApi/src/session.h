@@ -5,10 +5,10 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
+#include "octree_processor.h"
 #include <api_types.h>
 #include <memory>
 #include <string>
-#include "sparseOctree.h"
 
 
 class Session
@@ -45,7 +45,7 @@ public:
 private:
     int itsDevice;
     uint8_t* itsPointCloud;
-    std::unique_ptr<SparseOctree> itsOctree;
+    std::unique_ptr<OctreeProcessor> itsProcessor;
 
     // Cloud metadata
     CloudType itsCloudType              = CloudType::CLOUD_FLOAT_UINT8_T;

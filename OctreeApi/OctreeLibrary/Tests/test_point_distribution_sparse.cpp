@@ -4,7 +4,7 @@
 
 #include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include <sparseOctree.h>
+#include <octree_processor.h>
 
 
 uint32_t testOctreenodeSparse (
@@ -71,7 +71,7 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]")
     auto cpuData                         = cloud->toHost ();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree> (128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cloud));
 
     octree->initialPointCounting ();
