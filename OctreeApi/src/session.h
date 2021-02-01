@@ -39,9 +39,6 @@ public:
     void configurePointDistributionReport (const std::string& filename, uint32_t);
 
 private:
-    void generateOctreeTemplated (PointCloudMetadata metadata);
-
-private:
     int itsDevice;
     uint8_t* itsPointCloud;
 

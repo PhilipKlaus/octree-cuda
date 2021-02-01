@@ -56,11 +56,6 @@ void Session::generateOctree ()
     metadata.cloudOffset     = itsOffset;
     metadata.bbCubic         = itsBoundingBox;
 
-    generateOctreeTemplated(metadata);
-}
-
-void Session::generateOctreeTemplated (PointCloudMetadata metadata)
-{
     SparseOctree octree (
             itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
 
