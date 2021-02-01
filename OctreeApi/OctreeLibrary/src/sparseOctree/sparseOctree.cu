@@ -89,9 +89,11 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting ()
     auto nodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
     nodeAmountSparse->memset (0);
 
-    float time = executeKernel (
-            chunking::kernelInitialPointCounting<coordinateType>,
-            itsMetadata.cloudMetadata.pointAmount,
+    float time = Kernel::initialPointCounting (
+            {
+              itsMetadata.cloudMetadata.cloudType,
+              itsMetadata.cloudMetadata.pointAmount
+            },
             itsCloudData->devicePointer (),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
@@ -221,9 +223,11 @@ void SparseOctree<coordinateType, colorType>::distributePoints ()
     auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
-    float time = executeKernel (
-            chunking::kernelDistributePoints<coordinateType>,
-            itsMetadata.cloudMetadata.pointAmount,
+    float time = Kernel::distributePoints (
+            {
+              itsMetadata.cloudMetadata.cloudType,
+              itsMetadata.cloudMetadata.pointAmount
+            },
             itsOctree->devicePointer (),
             itsCloudData->devicePointer (),
             itsDataLUT->devicePointer (),

@@ -3,6 +3,7 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
+#include "kernel_executor.cuh"
 
 
 namespace chunking {
@@ -40,3 +41,26 @@ __global__ void kernelInitialPointCounting (
     }
 }
 } // namespace chunking
+
+
+namespace Kernel {
+
+template <typename... Arguments>
+float initialPointCounting (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                chunking::kernelInitialPointCounting<float>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                chunking::kernelInitialPointCounting<double>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+}
+}
