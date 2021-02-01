@@ -65,12 +65,13 @@ uint32_t testOctreenodeSparse (
 TEST_CASE ("Test point distributing sparse", "[distributing sparse]")
 {
     // Create test data point cloud
-    PointCloudMetadata<float> metadata{};
-    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid (128, metadata);
+    PointCloudMetadata metadata{};
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid<float>  (128, metadata);
+    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
     auto cpuData                         = cloud->toHost ();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>> (128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<SparseOctree> (128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cloud));
 
     octree->initialPointCounting ();
