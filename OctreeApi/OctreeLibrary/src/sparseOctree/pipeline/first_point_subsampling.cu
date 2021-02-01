@@ -75,9 +75,11 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
         itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes
-        timings.subsampling += executeKernel (
-                subsampling::kernelFirstPointSubsample<coordinateType>,
-                accumulatedPoints,
+        timings.subsampling += Kernel::firstPointSubsampling (
+                {
+                  metadata.cloudType,
+                  accumulatedPoints
+                },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
                 itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),

@@ -65,9 +65,11 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        timings.subsampleEvaluation += executeKernel (
-                subsampling::kernelEvaluateSubsamples<coordinateType>,
-                accumulatedPoints,
+        timings.subsampleEvaluation += Kernel::evaluateSubsamples(
+                {
+                    metadata.cloudType,
+                    accumulatedPoints
+                },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
@@ -100,9 +102,11 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
                 threads);
 
         // Perform averaging in parallel for all child nodes
-        timings.averaging += executeKernel (
-                subsampling::kernelPerformAveraging<coordinateType, colorType>,
-                accumulatedPoints,
+        timings.averaging += Kernel::performAveraging (
+                {
+                  metadata.cloudType,
+                  accumulatedPoints
+                },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
@@ -112,9 +116,11 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
                 accumulatedPoints);
 
         // Distribute the subsampled points in parallel for all child nodes
-        timings.subsampling += executeKernel (
-                subsampling::kernelRandomPointSubsample<coordinateType>,
-                accumulatedPoints,
+        timings.subsampling += Kernel::randomPointSubsampling (
+                {
+                  metadata.cloudType,
+                  accumulatedPoints
+                },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
                 itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),

@@ -3,7 +3,7 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-
+#include "kernel_executor.cuh"
 
 namespace subsampling {
 
@@ -170,3 +170,44 @@ __global__ void kernelGenerateRandoms (
     averagingData[sparseIndex].pointCount = 0;
 }
 } // namespace subsampling
+
+namespace Kernel {
+
+template <typename... Arguments>
+float performAveraging (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                subsampling::kernelPerformAveraging<float, uint8_t>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                subsampling::kernelPerformAveraging<double, uint8_t>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+}
+
+template <typename... Arguments>
+float randomPointSubsampling (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                subsampling::kernelRandomPointSubsample<float>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                subsampling::kernelRandomPointSubsample<double>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+}
+}

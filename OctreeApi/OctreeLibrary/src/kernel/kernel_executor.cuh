@@ -3,7 +3,6 @@
 #include "timing.cuh"
 #include "tools.cuh"
 
-#include "subsample_evaluating.cuh"
 
 // https://developer.nvidia.com/blog/cplusplus-11-in-cuda-variadic-templates/
 template <typename FunctType, typename... Arguments>
@@ -30,20 +29,5 @@ struct KernelConfig
     uint32_t threadAmount;
 };
 
-
-template <typename... Arguments>
-float evaluateSubsamples (KernelConfig config, Arguments&&... args)
-{
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
-    {
-        return executeKernel (
-                subsampling::kernelEvaluateSubsamples<float>, config.threadAmount, std::forward<Arguments> (args)...);
-    }
-    else
-    {
-        return executeKernel (
-                subsampling::kernelEvaluateSubsamples<double>, config.threadAmount, std::forward<Arguments> (args)...);
-    }
-}
 
 } // namespace Kernel

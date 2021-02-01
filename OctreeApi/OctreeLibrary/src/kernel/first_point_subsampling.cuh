@@ -3,6 +3,7 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
+#include "kernel_executor.cuh"
 
 namespace subsampling {
 
@@ -62,3 +63,25 @@ __global__ void kernelFirstPointSubsample (
     }
 }
 } // namespace subsampling
+
+namespace Kernel {
+
+template <typename... Arguments>
+float firstPointSubsampling (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                subsampling::kernelFirstPointSubsample<float>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                subsampling::kernelFirstPointSubsample<double>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+}
+}
