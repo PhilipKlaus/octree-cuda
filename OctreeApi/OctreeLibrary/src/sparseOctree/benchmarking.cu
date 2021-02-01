@@ -5,8 +5,8 @@
 #include "sparseOctree.h"
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::calculatePointVarianceInLeafNoes (
+
+void SparseOctree::calculatePointVarianceInLeafNoes (
         const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
 {
     Chunk chunk = h_octreeSparse[nodeIndex];
@@ -32,8 +32,8 @@ void SparseOctree<coordinateType, colorType>::calculatePointVarianceInLeafNoes (
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::evaluateOctreeProperties (
+
+void SparseOctree::evaluateOctreeProperties (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
@@ -70,8 +70,7 @@ void SparseOctree<coordinateType, colorType>::evaluateOctreeProperties (
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::updateOctreeStatistics ()
+void SparseOctree::updateOctreeStatistics ()
 {
     // Reset Octree statistics
     itsMetadata.leafNodeAmount         = 0;
@@ -100,8 +99,8 @@ void SparseOctree<coordinateType, colorType>::updateOctreeStatistics ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::histogramBinning (
+
+void SparseOctree::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
@@ -132,8 +131,8 @@ void SparseOctree<coordinateType, colorType>::histogramBinning (
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::exportHistogram (const string& filePath, uint32_t binWidth)
+
+void SparseOctree::exportHistogram (const string& filePath, uint32_t binWidth)
 {
     updateOctreeStatistics ();
 
@@ -212,56 +211,3 @@ void SparseOctree<coordinateType, colorType>::exportHistogram (const string& fil
     htmlData << itsHtmlPart2;
     htmlData.close ();
 };
-
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<float, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template void SparseOctree<float, uint8_t>::calculatePointVarianceInLeafNoes (
-        const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const;
-
-template void SparseOctree<float, uint8_t>::evaluateOctreeProperties (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        uint32_t& leafNodes,
-        uint32_t& parentNodes,
-        uint32_t& pointSum,
-        uint32_t& min,
-        uint32_t& max,
-        uint32_t nodeIndex) const;
-
-template void SparseOctree<float, uint8_t>::updateOctreeStatistics ();
-template void SparseOctree<float, uint8_t>::histogramBinning (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        std::vector<uint32_t>& counts,
-        uint32_t min,
-        uint32_t binWidth,
-        uint32_t nodeIndex) const;
-
-template void SparseOctree<float, uint8_t>::exportHistogram (const string& filePath, uint32_t binWidth);
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template void SparseOctree<double, uint8_t>::calculatePointVarianceInLeafNoes (
-        const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const;
-
-template void SparseOctree<double, uint8_t>::evaluateOctreeProperties (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        uint32_t& leafNodes,
-        uint32_t& parentNodes,
-        uint32_t& pointSum,
-        uint32_t& min,
-        uint32_t& max,
-        uint32_t nodeIndex) const;
-
-template void SparseOctree<double, uint8_t>::updateOctreeStatistics ();
-template void SparseOctree<double, uint8_t>::histogramBinning (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        std::vector<uint32_t>& counts,
-        uint32_t min,
-        uint32_t binWidth,
-        uint32_t nodeIndex) const;
-
-template void SparseOctree<double, uint8_t>::exportHistogram (const string& filePath, uint32_t binWidth);

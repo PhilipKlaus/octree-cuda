@@ -64,7 +64,7 @@ public:
         return std::make_unique<CudaArray<dataType>> (device, elements, name);
     }
 
-private:
+public:
     explicit CudaArray (dataType* device, uint32_t elements, const std::string& name) :
             itsElements (elements), itsName (name), itsData (device)
     {

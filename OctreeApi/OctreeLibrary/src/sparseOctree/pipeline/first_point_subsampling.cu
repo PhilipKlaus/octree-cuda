@@ -4,8 +4,8 @@
 #include "subsample_evaluating.cuh"
 
 
-template <typename coordinateType, typename colorType>
-SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsampling (
+
+SubsamplingTimings SparseOctree::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -92,32 +92,3 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::firstPointSubsamplin
     }
     return timings;
 }
-
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<float, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template SubsamplingTimings SparseOctree<float, uint8_t>::firstPointSubsampling (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        const unique_ptr<int[]>& h_sparseToDenseLUT,
-        uint32_t sparseVoxelIndex,
-        uint32_t level,
-        GpuArrayU32& subsampleCountingGrid,
-        GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
-        GpuSubsample& subsampleConfig);
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template SubsamplingTimings SparseOctree<double, uint8_t>::firstPointSubsampling (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        const unique_ptr<int[]>& h_sparseToDenseLUT,
-        uint32_t sparseVoxelIndex,
-        uint32_t level,
-        GpuArrayU32& subsampleCountingGrid,
-        GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
-        GpuSubsample& subsampleConfig);

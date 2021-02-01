@@ -8,7 +8,6 @@
 #include "types.cuh"
 
 
-template <typename coordinateType, typename colorType>
 class SparseOctree
 {
 public:

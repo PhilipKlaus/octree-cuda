@@ -56,20 +56,12 @@ void Session::generateOctree ()
     metadata.cloudOffset     = itsOffset;
     metadata.bbCubic         = itsBoundingBox;
 
-    if (itsCloudType == CloudType::CLOUD_FLOAT_UINT8_T)
-    {
-        generateOctreeTemplated<float, uint8_t> (metadata);
-    }
-    else
-    {
-        generateOctreeTemplated<double, uint8_t> (metadata);
-    }
+    generateOctreeTemplated(metadata);
 }
 
-template <typename coordinateType, typename colorType>
 void Session::generateOctreeTemplated (PointCloudMetadata metadata)
 {
-    SparseOctree<coordinateType, colorType> octree (
+    SparseOctree octree (
             itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
 
     octree.setPointCloudHost (itsPointCloud);

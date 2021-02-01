@@ -39,7 +39,6 @@ public:
     void configurePointDistributionReport (const std::string& filename, uint32_t);
 
 private:
-    template <typename coordinateType, typename colorType>
     void generateOctreeTemplated (PointCloudMetadata metadata);
 
 private:

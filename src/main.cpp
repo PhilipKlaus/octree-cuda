@@ -33,20 +33,28 @@ int main ()
     ocpi_create_session (&session, 0);
 
     // Setup cloud properties
-    uint32_t pointAmount     = 47111095;
+    /*uint32_t pointAmount     = 47111095;
     uint32_t pointDataStride = 27;
     float scaleX             = 0.001f;
     float scaleY             = 0.001f;
     float scaleZ             = 0.001f;
     auto cloudType           = 1;
-    std::string plyFile      = "lifeboat_headerless.ply";
+    std::string plyFile      = "lifeboat_headerless.ply";*/
+
+    uint32_t pointAmount     = 5138448;
+    uint32_t pointDataStride = 43;
+    float scaleX             = 0.001f;
+    float scaleY             = 0.001f;
+    float scaleZ             = 0.001f;
+    auto cloudType           = 0;
+    std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
 
     // Read in ply
     auto ply = readPly (plyFile);
 
     // Calculate BB
-    auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
-    auto cubicBB = calculateCubicBB<double> (realBB);
+    auto realBB  = calculateRealBB<float> (ply, pointAmount, pointDataStride);
+    auto cubicBB = calculateCubicBB (realBB);
 
     // Configurate and create octree
     ocpi_set_cloud_type (session, cloudType);

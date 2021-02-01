@@ -4,16 +4,16 @@
 #include "subsample_evaluating.cuh"
 
 
-template <typename coordinateType, typename colorType>
-float SparseOctree<coordinateType, colorType>::initRandomStates (
+
+float SparseOctree::initRandomStates (
         unsigned int seed, GpuRandomState& states, uint32_t nodeAmount)
 {
     return executeKernel (subsampling::kernelInitRandoms, nodeAmount, seed, states->devicePointer (), nodeAmount);
 }
 
 
-template <typename coordinateType, typename colorType>
-SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
+
+SubsamplingTimings SparseOctree::randomSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
@@ -136,40 +136,3 @@ SubsamplingTimings SparseOctree<coordinateType, colorType>::randomSubsampling (
 
     return timings;
 }
-
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<float, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template float SparseOctree<float, uint8_t>::initRandomStates (
-        unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
-template SubsamplingTimings SparseOctree<float, uint8_t>::randomSubsampling (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        const unique_ptr<int[]>& h_sparseToDenseLUT,
-        uint32_t sparseVoxelIndex,
-        uint32_t level,
-        GpuArrayU32& subsampleCountingGrid,
-        GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
-        GpuRandomState& randomStates,
-        GpuArrayU32& randomIndices,
-        GpuSubsample& subsampleConfig);
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-
-template float SparseOctree<double, uint8_t>::initRandomStates (
-        unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
-template SubsamplingTimings SparseOctree<double, uint8_t>::randomSubsampling (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        const unique_ptr<int[]>& h_sparseToDenseLUT,
-        uint32_t sparseVoxelIndex,
-        uint32_t level,
-        GpuArrayU32& subsampleCountingGrid,
-        GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
-        GpuRandomState& randomStates,
-        GpuArrayU32& randomIndices,
-        GpuSubsample& subsampleConfig);
