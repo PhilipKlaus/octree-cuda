@@ -6,7 +6,9 @@
 #define OCTREE_API_SESSION_H
 
 #include <api_types.h>
+#include <memory>
 #include <string>
+#include "sparseOctree.h"
 
 
 class Session
@@ -33,14 +35,17 @@ public:
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
     void configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy);
-    void configureOctreeExport (const std::string& directory);
-    void configureMemoryReport (const std::string& filename);
-    void configureJsonReport (const std::string& filename);
-    void configurePointDistributionReport (const std::string& filename, uint32_t);
+
+    void exportPotree (const std::string& directory);
+    void exportJsonReport (const std::string& filename);
+    void exportMemoryReport (const std::string& filename);
+    void exportDistributionHistogram (const std::string& filename, uint32_t);
+
 
 private:
     int itsDevice;
     uint8_t* itsPointCloud;
+    std::unique_ptr<SparseOctree> itsOctree;
 
     // Cloud metadata
     CloudType itsCloudType              = CloudType::CLOUD_FLOAT_UINT8_T;
@@ -57,11 +62,6 @@ private:
     // Subsampling
     uint32_t itsSubsamplingGrid                = 128;
     SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
-
-    std::string itsPointDistReportFile    = "";
-    std::string itsJsonReportFile         = "";
-    std::string itsOctreeExportDirectory  = "";
-    uint32_t itsPointDistributionBinWidth = 0;
 };
 
 #endif // OCTREE_API_SESSION_H

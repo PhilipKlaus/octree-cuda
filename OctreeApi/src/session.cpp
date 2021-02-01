@@ -56,58 +56,39 @@ void Session::generateOctree ()
     metadata.cloudOffset     = itsOffset;
     metadata.bbCubic         = itsBoundingBox;
 
-    SparseOctree octree (
-            itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
+    itsOctree = std::make_unique<SparseOctree>( itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
+    itsOctree->setPointCloudHost (itsPointCloud);
 
-    octree.setPointCloudHost (itsPointCloud);
-
-    octree.initialPointCounting ();
-    octree.performCellMerging ();
-    octree.distributePoints ();
-
-    if (!itsPointDistReportFile.empty ())
-    {
-        octree.exportHistogram (itsPointDistReportFile, itsPointDistributionBinWidth);
-    }
-
-    octree.performSubsampling ();
-
-    if (!itsOctreeExportDirectory.empty ())
-    {
-        octree.exportPlyNodes (itsOctreeExportDirectory);
-    }
-
-    if (!itsJsonReportFile.empty ())
-    {
-        octree.updateOctreeStatistics ();
-        export_json_data (itsJsonReportFile, octree.getMetadata (), octree.getTimings ());
-    }
+    itsOctree->initialPointCounting ();
+    itsOctree->performCellMerging ();
+    itsOctree->distributePoints ();
+    itsOctree->performSubsampling ();
 
     spdlog::debug ("octree generated");
 }
 
-void Session::configureOctreeExport (const string& directory)
+void Session::exportPotree (const string& directory)
 {
-    itsOctreeExportDirectory = directory;
+    itsOctree->exportPlyNodes (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
-void Session::configureMemoryReport (const std::string& filename)
+void Session::exportMemoryReport (const std::string& filename)
 {
     EventWatcher::getInstance ().configureMemoryReport (filename);
     spdlog::debug ("Export memory report to: {}", filename);
 }
 
-void Session::configureJsonReport (const std::string& filename)
+void Session::exportJsonReport (const std::string& filename)
 {
-    itsJsonReportFile = filename;
+    itsOctree->updateOctreeStatistics ();
+    export_json_data (filename, itsOctree->getMetadata (), itsOctree->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
-void Session::configurePointDistributionReport (const std::string& filename, uint32_t binWidth)
+void Session::exportDistributionHistogram (const std::string& filename, uint32_t binWidth)
 {
-    itsPointDistReportFile       = filename;
-    itsPointDistributionBinWidth = binWidth;
+    itsOctree->exportHistogram (filename, binWidth);
     spdlog::debug ("Export point dist. report to: {}", filename);
 }
 
