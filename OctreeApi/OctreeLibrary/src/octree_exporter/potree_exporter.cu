@@ -5,6 +5,7 @@
 #include <queue>
 #include <unordered_map>
 #include <list>
+#include "thread_pool.h"
 
 constexpr char METADATA_FILE_NAME[]    = "/metadata.json";
 constexpr char HIERARCHY_FILE_NAME[]   = "/hierarchy.bin";
@@ -65,7 +66,7 @@ void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
 }
 
 template <typename coordinateType, typename colorType>
-void PotreeExporter<coordinateType, colorType>::exportNode (std::promise<ExportResult> && result, uint32_t nodeIndex)
+ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nodeIndex)
 {
     bool isFinished       = this->isFinishedNode (nodeIndex);
     uint64_t nodeByteSize = 0;
@@ -128,13 +129,13 @@ void PotreeExporter<coordinateType, colorType>::exportNode (std::promise<ExportR
     uint8_t bitmask = getChildMask (nodeIndex);
     uint8_t type = bitmask == 0 ? 1 : 0;
 
-    result.set_value({
+    return {
             type,
             bitmask,
             validPoints,
             nodeByteSize,
             std::move(buffer)
-    });
+    };
 }
 
 template <typename coordinateType, typename colorType>
@@ -151,27 +152,19 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
 
     auto start = std::chrono::high_resolution_clock::now ();
 
+    ThreadPool pool(thread::hardware_concurrency());
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
 
-        if(itsFutureResults.size() >= 4) {
-            for(auto i = 0; i < itsFutureResults.size(); ++i) {
-                itsThreads[i].join();
-                itsResults.push_back(itsFutureResults[i].get());
-            }
-            itsThreads.clear();
-            itsFutureResults.clear();
-        }
+        itsFutureResults.push_back(
+                pool.enqueue([this, node] {
+                  return std::move(exportNode(node));
+                })
+                );
 
-        std::promise<ExportResult> promise;
-        auto result = promise.get_future();
-        auto t = std::thread(&PotreeExporter<coordinateType, colorType>::exportNode, this, std::move(promise), node);
-        itsFutureResults.push_back(std::move(result));
-        itsThreads.push_back(std::move(t));
-
-
+        // Retrieve results and close threads
         for (auto i = 0; i < 8; ++i)
         {
             int childNode = this->getChildNodeIndex (node, i);
@@ -184,21 +177,16 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
         }
     }
 
+    // Write out result data
     for(auto i = 0; i < itsFutureResults.size(); ++i) {
-        itsThreads[i].join();
-        itsResults.push_back(itsFutureResults[i].get());
-    }
-    itsThreads.clear();
-    itsFutureResults.clear();
+        const ExportResult &result = itsFutureResults[i].get();
 
-    for(auto i = 0; i < itsResults.size(); ++i) {
-        const ExportResult &result = itsResults[i];
-
+        // Write out binary and hierarchy data
         pointFile.write (reinterpret_cast<const char*> (&(result.buffer[0])), result.nodeByteSize);
-
         HierarchyFileEntry entry{result.type, result.bitmask, result.validPoints, byteOffset, result.nodeByteSize};
         hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
 
+        // Increase local statistics
         byteOffset += result.nodeByteSize;
         this->itsPointsExported += result.validPoints;
         ++exportedNodes;

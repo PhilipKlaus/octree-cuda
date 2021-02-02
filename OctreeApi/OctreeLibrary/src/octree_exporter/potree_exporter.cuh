@@ -28,9 +28,8 @@ public:
     void exportOctree (const std::string& path) override;
 
 private:
-    std::string itsExportFolder;
     void createBinaryHierarchyFiles ();
-    void exportNode (std::promise<ExportResult> && p, uint32_t nodeIndex);
+    ExportResult exportNode (uint32_t nodeIndex);
     void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
     inline uint8_t writePointCoordinates (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
@@ -43,7 +42,7 @@ private:
     void createMetadataFile ();
 
 private:
-
+    std::string itsExportFolder;
     std::vector<std::future<ExportResult>> itsFutureResults;
     std::vector<ExportResult> itsResults;
     std::vector<std::thread> itsThreads;
