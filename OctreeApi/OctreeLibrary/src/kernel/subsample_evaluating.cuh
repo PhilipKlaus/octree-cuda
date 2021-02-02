@@ -1,9 +1,9 @@
 #pragma once
 
+#include "kernel_executor.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_executor.cuh"
 
 
 namespace subsampling {
@@ -11,7 +11,7 @@ namespace subsampling {
 template <typename coordinateType>
 __global__ void kernelEvaluateSubsamples (
         uint8_t* cloud,
-        SubsampleConfig* subsampleData,
+        SubsampleSet subsampleSet,
         uint32_t* densePointCount,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
@@ -29,13 +29,15 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t* childDataLUT     = nullptr;
     uint32_t childDataLUTStart = 0;
 
+    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
+
     for (int i = 0; i < 8; ++i)
     {
-        if (index < subsampleData[i].pointOffsetUpper)
+        if (index < config[i].pointOffsetUpper)
         {
-            childDataLUT      = subsampleData[i].lutAdress;
-            childDataLUTStart = subsampleData[i].lutStartIndex;
-            index -= subsampleData[i].pointOffsetLower;
+            childDataLUT      = config[i].lutAdress;
+            childDataLUTStart = config[i].lutStartIndex;
+            index -= config[i].pointOffsetLower;
             break;
         }
     }
@@ -76,4 +78,4 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     }
 }
 
-}
+} // namespace Kernel

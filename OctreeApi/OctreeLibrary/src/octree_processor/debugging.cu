@@ -13,7 +13,7 @@ const OctreeMetadata& OctreeProcessor::getMetadata () const
 
 unique_ptr<uint32_t[]> OctreeProcessor::getDataLUT () const
 {
-    return itsDataLUT->toHost ();
+    return itsLeafLut->toHost ();
 }
 
 
@@ -45,7 +45,7 @@ unique_ptr<Chunk[]> OctreeProcessor::getOctreeSparse () const
 
 unordered_map<uint32_t, GpuArrayU32> const& OctreeProcessor::getSubsampleLUT () const
 {
-    return itsSubsampleLUTs;
+    return itsParentLut;
 }
 
 

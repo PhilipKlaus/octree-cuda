@@ -93,13 +93,12 @@ private:
             GpuArrayI32& subsampleDenseToSparseLUT,
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,
-            GpuArrayU32& randomIndices,
-            GpuSubsample& subsampleConfig);
+            GpuArrayU32& randomIndices);
 
     void OctreeProcessor::prepareSubsampleConfig (
+            SubsampleSet &subsampleSet,
             Chunk& voxel,
             const unique_ptr<Chunk[]>& h_octreeSparse,
-            GpuSubsample& subsampleData,
             uint32_t& accumulatedPoints);
 
     float initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
@@ -140,7 +139,7 @@ private:
     GpuArrayU8 itsCloudData;
 
     // Required data structures for calculation
-    GpuArrayU32 itsDataLUT;
+    GpuArrayU32 itsLeafLut;
     GpuArrayU32 itsDensePointCountPerVoxel;
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
@@ -155,7 +154,7 @@ private:
     vector<uint32_t> itsLinearizedDenseVoxelOffset; // Holds the linear voxel offset for each level (dense)
 
     // Subsampling
-    unordered_map<uint32_t, GpuArrayU32> itsSubsampleLUTs;
+    unordered_map<uint32_t, GpuArrayU32> itsParentLut;
     unordered_map<uint32_t, GpuAveraging> itsAveragingData;
 
     // Benchmarking

@@ -82,7 +82,8 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
         uint32_t dataStride  = this->itsMetadata.cloudMetadata.pointDataStride;
 
         uint64_t bufferOffset = 0;
-        auto buffer = std::make_unique<uint8_t[]> (pointsInNode * (3 * (sizeof (int32_t) + sizeof (uint16_t))));
+        uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
+        auto buffer = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
         // Export all point to pointFile
         for (uint64_t u = 0; u < pointsInNode; ++u)
@@ -123,7 +124,7 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
 
         uint8_t bitmask = getChildMask (nodeIndex);
         uint8_t type    = bitmask == 0 ? 1 : 0;
-        nodeByteSize    = validPoints * 3 * (sizeof (int32_t) + sizeof (uint16_t));
+        nodeByteSize    = validPoints * bytesPerPoint;
 
         // Export buffered coordinates and colors
         pointFile.write (reinterpret_cast<const char*> (&buffer[0]), nodeByteSize);
@@ -179,12 +180,11 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates 
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     auto* point = reinterpret_cast<coordinateType*> (this->itsPointCloud.get () + pointByteIndex);
-    auto realBB = this->itsMetadata.cloudMetadata.bbReal;
     auto scale  = this->itsMetadata.cloudMetadata.scale;
 
     auto *dst = reinterpret_cast<int32_t *>(buffer.get() + bufferOffset);
     dst[0] = static_cast<int32_t> (std::floor (point[0] / scale.x));
-    dst[1] = static_cast<int32_t> (std::floor (point[1]/ scale.y));
+    dst[1] = static_cast<int32_t> (std::floor (point[1] / scale.y));
     dst[2] = static_cast<int32_t> (std::floor (point[2] / scale.z));
 
     return 3 * sizeof (int32_t);

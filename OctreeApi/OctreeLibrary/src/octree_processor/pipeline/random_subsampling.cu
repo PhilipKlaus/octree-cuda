@@ -21,8 +21,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         GpuArrayI32& subsampleDenseToSparseLUT,
         GpuArrayU32& subsampleSparseVoxelCount,
         GpuRandomState& randomStates,
-        GpuArrayU32& randomIndices,
-        GpuSubsample& subsampleConfig)
+        GpuArrayU32& randomIndices)
 {
     Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
@@ -41,8 +40,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                     subsampleDenseToSparseLUT,
                     subsampleSparseVoxelCount,
                     randomStates,
-                    randomIndices,
-                    subsampleConfig);
+                    randomIndices);
 
             timings.subsampleEvaluation += childTiming.subsampleEvaluation;
             timings.generateRandoms += childTiming.generateRandoms;
@@ -56,7 +54,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
     {
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
-        prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
+        SubsampleSet subsampleSet {};
+        prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
@@ -70,7 +69,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                     accumulatedPoints
                 },
                 itsCloudData->devicePointer (),
-                subsampleConfig->devicePointer (),
+                subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
@@ -85,7 +84,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         // Create LUT and averaging data for parent node
         auto subsampleLUT  = createGpuU32 (amountUsedVoxels, "subsampleLUT_" + to_string (sparseVoxelIndex));
         auto averagingData = createGpuAveraging (amountUsedVoxels, "averagingData_" + to_string (sparseVoxelIndex));
-        itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
+        itsParentLut.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
         itsAveragingData.insert (make_pair (sparseVoxelIndex, move (averagingData)));
 
         // Prepare random point indices and reset averaging data
@@ -107,7 +106,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                   accumulatedPoints
                 },
                 itsCloudData->devicePointer (),
-                subsampleConfig->devicePointer (),
+                subsampleSet,
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 metadata,
@@ -121,8 +120,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                   accumulatedPoints
                 },
                 itsCloudData->devicePointer (),
-                subsampleConfig->devicePointer (),
-                itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),
+                subsampleSet,
+                itsParentLut[sparseVoxelIndex]->devicePointer (),
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),

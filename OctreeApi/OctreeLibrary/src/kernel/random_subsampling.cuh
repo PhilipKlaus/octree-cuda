@@ -10,7 +10,7 @@ namespace subsampling {
 template <typename coordinateType, typename colorType>
 __global__ void kernelPerformAveraging (
         uint8_t* cloud,
-        SubsampleConfig* subsampleData,
+        SubsampleSet subsampleSet,
         Averaging* parentAveragingData,
         int* denseToSparseLUT,
         PointCloudMetadata metadata,
@@ -28,14 +28,16 @@ __global__ void kernelPerformAveraging (
     Averaging* childAveraging  = nullptr;
     uint32_t childDataLUTStart = 0;
 
-    for (int i = 0; i < 8; ++i)
+    SubsampleConfig* config = reinterpret_cast<SubsampleConfig*>(&subsampleSet);
+
+    for (uint8_t i = 0; i < 8; ++i)
     {
-        if (index < subsampleData[i].pointOffsetUpper)
+        if (index < config[i].pointOffsetUpper)
         {
-            childDataLUT      = subsampleData[i].lutAdress;
-            childAveraging    = subsampleData[i].averagingAdress;
-            childDataLUTStart = subsampleData[i].lutStartIndex;
-            index -= subsampleData[i].pointOffsetLower;
+            childDataLUT      = config[i].lutAdress;
+            childAveraging    = config[i].averagingAdress;
+            childDataLUTStart = config[i].lutStartIndex;
+            index -= config[i].pointOffsetLower;
             break;
         }
     }
@@ -54,8 +56,8 @@ __global__ void kernelPerformAveraging (
     int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
     bool hasAveragingData = (childAveraging != nullptr);
-    atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? childAveraging[index].pointCount : 1);
 
+    atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? childAveraging[index].pointCount : 1);
     atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? childAveraging[index].r : color->x);
     atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? childAveraging[index].g : color->y);
     atomicAdd (&(parentAveragingData[sparseIndex].b), hasAveragingData ? childAveraging[index].b : color->z);
@@ -66,7 +68,7 @@ __global__ void kernelPerformAveraging (
 template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
         uint8_t* cloud,
-        SubsampleConfig* subsampleData,
+        SubsampleSet subsampleSet,
         uint32_t* parentDataLUT,
         Averaging* averagingData,
         uint32_t* countingGrid,
@@ -87,16 +89,19 @@ __global__ void kernelRandomPointSubsample (
     uint32_t* childDataLUT     = nullptr;
     uint32_t childDataLUTStart = 0;
 
-    for (int i = 0; i < 8; ++i)
+    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
+
+    for (uint8_t i = 0; i < 8; ++i)
     {
-        if (index < subsampleData[i].pointOffsetUpper)
+        if (index < config[i].pointOffsetUpper)
         {
-            childDataLUT      = subsampleData[i].lutAdress;
-            childDataLUTStart = subsampleData[i].lutStartIndex;
-            index -= subsampleData[i].pointOffsetLower;
+            childDataLUT      = config[i].lutAdress;
+            childDataLUTStart = config[i].lutStartIndex;
+            index -= config[i].pointOffsetLower;
             break;
         }
     }
+
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (

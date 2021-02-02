@@ -40,7 +40,7 @@ OctreeProcessor::OctreeProcessor (
     }
 
     // Create data LUT
-    itsDataLUT = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
+    itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
     spdlog::info ("Prepared empty SparseOctree");
 }
 
@@ -221,7 +221,7 @@ void OctreeProcessor::distributePoints ()
             },
             itsOctree->devicePointer (),
             itsCloudData->devicePointer (),
-            itsDataLUT->devicePointer (),
+            itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             itsMetadata.cloudMetadata,
@@ -267,8 +267,7 @@ void OctreeProcessor::performSubsampling ()
                 denseToSpareLUT,
                 voxelCount,
                 randomStates,
-                randomIndices,
-                subsampleData);
+                randomIndices);
     }
     else
     {
@@ -296,31 +295,55 @@ void OctreeProcessor::performSubsampling ()
 
 
 void OctreeProcessor::prepareSubsampleConfig (
+        SubsampleSet &subsampleSet,
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
-        GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints)
 {
-    // Prepare subsample data and copy it to the GPU
-    SubsampleConfig newSubsampleData[8];
     uint32_t i = 0;
     for (int childIndex : voxel.childrenChunks)
     {
         if (childIndex != -1)
         {
+            SubsampleConfig *config;
+            switch(i) {
+            case 0:
+                config = &subsampleSet.child_0;
+                break;
+            case 1:
+                config = &subsampleSet.child_1;
+                break;
+            case 2:
+                config = &subsampleSet.child_2;
+                break;
+            case 3:
+                config = &subsampleSet.child_3;
+                break;
+            case 4:
+                config = &subsampleSet.child_4;
+                break;
+            case 5:
+                config = &subsampleSet.child_5;
+                break;
+            case 6:
+                config = &subsampleSet.child_6;
+                break;
+            default:
+                config = &subsampleSet.child_7;
+                break;
+            }
             Chunk child = h_octreeSparse[childIndex];
-            newSubsampleData[i].lutAdress =
-                    child.isParent ? itsSubsampleLUTs[childIndex]->devicePointer () : itsDataLUT->devicePointer ();
-            newSubsampleData[i].averagingAdress =
+            config->lutAdress =
+                    child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
+            config->averagingAdress =
                     child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
-            newSubsampleData[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
-            newSubsampleData[i].pointOffsetLower = accumulatedPoints;
-            accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount () : child.pointCount;
-            newSubsampleData[i].pointOffsetUpper = accumulatedPoints;
-            ++i;
+            config->lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
+            config->pointOffsetLower = accumulatedPoints;
+            accumulatedPoints += child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            config->pointOffsetUpper = accumulatedPoints;
         }
+        ++i;
     }
-    subsampleData->toGPU (reinterpret_cast<uint8_t*> (newSubsampleData));
 }
 
 void OctreeProcessor::calculateVoxelBB (
@@ -353,7 +376,7 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<float, uint8_t > potreeExporter (
-            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    PotreeExporter<double, uint8_t > potreeExporter (
+            itsCloudData, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
     potreeExporter.exportOctree (folderPath);
 }

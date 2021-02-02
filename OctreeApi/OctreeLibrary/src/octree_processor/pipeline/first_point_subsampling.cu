@@ -45,7 +45,8 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
     {
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
-        prepareSubsampleConfig (voxel, h_octreeSparse, subsampleConfig, accumulatedPoints);
+        SubsampleSet subsampleSet {};
+        prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = itsMetadata.cloudMetadata;
@@ -59,7 +60,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                         accumulatedPoints
                 },
                 itsCloudData->devicePointer (),
-                subsampleConfig->devicePointer (),
+                subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
@@ -72,7 +73,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
         auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];
 
         auto subsampleLUT = createGpuU32 (amountUsedVoxels, "subsampleLUT_" + to_string (sparseVoxelIndex));
-        itsSubsampleLUTs.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
+        itsParentLut.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::firstPointSubsampling (
@@ -82,7 +83,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                 },
                 itsCloudData->devicePointer (),
                 subsampleConfig->devicePointer (),
-                itsSubsampleLUTs[sparseVoxelIndex]->devicePointer (),
+                itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
