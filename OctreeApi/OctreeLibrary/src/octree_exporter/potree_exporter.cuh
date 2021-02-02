@@ -1,6 +1,16 @@
 #pragma once
 
 #include "octree_exporter.cuh"
+#include <future>
+#include <thread>
+
+struct ExportResult {
+    uint8_t type;
+    uint8_t bitmask;
+    uint32_t validPoints;
+    uint64_t nodeByteSize;
+    std::unique_ptr<uint8_t[]> buffer;
+};
 
 
 template <typename coordinateType, typename colorType>
@@ -20,8 +30,7 @@ public:
 private:
     std::string itsExportFolder;
     void createBinaryHierarchyFiles ();
-    uint64_t exportNode (
-            uint32_t nodeIndex, uint64_t bytesWritten, std::ofstream& pointFile, std::ofstream& hierarchyFile);
+    void exportNode (std::promise<ExportResult> && p, uint32_t nodeIndex);
     void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
     inline uint8_t writePointCoordinates (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
@@ -34,6 +43,11 @@ private:
     void createMetadataFile ();
 
 private:
+
+    std::vector<std::future<ExportResult>> itsFutureResults;
+    std::vector<ExportResult> itsResults;
+    std::vector<std::thread> itsThreads;
+
 #pragma pack(push, 1)
     struct HierarchyFileEntry
     {
@@ -44,4 +58,5 @@ private:
         uint64_t byteSize;
     };
 #pragma pack(pop)
+
 };

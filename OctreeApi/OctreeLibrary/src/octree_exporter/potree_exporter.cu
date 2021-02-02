@@ -65,11 +65,13 @@ void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
 }
 
 template <typename coordinateType, typename colorType>
-uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
-        uint32_t nodeIndex, uint64_t byteOffset, std::ofstream& pointFile, std::ofstream& hierarchyFile)
+void PotreeExporter<coordinateType, colorType>::exportNode (std::promise<ExportResult> && result, uint32_t nodeIndex)
 {
     bool isFinished       = this->isFinishedNode (nodeIndex);
     uint64_t nodeByteSize = 0;
+    uint32_t validPoints = 0;
+
+    std::unique_ptr<uint8_t []> buffer;
 
     if (isFinished)
     {
@@ -78,12 +80,12 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
         auto pointsInNode                      = this->getPointsInNode (nodeIndex);
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
-        uint32_t validPoints = 0;
+
         uint32_t dataStride  = this->itsMetadata.cloudMetadata.pointDataStride;
 
         uint64_t bufferOffset = 0;
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
-        auto buffer = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
+        buffer = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
         // Export all point to pointFile
         for (uint64_t u = 0; u < pointsInNode; ++u)
@@ -120,20 +122,19 @@ uint64_t PotreeExporter<coordinateType, colorType>::exportNode (
                 }
             }
         }
-        this->itsPointsExported += validPoints;
-
-        uint8_t bitmask = getChildMask (nodeIndex);
-        uint8_t type    = bitmask == 0 ? 1 : 0;
         nodeByteSize    = validPoints * bytesPerPoint;
-
-        // Export buffered coordinates and colors
-        pointFile.write (reinterpret_cast<const char*> (&buffer[0]), nodeByteSize);
-
-        // Export hierarchy to hierarchyFile
-        HierarchyFileEntry entry{type, bitmask, validPoints, byteOffset, nodeByteSize};
-        hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
     }
-    return nodeByteSize;
+
+    uint8_t bitmask = getChildMask (nodeIndex);
+    uint8_t type = bitmask == 0 ? 1 : 0;
+
+    result.set_value({
+            type,
+            bitmask,
+            validPoints,
+            nodeByteSize,
+            std::move(buffer)
+    });
 }
 
 template <typename coordinateType, typename colorType>
@@ -154,8 +155,22 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
-        byteOffset += exportNode (node, byteOffset, pointFile, hierarchyFile);
-        ++exportedNodes;
+
+        if(itsFutureResults.size() >= 4) {
+            for(auto i = 0; i < itsFutureResults.size(); ++i) {
+                itsThreads[i].join();
+                itsResults.push_back(itsFutureResults[i].get());
+            }
+            itsThreads.clear();
+            itsFutureResults.clear();
+        }
+
+        std::promise<ExportResult> promise;
+        auto result = promise.get_future();
+        auto t = std::thread(&PotreeExporter<coordinateType, colorType>::exportNode, this, std::move(promise), node);
+        itsFutureResults.push_back(std::move(result));
+        itsThreads.push_back(std::move(t));
+
 
         for (auto i = 0; i < 8; ++i)
         {
@@ -167,6 +182,26 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
                 toVisit.push_back (childNode);
             }
         }
+    }
+
+    for(auto i = 0; i < itsFutureResults.size(); ++i) {
+        itsThreads[i].join();
+        itsResults.push_back(itsFutureResults[i].get());
+    }
+    itsThreads.clear();
+    itsFutureResults.clear();
+
+    for(auto i = 0; i < itsResults.size(); ++i) {
+        const ExportResult &result = itsResults[i];
+
+        pointFile.write (reinterpret_cast<const char*> (&(result.buffer[0])), result.nodeByteSize);
+
+        HierarchyFileEntry entry{result.type, result.bitmask, result.validPoints, byteOffset, result.nodeByteSize};
+        hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
+
+        byteOffset += result.nodeByteSize;
+        this->itsPointsExported += result.validPoints;
+        ++exportedNodes;
     }
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
