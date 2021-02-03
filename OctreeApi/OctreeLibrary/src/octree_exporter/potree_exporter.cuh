@@ -32,14 +32,15 @@ private:
     void createBinaryHierarchyFiles ();
     ExportResult exportNode (uint32_t nodeIndex);
     void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
-    inline uint8_t writePointCoordinates (
+    inline uint8_t writeCoordinatesBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
-    inline uint8_t writeColorAveraged (
+    inline uint8_t writeColorsBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex);
-    inline uint8_t writeColorNonAveraged (
+    inline uint8_t writeSimpleColorsBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
     inline uint8_t getChildMask (uint32_t nodeIndex);
     void createMetadataFile ();
+    void exportBuffers(std::ofstream& pointFile, std::ofstream& hierarchyFile);
 
 private:
     std::string itsExportFolder;
