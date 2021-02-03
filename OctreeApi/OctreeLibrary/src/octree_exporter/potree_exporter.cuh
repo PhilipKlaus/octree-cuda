@@ -4,7 +4,8 @@
 #include <future>
 #include <thread>
 
-struct ExportResult {
+struct ExportResult
+{
     uint8_t type;
     uint8_t bitmask;
     uint32_t validPoints;
@@ -38,14 +39,11 @@ private:
     inline uint8_t writeColorNonAveraged (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
     inline uint8_t getChildMask (uint32_t nodeIndex);
-
     void createMetadataFile ();
 
 private:
     std::string itsExportFolder;
     std::vector<std::future<ExportResult>> itsFutureResults;
-    std::vector<ExportResult> itsResults;
-    std::vector<std::thread> itsThreads;
 
 #pragma pack(push, 1)
     struct HierarchyFileEntry
@@ -57,5 +55,4 @@ private:
         uint64_t byteSize;
     };
 #pragma pack(pop)
-
 };

@@ -1,11 +1,11 @@
 #include "potree_exporter.cuh"
+#include "thread_pool.h"
 #include <iomanip>
 #include <iostream>
 #include <json.hpp>
+#include <list>
 #include <queue>
 #include <unordered_map>
-#include <list>
-#include "thread_pool.h"
 
 constexpr char METADATA_FILE_NAME[]    = "/metadata.json";
 constexpr char HIERARCHY_FILE_NAME[]   = "/hierarchy.bin";
@@ -70,9 +70,9 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
 {
     bool isFinished       = this->isFinishedNode (nodeIndex);
     uint64_t nodeByteSize = 0;
-    uint32_t validPoints = 0;
+    uint32_t validPoints  = 0;
 
-    std::unique_ptr<uint8_t []> buffer;
+    std::unique_ptr<uint8_t[]> buffer;
 
     if (isFinished)
     {
@@ -82,11 +82,11 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
 
-        uint32_t dataStride  = this->itsMetadata.cloudMetadata.pointDataStride;
+        uint32_t dataStride = this->itsMetadata.cloudMetadata.pointDataStride;
 
-        uint64_t bufferOffset = 0;
+        uint64_t bufferOffset  = 0;
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
-        buffer = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
+        buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
         // Export all point to pointFile
         for (uint64_t u = 0; u < pointsInNode; ++u)
@@ -123,19 +123,13 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
                 }
             }
         }
-        nodeByteSize    = validPoints * bytesPerPoint;
+        nodeByteSize = validPoints * bytesPerPoint;
     }
 
     uint8_t bitmask = getChildMask (nodeIndex);
-    uint8_t type = bitmask == 0 ? 1 : 0;
+    uint8_t type    = bitmask == 0 ? 1 : 0;
 
-    return {
-            type,
-            bitmask,
-            validPoints,
-            nodeByteSize,
-            std::move(buffer)
-    };
+    return {type, bitmask, validPoints, nodeByteSize, std::move (buffer)};
 }
 
 template <typename coordinateType, typename colorType>
@@ -152,17 +146,13 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
 
     auto start = std::chrono::high_resolution_clock::now ();
 
-    ThreadPool pool(thread::hardware_concurrency());
+    ThreadPool pool (thread::hardware_concurrency ());
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
 
-        itsFutureResults.push_back(
-                pool.enqueue([this, node] {
-                  return std::move(exportNode(node));
-                })
-                );
+        itsFutureResults.push_back (pool.enqueue ([this, node] { return std::move (exportNode (node)); }));
 
         // Retrieve results and close threads
         for (auto i = 0; i < 8; ++i)
@@ -178,8 +168,9 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     }
 
     // Write out result data
-    for(auto i = 0; i < itsFutureResults.size(); ++i) {
-        const ExportResult &result = itsFutureResults[i].get();
+    for (auto i = 0; i < itsFutureResults.size (); ++i)
+    {
+        const ExportResult& result = itsFutureResults[i].get ();
 
         // Write out binary and hierarchy data
         pointFile.write (reinterpret_cast<const char*> (&(result.buffer[0])), result.nodeByteSize);
@@ -195,7 +186,8 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
 
-    spdlog::info ("Exported {} nodes / {} points in {} seconds", exportedNodes, this->itsPointsExported, elapsed.count ());
+    spdlog::info (
+            "Exported {} nodes / {} points in {} seconds", exportedNodes, this->itsPointsExported, elapsed.count ());
 }
 
 template <typename coordinateType, typename colorType>
@@ -205,10 +197,10 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writePointCoordinates 
     auto* point = reinterpret_cast<coordinateType*> (this->itsPointCloud.get () + pointByteIndex);
     auto scale  = this->itsMetadata.cloudMetadata.scale;
 
-    auto *dst = reinterpret_cast<int32_t *>(buffer.get() + bufferOffset);
-    dst[0] = static_cast<int32_t> (std::floor (point[0] / scale.x));
-    dst[1] = static_cast<int32_t> (std::floor (point[1] / scale.y));
-    dst[2] = static_cast<int32_t> (std::floor (point[2] / scale.z));
+    auto* dst = reinterpret_cast<int32_t*> (buffer.get () + bufferOffset);
+    dst[0]    = static_cast<int32_t> (std::floor (point[0] / scale.x));
+    dst[1]    = static_cast<int32_t> (std::floor (point[1] / scale.y));
+    dst[2]    = static_cast<int32_t> (std::floor (point[2] / scale.z));
 
     return 3 * sizeof (int32_t);
 }
@@ -219,10 +211,10 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorAveraged (
 {
     uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
 
-    auto *dst = reinterpret_cast<uint16_t *>(buffer.get() + bufferOffset);
-    dst[0] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
-    dst[1] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
-    dst[2] = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    auto* dst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
+    dst[0]    = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    dst[1]    = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    dst[2]    = static_cast<uint16_t> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
 
     return 3 * sizeof (uint16_t);
 }
@@ -233,10 +225,10 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorNonAveraged 
 {
     uint32_t colorSize = sizeof (colorType);
 
-    auto *dst = reinterpret_cast<uint16_t *>(buffer.get() + bufferOffset);
-    dst[0] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex]);
-    dst[1] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize]);
-    dst[2] = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize * 2]);
+    auto* dst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
+    dst[0]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex]);
+    dst[1]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize]);
+    dst[2]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize * 2]);
 
     return 3 * sizeof (uint16_t);
 }
@@ -285,12 +277,12 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;
-    metadata["offset"]                      = {bbReal.min.x, bbReal.min.y, bbReal.min.z}; // ToDo: real offset !!! currently 0
-    metadata["scale"]                       = {scale.x, scale.y, scale.z};
-    metadata["spacing"]                     = spacing;
-    metadata["boundingBox"]["min"]          = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
-    metadata["boundingBox"]["max"]          = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
-    metadata["encoding"]                    = POTREE_DATA_ENCODING;
+    metadata["offset"]             = {bbReal.min.x, bbReal.min.y, bbReal.min.z}; // ToDo: real offset !!! currently 0
+    metadata["scale"]              = {scale.x, scale.y, scale.z};
+    metadata["spacing"]            = spacing;
+    metadata["boundingBox"]["min"] = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
+    metadata["boundingBox"]["max"] = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
+    metadata["encoding"]           = POTREE_DATA_ENCODING;
 
     // POSITION attribute
     metadata["attributes"][0]["name"]        = POSITION_NAME;
