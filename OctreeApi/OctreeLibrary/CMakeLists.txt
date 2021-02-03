@@ -45,7 +45,8 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_exporter/ply_exporter.cuh
         src/octree_exporter/ply_exporter.cu
         src/octree_exporter/potree_exporter.cuh
-        src/octree_exporter/potree_exporter.cu)
+        src/octree_exporter/potree_exporter.cu
+        src/octree_exporter/thread_pool.h)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE

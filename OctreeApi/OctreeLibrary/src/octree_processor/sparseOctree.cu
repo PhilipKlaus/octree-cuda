@@ -373,10 +373,17 @@ void OctreeProcessor::calculateVoxelBB (
 
 void OctreeProcessor::exportPlyNodes (const string& folderPath)
 {
+    auto start = std::chrono::high_resolution_clock::now ();
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
     PotreeExporter<double, uint8_t > potreeExporter (
             itsCloudData, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
     potreeExporter.exportOctree (folderPath);
+
+
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info ("Export tooks {} seconds", elapsed.count ());
+    itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count() * 1000);
 }
