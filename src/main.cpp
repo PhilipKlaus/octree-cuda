@@ -56,6 +56,8 @@ auto ply = readPly (plyFile);
 auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
 auto cubicBB = calculateCubicBB (realBB);
 
+auto start = std::chrono::high_resolution_clock::now ();
+
 // Configurate and create octree
 ocpi_set_cloud_type (session, cloudType);
 ocpi_set_cloud_point_amount (session, pointAmount);
@@ -64,10 +66,9 @@ ocpi_set_cloud_scale (session, scaleX, scaleY, scaleZ);
 ocpi_set_cloud_offset (session, cubicBB[0], cubicBB[1], cubicBB[2]);
 ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 
-auto start = std::chrono::high_resolution_clock::now ();
 ocpi_set_point_cloud_host (session, ply.get ());
 ocpi_configure_chunking (session, 512, 10000);
-ocpi_configure_subsampling (session, 128, 1);
+ocpi_configure_subsampling (session, 128, 1, true);
 
 ocpi_generate_octree (session);
 ocpi_export_potree (session, R"(./export)");

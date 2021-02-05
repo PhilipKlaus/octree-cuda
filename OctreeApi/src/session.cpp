@@ -73,6 +73,7 @@ void Session::generateOctree ()
 
 void Session::exportPotree (const string& directory)
 {
+    itsProcessor->exportPlyNodes(directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
@@ -101,8 +102,9 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy)
+void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging)
 {
+    itsIsAveraging = averaging;
     itsSubsamplingGrid     = subsamplingGrid;
     itsSubsamplingStrategy = static_cast<SubsamplingStrategy> (strategy);
 }

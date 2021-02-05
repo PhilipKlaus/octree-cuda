@@ -25,4 +25,5 @@ struct OctreeMetadata
     uint32_t maxPointsPerNode;    // Maximum amount of points in a node
     PointCloudMetadata cloudMetadata; // The cloud metadata;
     SubsamplingStrategy strategy;                     // The subsampling strategy
+    bool performAveraging;
 };

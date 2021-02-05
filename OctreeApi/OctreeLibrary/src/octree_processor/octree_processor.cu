@@ -129,13 +129,6 @@ void OctreeProcessor::performCellMerging ()
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost ()[0];
     itsOctree                    = createGpuOctree (itsMetadata.nodeAmountSparse, "octreeSparse");
 
-    spdlog::info (
-            "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
-            itsMetadata.nodeAmountSparse,
-            (1 - static_cast<float> (itsMetadata.nodeAmountSparse) / itsMetadata.nodeAmountDense) * 100,
-            static_cast<float> (itsMetadata.nodeAmountDense - itsMetadata.nodeAmountSparse) * sizeof (Chunk) /
-                    1000000000.f);
-
     // Allocate the conversion LUT from sparse to dense
     itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     itsSparseToDenseLUT->memset (-1);
