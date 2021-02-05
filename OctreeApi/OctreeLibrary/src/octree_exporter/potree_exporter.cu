@@ -33,7 +33,7 @@ constexpr uint8_t COLOR_SIZE         = COLOR_ELEMENT_SIZE * 3;
 
 template <typename coordinateType, typename colorType>
 PotreeExporter<coordinateType, colorType>::PotreeExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
@@ -195,7 +195,7 @@ template <typename coordinateType, typename colorType>
 inline uint8_t PotreeExporter<coordinateType, colorType>::writeCoordinatesBuffered (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
-    auto* point = reinterpret_cast<coordinateType*> (this->itsPointCloud.get () + pointByteIndex);
+    auto* point = reinterpret_cast<coordinateType*> (this->itsCloud + pointByteIndex);
     auto scale  = this->itsMetadata.cloudMetadata.scale;
 
     auto* dst = reinterpret_cast<int32_t*> (buffer.get () + bufferOffset);
@@ -227,9 +227,9 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writeSimpleColorsBuffe
     uint32_t colorSize = sizeof (colorType);
 
     auto* dst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
-    dst[0]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex]);
-    dst[1]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize]);
-    dst[2]    = static_cast<uint16_t> (this->itsPointCloud[pointByteIndex + colorSize * 2]);
+    dst[0]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex]);
+    dst[1]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex + colorSize]);
+    dst[2]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex + colorSize * 2]);
 
     return 3 * sizeof (uint16_t);
 }
@@ -315,7 +315,7 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template PotreeExporter<float, uint8_t>::PotreeExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
@@ -328,7 +328,7 @@ template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& p
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template PotreeExporter<double, uint8_t>::PotreeExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,

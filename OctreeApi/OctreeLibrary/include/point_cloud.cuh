@@ -8,12 +8,13 @@
 #include <cstdint>
 #include <types.cuh>
 
-class PointCloud
+class IPointCloud
 {
 public:
-    PointCloud (uint8_t* source, PointCloudMetadata metadata) :
+    IPointCloud (uint8_t* source, PointCloudMetadata metadata) :
             itsSourceCloud (source), itsMetadata (metadata)
     {}
+    virtual ~IPointCloud() = default;
     virtual uint8_t* getCloudHost ()   = 0;
     virtual uint8_t* getCloudDevice () = 0;
 
@@ -22,7 +23,7 @@ protected:
     PointCloudMetadata itsMetadata;
 };
 
-class PointCloudHost : public PointCloud
+class PointCloudHost : public IPointCloud
 {
 public:
     PointCloudHost (uint8_t* source, PointCloudMetadata metadata);
@@ -33,7 +34,7 @@ private:
     GpuArrayU8 itsDeviceCloud;
 };
 
-class PointCloudDevice : public PointCloud
+class PointCloudDevice : public IPointCloud
 {
 public:
     PointCloudDevice (uint8_t* source, PointCloudMetadata metadata);
@@ -41,5 +42,7 @@ public:
     uint8_t* getCloudDevice () override;
 
 private:
-    std::unique_ptr<uint8_t> itsHostCloud;
+    std::unique_ptr<uint8_t[]> itsHostCloud;
 };
+
+using PointCloud = std::unique_ptr<IPointCloud>;

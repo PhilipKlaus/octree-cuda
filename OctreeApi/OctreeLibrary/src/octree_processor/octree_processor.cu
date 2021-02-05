@@ -14,6 +14,7 @@
 
 
 OctreeProcessor::OctreeProcessor (
+        uint8_t *pointCloud,
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
@@ -39,31 +40,16 @@ OctreeProcessor::OctreeProcessor (
         itsMetadata.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 
+    if(cloudMetadata.memoryType == CLOUD_HOST) {
+        itsCloud = std::make_unique<PointCloudHost>(pointCloud, cloudMetadata);
+    }
+    else {
+        itsCloud = std::make_unique<PointCloudDevice>(pointCloud, cloudMetadata);
+    }
+
     // Create data LUT
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
     spdlog::info ("Prepared empty SparseOctree");
-}
-
-void OctreeProcessor::setPointCloudHost (uint8_t* pointCloud)
-{
-    itsCloudData = createGpuU8 (
-            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
-    itsCloudData->toGPU (pointCloud);
-    spdlog::info ("Copied point cloud from host->device");
-}
-
-void OctreeProcessor::setPointCloudDevice (uint8_t* pointCloud)
-{
-    itsCloudData = CudaArray<uint8_t>::fromDevicePtr (
-            pointCloud,
-            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride,
-            "pointcloud");
-    spdlog::info ("Imported point cloud from device");
-}
-
-void OctreeProcessor::setPointCloudDevice (GpuArrayU8 pointCloud)
-{
-    itsCloudData = std::move (pointCloud);
 }
 
 //###################
@@ -89,7 +75,7 @@ void OctreeProcessor::initialPointCounting ()
               itsMetadata.cloudMetadata.cloudType,
               itsMetadata.cloudMetadata.pointAmount
             },
-            itsCloudData->devicePointer (),
+            itsCloud->getCloudDevice(),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             nodeAmountSparse->devicePointer (),
@@ -220,7 +206,7 @@ void OctreeProcessor::distributePoints ()
               itsMetadata.cloudMetadata.pointAmount
             },
             itsOctree->devicePointer (),
-            itsCloudData->devicePointer (),
+            itsCloud->getCloudDevice(),
             itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
@@ -378,7 +364,7 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
     PotreeExporter<double, uint8_t > potreeExporter (
-            itsCloudData, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
+            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
     potreeExporter.exportOctree (folderPath);
 
 

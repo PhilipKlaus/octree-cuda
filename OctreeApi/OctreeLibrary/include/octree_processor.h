@@ -6,12 +6,13 @@
 
 #include "octree_metadata.h"
 #include "types.cuh"
-
+#include "point_cloud.cuh"
 
 class OctreeProcessor
 {
 public:
     OctreeProcessor (
+            uint8_t *pointCloud,
             uint32_t chunkingGrid,
             uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
@@ -23,10 +24,6 @@ public:
     void operator= (const OctreeProcessor&) = delete;
 
 public:
-    // Set point cloud
-    void setPointCloudHost (uint8_t* pointCloud);
-    void setPointCloudDevice (uint8_t* pointCloud);
-    void setPointCloudDevice (GpuArrayU8 pointCloud);
 
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
@@ -136,7 +133,7 @@ private:
 
 private:
     // Point cloud
-    GpuArrayU8 itsCloudData;
+    PointCloud itsCloud;
 
     // Required data structures for calculation
     GpuArrayU32 itsLeafLut;

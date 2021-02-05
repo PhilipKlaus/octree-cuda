@@ -37,18 +37,22 @@ void Session::setDevice () const
 
 Session::~Session ()
 {
+    itsProcessor.reset();
     spdlog::debug ("session destroyed");
 }
 
+
 void Session::setPointCloudHost (uint8_t* pointCloud)
 {
-    itsPointCloud = pointCloud;
+    itsPointCloud  = pointCloud;
+    itsCloudMemory = CLOUD_HOST;
     spdlog::debug ("set point cloud data from host");
 }
 
 void Session::generateOctree ()
 {
     PointCloudMetadata metadata{};
+    metadata.memoryType      = itsCloudMemory;
     metadata.cloudType       = itsCloudType;
     metadata.pointAmount     = itsPointAmount;
     metadata.pointDataStride = itsDataStride;
@@ -56,8 +60,8 @@ void Session::generateOctree ()
     metadata.cloudOffset     = itsOffset;
     metadata.bbCubic         = itsBoundingBox;
 
-    itsProcessor = std::make_unique<OctreeProcessor>( itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
-    itsProcessor->setPointCloudHost (itsPointCloud);
+    itsProcessor = std::make_unique<OctreeProcessor> (
+            itsPointCloud, itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
 
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
@@ -69,7 +73,6 @@ void Session::generateOctree ()
 
 void Session::exportPotree (const string& directory)
 {
-    itsProcessor->exportPlyNodes (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
@@ -101,11 +104,11 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
 void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy)
 {
     itsSubsamplingGrid     = subsamplingGrid;
-    itsSubsamplingStrategy = static_cast<SubsamplingStrategy>(strategy);
+    itsSubsamplingStrategy = static_cast<SubsamplingStrategy> (strategy);
 }
 void Session::setCloudType (uint8_t cloudType)
 {
-    itsCloudType = static_cast<CloudType>(cloudType);
+    itsCloudType = static_cast<CloudType> (cloudType);
 }
 
 void Session::setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)

@@ -37,7 +37,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_processor/pipeline/random_subsampling.cu
         src/octree_processor/benchmarking.cu
         src/octree_processor/debugging.cu
-        src/octree_processor/sparseOctree.cu
+        src/octree_processor/octree_processor.cu
         src/octree_processor/dummy.cpp
 
         # Data export

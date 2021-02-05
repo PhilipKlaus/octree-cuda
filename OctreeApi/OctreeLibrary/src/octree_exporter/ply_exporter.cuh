@@ -6,7 +6,7 @@ class PlyExporter : public OctreeExporter<coordinateType, colorType>
 {
 public:
     PlyExporter (
-            const GpuArrayU8& pointCloud,
+            const PointCloud& pointCloud,
             const GpuOctree& octree,
             const GpuArrayU32& leafeLut,
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
