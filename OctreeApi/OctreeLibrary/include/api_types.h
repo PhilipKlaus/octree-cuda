@@ -23,6 +23,11 @@ enum CloudType
     CLOUD_DOUBLE_UINT8_T
 };
 
+enum CloudMemory {
+    CLOUD_HOST,
+    ClOUD_DEVICE
+};
+
 struct BoundingBox
 {
     Vector3<double> min;
@@ -38,6 +43,7 @@ struct PointCloudMetadata
     Vector3<double> cloudOffset;
     Vector3<double> scale;
     CloudType cloudType;
+    CloudMemory memoryType;
 };
 
 enum SubsamplingStrategy

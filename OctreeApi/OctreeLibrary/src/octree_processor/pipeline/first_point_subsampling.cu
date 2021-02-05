@@ -59,7 +59,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                         metadata.cloudType,
                         accumulatedPoints
                 },
-                itsCloudData->devicePointer (),
+                itsCloud->getCloudDevice (),
                 subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
@@ -81,7 +81,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                   metadata.cloudType,
                   accumulatedPoints
                 },
-                itsCloudData->devicePointer (),
+                itsCloud->getCloudDevice(),
                 subsampleConfig->devicePointer (),
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
