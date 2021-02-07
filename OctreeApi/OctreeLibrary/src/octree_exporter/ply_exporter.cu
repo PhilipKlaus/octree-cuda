@@ -3,12 +3,12 @@
 
 template <typename coordinateType, typename colorType>
 PlyExporter<coordinateType, colorType>::PlyExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<coordinateType> metadata) :
+        OctreeMetadata metadata) :
         OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
 {}
 
@@ -29,7 +29,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     // ToDo: read from config + change in kernel;
     bool isAveraging = true;
 
-    PointCloudMetadata<coordinateType> cloudMetadata = this->itsMetadata.cloudMetadata;
+    PointCloudMetadata cloudMetadata = this->itsMetadata.cloudMetadata;
     uint32_t pointsInNode = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
     const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
 
@@ -163,15 +163,15 @@ void PlyExporter<coordinateType, colorType>::writePointCoordinates (
 {
     uint32_t coordinateSize = sizeof (coordinateType);
 
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), coordinateSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), coordinateSize);
 
     bufferOffset += coordinateSize;
     pointByteIndex += coordinateSize;
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), coordinateSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), coordinateSize);
 
     bufferOffset += coordinateSize;
     pointByteIndex += coordinateSize;
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), coordinateSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), coordinateSize);
 }
 
 template <typename coordinateType, typename colorType>
@@ -200,27 +200,27 @@ void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (
     pointByteIndex += sizeof (coordinateType) * 3;
     uint32_t colorSize = sizeof (colorType);
 
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), colorSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), colorSize);
 
     bufferOffset += colorSize;
     pointByteIndex += colorSize;
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), colorSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), colorSize);
 
     bufferOffset += colorSize;
     pointByteIndex += colorSize;
-    std::memcpy (buffer.get () + bufferOffset, &(this->itsPointCloud[pointByteIndex]), colorSize);
+    std::memcpy (buffer.get () + bufferOffset, &(this->itsCloud[pointByteIndex]), colorSize);
 }
 
 //----------------------------------------------------------------------------------------------------------------------
 //                                           SparseOctree<float, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<float, uint8_t>::PlyExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<float> metadata);
+        OctreeMetadata metadata);
 
 template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -228,11 +228,11 @@ template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path
 //                                           SparseOctree<double, uint8_t>
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<double, uint8_t>::PlyExporter (
-        const GpuArrayU8& pointCloud,
+        const PointCloud& pointCloud,
         const GpuOctree& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata<double> metadata);
+        OctreeMetadata metadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);

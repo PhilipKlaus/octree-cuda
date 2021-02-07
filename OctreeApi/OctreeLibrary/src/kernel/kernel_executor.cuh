@@ -19,3 +19,15 @@ float executeKernel (FunctType kernel, uint32_t threads, Arguments&&... args)
     gpuErrchk (cudaGetLastError ());
     return timer.getMilliseconds ();
 }
+
+
+namespace Kernel {
+
+struct KernelConfig
+{
+    CloudType cloudType;
+    uint32_t threadAmount;
+};
+
+
+} // namespace Kernel

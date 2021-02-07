@@ -8,7 +8,6 @@
 #include <cstdint>
 
 
-template <typename coordinateType>
 struct OctreeMetadata
 {
     uint32_t depth;               // The depth of the octree // ToDo: -1
@@ -24,6 +23,7 @@ struct OctreeMetadata
     float stdevPointsPerLeafNode; // Standard deviation of points per leaf node
     uint32_t minPointsPerNode;    // Minimum amount of points in a node
     uint32_t maxPointsPerNode;    // Maximum amount of points in a node
-    PointCloudMetadata<coordinateType> cloudMetadata; // The cloud metadata;
+    PointCloudMetadata cloudMetadata; // The cloud metadata;
     SubsamplingStrategy strategy;                     // The subsampling strategy
+    bool performAveraging;
 };

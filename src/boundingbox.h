@@ -8,9 +8,9 @@
 #include <memory>
 
 template <typename coordinateType>
-std::vector<coordinateType> calculateRealBB (const std::unique_ptr<uint8_t[]> &cloud, uint32_t pointAmount, uint32_t dataStride)
+std::vector<double> calculateRealBB (const std::unique_ptr<uint8_t[]> &cloud, uint32_t pointAmount, uint32_t dataStride)
 {
-    std::vector<coordinateType> bbReal = {
+    std::vector<double> bbReal = {
             INFINITY,
             INFINITY,
             INFINITY,
@@ -21,7 +21,7 @@ std::vector<coordinateType> calculateRealBB (const std::unique_ptr<uint8_t[]> &c
 
     uint8_t positionSize = sizeof (coordinateType);
 
-    for (auto i = 0; i < pointAmount; ++i)
+    for (uint32_t i = 0; i < pointAmount; ++i)
     {
         coordinateType pointX = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride);
         coordinateType pointY = *reinterpret_cast<const coordinateType*> (cloud.get() + i * dataStride + positionSize);
@@ -38,16 +38,15 @@ std::vector<coordinateType> calculateRealBB (const std::unique_ptr<uint8_t[]> &c
     return bbReal;
 }
 
-template <typename coordinateType>
-std::vector<coordinateType> calculateCubicBB (const std::vector<coordinateType> &realBB)
+std::vector<double> calculateCubicBB (const std::vector<double> &realBB)
 {
     auto dimX = realBB[3] - realBB[0];
     auto dimY = realBB[4] - realBB[1];
     auto dimZ = realBB[5] - realBB[2];
 
-    coordinateType cubicSideLength = max (max (dimX, dimY), dimZ);
+    double cubicSideLength = fmax (fmax (dimX, dimY), dimZ);
 
-    std::vector<coordinateType> cubicBB;
+    std::vector<double> cubicBB;
 
     cubicBB.push_back(realBB[0] - ((cubicSideLength - dimX) / 2.0f));
     cubicBB.push_back(realBB[1] - ((cubicSideLength - dimY) / 2.0f));

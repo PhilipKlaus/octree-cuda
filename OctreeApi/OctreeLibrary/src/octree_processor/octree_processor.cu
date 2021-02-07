@@ -5,20 +5,20 @@
 #include "hierarchical_merging.cuh"
 #include "kernel_executor.cuh"
 #include "octree_initialization.cuh"
+#include "octree_processor.h"
 #include "ply_exporter.cuh"
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
 #include "point_distributing.cuh"
 #include "potree_exporter.cuh"
-#include "sparseOctree.h"
 
 
-template <typename coordinateType, typename colorType>
-SparseOctree<coordinateType, colorType>::SparseOctree (
+OctreeProcessor::OctreeProcessor (
+        uint8_t *pointCloud,
         uint32_t chunkingGrid,
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
-        PointCloudMetadata<coordinateType> cloudMetadata,
+        PointCloudMetadata cloudMetadata,
         SubsamplingStrategy strategy)
 {
     // Initialize octree metadata
@@ -40,42 +40,23 @@ SparseOctree<coordinateType, colorType>::SparseOctree (
         itsMetadata.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 
+    if(cloudMetadata.memoryType == CLOUD_HOST) {
+        itsCloud = std::make_unique<PointCloudHost>(pointCloud, cloudMetadata);
+    }
+    else {
+        itsCloud = std::make_unique<PointCloudDevice>(pointCloud, cloudMetadata);
+    }
+
     // Create data LUT
-    itsDataLUT = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
+    itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
     spdlog::info ("Prepared empty SparseOctree");
-}
-
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::setPointCloudHost (uint8_t* pointCloud)
-{
-    itsCloudData = createGpuU8 (
-            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride, "pointcloud");
-    itsCloudData->toGPU (pointCloud);
-    spdlog::info ("Copied point cloud from host->device");
-}
-
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::setPointCloudDevice (uint8_t* pointCloud)
-{
-    itsCloudData = CudaArray<coordinateType>::fromDevicePtr (
-            pointCloud,
-            itsMetadata.cloudMetadata.pointAmount * itsMetadata.cloudMetadata.pointDataStride,
-            "pointcloud");
-    spdlog::info ("Imported point cloud from device");
-}
-
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::setPointCloudDevice (GpuArrayU8 pointCloud)
-{
-    itsCloudData = std::move (pointCloud);
 }
 
 //###################
 //#     Pipeline    #
 //###################
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::initialPointCounting ()
+void OctreeProcessor::initialPointCounting ()
 {
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
@@ -89,10 +70,12 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting ()
     auto nodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
     nodeAmountSparse->memset (0);
 
-    float time = executeKernel (
-            chunking::kernelInitialPointCounting<coordinateType>,
-            itsMetadata.cloudMetadata.pointAmount,
-            itsCloudData->devicePointer (),
+    float time = Kernel::initialPointCounting (
+            {
+              itsMetadata.cloudMetadata.cloudType,
+              itsMetadata.cloudMetadata.pointAmount
+            },
+            itsCloud->getCloudDevice(),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             nodeAmountSparse->devicePointer (),
@@ -108,8 +91,7 @@ void SparseOctree<coordinateType, colorType>::initialPointCounting ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::performCellMerging ()
+void OctreeProcessor::performCellMerging ()
 {
     // Allocate the temporary sparseIndexCounter
     auto nodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
@@ -147,13 +129,6 @@ void SparseOctree<coordinateType, colorType>::performCellMerging ()
     itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost ()[0];
     itsOctree                    = createGpuOctree (itsMetadata.nodeAmountSparse, "octreeSparse");
 
-    spdlog::info (
-            "Sparse octree ({} voxels) -> Memory saving: {:f} [%] {:f} [GB]",
-            itsMetadata.nodeAmountSparse,
-            (1 - static_cast<float> (itsMetadata.nodeAmountSparse) / itsMetadata.nodeAmountDense) * 100,
-            static_cast<float> (itsMetadata.nodeAmountDense - itsMetadata.nodeAmountSparse) * sizeof (Chunk) /
-                    1000000000.f);
-
     // Allocate the conversion LUT from sparse to dense
     itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     itsSparseToDenseLUT->memset (-1);
@@ -163,8 +138,7 @@ void SparseOctree<coordinateType, colorType>::performCellMerging ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::initLowestOctreeHierarchy ()
+void OctreeProcessor::initLowestOctreeHierarchy ()
 {
     float time = executeKernel (
             chunking::kernelOctreeInitialization,
@@ -180,8 +154,7 @@ void SparseOctree<coordinateType, colorType>::initLowestOctreeHierarchy ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::mergeHierarchical ()
+void OctreeProcessor::mergeHierarchical ()
 {
     // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
     auto globalChunkCounter = createGpuU32 (1, "globalChunkCounter");
@@ -214,19 +187,20 @@ void SparseOctree<coordinateType, colorType>::mergeHierarchical ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::distributePoints ()
+void OctreeProcessor::distributePoints ()
 {
     // Create temporary indexRegister for assigning an index for each point within its chunk area
     auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
-    float time = executeKernel (
-            chunking::kernelDistributePoints<coordinateType>,
-            itsMetadata.cloudMetadata.pointAmount,
+    float time = Kernel::distributePoints (
+            {
+              itsMetadata.cloudMetadata.cloudType,
+              itsMetadata.cloudMetadata.pointAmount
+            },
             itsOctree->devicePointer (),
-            itsCloudData->devicePointer (),
-            itsDataLUT->devicePointer (),
+            itsCloud->getCloudDevice(),
+            itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             itsMetadata.cloudMetadata,
@@ -237,8 +211,7 @@ void SparseOctree<coordinateType, colorType>::distributePoints ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::performSubsampling ()
+void OctreeProcessor::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctree->toHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
@@ -273,8 +246,7 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
                 denseToSpareLUT,
                 voxelCount,
                 randomStates,
-                randomIndices,
-                subsampleData);
+                randomIndices);
     }
     else
     {
@@ -301,38 +273,60 @@ void SparseOctree<coordinateType, colorType>::performSubsampling ()
 }
 
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::prepareSubsampleConfig (
+void OctreeProcessor::prepareSubsampleConfig (
+        SubsampleSet &subsampleSet,
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
-        GpuSubsample& subsampleData,
         uint32_t& accumulatedPoints)
 {
-    // Prepare subsample data and copy it to the GPU
-    SubsampleConfig newSubsampleData[8];
     uint32_t i = 0;
     for (int childIndex : voxel.childrenChunks)
     {
         if (childIndex != -1)
         {
+            SubsampleConfig *config;
+            switch(i) {
+            case 0:
+                config = &subsampleSet.child_0;
+                break;
+            case 1:
+                config = &subsampleSet.child_1;
+                break;
+            case 2:
+                config = &subsampleSet.child_2;
+                break;
+            case 3:
+                config = &subsampleSet.child_3;
+                break;
+            case 4:
+                config = &subsampleSet.child_4;
+                break;
+            case 5:
+                config = &subsampleSet.child_5;
+                break;
+            case 6:
+                config = &subsampleSet.child_6;
+                break;
+            default:
+                config = &subsampleSet.child_7;
+                break;
+            }
             Chunk child = h_octreeSparse[childIndex];
-            newSubsampleData[i].lutAdress =
-                    child.isParent ? itsSubsampleLUTs[childIndex]->devicePointer () : itsDataLUT->devicePointer ();
-            newSubsampleData[i].averagingAdress =
+            config->lutAdress =
+                    child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
+            config->averagingAdress =
                     child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
-            newSubsampleData[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
-            newSubsampleData[i].pointOffsetLower = accumulatedPoints;
-            accumulatedPoints += child.isParent ? itsSubsampleLUTs[childIndex]->pointCount () : child.pointCount;
-            newSubsampleData[i].pointOffsetUpper = accumulatedPoints;
-            ++i;
+            config->lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
+            config->pointOffsetLower = accumulatedPoints;
+            accumulatedPoints += child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            config->pointOffsetUpper = accumulatedPoints;
         }
+        ++i;
     }
-    subsampleData->toGPU (reinterpret_cast<uint8_t*> (newSubsampleData));
 }
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
-        PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level)
+void OctreeProcessor::calculateVoxelBB (
+        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -342,10 +336,10 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    coordinateType min  = itsMetadata.cloudMetadata.bbCubic.min.x;
-    coordinateType max  = itsMetadata.cloudMetadata.bbCubic.max.x;
-    coordinateType side = max - min;
-    auto cubicWidth     = side / static_cast<coordinateType> (itsGridSideLengthPerLevel[level]);
+    double min  = itsMetadata.cloudMetadata.bbCubic.min.x;
+    double max  = itsMetadata.cloudMetadata.bbCubic.max.x;
+    double side = max - min;
+    auto cubicWidth     = side / itsGridSideLengthPerLevel[level];
 
     metadata.bbCubic.min.x = itsMetadata.cloudMetadata.bbCubic.min.x + coords.x * cubicWidth;
     metadata.bbCubic.min.y = itsMetadata.cloudMetadata.bbCubic.min.y + coords.y * cubicWidth;
@@ -356,61 +350,19 @@ void SparseOctree<coordinateType, colorType>::calculateVoxelBB (
     metadata.cloudOffset   = metadata.bbCubic.min;
 }
 
-template <typename coordinateType, typename colorType>
-void SparseOctree<coordinateType, colorType>::exportPlyNodes (const string& folderPath)
+void OctreeProcessor::exportPlyNodes (const string& folderPath)
 {
+    auto start = std::chrono::high_resolution_clock::now ();
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<coordinateType, colorType> potreeExporter (
-            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
+    PotreeExporter<double, uint8_t > potreeExporter (
+            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
     potreeExporter.exportOctree (folderPath);
+
+
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info ("Export tooks {} seconds", elapsed.count ());
+    itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count() * 1000);
 }
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<float, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-template SparseOctree<float, uint8_t>::SparseOctree (
-        uint32_t chunkingGrid,
-        uint32_t subsamplingGrid,
-        uint32_t mergingThreshold,
-        PointCloudMetadata<float> cloudMetadata,
-        SubsamplingStrategy strategy);
-template void SparseOctree<float, uint8_t>::initialPointCounting ();
-template void SparseOctree<float, uint8_t>::performCellMerging ();
-template void SparseOctree<float, uint8_t>::distributePoints ();
-template void SparseOctree<float, uint8_t>::performSubsampling ();
-template void SparseOctree<float, uint8_t>::exportPlyNodes (const string& folderPath);
-template void SparseOctree<float, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
-template void SparseOctree<float, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
-template void SparseOctree<float, uint8_t>::prepareSubsampleConfig (
-        Chunk& voxel,
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        GpuSubsample& subsampleData,
-        uint32_t& accumulatedPoints);
-template void SparseOctree<float, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata<float>& metadata, uint32_t denseVoxelIndex, uint32_t level);
-
-//----------------------------------------------------------------------------------------------------------------------
-//                                           SparseOctree<double, uint8_t>
-//----------------------------------------------------------------------------------------------------------------------
-template SparseOctree<double, uint8_t>::SparseOctree (
-        uint32_t chunkingGrid,
-        uint32_t subsamplingGrid,
-        uint32_t mergingThreshold,
-        PointCloudMetadata<double> cloudMetadata,
-        SubsamplingStrategy strategy);
-template void SparseOctree<double, uint8_t>::initialPointCounting ();
-template void SparseOctree<double, uint8_t>::performCellMerging ();
-template void SparseOctree<double, uint8_t>::distributePoints ();
-template void SparseOctree<double, uint8_t>::performSubsampling ();
-template void SparseOctree<double, uint8_t>::exportPlyNodes (const string& folderPath);
-template void SparseOctree<double, uint8_t>::setPointCloudHost (uint8_t* pointCloud);
-template void SparseOctree<double, uint8_t>::setPointCloudDevice (GpuArrayU8 pointCloud);
-template void SparseOctree<double, uint8_t>::prepareSubsampleConfig (
-        Chunk& voxel,
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        GpuSubsample& subsampleData,
-        uint32_t& accumulatedPoints);
-template void SparseOctree<double, uint8_t>::calculateVoxelBB (
-        PointCloudMetadata<double>& metadata, uint32_t denseVoxelIndex, uint32_t level);

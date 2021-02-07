@@ -4,17 +4,18 @@
 
 #include "catch2/catch.hpp"
 #include "tools.cuh"
-#include <sparseOctree.h>
+#include <octree_processor.h>
 
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
 {
     // Create test data point octree
-    PointCloudMetadata<float> metadata{};
-    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid (128, metadata);
+    PointCloudMetadata metadata{};
+    unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid<float> (128, metadata);
+    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>> (128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor>(128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cloud));
 
     // Perform initial point counting

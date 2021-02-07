@@ -23,23 +23,27 @@ enum CloudType
     CLOUD_DOUBLE_UINT8_T
 };
 
-template <typename coordinateType>
-struct BoundingBox
-{
-    Vector3<coordinateType> min;
-    Vector3<coordinateType> max;
+enum CloudMemory {
+    CLOUD_HOST,
+    ClOUD_DEVICE
 };
 
-template <typename coordinateType>
+struct BoundingBox
+{
+    Vector3<double> min;
+    Vector3<double> max;
+};
+
 struct PointCloudMetadata
 {
     uint32_t pointAmount;
     uint32_t pointDataStride;
-    BoundingBox<coordinateType> bbCubic;
-    BoundingBox<coordinateType> bbReal;
-    Vector3<coordinateType> cloudOffset;
-    Vector3<float> scale;
+    BoundingBox bbCubic;
+    BoundingBox bbReal;
+    Vector3<double> cloudOffset;
+    Vector3<double> scale;
     CloudType cloudType;
+    CloudMemory memoryType;
 };
 
 enum SubsamplingStrategy

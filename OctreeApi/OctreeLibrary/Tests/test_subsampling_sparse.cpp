@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "sparseOctree.h"
+#include "octree_processor.h"
 #include "tools.cuh"
 
 void testSubsampleTree (
@@ -43,12 +43,13 @@ void testSubsampleTree (
 TEST_CASE ("Test node subsampling", "[subsampling]")
 {
     // Create test data point cloud
-    PointCloudMetadata<float> metadata{};
-    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid (128, metadata);
+    PointCloudMetadata metadata{};
+    unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid<float> (128, metadata);
+    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
     auto cpuData                          = cuboid->toHost ();
 
     // Create the octree
-    auto octree = make_unique<SparseOctree<float, uint8_t>> (128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (128, 128, 10000, metadata, RANDOM_POINT);
     octree->setPointCloudDevice (move (cuboid));
 
     octree->initialPointCounting ();

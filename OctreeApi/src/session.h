@@ -5,7 +5,9 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
+#include "octree_processor.h"
 #include <api_types.h>
+#include <memory>
 #include <string>
 
 
@@ -26,38 +28,34 @@ public:
     void setCloudType (uint8_t cloudType);
     void setCloudPointAmount (uint32_t pointAmount);
     void setCloudDataStride (uint32_t dataStride);
-    void setCloudScaleF (float x, float y, float z);
-    void setCloudOffsetF (float x, float y, float z);
-    void setCloudBoundingBoxF (float minX, float minY, float minZ, float maxX, float maxY, float maxZ);
-    void setCloudOffsetD (double x, double y, double z);
-    void setCloudBoundingBoxD (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
+    void setCloudScale (double x, double y, double z);
+    void setCloudOffset (double x, double y, double z);
+    void setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
-    void configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy);
-    void configureOctreeExport (const std::string& directory);
-    void configureMemoryReport (const std::string& filename);
-    void configureJsonReport (const std::string& filename);
-    void configurePointDistributionReport (const std::string& filename, uint32_t);
+    void configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging);
 
-private:
-    template <typename coordinateType, typename colorType>
-    void generateOctreeTemplated (PointCloudMetadata<coordinateType> metadata);
+    void exportPotree (const std::string& directory);
+    void exportJsonReport (const std::string& filename);
+    void exportMemoryReport (const std::string& filename);
+    void exportDistributionHistogram (const std::string& filename, uint32_t);
+
 
 private:
     int itsDevice;
     uint8_t* itsPointCloud;
+    std::unique_ptr<OctreeProcessor> itsProcessor;
 
     // Cloud metadata
-    CloudType itsCloudType              = CloudType::CLOUD_FLOAT_UINT8_T;
-    uint32_t itsPointAmount             = 0;
-    uint32_t itsDataStride              = 0;
-    Vector3<float> itsScaleF            = {};
-    Vector3<double> itsScaleD           = {};
-    Vector3<float> itsOffsetF           = {};
-    Vector3<double> itsOffsetD          = {};
-    BoundingBox<float> itsBoundingBoxF  = {};
-    BoundingBox<double> itsBoundingBoxD = {};
+    bool itsIsAveraging           = false;
+    CloudType itsCloudType     = CloudType::CLOUD_FLOAT_UINT8_T;
+    CloudMemory itsCloudMemory = CloudMemory::CLOUD_HOST;
+    uint32_t itsPointAmount    = 0;
+    uint32_t itsDataStride     = 0;
+    Vector3<double> itsScale   = {};
+    Vector3<double> itsOffset  = {};
+    BoundingBox itsBoundingBox = {};
 
     // Chunking
     uint32_t itsChunkingGrid     = 128;
@@ -66,11 +64,6 @@ private:
     // Subsampling
     uint32_t itsSubsamplingGrid                = 128;
     SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
-
-    std::string itsPointDistReportFile    = "";
-    std::string itsJsonReportFile         = "";
-    std::string itsOctreeExportDirectory  = "";
-    uint32_t itsPointDistributionBinWidth = 0;
 };
 
 #endif // OCTREE_API_SESSION_H

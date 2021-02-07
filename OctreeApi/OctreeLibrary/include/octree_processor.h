@@ -6,28 +6,24 @@
 
 #include "octree_metadata.h"
 #include "types.cuh"
+#include "point_cloud.cuh"
 
-
-template <typename coordinateType, typename colorType>
-class SparseOctree
+class OctreeProcessor
 {
 public:
-    SparseOctree (
+    OctreeProcessor (
+            uint8_t *pointCloud,
             uint32_t chunkingGrid,
             uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
-            PointCloudMetadata<coordinateType> cloudMetadata,
+            PointCloudMetadata cloudMetadata,
             SubsamplingStrategy strategy);
 
-    SparseOctree (const SparseOctree&) = delete;
+    OctreeProcessor (const OctreeProcessor&) = delete;
 
-    void operator= (const SparseOctree&) = delete;
+    void operator= (const OctreeProcessor&) = delete;
 
 public:
-    // Set point cloud
-    void setPointCloudHost (uint8_t* pointCloud);
-    void setPointCloudDevice (uint8_t* pointCloud);
-    void setPointCloudDevice (GpuArrayU8 pointCloud);
 
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
@@ -44,13 +40,13 @@ public:
     void performSubsampling ();
 
     // Calculation tools
-    void calculateVoxelBB (PointCloudMetadata<coordinateType>& metadata, uint32_t denseVoxelIndex, uint32_t level);
+    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     // Data export
     void exportPlyNodes (const string& folderPath);
 
     // Debugging methods
-    const OctreeMetadata<coordinateType>& getMetadata () const;
+    const OctreeMetadata& getMetadata () const;
 
     void updateOctreeStatistics ();
 
@@ -94,13 +90,12 @@ private:
             GpuArrayI32& subsampleDenseToSparseLUT,
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,
-            GpuArrayU32& randomIndices,
-            GpuSubsample& subsampleConfig);
+            GpuArrayU32& randomIndices);
 
-    void SparseOctree::prepareSubsampleConfig (
+    void OctreeProcessor::prepareSubsampleConfig (
+            SubsampleSet &subsampleSet,
             Chunk& voxel,
             const unique_ptr<Chunk[]>& h_octreeSparse,
-            GpuSubsample& subsampleData,
             uint32_t& accumulatedPoints);
 
     float initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
@@ -138,17 +133,17 @@ private:
 
 private:
     // Point cloud
-    GpuArrayU8 itsCloudData;
+    PointCloud itsCloud;
 
     // Required data structures for calculation
-    GpuArrayU32 itsDataLUT;
+    GpuArrayU32 itsLeafLut;
     GpuArrayU32 itsDensePointCountPerVoxel;
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
     GpuOctree itsOctree;
 
     // Octree Metadata
-    OctreeMetadata<coordinateType> itsMetadata;
+    OctreeMetadata itsMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)
@@ -156,7 +151,7 @@ private:
     vector<uint32_t> itsLinearizedDenseVoxelOffset; // Holds the linear voxel offset for each level (dense)
 
     // Subsampling
-    unordered_map<uint32_t, GpuArrayU32> itsSubsampleLUTs;
+    unordered_map<uint32_t, GpuArrayU32> itsParentLut;
     unordered_map<uint32_t, GpuAveraging> itsAveragingData;
 
     // Benchmarking

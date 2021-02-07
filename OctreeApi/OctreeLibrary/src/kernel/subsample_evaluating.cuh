@@ -1,5 +1,6 @@
 #pragma once
 
+#include "kernel_executor.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
@@ -10,11 +11,11 @@ namespace subsampling {
 template <typename coordinateType>
 __global__ void kernelEvaluateSubsamples (
         uint8_t* cloud,
-        SubsampleConfig* subsampleData,
+        SubsampleSet subsampleSet,
         uint32_t* densePointCount,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata<coordinateType> metadata,
+        PointCloudMetadata metadata,
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {
@@ -28,13 +29,15 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t* childDataLUT     = nullptr;
     uint32_t childDataLUTStart = 0;
 
+    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
+
     for (int i = 0; i < 8; ++i)
     {
-        if (index < subsampleData[i].pointOffsetUpper)
+        if (index < config[i].pointOffsetUpper)
         {
-            childDataLUT      = subsampleData[i].lutAdress;
-            childDataLUTStart = subsampleData[i].lutStartIndex;
-            index -= subsampleData[i].pointOffsetLower;
+            childDataLUT      = config[i].lutAdress;
+            childDataLUTStart = config[i].lutStartIndex;
+            index -= config[i].pointOffsetLower;
             break;
         }
     }
@@ -56,3 +59,23 @@ __global__ void kernelEvaluateSubsamples (
     }
 }
 } // namespace subsampling
+
+
+namespace Kernel {
+
+template <typename... Arguments>
+float evaluateSubsamples (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                subsampling::kernelEvaluateSubsamples<float>, config.threadAmount, std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                subsampling::kernelEvaluateSubsamples<double>, config.threadAmount, std::forward<Arguments> (args)...);
+    }
+}
+
+} // namespace Kernel

@@ -3,6 +3,7 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
+#include "kernel_executor.cuh"
 
 
 namespace chunking {
@@ -14,7 +15,7 @@ __global__ void kernelDistributePoints (
         uint32_t* dataLUT,
         int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
-        PointCloudMetadata<coordinateType> metadata,
+        PointCloudMetadata metadata,
         uint32_t gridSize)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
@@ -42,3 +43,25 @@ __global__ void kernelDistributePoints (
 }
 
 } // namespace chunking
+
+namespace Kernel {
+
+template <typename... Arguments>
+float distributePoints (KernelConfig config, Arguments&&... args)
+{
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        return executeKernel (
+                chunking::kernelDistributePoints<float>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        return executeKernel (
+                chunking::kernelDistributePoints<double>,
+                config.threadAmount,
+                std::forward<Arguments> (args)...);
+    }
+}
+}
