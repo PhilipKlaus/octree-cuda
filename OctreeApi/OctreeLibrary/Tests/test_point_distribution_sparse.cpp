@@ -68,11 +68,12 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]")
     PointCloudMetadata metadata{};
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid<float>  (128, metadata);
     metadata.cloudType = CLOUD_FLOAT_UINT8_T;
+    metadata.memoryType = ClOUD_DEVICE;
+
     auto cpuData                         = cloud->toHost ();
 
     // Create the octree
-    auto octree = make_unique<OctreeProcessor> (128, 128, 10000, metadata, RANDOM_POINT);
-    octree->setPointCloudDevice (move (cloud));
+    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer(), 128, 128, 10000, metadata, RANDOM_POINT);
 
     octree->initialPointCounting ();
     octree->performCellMerging (); // All points reside in the 4th level (8x8x8) of the octree
