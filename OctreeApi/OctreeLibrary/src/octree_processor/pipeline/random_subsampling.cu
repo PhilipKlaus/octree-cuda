@@ -128,7 +128,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 metadata,
                 itsMetadata.subsamplingGrid,
                 randomIndices->devicePointer (),
-                accumulatedPoints);
+                accumulatedPoints,
+                itsMetadata.useReplacementScheme);
     }
 
     return timings;

@@ -75,7 +75,8 @@ __global__ void kernelRandomPointSubsample (
         PointCloudMetadata metadata,
         uint32_t gridSideLength,
         uint32_t* randomIndices,
-        uint32_t accumulatedPoints)
+        uint32_t accumulatedPoints,
+        bool replacementScheme)
 {
     int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (thread >= accumulatedPoints)
@@ -121,7 +122,7 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled point to parent
     parentDataLUT[sparseIndex] = lutItem;
-    // childDataLUT[childDataLUTStart + index] = INVALID_INDEX; // Additive strategy
+    childDataLUT[childDataLUTStart + thread] = replacementScheme ? childDataLUT[childDataLUTStart + thread] : INVALID_INDEX;
 
     // Reset all subsampling data data
     denseToSparseLUT[denseVoxelIndex] = -1;

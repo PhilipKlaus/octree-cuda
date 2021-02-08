@@ -17,7 +17,9 @@ public:
             uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            SubsamplingStrategy strategy);
+            SubsamplingStrategy strategy,
+            bool performAveraging,
+            bool replacementScheme);
 
     OctreeProcessor (const OctreeProcessor&) = delete;
 

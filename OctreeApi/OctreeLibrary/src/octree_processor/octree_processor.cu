@@ -19,7 +19,9 @@ OctreeProcessor::OctreeProcessor (
         uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        SubsamplingStrategy strategy)
+        SubsamplingStrategy strategy,
+        bool performAveraging,
+        bool replacementScheme)
 {
     // Initialize octree metadata
     itsMetadata                  = {};
@@ -28,7 +30,8 @@ OctreeProcessor::OctreeProcessor (
     itsMetadata.subsamplingGrid  = subsamplingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
-
+    itsMetadata.performAveraging = performAveraging;
+    itsMetadata.useReplacementScheme = replacementScheme;
     itsMetadata.strategy = strategy;
 
     // Pre calculate often-used octree metrics
@@ -350,13 +353,14 @@ void OctreeProcessor::calculateVoxelBB (
     metadata.cloudOffset   = metadata.bbCubic.min;
 }
 
+// ToDo: call appropriate export function!!!
 void OctreeProcessor::exportPlyNodes (const string& folderPath)
 {
     auto start = std::chrono::high_resolution_clock::now ();
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<double, uint8_t > potreeExporter (
+    PotreeExporter<float, uint8_t > potreeExporter (
             itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
     potreeExporter.exportOctree (folderPath);
 

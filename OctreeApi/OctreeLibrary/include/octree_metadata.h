@@ -26,4 +26,5 @@ struct OctreeMetadata
     PointCloudMetadata cloudMetadata; // The cloud metadata;
     SubsamplingStrategy strategy;                     // The subsampling strategy
     bool performAveraging;
+    bool useReplacementScheme;
 };

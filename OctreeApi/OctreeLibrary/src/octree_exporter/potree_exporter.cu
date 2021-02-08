@@ -76,7 +76,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
 
     if (isFinished)
     {
-        bool isAveraging                       = true;
+        bool isAveraging                       = this->itsMetadata.performAveraging;
         bool isParent                          = this->isParentNode (nodeIndex);
         auto pointsInNode                      = this->getPointsInNode (nodeIndex);
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
@@ -275,6 +275,10 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     metadata["description"]                 = "AIT Austrian Institute of Technology";
     metadata["points"]                      = this->itsPointsExported;
     metadata["projection"]                  = "";
+    metadata["flags"][0] = this->itsMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
+    if(this->itsMetadata.performAveraging) {
+        metadata["flags"][1] = "AVERAGING";
+    }
     metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;

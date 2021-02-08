@@ -61,7 +61,7 @@ void Session::generateOctree ()
     metadata.bbCubic         = itsBoundingBox;
 
     itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy);
+            itsPointCloud, itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy, itsIsAveraging, itsUseReplacementScheme);
 
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
@@ -102,9 +102,10 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging)
+void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
 {
     itsIsAveraging = averaging;
+    itsUseReplacementScheme = replacementScheme;
     itsSubsamplingGrid     = subsamplingGrid;
     itsSubsamplingStrategy = static_cast<SubsamplingStrategy> (strategy);
 }
