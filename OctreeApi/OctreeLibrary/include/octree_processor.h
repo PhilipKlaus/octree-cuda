@@ -5,25 +5,24 @@
 #pragma once
 
 #include "octree_metadata.h"
-#include "types.cuh"
 #include "point_cloud.cuh"
+#include "types.cuh"
 
 class OctreeProcessor
 {
 public:
     OctreeProcessor (
-            uint8_t *pointCloud,
+            uint8_t* pointCloud,
             uint32_t chunkingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            SubsamplingMetadata subsamplingMetadata);
+            SubsampleMetadata subsamplingMetadata);
 
     OctreeProcessor (const OctreeProcessor&) = delete;
 
     void operator= (const OctreeProcessor&) = delete;
 
 public:
-
     // Benchmarking
     void exportOctreeStatistics (const string& filePath);
 
@@ -92,7 +91,7 @@ private:
             GpuArrayU32& randomIndices);
 
     void OctreeProcessor::prepareSubsampleConfig (
-            SubsampleSet &subsampleSet,
+            SubsampleSet& subsampleSet,
             Chunk& voxel,
             const unique_ptr<Chunk[]>& h_octreeSparse,
             uint32_t& accumulatedPoints);
@@ -143,7 +142,7 @@ private:
 
     // Metadata
     OctreeMetadata itsMetadata;
-    SubsamplingMetadata itsSubsamplingMetadata;
+    SubsampleMetadata itsSubsampleMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)

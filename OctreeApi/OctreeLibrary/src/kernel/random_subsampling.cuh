@@ -1,9 +1,9 @@
 #pragma once
 
+#include "kernel_executor.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_executor.cuh"
 
 namespace subsampling {
 
@@ -28,7 +28,7 @@ __global__ void kernelPerformAveraging (
     Averaging* childAveraging  = nullptr;
     uint32_t childDataLUTStart = 0;
 
-    SubsampleConfig* config = reinterpret_cast<SubsampleConfig*>(&subsampleSet);
+    SubsampleConfig* config = reinterpret_cast<SubsampleConfig*> (&subsampleSet);
 
     for (uint8_t i = 0; i < 8; ++i)
     {
@@ -42,7 +42,7 @@ __global__ void kernelPerformAveraging (
         }
     }
 
-    uint8_t *targetCloudByte = cloud + childDataLUT[childDataLUTStart + thread] * metadata.pointDataStride;
+    uint8_t* targetCloudByte = cloud + childDataLUT[childDataLUTStart + thread] * metadata.pointDataStride;
 
     // Get the coordinates & colors from the point within the point cloud
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
@@ -55,7 +55,7 @@ __global__ void kernelPerformAveraging (
 
     bool hasAveragingData = (childAveraging != nullptr);
 
-    Averaging *averagingData = childAveraging + thread;
+    Averaging* averagingData = childAveraging + thread;
     atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
     atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? averagingData->r : color->x);
     atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? averagingData->g : color->y);
@@ -104,8 +104,8 @@ __global__ void kernelRandomPointSubsample (
     uint32_t lutItem = childDataLUT[childDataLUTStart + thread];
 
     // Get the point within the point cloud
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud + lutItem * metadata.pointDataStride);
+    Vector3<coordinateType>* point =
+            reinterpret_cast<Vector3<coordinateType>*> (cloud + lutItem * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid of the evaluateSubsamples
     auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
@@ -122,7 +122,8 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled point to parent
     parentDataLUT[sparseIndex] = lutItem;
-    childDataLUT[childDataLUTStart + thread] = replacementScheme ? childDataLUT[childDataLUTStart + thread] : INVALID_INDEX;
+    childDataLUT[childDataLUTStart + thread] =
+            replacementScheme ? childDataLUT[childDataLUTStart + thread] : INVALID_INDEX;
 
     // Reset all subsampling data data
     denseToSparseLUT[denseVoxelIndex] = -1;
@@ -203,9 +204,7 @@ float randomPointSubsampling (KernelConfig config, Arguments&&... args)
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         return executeKernel (
-                subsampling::kernelRandomPointSubsample<float>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+                subsampling::kernelRandomPointSubsample<float>, config.threadAmount, std::forward<Arguments> (args)...);
     }
     else
     {
@@ -215,4 +214,4 @@ float randomPointSubsampling (KernelConfig config, Arguments&&... args)
                 std::forward<Arguments> (args)...);
     }
 }
-}
+} // namespace Kernel

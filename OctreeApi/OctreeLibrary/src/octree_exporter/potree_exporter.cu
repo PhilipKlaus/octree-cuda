@@ -39,8 +39,9 @@ PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
-        SubsamplingMetadata subsamplingMetadata) :
-        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, subsamplingMetadata)
+        SubsampleMetadata subsamplingMetadata) :
+        OctreeExporter<coordinateType, colorType> (
+                pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -48,6 +49,7 @@ void PotreeExporter<coordinateType, colorType>::exportOctree (const std::string&
 {
     this->itsPointsExported = 0;
     itsExportFolder         = path;
+    itsExportedNodes = 0;
     createBinaryHierarchyFiles ();
     createMetadataFile ();
 }
@@ -77,7 +79,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
 
     if (isFinished)
     {
-        bool isAveraging                       = this->itsSubsamplingMetadata.performAveraging;
+        bool isAveraging                       = this->itsSubsampleMetadata.performAveraging;
         bool isParent                          = this->isParentNode (nodeIndex);
         auto pointsInNode                      = this->getPointsInNode (nodeIndex);
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
@@ -170,7 +172,6 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
 template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::exportBuffers (std::ofstream& pointFile, std::ofstream& hierarchyFile)
 {
-    uint32_t exportedNodes = 0;
     uint64_t byteOffset    = 0;
 
     // Write out result data
@@ -185,10 +186,10 @@ void PotreeExporter<coordinateType, colorType>::exportBuffers (std::ofstream& po
 
         // Increase local statistics
         byteOffset += result.nodeByteSize;
-        ++exportedNodes;
+        ++itsExportedNodes;
         this->itsPointsExported += result.validPoints;
     }
-    spdlog::info ("Exported {} nodes / {} points", exportedNodes, this->itsPointsExported);
+    spdlog::info ("Exported {} nodes / {} points", itsExportedNodes, this->itsPointsExported);
 }
 
 
@@ -254,31 +255,31 @@ template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 {
     // Prepare metadata for export
-    uint32_t exportedNodes = this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount;
     auto bbCubic           = this->itsMetadata.cloudMetadata.bbCubic;
     auto scale             = this->itsMetadata.cloudMetadata.scale;
-    auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsamplingMetadata.subsamplingGrid;
+    auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsampleMetadata.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;
-    metadata["version"]                     = POTREE_DATA_VERSION;
-    metadata["name"]                        = "GpuPotreeConverter";
-    metadata["description"]                 = "AIT Austrian Institute of Technology";
-    metadata["points"]                      = this->itsPointsExported;
-    metadata["projection"]                  = "";
-    metadata["flags"][0] = this->itsSubsamplingMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
-    if(this->itsSubsamplingMetadata.performAveraging) {
+    metadata["version"]     = POTREE_DATA_VERSION;
+    metadata["name"]        = "GpuPotreeConverter";
+    metadata["description"] = "AIT Austrian Institute of Technology";
+    metadata["points"]      = this->itsPointsExported;
+    metadata["projection"]  = "";
+    metadata["flags"][0]    = this->itsSubsampleMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
+    if (this->itsSubsampleMetadata.performAveraging)
+    {
         metadata["flags"][1] = "AVERAGING";
     }
-    metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
+    metadata["hierarchy"]["firstChunkSize"] = itsExportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;
-    metadata["offset"]             = {0, 0, 0}; // We are not shifting the cloud
-    metadata["scale"]              = {scale.x, scale.y, scale.z};
-    metadata["spacing"]            = spacing;
-    metadata["boundingBox"]["min"] = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
-    metadata["boundingBox"]["max"] = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
-    metadata["encoding"]           = POTREE_DATA_ENCODING;
+    metadata["offset"]                      = {0, 0, 0}; // We are not shifting the cloud
+    metadata["scale"]                       = {scale.x, scale.y, scale.z};
+    metadata["spacing"]                     = spacing;
+    metadata["boundingBox"]["min"]          = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
+    metadata["boundingBox"]["max"]          = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
+    metadata["encoding"]                    = POTREE_DATA_ENCODING;
 
     // POSITION attribute
     metadata["attributes"][0]["name"]        = POSITION_NAME;
@@ -316,7 +317,7 @@ template PotreeExporter<float, uint8_t>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
-        SubsamplingMetadata subsamplingMetadata);
+        SubsampleMetadata subsamplingMetadata);
 
 template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -330,6 +331,6 @@ template PotreeExporter<double, uint8_t>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
-        SubsamplingMetadata subsamplingMetadata);
+        SubsampleMetadata subsamplingMetadata);
 
 template void PotreeExporter<double, uint8_t>::exportOctree (const std::string& path);

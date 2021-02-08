@@ -1,9 +1,9 @@
 #pragma once
 
+#include "kernel_executor.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_executor.cuh"
 
 namespace subsampling {
 
@@ -72,16 +72,12 @@ float firstPointSubsampling (KernelConfig config, Arguments&&... args)
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         return executeKernel (
-                subsampling::kernelFirstPointSubsample<float>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+                subsampling::kernelFirstPointSubsample<float>, config.threadAmount, std::forward<Arguments> (args)...);
     }
     else
     {
         return executeKernel (
-                subsampling::kernelFirstPointSubsample<double>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+                subsampling::kernelFirstPointSubsample<double>, config.threadAmount, std::forward<Arguments> (args)...);
     }
 }
-}
+} // namespace Kernel

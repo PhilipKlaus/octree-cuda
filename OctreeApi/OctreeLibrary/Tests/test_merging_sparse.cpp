@@ -12,11 +12,11 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]")
     // Create test data point octree
     PointCloudMetadata metadata{};
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid<float> (128, metadata);
-    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
-    metadata.memoryType = ClOUD_DEVICE;
+    metadata.cloudType                   = CLOUD_FLOAT_UINT8_T;
+    metadata.memoryType                  = ClOUD_DEVICE;
 
     // Create the octree
-    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer(), 128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 128, 10000, metadata, RANDOM_POINT);
 
     octree->initialPointCounting ();
     octree->performCellMerging ();

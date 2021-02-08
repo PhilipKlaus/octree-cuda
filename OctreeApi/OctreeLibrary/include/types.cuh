@@ -6,7 +6,6 @@
 #include "../src/include/cudaArray.h"
 
 
-
 struct Averaging
 {
     uint32_t r, g, b;
@@ -22,7 +21,8 @@ struct SubsampleConfig
     uint32_t pointOffsetUpper;
 };
 
-struct __align__(16) SubsampleSet {
+struct __align__ (16) SubsampleSet
+{
     SubsampleConfig child_0;
     SubsampleConfig child_1;
     SubsampleConfig child_2;

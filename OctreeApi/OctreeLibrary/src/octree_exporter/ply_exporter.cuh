@@ -12,7 +12,7 @@ public:
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
             OctreeMetadata metadata,
-            SubsamplingMetadata subsamplingMetadata);
+            SubsampleMetadata subsamplingMetadata);
 
     void exportOctree (const std::string& path) override;
 

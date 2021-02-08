@@ -31,7 +31,6 @@ void OctreeProcessor::calculatePointVarianceInLeafNoes (
 }
 
 
-
 void OctreeProcessor::evaluateOctreeProperties (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
@@ -98,7 +97,6 @@ void OctreeProcessor::updateOctreeStatistics ()
 }
 
 
-
 void OctreeProcessor::histogramBinning (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
@@ -128,7 +126,6 @@ void OctreeProcessor::histogramBinning (
         }
     }
 }
-
 
 
 void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth)

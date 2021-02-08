@@ -1,8 +1,8 @@
 #pragma once
 
 #include "octree_metadata.h"
-#include "types.cuh"
 #include "point_cloud.cuh"
+#include "types.cuh"
 
 
 template <typename coordinateType, typename colorType>
@@ -16,11 +16,10 @@ public:
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
             OctreeMetadata metadata,
-            SubsamplingMetadata subsamplingMetadata) :
+            SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
-            itsSubsamplingMetadata(subsamplingMetadata),
-            itsCloud (pointCloud->getCloudHost()), itsOctree (octree->toHost ()), itsLeafLut (leafLut->toHost ()),
-            itsAbsorbedNodes (0), itsPointsExported (0)
+            itsSubsampleMetadata (subsampleMetadata), itsCloud (pointCloud->getCloudHost ()),
+            itsOctree (octree->toHost ()), itsLeafLut (leafLut->toHost ()), itsAbsorbedNodes (0), itsPointsExported (0)
     {
         std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
             itsParentLut.insert (make_pair (lutItem.first, lutItem.second->toHost ()));
@@ -66,8 +65,8 @@ protected:
     uint32_t itsPointsExported;
     uint32_t itsAbsorbedNodes;
     OctreeMetadata itsMetadata;
-    SubsamplingMetadata itsSubsamplingMetadata;
-    uint8_t *itsCloud;
+    SubsampleMetadata itsSubsampleMetadata;
+    uint8_t* itsCloud;
     unique_ptr<Chunk[]> itsOctree;
     unique_ptr<uint32_t[]> itsLeafLut;
     unordered_map<uint32_t, unique_ptr<uint32_t[]>> itsParentLut;

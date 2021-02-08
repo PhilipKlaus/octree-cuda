@@ -4,16 +4,16 @@
 
 #pragma once
 
+#include "eventWatcher.h"
 #include "octree_metadata.h"
 #include <iomanip>
 #include <json.hpp>
-#include "eventWatcher.h"
 
 
 void export_json_data (
         const std::string filePath,
         OctreeMetadata metadata,
-        SubsamplingMetadata subsampleMetadata,
+        SubsampleMetadata subsampleMetadata,
         const std::vector<std::tuple<std::string, float>>& timings)
 {
     nlohmann::ordered_json statistics;

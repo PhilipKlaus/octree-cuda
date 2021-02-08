@@ -4,7 +4,6 @@
 #include "subsample_evaluating.cuh"
 
 
-
 SubsamplingTimings OctreeProcessor::firstPointSubsampling (
         const unique_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
@@ -47,27 +46,24 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
     {
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
-        SubsampleSet subsampleSet {};
+        SubsampleSet subsampleSet{};
         prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
-        auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
+        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        timings.subsampleEvaluation += Kernel::evaluateSubsamples(
-                {
-                        metadata.cloudType,
-                        accumulatedPoints
-                },
+        timings.subsampleEvaluation += Kernel::evaluateSubsamples (
+                {metadata.cloudType, accumulatedPoints},
                 itsCloud->getCloudDevice (),
                 subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsSubsamplingMetadata.subsamplingGrid,
+                itsSubsampleMetadata.subsamplingGrid,
                 accumulatedPoints);
 
 
@@ -79,18 +75,15 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::firstPointSubsampling (
-                {
-                  metadata.cloudType,
-                  accumulatedPoints
-                },
-                itsCloud->getCloudDevice(),
+                {metadata.cloudType, accumulatedPoints},
+                itsCloud->getCloudDevice (),
                 subsampleConfig->devicePointer (),
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsSubsamplingMetadata.subsamplingGrid,
+                itsSubsampleMetadata.subsamplingGrid,
                 accumulatedPoints);
     }
     return timings;

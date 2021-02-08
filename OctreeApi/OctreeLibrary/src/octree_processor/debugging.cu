@@ -35,19 +35,16 @@ unique_ptr<int[]> OctreeProcessor::getSparseToDenseLUT () const
 }
 
 
-
 unique_ptr<Chunk[]> OctreeProcessor::getOctreeSparse () const
 {
     return itsOctree->toHost ();
 }
 
 
-
 unordered_map<uint32_t, GpuArrayU32> const& OctreeProcessor::getSubsampleLUT () const
 {
     return itsParentLut;
 }
-
 
 
 uint32_t OctreeProcessor::getRootIndex ()

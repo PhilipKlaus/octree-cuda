@@ -133,7 +133,7 @@ GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata&
 {
     coordinateType boundingBoxMax = static_cast<coordinateType> (sideLength) - 0.5;
     metadata.pointAmount          = static_cast<uint32_t> (pow (sideLength, 3.0));
-    metadata.bbCubic.min          = Vector3<double >{0.5, 0.5, 0.5};
+    metadata.bbCubic.min          = Vector3<double>{0.5, 0.5, 0.5};
     metadata.bbCubic.max          = Vector3<double>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
     metadata.cloudOffset          = Vector3<double>{0.5, 0.5, 0.5};
     metadata.scale                = {1.0, 1.0, 1.0};
@@ -179,6 +179,3 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
 template GpuArrayU8 generate_point_cloud_cuboid<float> (uint32_t sideLength, PointCloudMetadata& metadata);
 
 } // namespace tools
-
-
-

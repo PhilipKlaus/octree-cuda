@@ -9,7 +9,7 @@
 TEST_CASE ("Test cuboid sample generation", "[cuboid]")
 {
     PointCloudMetadata metadata{};
-    auto data = tools::generate_point_cloud_cuboid<float>(2, metadata);
+    auto data = tools::generate_point_cloud_cuboid<float> (2, metadata);
     auto host = data->toHost ();
 
     auto* vecData = reinterpret_cast<Vector3<float>*> (host.get ());

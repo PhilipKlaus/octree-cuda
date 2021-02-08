@@ -11,10 +11,9 @@
 class IPointCloud
 {
 public:
-    IPointCloud (uint8_t* source, PointCloudMetadata metadata) :
-            itsSourceCloud (source), itsMetadata (metadata)
+    IPointCloud (uint8_t* source, PointCloudMetadata metadata) : itsSourceCloud (source), itsMetadata (metadata)
     {}
-    virtual ~IPointCloud() = default;
+    virtual ~IPointCloud ()            = default;
     virtual uint8_t* getCloudHost ()   = 0;
     virtual uint8_t* getCloudDevice () = 0;
 

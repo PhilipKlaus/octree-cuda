@@ -60,7 +60,7 @@ private:
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;
 
-    SubsamplingMetadata itsSubsamplingMetadata = {};
+    SubsampleMetadata itsSubsamplingMetadata = {};
 };
 
 #endif // OCTREE_API_SESSION_H

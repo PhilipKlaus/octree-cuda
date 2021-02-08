@@ -23,7 +23,8 @@ enum CloudType
     CLOUD_DOUBLE_UINT8_T
 };
 
-enum CloudMemory {
+enum CloudMemory
+{
     CLOUD_HOST,
     ClOUD_DEVICE
 };
@@ -45,7 +46,7 @@ struct PointCloudMetadata
     CloudMemory memoryType;
 };
 
-enum SubsamplingStrategy
+enum SubsampleStrategy
 {
     FIRST_POINT,
     RANDOM_POINT

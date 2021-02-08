@@ -25,7 +25,7 @@ public:
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
             OctreeMetadata metadata,
-            SubsamplingMetadata subsamplingMetadata);
+            SubsampleMetadata subsamplingMetadata);
 
     void exportOctree (const std::string& path) override;
 
@@ -41,11 +41,12 @@ private:
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
     inline uint8_t getChildMask (uint32_t nodeIndex);
     void createMetadataFile ();
-    void exportBuffers(std::ofstream& pointFile, std::ofstream& hierarchyFile);
+    void exportBuffers (std::ofstream& pointFile, std::ofstream& hierarchyFile);
 
 private:
     std::string itsExportFolder;
     std::vector<std::future<ExportResult>> itsFutureResults;
+    uint32_t itsExportedNodes;
 
 #pragma pack(push, 1)
     struct HierarchyFileEntry

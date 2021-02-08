@@ -1,9 +1,9 @@
 #pragma once
 
+#include "kernel_executor.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_executor.cuh"
 
 
 namespace chunking {
@@ -51,16 +51,12 @@ float initialPointCounting (KernelConfig config, Arguments&&... args)
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         return executeKernel (
-                chunking::kernelInitialPointCounting<float>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+                chunking::kernelInitialPointCounting<float>, config.threadAmount, std::forward<Arguments> (args)...);
     }
     else
     {
         return executeKernel (
-                chunking::kernelInitialPointCounting<double>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+                chunking::kernelInitialPointCounting<double>, config.threadAmount, std::forward<Arguments> (args)...);
     }
 }
-}
+} // namespace Kernel

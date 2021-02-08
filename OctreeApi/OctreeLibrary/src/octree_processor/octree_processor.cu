@@ -14,11 +14,11 @@
 
 
 OctreeProcessor::OctreeProcessor (
-        uint8_t *pointCloud,
+        uint8_t* pointCloud,
         uint32_t chunkingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        SubsamplingMetadata subsamplingMetadata)
+        SubsampleMetadata subsamplingMetadata)
 {
     // Initialize metadata
     itsMetadata                  = {};
@@ -26,7 +26,7 @@ OctreeProcessor::OctreeProcessor (
     itsMetadata.chunkingGrid     = chunkingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
-    itsSubsamplingMetadata = subsamplingMetadata;
+    itsSubsampleMetadata         = subsamplingMetadata;
 
     // Pre calculate often-used octree metrics
     for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
@@ -37,11 +37,13 @@ OctreeProcessor::OctreeProcessor (
         itsMetadata.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 
-    if(cloudMetadata.memoryType == CLOUD_HOST) {
-        itsCloud = std::make_unique<PointCloudHost>(pointCloud, cloudMetadata);
+    if (cloudMetadata.memoryType == CLOUD_HOST)
+    {
+        itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudMetadata);
     }
-    else {
-        itsCloud = std::make_unique<PointCloudDevice>(pointCloud, cloudMetadata);
+    else
+    {
+        itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudMetadata);
     }
 
     // Create data LUT
@@ -68,11 +70,8 @@ void OctreeProcessor::initialPointCounting ()
     nodeAmountSparse->memset (0);
 
     float time = Kernel::initialPointCounting (
-            {
-              itsMetadata.cloudMetadata.cloudType,
-              itsMetadata.cloudMetadata.pointAmount
-            },
-            itsCloud->getCloudDevice(),
+            {itsMetadata.cloudMetadata.cloudType, itsMetadata.cloudMetadata.pointAmount},
+            itsCloud->getCloudDevice (),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             nodeAmountSparse->devicePointer (),
@@ -191,12 +190,9 @@ void OctreeProcessor::distributePoints ()
     tmpIndexRegister->memset (0);
 
     float time = Kernel::distributePoints (
-            {
-              itsMetadata.cloudMetadata.cloudType,
-              itsMetadata.cloudMetadata.pointAmount
-            },
+            {itsMetadata.cloudMetadata.cloudType, itsMetadata.cloudMetadata.pointAmount},
             itsOctree->devicePointer (),
-            itsCloud->getCloudDevice(),
+            itsCloud->getCloudDevice (),
             itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
@@ -212,7 +208,7 @@ void OctreeProcessor::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctree->toHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
-    auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsSubsamplingMetadata.subsamplingGrid, 3.f));
+    auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
 
     // Prepare data strucutres for the subsampling
     auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
@@ -226,7 +222,7 @@ void OctreeProcessor::performSubsampling ()
 
     SubsamplingTimings timings = {};
 
-    if (itsSubsamplingMetadata.strategy == RANDOM_POINT)
+    if (itsSubsampleMetadata.strategy == RANDOM_POINT)
     {
         auto randomStates = createGpuRandom (1024, "randomStates");
 
@@ -271,7 +267,7 @@ void OctreeProcessor::performSubsampling ()
 
 
 void OctreeProcessor::prepareSubsampleConfig (
-        SubsampleSet &subsampleSet,
+        SubsampleSet& subsampleSet,
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& accumulatedPoints)
@@ -281,8 +277,9 @@ void OctreeProcessor::prepareSubsampleConfig (
     {
         if (childIndex != -1)
         {
-            SubsampleConfig *config;
-            switch(i) {
+            SubsampleConfig* config;
+            switch (i)
+            {
             case 0:
                 config = &subsampleSet.child_0;
                 break;
@@ -311,8 +308,7 @@ void OctreeProcessor::prepareSubsampleConfig (
             Chunk child = h_octreeSparse[childIndex];
             config->lutAdress =
                     child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
-            config->averagingAdress =
-                    child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
+            config->averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
             config->lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
             config->pointOffsetLower = accumulatedPoints;
             accumulatedPoints += child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
@@ -322,8 +318,7 @@ void OctreeProcessor::prepareSubsampleConfig (
     }
 }
 
-void OctreeProcessor::calculateVoxelBB (
-        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
+void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -333,10 +328,10 @@ void OctreeProcessor::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    double min  = itsMetadata.cloudMetadata.bbCubic.min.x;
-    double max  = itsMetadata.cloudMetadata.bbCubic.max.x;
-    double side = max - min;
-    auto cubicWidth     = side / itsGridSideLengthPerLevel[level];
+    double min      = itsMetadata.cloudMetadata.bbCubic.min.x;
+    double max      = itsMetadata.cloudMetadata.bbCubic.max.x;
+    double side     = max - min;
+    auto cubicWidth = side / itsGridSideLengthPerLevel[level];
 
     metadata.bbCubic.min.x = itsMetadata.cloudMetadata.bbCubic.min.x + coords.x * cubicWidth;
     metadata.bbCubic.min.y = itsMetadata.cloudMetadata.bbCubic.min.y + coords.y * cubicWidth;
@@ -354,13 +349,13 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<float, uint8_t > potreeExporter (
-            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata, itsSubsamplingMetadata);
+    PotreeExporter<float, uint8_t> potreeExporter (
+            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata, itsSubsampleMetadata);
     potreeExporter.exportOctree (folderPath);
 
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
     spdlog::info ("Export tooks {} seconds", elapsed.count ());
-    itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count() * 1000);
+    itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count () * 1000);
 }

@@ -37,7 +37,7 @@ void Session::setDevice () const
 
 Session::~Session ()
 {
-    itsProcessor.reset();
+    itsProcessor.reset ();
     spdlog::debug ("session destroyed");
 }
 
@@ -52,14 +52,7 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 void Session::generateOctree ()
 {
     PointCloudMetadata cloudMetadata{
-            itsPointAmount,
-            itsDataStride,
-            itsBoundingBox,
-            itsOffset,
-            itsScale,
-            itsCloudType,
-            itsCloudMemory
-    };
+            itsPointAmount, itsDataStride, itsBoundingBox, itsOffset, itsScale, itsCloudType, itsCloudMemory};
 
     itsProcessor = std::make_unique<OctreeProcessor> (
             itsPointCloud, itsChunkingGrid, itsMergingThreshold, cloudMetadata, itsSubsamplingMetadata);
@@ -74,7 +67,7 @@ void Session::generateOctree ()
 
 void Session::exportPotree (const string& directory)
 {
-    itsProcessor->exportPlyNodes(directory);
+    itsProcessor->exportPlyNodes (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
@@ -105,10 +98,10 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
 
 void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
 {
-    itsSubsamplingMetadata.performAveraging = averaging;
+    itsSubsamplingMetadata.performAveraging     = averaging;
     itsSubsamplingMetadata.useReplacementScheme = replacementScheme;
-    itsSubsamplingMetadata.subsamplingGrid     = subsamplingGrid;
-    itsSubsamplingMetadata.strategy = static_cast<SubsamplingStrategy> (strategy);
+    itsSubsamplingMetadata.subsamplingGrid      = subsamplingGrid;
+    itsSubsamplingMetadata.strategy             = static_cast<SubsampleStrategy> (strategy);
 }
 void Session::setCloudType (uint8_t cloudType)
 {

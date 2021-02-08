@@ -4,12 +4,10 @@
 #include "subsample_evaluating.cuh"
 
 
-float OctreeProcessor::initRandomStates (
-        unsigned int seed, GpuRandomState& states, uint32_t nodeAmount)
+float OctreeProcessor::initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount)
 {
     return executeKernel (subsampling::kernelInitRandoms, nodeAmount, seed, states->devicePointer (), nodeAmount);
 }
-
 
 
 SubsamplingTimings OctreeProcessor::randomSubsampling (
@@ -56,27 +54,24 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
     {
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
-        SubsampleSet subsampleSet {};
+        SubsampleSet subsampleSet{};
         prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
-        auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
+        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // Evaluate the subsample points in parallel for all child nodes
-        timings.subsampleEvaluation += Kernel::evaluateSubsamples(
-                {
-                    metadata.cloudType,
-                    accumulatedPoints
-                },
-                itsCloud->getCloudDevice(),
+        timings.subsampleEvaluation += Kernel::evaluateSubsamples (
+                {metadata.cloudType, accumulatedPoints},
+                itsCloud->getCloudDevice (),
                 subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsSubsamplingMetadata.subsamplingGrid,
+                itsSubsampleMetadata.subsamplingGrid,
                 accumulatedPoints);
 
 
@@ -103,35 +98,29 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 
         // Perform averaging in parallel for all child nodes
         timings.averaging += Kernel::performAveraging (
-                {
-                  metadata.cloudType,
-                  accumulatedPoints
-                },
-                itsCloud->getCloudDevice(),
+                {metadata.cloudType, accumulatedPoints},
+                itsCloud->getCloudDevice (),
                 subsampleSet,
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 metadata,
-                itsSubsamplingMetadata.subsamplingGrid,
+                itsSubsampleMetadata.subsamplingGrid,
                 accumulatedPoints);
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
-                {
-                  metadata.cloudType,
-                  accumulatedPoints
-                },
-                itsCloud->getCloudDevice(),
+                {metadata.cloudType, accumulatedPoints},
+                itsCloud->getCloudDevice (),
                 subsampleSet,
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsSubsamplingMetadata.subsamplingGrid,
+                itsSubsampleMetadata.subsamplingGrid,
                 randomIndices->devicePointer (),
                 accumulatedPoints,
-                itsSubsamplingMetadata.useReplacementScheme);
+                itsSubsampleMetadata.useReplacementScheme);
     }
 
     return timings;
