@@ -12,12 +12,12 @@ public:
     OctreeExporter (
             const PointCloud& pointCloud,
             const GpuOctree& octree,
-            const GpuArrayU32& leafeLut,
+            const GpuArrayU32& leafLut,
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
             OctreeMetadata metadata) :
             itsMetadata (metadata),
-            itsCloud (pointCloud->getCloudHost()), itsOctree (octree->toHost ()), itsLeafeLut (leafeLut->toHost ()),
+            itsCloud (pointCloud->getCloudHost()), itsOctree (octree->toHost ()), itsLeafLut (leafLut->toHost ()),
             itsAbsorbedNodes (0), itsPointsExported (0)
     {
         std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
@@ -66,7 +66,7 @@ protected:
     OctreeMetadata itsMetadata;
     uint8_t *itsCloud;
     unique_ptr<Chunk[]> itsOctree;
-    unique_ptr<uint32_t[]> itsLeafeLut;
+    unique_ptr<uint32_t[]> itsLeafLut;
     unordered_map<uint32_t, unique_ptr<uint32_t[]>> itsParentLut;
     unordered_map<uint32_t, uint32_t> itsParentLutCounts;
     unordered_map<uint32_t, unique_ptr<Averaging[]>> itsAveraging;

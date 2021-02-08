@@ -79,7 +79,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         bool isAveraging                       = true;
         bool isParent                          = this->isParentNode (nodeIndex);
         auto pointsInNode                      = this->getPointsInNode (nodeIndex);
-        const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
+        const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
 
 
         uint32_t dataStride = this->itsMetadata.cloudMetadata.pointDataStride;

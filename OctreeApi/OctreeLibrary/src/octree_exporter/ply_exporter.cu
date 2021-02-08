@@ -31,7 +31,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
 
     PointCloudMetadata cloudMetadata = this->itsMetadata.cloudMetadata;
     uint32_t pointsInNode = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
-    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafeLut;
+    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
 
     uint32_t dataStride = cloudMetadata.pointDataStride;
 

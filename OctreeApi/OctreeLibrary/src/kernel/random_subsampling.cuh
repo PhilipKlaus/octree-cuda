@@ -17,8 +17,8 @@ __global__ void kernelPerformAveraging (
         uint32_t gridSideLength,
         uint32_t accumulatedPoints)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (index >= accumulatedPoints)
+    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    if (thread >= accumulatedPoints)
     {
         return;
     }
@@ -32,23 +32,21 @@ __global__ void kernelPerformAveraging (
 
     for (uint8_t i = 0; i < 8; ++i)
     {
-        if (index < config[i].pointOffsetUpper)
+        if (thread < config[i].pointOffsetUpper)
         {
             childDataLUT      = config[i].lutAdress;
             childAveraging    = config[i].averagingAdress;
             childDataLUTStart = config[i].lutStartIndex;
-            index -= config[i].pointOffsetLower;
+            thread -= config[i].pointOffsetLower;
             break;
         }
     }
 
-    // Get the coordinates from the point within the point cloud
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
+    uint8_t *targetCloudByte = cloud + childDataLUT[childDataLUTStart + thread] * metadata.pointDataStride;
 
-    // Get the color from the point within the point cloud
-    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (
-            cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride + sizeof (coordinateType) * 3);
+    // Get the coordinates & colors from the point within the point cloud
+    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
+    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
     // 1. Calculate the index within the dense grid of the evaluateSubsamples
     auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
@@ -57,10 +55,11 @@ __global__ void kernelPerformAveraging (
 
     bool hasAveragingData = (childAveraging != nullptr);
 
-    atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? childAveraging[index].pointCount : 1);
-    atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? childAveraging[index].r : color->x);
-    atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? childAveraging[index].g : color->y);
-    atomicAdd (&(parentAveragingData[sparseIndex].b), hasAveragingData ? childAveraging[index].b : color->z);
+    Averaging *averagingData = childAveraging + thread;
+    atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
+    atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? averagingData->r : color->x);
+    atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? averagingData->g : color->y);
+    atomicAdd (&(parentAveragingData[sparseIndex].b), hasAveragingData ? averagingData->b : color->z);
 }
 
 
@@ -70,7 +69,6 @@ __global__ void kernelRandomPointSubsample (
         uint8_t* cloud,
         SubsampleSet subsampleSet,
         uint32_t* parentDataLUT,
-        Averaging* averagingData,
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
@@ -79,8 +77,8 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* randomIndices,
         uint32_t accumulatedPoints)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (index >= accumulatedPoints)
+    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    if (thread >= accumulatedPoints)
     {
         return;
     }
@@ -93,19 +91,20 @@ __global__ void kernelRandomPointSubsample (
 
     for (uint8_t i = 0; i < 8; ++i)
     {
-        if (index < config[i].pointOffsetUpper)
+        if (thread < config[i].pointOffsetUpper)
         {
             childDataLUT      = config[i].lutAdress;
             childDataLUTStart = config[i].lutStartIndex;
-            index -= config[i].pointOffsetLower;
+            thread -= config[i].pointOffsetLower;
             break;
         }
     }
 
+    uint32_t lutItem = childDataLUT[childDataLUTStart + thread];
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
+            cloud + lutItem * metadata.pointDataStride);
 
     // 1. Calculate the index within the dense grid of the evaluateSubsamples
     auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
@@ -121,7 +120,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled point to parent
-    parentDataLUT[sparseIndex] = childDataLUT[childDataLUTStart + index];
+    parentDataLUT[sparseIndex] = lutItem;
     // childDataLUT[childDataLUTStart + index] = INVALID_INDEX; // Additive strategy
 
     // Reset all subsampling data data
