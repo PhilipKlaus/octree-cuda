@@ -51,17 +51,18 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
-    PointCloudMetadata metadata{};
-    metadata.memoryType      = itsCloudMemory;
-    metadata.cloudType       = itsCloudType;
-    metadata.pointAmount     = itsPointAmount;
-    metadata.pointDataStride = itsDataStride;
-    metadata.scale           = itsScale;
-    metadata.cloudOffset     = itsOffset;
-    metadata.bbCubic         = itsBoundingBox;
+    PointCloudMetadata cloudMetadata{
+            itsPointAmount,
+            itsDataStride,
+            itsBoundingBox,
+            itsOffset,
+            itsScale,
+            itsCloudType,
+            itsCloudMemory
+    };
 
     itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy, itsIsAveraging, itsUseReplacementScheme);
+            itsPointCloud, itsChunkingGrid, itsMergingThreshold, cloudMetadata, itsSubsamplingMetadata);
 
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
@@ -86,7 +87,7 @@ void Session::exportMemoryReport (const std::string& filename)
 void Session::exportJsonReport (const std::string& filename)
 {
     itsProcessor->updateOctreeStatistics ();
-    export_json_data (filename, itsProcessor->getMetadata (), itsProcessor->getTimings ());
+    export_json_data (filename, itsProcessor->getMetadata (), itsSubsamplingMetadata, itsProcessor->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
@@ -104,10 +105,10 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
 
 void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
 {
-    itsIsAveraging = averaging;
-    itsUseReplacementScheme = replacementScheme;
-    itsSubsamplingGrid     = subsamplingGrid;
-    itsSubsamplingStrategy = static_cast<SubsamplingStrategy> (strategy);
+    itsSubsamplingMetadata.performAveraging = averaging;
+    itsSubsamplingMetadata.useReplacementScheme = replacementScheme;
+    itsSubsamplingMetadata.subsamplingGrid     = subsamplingGrid;
+    itsSubsamplingMetadata.strategy = static_cast<SubsamplingStrategy> (strategy);
 }
 void Session::setCloudType (uint8_t cloudType)
 {

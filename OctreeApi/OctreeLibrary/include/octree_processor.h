@@ -14,12 +14,9 @@ public:
     OctreeProcessor (
             uint8_t *pointCloud,
             uint32_t chunkingGrid,
-            uint32_t subsamplingGrid,
             uint32_t mergingThreshold,
             PointCloudMetadata cloudMetadata,
-            SubsamplingStrategy strategy,
-            bool performAveraging,
-            bool replacementScheme);
+            SubsamplingMetadata subsamplingMetadata);
 
     OctreeProcessor (const OctreeProcessor&) = delete;
 
@@ -144,8 +141,9 @@ private:
     GpuArrayI32 itsSparseToDenseLUT;
     GpuOctree itsOctree;
 
-    // Octree Metadata
+    // Metadata
     OctreeMetadata itsMetadata;
+    SubsamplingMetadata itsSubsamplingMetadata;
 
     // Pre-calculations
     vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)

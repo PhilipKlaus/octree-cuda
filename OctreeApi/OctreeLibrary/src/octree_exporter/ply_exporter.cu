@@ -8,8 +8,9 @@ PlyExporter<coordinateType, colorType>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata) :
-        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata) :
+        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -220,7 +221,8 @@ template PlyExporter<float, uint8_t>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata);
 
 template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -233,6 +235,7 @@ template PlyExporter<double, uint8_t>::PlyExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);

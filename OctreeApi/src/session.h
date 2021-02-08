@@ -60,11 +60,7 @@ private:
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;
 
-    // Subsampling
-    uint32_t itsSubsamplingGrid                = 128;
-    SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
-    bool itsUseReplacementScheme = true;
-    bool itsIsAveraging           = false;
+    SubsamplingMetadata itsSubsamplingMetadata = {};
 };
 
 #endif // OCTREE_API_SESSION_H

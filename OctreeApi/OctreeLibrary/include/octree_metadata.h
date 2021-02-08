@@ -7,12 +7,17 @@
 #include <api_types.h>
 #include <cstdint>
 
+struct SubsamplingMetadata {
+    SubsamplingStrategy strategy;
+    uint32_t subsamplingGrid;
+    bool performAveraging;
+    bool useReplacementScheme;
+};
 
 struct OctreeMetadata
 {
     uint32_t depth;               // The depth of the octree // ToDo: -1
     uint32_t chunkingGrid;        // Side length of the grid used for chunking
-    uint32_t subsamplingGrid;     // Side length of the grid used for subsampling
     uint32_t nodeAmountSparse;    // The actual amount of sparse nodes (amount leafs + amount parents)
     uint32_t leafNodeAmount;      // The amount of child nodes
     uint32_t parentNodeAmount;    // The amount of parent nodes
@@ -24,7 +29,4 @@ struct OctreeMetadata
     uint32_t minPointsPerNode;    // Minimum amount of points in a node
     uint32_t maxPointsPerNode;    // Maximum amount of points in a node
     PointCloudMetadata cloudMetadata; // The cloud metadata;
-    SubsamplingStrategy strategy;                     // The subsampling strategy
-    bool performAveraging;
-    bool useReplacementScheme;
 };

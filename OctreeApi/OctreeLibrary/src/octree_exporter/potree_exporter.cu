@@ -38,8 +38,9 @@ PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata) :
-        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata) :
+        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -76,7 +77,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
 
     if (isFinished)
     {
-        bool isAveraging                       = this->itsMetadata.performAveraging;
+        bool isAveraging                       = this->itsSubsamplingMetadata.performAveraging;
         bool isParent                          = this->isParentNode (nodeIndex);
         auto pointsInNode                      = this->getPointsInNode (nodeIndex);
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
@@ -254,19 +255,9 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 {
     // Prepare metadata for export
     uint32_t exportedNodes = this->itsMetadata.leafNodeAmount + this->itsMetadata.parentNodeAmount;
-    auto bbReal            = this->itsMetadata.cloudMetadata.bbReal;
     auto bbCubic           = this->itsMetadata.cloudMetadata.bbCubic;
     auto scale             = this->itsMetadata.cloudMetadata.scale;
-    auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsMetadata.subsamplingGrid;
-
-    spdlog::info (
-            "EXPORTED BB: min[x,y,z]=[{},{},{}], max[x,y,z]=[{},{},{}]",
-            bbReal.min.x,
-            bbReal.min.y,
-            bbReal.min.z,
-            bbReal.max.x,
-            bbReal.max.y,
-            bbReal.max.z);
+    auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsamplingMetadata.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;
@@ -275,14 +266,14 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
     metadata["description"]                 = "AIT Austrian Institute of Technology";
     metadata["points"]                      = this->itsPointsExported;
     metadata["projection"]                  = "";
-    metadata["flags"][0] = this->itsMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
-    if(this->itsMetadata.performAveraging) {
+    metadata["flags"][0] = this->itsSubsamplingMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
+    if(this->itsSubsamplingMetadata.performAveraging) {
         metadata["flags"][1] = "AVERAGING";
     }
     metadata["hierarchy"]["firstChunkSize"] = exportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;
-    metadata["offset"]             = {bbReal.min.x, bbReal.min.y, bbReal.min.z}; // ToDo: real offset !!! currently 0
+    metadata["offset"]             = {0, 0, 0}; // We are not shifting the cloud
     metadata["scale"]              = {scale.x, scale.y, scale.z};
     metadata["spacing"]            = spacing;
     metadata["boundingBox"]["min"] = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
@@ -324,7 +315,8 @@ template PotreeExporter<float, uint8_t>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata);
 
 template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -337,6 +329,7 @@ template PotreeExporter<double, uint8_t>::PotreeExporter (
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        OctreeMetadata metadata,
+        SubsamplingMetadata subsamplingMetadata);
 
 template void PotreeExporter<double, uint8_t>::exportOctree (const std::string& path);

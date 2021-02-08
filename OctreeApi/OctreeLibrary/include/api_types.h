@@ -39,7 +39,6 @@ struct PointCloudMetadata
     uint32_t pointAmount;
     uint32_t pointDataStride;
     BoundingBox bbCubic;
-    BoundingBox bbReal;
     Vector3<double> cloudOffset;
     Vector3<double> scale;
     CloudType cloudType;

@@ -40,14 +40,14 @@ int main ()
     uint8_t subsamplingStrategy = 1;
 
     // Setup cloud properties
-    uint32_t pointAmount     = 25010001;
+    /*uint32_t pointAmount     = 25010001;
     uint32_t pointDataStride = 15;
     float scaleX             = 0.001f;
     float scaleY             = 0.001f;
     float scaleZ             = 0.001f;
     auto cloudType           = 0;
     std::string plyFile      = "wave_headerless.ply";
-
+    */
     /*
          uint32_t pointAmount     = 47111095;
     uint32_t pointDataStride = 27;
@@ -57,14 +57,14 @@ int main ()
     auto cloudType           = 1;
     std::string plyFile      = "lifeboat_headerless.ply";*/
 
-/*uint32_t pointAmount     = 5138448;
+uint32_t pointAmount     = 5138448;
 uint32_t pointDataStride = 43;
 float scaleX             = 0.001f;
 float scaleY             = 0.001f;
 float scaleZ             = 0.001f;
 auto cloudType           = 0;
 std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
-*/
+
 // Read in ply
 auto ply = readPly (plyFile);
 

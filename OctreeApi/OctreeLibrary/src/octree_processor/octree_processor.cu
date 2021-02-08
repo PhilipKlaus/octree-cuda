@@ -16,23 +16,17 @@
 OctreeProcessor::OctreeProcessor (
         uint8_t *pointCloud,
         uint32_t chunkingGrid,
-        uint32_t subsamplingGrid,
         uint32_t mergingThreshold,
         PointCloudMetadata cloudMetadata,
-        SubsamplingStrategy strategy,
-        bool performAveraging,
-        bool replacementScheme)
+        SubsamplingMetadata subsamplingMetadata)
 {
-    // Initialize octree metadata
+    // Initialize metadata
     itsMetadata                  = {};
     itsMetadata.depth            = tools::getOctreeLevel (chunkingGrid);
     itsMetadata.chunkingGrid     = chunkingGrid;
-    itsMetadata.subsamplingGrid  = subsamplingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
-    itsMetadata.performAveraging = performAveraging;
-    itsMetadata.useReplacementScheme = replacementScheme;
-    itsMetadata.strategy = strategy;
+    itsSubsamplingMetadata = subsamplingMetadata;
 
     // Pre calculate often-used octree metrics
     for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
@@ -218,7 +212,7 @@ void OctreeProcessor::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctree->toHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
-    auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsMetadata.subsamplingGrid, 3.f));
+    auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsSubsamplingMetadata.subsamplingGrid, 3.f));
 
     // Prepare data strucutres for the subsampling
     auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
@@ -232,7 +226,7 @@ void OctreeProcessor::performSubsampling ()
 
     SubsamplingTimings timings = {};
 
-    if (itsMetadata.strategy == RANDOM_POINT)
+    if (itsSubsamplingMetadata.strategy == RANDOM_POINT)
     {
         auto randomStates = createGpuRandom (1024, "randomStates");
 
@@ -361,7 +355,7 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
     PotreeExporter<float, uint8_t > potreeExporter (
-            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata);
+            itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata, itsSubsamplingMetadata);
     potreeExporter.exportOctree (folderPath);
 
 

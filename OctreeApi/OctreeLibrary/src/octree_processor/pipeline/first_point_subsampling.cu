@@ -15,6 +15,8 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
         GpuArrayU32& subsampleSparseVoxelCount,
         GpuSubsample& subsampleConfig)
 {
+    PointCloudMetadata cloudMetadata = itsMetadata.cloudMetadata;
+
     Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
 
@@ -49,7 +51,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
         prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
@@ -65,7 +67,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsMetadata.subsamplingGrid,
+                itsSubsamplingMetadata.subsamplingGrid,
                 accumulatedPoints);
 
 
@@ -88,7 +90,7 @@ SubsamplingTimings OctreeProcessor::firstPointSubsampling (
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsMetadata.subsamplingGrid,
+                itsSubsamplingMetadata.subsamplingGrid,
                 accumulatedPoints);
     }
     return timings;

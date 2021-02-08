@@ -13,6 +13,7 @@
 void export_json_data (
         const std::string filePath,
         OctreeMetadata metadata,
+        SubsamplingMetadata subsampleMetadata,
         const std::vector<std::tuple<std::string, float>>& timings)
 {
     nlohmann::ordered_json statistics;
@@ -21,8 +22,8 @@ void export_json_data (
     statistics["chunking"]["grid"]             = metadata.chunkingGrid;
     statistics["chunking"]["mergingThreshold"] = metadata.mergingThreshold;
 
-    statistics["subsampling"]["grid"] = metadata.subsamplingGrid;
-    switch (metadata.strategy)
+    statistics["subsampling"]["grid"] = subsampleMetadata.subsamplingGrid;
+    switch (subsampleMetadata.strategy)
     {
     case FIRST_POINT:
         statistics["subsampling"]["strategy"] = "FIRST POINT";

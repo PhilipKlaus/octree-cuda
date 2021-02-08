@@ -23,6 +23,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         GpuRandomState& randomStates,
         GpuArrayU32& randomIndices)
 {
+    PointCloudMetadata cloudMetadata = itsMetadata.cloudMetadata;
+
     Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
 
@@ -58,7 +60,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
 
         // Parent bounding box calculation
-        PointCloudMetadata metadata = itsMetadata.cloudMetadata;
+        PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex                        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
@@ -74,7 +76,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsMetadata.subsamplingGrid,
+                itsSubsamplingMetadata.subsamplingGrid,
                 accumulatedPoints);
 
 
@@ -110,7 +112,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 metadata,
-                itsMetadata.subsamplingGrid,
+                itsSubsamplingMetadata.subsamplingGrid,
                 accumulatedPoints);
 
         // Distribute the subsampled points in parallel for all child nodes
@@ -126,10 +128,10 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 metadata,
-                itsMetadata.subsamplingGrid,
+                itsSubsamplingMetadata.subsamplingGrid,
                 randomIndices->devicePointer (),
                 accumulatedPoints,
-                itsMetadata.useReplacementScheme);
+                itsSubsamplingMetadata.useReplacementScheme);
     }
 
     return timings;
