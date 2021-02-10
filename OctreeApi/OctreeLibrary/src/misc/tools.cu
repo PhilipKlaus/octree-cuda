@@ -25,7 +25,7 @@ __global__ void kernel_point_cloud_cuboid (uint8_t* out, uint32_t n, uint32_t si
 
 namespace tools {
 
-uint32_t getOctreeLevel (uint32_t gridSize)
+uint8_t getOctreeLevel (uint32_t gridSize)
 {
     switch (gridSize)
     {

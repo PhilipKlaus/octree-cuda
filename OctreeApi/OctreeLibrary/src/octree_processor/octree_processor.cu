@@ -20,22 +20,16 @@ OctreeProcessor::OctreeProcessor (
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata)
 {
+    itsOctreeData = std::make_unique<OctreeData>(chunkingGrid);
+
     // Initialize metadata
     itsMetadata                  = {};
-    itsMetadata.depth            = tools::getOctreeLevel (chunkingGrid);
+    itsMetadata.depth            = itsOctreeData->getDepth();
+    itsMetadata.nodeAmountDense = itsOctreeData->getOverallNodes();
     itsMetadata.chunkingGrid     = chunkingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.cloudMetadata    = cloudMetadata;
     itsSubsampleMetadata         = subsamplingMetadata;
-
-    // Pre calculate often-used octree metrics
-    for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
-    {
-        itsGridSideLengthPerLevel.push_back (gridSize);
-        itsLinearizedDenseVoxelOffset.push_back (itsMetadata.nodeAmountDense);
-        itsVoxelsPerLevel.push_back (static_cast<uint32_t> (pow (gridSize, 3)));
-        itsMetadata.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
-    }
 
     if (cloudMetadata.memoryType == CLOUD_HOST)
     {
@@ -76,7 +70,7 @@ void OctreeProcessor::initialPointCounting ()
             itsDenseToSparseLUT->devicePointer (),
             nodeAmountSparse->devicePointer (),
             itsMetadata.cloudMetadata,
-            itsGridSideLengthPerLevel[0]);
+            itsOctreeData->getGridSize(0));
 
     // Store the current amount of sparse nodes
     // !IMPORTANT! At this time nodeAmountSparse holds just the amount of nodes
@@ -105,17 +99,17 @@ void OctreeProcessor::performCellMerging ()
     {
         float time = executeKernel (
                 chunking::kernelPropagatePointCounts,
-                itsVoxelsPerLevel[i + 1],
+                itsOctreeData->getNodes(i + 1),
                 itsDensePointCountPerVoxel->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 nodeAmountSparse->devicePointer (),
-                itsVoxelsPerLevel[i + 1],
-                itsGridSideLengthPerLevel[i + 1],
-                itsGridSideLengthPerLevel[i],
-                itsLinearizedDenseVoxelOffset[i + 1],
-                itsLinearizedDenseVoxelOffset[i]);
+                itsOctreeData->getNodes(i + 1),
+                itsOctreeData->getGridSize(i + 1),
+                itsOctreeData->getGridSize(i),
+                itsOctreeData->getNodeOffset(i + 1),
+                itsOctreeData->getNodeOffset(i));
 
-        itsTimeMeasurement.emplace_back ("propagatePointCounts_" + std::to_string (itsGridSideLengthPerLevel[i]), time);
+        itsTimeMeasurement.emplace_back ("propagatePointCounts_" + std::to_string (itsOctreeData->getGridSize(i)), time);
         timeAccumulated += time;
     }
 
@@ -138,12 +132,12 @@ void OctreeProcessor::initLowestOctreeHierarchy ()
 {
     float time = executeKernel (
             chunking::kernelOctreeInitialization,
-            itsVoxelsPerLevel[0],
+            itsOctreeData->getNodes(0),
             itsOctree->devicePointer (),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
-            itsVoxelsPerLevel[0]);
+            itsOctreeData->getNodes(0));
 
     itsTimeMeasurement.emplace_back ("initLowestOctreeHierarchy", time);
     spdlog::info ("'initLowestOctreeHierarchy' took {:f} [ms]", time);
@@ -162,21 +156,21 @@ void OctreeProcessor::mergeHierarchical ()
     {
         float time = executeKernel (
                 chunking::kernelMergeHierarchical,
-                itsVoxelsPerLevel[i + 1],
+                itsOctreeData->getNodes(i + 1),
                 itsOctree->devicePointer (),
                 itsDensePointCountPerVoxel->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
                 globalChunkCounter->devicePointer (),
                 itsMetadata.mergingThreshold,
-                itsVoxelsPerLevel[i + 1],
-                itsGridSideLengthPerLevel[i + 1],
-                itsGridSideLengthPerLevel[i],
-                itsLinearizedDenseVoxelOffset[i + 1],
-                itsLinearizedDenseVoxelOffset[i]);
+                itsOctreeData->getNodes(i + 1),
+                itsOctreeData->getGridSize(i + 1),
+                itsOctreeData->getGridSize(i),
+                itsOctreeData->getNodeOffset(i + 1),
+                itsOctreeData->getNodeOffset(i));
 
         timeAccumulated += time;
-        itsTimeMeasurement.emplace_back ("mergeHierarchical_" + std::to_string (itsGridSideLengthPerLevel[i]), time);
+        itsTimeMeasurement.emplace_back ("mergeHierarchical_" + std::to_string (itsOctreeData->getGridSize(i)), time);
     }
 
     spdlog::info ("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
@@ -197,7 +191,7 @@ void OctreeProcessor::distributePoints ()
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             itsMetadata.cloudMetadata,
-            itsGridSideLengthPerLevel[0]);
+            itsOctreeData->getGridSize(0));
 
     itsTimeMeasurement.emplace_back ("distributePointsSparse", time);
     spdlog::info ("'distributePoints' took {:f} [ms]", time);
@@ -323,15 +317,15 @@ void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t d
     Vector3<uint32_t> coords = {};
 
     // 1. Calculate coordinates of voxel within the actual level
-    auto indexInLevel = denseVoxelIndex - itsLinearizedDenseVoxelOffset[level];
-    tools::mapFromDenseIdxToDenseCoordinates (coords, indexInLevel, itsGridSideLengthPerLevel[level]);
+    auto indexInLevel = denseVoxelIndex - itsOctreeData->getNodeOffset(level);
+    tools::mapFromDenseIdxToDenseCoordinates (coords, indexInLevel, itsOctreeData->getGridSize(level));
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
     double min      = itsMetadata.cloudMetadata.bbCubic.min.x;
     double max      = itsMetadata.cloudMetadata.bbCubic.max.x;
     double side     = max - min;
-    auto cubicWidth = side / itsGridSideLengthPerLevel[level];
+    auto cubicWidth = side / itsOctreeData->getGridSize(level);
 
     metadata.bbCubic.min.x = itsMetadata.cloudMetadata.bbCubic.min.x + coords.x * cubicWidth;
     metadata.bbCubic.min.y = itsMetadata.cloudMetadata.bbCubic.min.y + coords.y * cubicWidth;
@@ -349,7 +343,7 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<float, uint8_t> potreeExporter (
+    PotreeExporter<double, uint8_t> potreeExporter (
             itsCloud, itsOctree, itsLeafLut, itsParentLut, itsAveragingData, itsMetadata, itsSubsampleMetadata);
     potreeExporter.exportOctree (folderPath);
 

@@ -7,6 +7,7 @@
 #include "octree_metadata.h"
 #include "point_cloud.cuh"
 #include "types.cuh"
+#include "octree_data.cuh"
 
 class OctreeProcessor
 {
@@ -144,10 +145,8 @@ private:
     OctreeMetadata itsMetadata;
     SubsampleMetadata itsSubsampleMetadata;
 
-    // Pre-calculations
-    vector<uint32_t> itsVoxelsPerLevel;             // Holds the voxel amount per level (dense)
-    vector<uint32_t> itsGridSideLengthPerLevel;     // Holds the side length of the grid per level
-    vector<uint32_t> itsLinearizedDenseVoxelOffset; // Holds the linear voxel offset for each level (dense)
+    // Octree
+    std::unique_ptr<OctreeData> itsOctreeData;
 
     // Subsampling
     unordered_map<uint32_t, GpuArrayU32> itsParentLut;

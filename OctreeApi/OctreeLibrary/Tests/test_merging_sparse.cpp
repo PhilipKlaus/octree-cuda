@@ -15,8 +15,15 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]")
     metadata.cloudType                   = CLOUD_FLOAT_UINT8_T;
     metadata.memoryType                  = ClOUD_DEVICE;
 
+    SubsampleMetadata subsampleMetadata {
+            RANDOM_POINT,
+            128,
+            true,
+            true
+    };
+
     // Create the octree
-    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 10000, metadata, subsampleMetadata);
 
     octree->initialPointCounting ();
     octree->performCellMerging ();

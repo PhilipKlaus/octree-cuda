@@ -70,10 +70,17 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]")
     metadata.cloudType                   = CLOUD_FLOAT_UINT8_T;
     metadata.memoryType                  = ClOUD_DEVICE;
 
+    SubsampleMetadata subsampleMetadata {
+            RANDOM_POINT,
+            128,
+            true,
+            true
+    };
+
     auto cpuData = cloud->toHost ();
 
     // Create the octree
-    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 10000, metadata, subsampleMetadata);
 
     octree->initialPointCounting ();
     octree->performCellMerging (); // All points reside in the 4th level (8x8x8) of the octree

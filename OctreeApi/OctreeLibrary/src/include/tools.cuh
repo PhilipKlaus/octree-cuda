@@ -13,7 +13,7 @@ using namespace std;
 
 namespace tools {
 
-uint32_t getOctreeLevel (uint32_t gridSize);
+uint8_t getOctreeLevel (uint32_t gridSize);
 uint32_t getOctreeGrid (uint32_t octreeLevel);
 uint32_t getNodeAmount (uint32_t octreeLevel);
 uint32_t getNodeOffset (uint32_t octreeLevel, uint32_t octreeDepth);

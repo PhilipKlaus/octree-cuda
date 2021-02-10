@@ -50,7 +50,11 @@ add_library(${PROJECT_NAME} STATIC
 
         # Point cloud
         include/point_cloud.cuh
-        src/point_cloud.cu)
+        src/point_cloud.cu
+
+        # Octree
+        include/octree_data.cuh
+        src/octree/octree_data.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE

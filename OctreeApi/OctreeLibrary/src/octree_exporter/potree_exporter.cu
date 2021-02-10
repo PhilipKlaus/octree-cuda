@@ -49,7 +49,7 @@ void PotreeExporter<coordinateType, colorType>::exportOctree (const std::string&
 {
     this->itsPointsExported = 0;
     itsExportFolder         = path;
-    itsExportedNodes = 0;
+    itsExportedNodes        = 0;
     createBinaryHierarchyFiles ();
     createMetadataFile ();
 }
@@ -172,7 +172,7 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
 template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::exportBuffers (std::ofstream& pointFile, std::ofstream& hierarchyFile)
 {
-    uint64_t byteOffset    = 0;
+    uint64_t byteOffset = 0;
 
     // Write out result data
     for (auto i = 0; i < itsFutureResults.size (); ++i)
@@ -255,9 +255,9 @@ template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 {
     // Prepare metadata for export
-    auto bbCubic           = this->itsMetadata.cloudMetadata.bbCubic;
-    auto scale             = this->itsMetadata.cloudMetadata.scale;
-    auto spacing           = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsampleMetadata.subsamplingGrid;
+    auto bbCubic = this->itsMetadata.cloudMetadata.bbCubic;
+    auto scale   = this->itsMetadata.cloudMetadata.scale;
+    auto spacing = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsampleMetadata.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;
