@@ -2,7 +2,6 @@
 // Created by KlausP on 04.11.2020.
 //
 
-#include "hierarchical_merging.cuh"
 #include "octree_processor.h"
 #include "ply_exporter.cuh"
 #include "point_distributing.cuh"
@@ -44,39 +43,6 @@ OctreeProcessor::OctreeProcessor (
 //###################
 //#     Pipeline    #
 //###################
-
-void OctreeProcessor::mergeHierarchical ()
-{
-    // Create a temporary counter register for assigning indices for chunks within the 'itsDataLUT' register
-    auto globalChunkCounter = createGpuU32 (1, "globalChunkCounter");
-    globalChunkCounter->memset (0);
-
-    // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    float timeAccumulated = 0;
-    for (uint32_t i = 0; i < itsMetadata.depth; ++i)
-    {
-        float time = executeKernel (
-                chunking::kernelMergeHierarchical,
-                itsOctreeData->getNodes (i + 1),
-                itsOctree->devicePointer (),
-                itsDensePointCountPerVoxel->devicePointer (),
-                itsDenseToSparseLUT->devicePointer (),
-                itsSparseToDenseLUT->devicePointer (),
-                globalChunkCounter->devicePointer (),
-                itsMetadata.mergingThreshold,
-                itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getGridSize (i + 1),
-                itsOctreeData->getGridSize (i),
-                itsOctreeData->getNodeOffset (i + 1),
-                itsOctreeData->getNodeOffset (i));
-
-        timeAccumulated += time;
-        itsTimeMeasurement.emplace_back ("mergeHierarchical_" + std::to_string (itsOctreeData->getGridSize (i)), time);
-    }
-
-    spdlog::info ("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
-}
-
 
 void OctreeProcessor::distributePoints ()
 {

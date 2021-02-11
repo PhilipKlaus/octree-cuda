@@ -10,6 +10,7 @@
 #include "octree_initialization.cuh"
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
+#include "hierarchical_merging.cuh"
 
 
 void OctreeProcessor::initialPointCounting ()
@@ -23,8 +24,8 @@ void OctreeProcessor::initialPointCounting ()
     itsDenseToSparseLUT->memset (-1);
 
     // Allocate the temporary sparseIndexCounter
-    itsNodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
-    itsNodeAmountSparse->memset (0);
+    itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
+    itsTmpCounting->memset (0);
 
     auto& meta                       = itsCloud->getMetadata ();
     Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount};
@@ -34,7 +35,7 @@ void OctreeProcessor::initialPointCounting ()
     float time = Kernel::pointCounting (
             config,
             itsDensePointCountPerVoxel->devicePointer (),
-            itsNodeAmountSparse->devicePointer (),
+            itsTmpCounting->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             cloud,
             gridding);
@@ -55,7 +56,7 @@ void OctreeProcessor::performCellMerging ()
                 itsOctreeData->getNodes (i + 1),
                 itsDensePointCountPerVoxel->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
-                itsNodeAmountSparse->devicePointer (),
+                itsTmpCounting->devicePointer (),
                 itsOctreeData->getNodes (i + 1),
                 itsOctreeData->getGridSize (i + 1),
                 itsOctreeData->getGridSize (i),
@@ -70,7 +71,7 @@ void OctreeProcessor::performCellMerging ()
     spdlog::info ("'propagatePointCounts' took {:f} [ms]", timeAccumulated);
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
-    itsMetadata.nodeAmountSparse = itsNodeAmountSparse->toHost ()[0];
+    itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
     itsOctree                    = createGpuOctree (itsMetadata.nodeAmountSparse, "octreeSparse");
 
     // Allocate the conversion LUT from sparse to dense
@@ -94,4 +95,34 @@ void OctreeProcessor::initLowestOctreeHierarchy ()
 
     itsTimeMeasurement.emplace_back ("initLowestOctreeHierarchy", time);
     spdlog::info ("'initLowestOctreeHierarchy' took {:f} [ms]", time);
+}
+
+
+void OctreeProcessor::mergeHierarchical ()
+{
+    itsTmpCounting->memset (0);
+
+    float timeAccumulated = 0;
+    for (uint32_t i = 0; i < itsMetadata.depth; ++i)
+    {
+        float time = executeKernel (
+                chunking::kernelMergeHierarchical,
+                itsOctreeData->getNodes (i + 1),
+                itsOctree->devicePointer (),
+                itsDensePointCountPerVoxel->devicePointer (),
+                itsDenseToSparseLUT->devicePointer (),
+                itsSparseToDenseLUT->devicePointer (),
+                itsTmpCounting->devicePointer (),
+                itsMetadata.mergingThreshold,
+                itsOctreeData->getNodes (i + 1),
+                itsOctreeData->getGridSize (i + 1),
+                itsOctreeData->getGridSize (i),
+                itsOctreeData->getNodeOffset (i + 1),
+                itsOctreeData->getNodeOffset (i));
+
+        timeAccumulated += time;
+        itsTimeMeasurement.emplace_back ("mergeHierarchical_" + std::to_string (itsOctreeData->getGridSize (i)), time);
+    }
+
+    spdlog::info ("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
 }

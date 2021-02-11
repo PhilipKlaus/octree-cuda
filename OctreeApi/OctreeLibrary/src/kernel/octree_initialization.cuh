@@ -44,8 +44,8 @@ __global__ void kernelInitLeafNodes (
 
     sparseToDenseLUT[sparseVoxelIndex] = index;
 
-    Chunk* chunk      = octreeSparse + sparseVoxelIndex;
-    chunk->pointCount = countingGrid[index];
+    Chunk* chunk             = octreeSparse + sparseVoxelIndex;
+    chunk->pointCount        = countingGrid[index];
     chunk->childrenChunks[0] = -1;
     chunk->childrenChunks[1] = -1;
     chunk->childrenChunks[2] = -1;

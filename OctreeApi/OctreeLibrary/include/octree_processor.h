@@ -135,7 +135,7 @@ private:
     GpuArrayU32 itsDensePointCountPerVoxel;
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
-    GpuArrayU32 itsNodeAmountSparse;
+    GpuArrayU32 itsTmpCounting;
     GpuOctree itsOctree;
 
     // Metadata
