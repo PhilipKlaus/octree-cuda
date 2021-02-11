@@ -49,7 +49,6 @@ TEST_CASE ("Test node subsampling", "[subsampling]")
     metadata.memoryType                   = ClOUD_DEVICE;
 
     SubsampleMetadata subsampleMetadata {
-            RANDOM_POINT,
             128,
             true,
             true

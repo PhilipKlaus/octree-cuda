@@ -16,7 +16,6 @@ TEST_CASE ("Test cell merging sparse", "[merging sparse]")
     metadata.memoryType                  = ClOUD_DEVICE;
 
     SubsampleMetadata subsampleMetadata {
-            RANDOM_POINT,
             128,
             true,
             true

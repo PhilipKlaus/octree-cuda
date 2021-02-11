@@ -216,37 +216,22 @@ void OctreeProcessor::performSubsampling ()
 
     SubsamplingTimings timings = {};
 
-    if (itsSubsampleMetadata.strategy == RANDOM_POINT)
-    {
-        auto randomStates = createGpuRandom (1024, "randomStates");
+    auto randomStates = createGpuRandom (1024, "randomStates");
 
-        // ToDo: Time measurement
-        initRandomStates (std::time (0), randomStates, 1024);
-        auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
+    // ToDo: Time measurement
+    initRandomStates (std::time (0), randomStates, 1024);
+    auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
 
-        timings = randomSubsampling (
-                h_octreeSparse,
-                h_sparseToDenseLUT,
-                getRootIndex (),
-                itsMetadata.depth,
-                pointCountGrid,
-                denseToSpareLUT,
-                voxelCount,
-                randomStates,
-                randomIndices);
-    }
-    else
-    {
-        timings = firstPointSubsampling (
-                h_octreeSparse,
-                h_sparseToDenseLUT,
-                getRootIndex (),
-                itsMetadata.depth,
-                pointCountGrid,
-                denseToSpareLUT,
-                voxelCount,
-                subsampleData);
-    }
+    timings = randomSubsampling (
+            h_octreeSparse,
+            h_sparseToDenseLUT,
+            getRootIndex (),
+            itsMetadata.depth,
+            pointCountGrid,
+            denseToSpareLUT,
+            voxelCount,
+            randomStates,
+            randomIndices);
 
 
     itsTimeMeasurement.emplace_back ("subsampleEvaluation", timings.subsampleEvaluation);

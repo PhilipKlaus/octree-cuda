@@ -45,9 +45,3 @@ struct PointCloudMetadata
     CloudType cloudType;
     CloudMemory memoryType;
 };
-
-enum SubsampleStrategy
-{
-    FIRST_POINT,
-    RANDOM_POINT
-};

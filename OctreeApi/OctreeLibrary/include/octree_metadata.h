@@ -9,7 +9,6 @@
 
 struct SubsampleMetadata
 {
-    SubsampleStrategy strategy;
     uint32_t subsamplingGrid;
     bool performAveraging;
     bool useReplacementScheme;

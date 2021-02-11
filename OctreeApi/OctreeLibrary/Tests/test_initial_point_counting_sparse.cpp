@@ -16,7 +16,6 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
     metadata.memoryType                  = ClOUD_DEVICE;
 
     SubsampleMetadata subsampleMetadata {
-            RANDOM_POINT,
             128,
             true,
             true

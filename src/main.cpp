@@ -37,7 +37,6 @@ int main ()
     uint32_t chunkingGrid = 512;
     uint32_t subsamplingGrid = 128;
     uint32_t mergingThreshold = 10000;
-    uint8_t subsamplingStrategy = 1;
 
     // Setup cloud properties
     /*uint32_t pointAmount     = 25010001;
@@ -66,13 +65,22 @@ auto cloudType           = 0;
 std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
 */
 
-uint32_t pointAmount     = 119701547;
+/*uint32_t pointAmount     = 119701547;
 uint32_t pointDataStride = 27;
 float scaleX             = 0.01f;
 float scaleY             = 0.01f;
 float scaleZ             = 0.01f;
 auto cloudType           = 1;
 std::string plyFile      = "morrobay_fused_headerless.ply";
+*/
+
+uint32_t pointAmount     = 47111095;
+uint32_t pointDataStride = 27;
+float scaleX             = 0.001f;
+float scaleY             = 0.001f;
+float scaleZ             = 0.001f;
+auto cloudType           = 1;
+std::string plyFile      = "lifeboat_headerless.ply";
 
 // Read in ply
 auto ply = readPly (plyFile);
@@ -95,7 +103,7 @@ ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubi
 
 ocpi_set_point_cloud_host (session, ply.get ());
 ocpi_configure_chunking (session, chunkingGrid, mergingThreshold);
-ocpi_configure_subsampling (session, subsamplingGrid, subsamplingStrategy, isAveraging, useReplacementScheme);
+ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacementScheme);
 
 ocpi_generate_octree (session);
 ocpi_export_potree (session, R"(./export)");

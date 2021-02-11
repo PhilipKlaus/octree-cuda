@@ -62,10 +62,10 @@ void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mer
 }
 
 void ocpi_configure_subsampling (
-        void* session, uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
+        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
 {
     auto s = Session::ToSession (session);
-    s->configureSubsampling (subsamplingGrid, strategy, averaging, replacementScheme);
+    s->configureSubsampling (subsamplingGrid, averaging, replacementScheme);
 }
 
 void ocpi_export_memory_report (void* session, const char* filename)

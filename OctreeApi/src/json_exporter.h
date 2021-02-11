@@ -23,15 +23,7 @@ void export_json_data (
     statistics["chunking"]["mergingThreshold"] = metadata.mergingThreshold;
 
     statistics["subsampling"]["grid"] = subsampleMetadata.subsamplingGrid;
-    switch (subsampleMetadata.strategy)
-    {
-    case FIRST_POINT:
-        statistics["subsampling"]["strategy"] = "FIRST POINT";
-        break;
-    default:
-        statistics["subsampling"]["strategy"] = "RANDOM POINT";
-        break;
-    }
+    statistics["subsampling"]["strategy"] = "RANDOM POINT";
 
     statistics["resultNodes"]["octreeNodes"]      = metadata.leafNodeAmount + metadata.parentNodeAmount;
     statistics["resultNodes"]["leafNodeAmount"]   = metadata.leafNodeAmount;

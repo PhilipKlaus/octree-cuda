@@ -96,12 +96,11 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
+void Session::configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
 {
     itsSubsamplingMetadata.performAveraging     = averaging;
     itsSubsamplingMetadata.useReplacementScheme = replacementScheme;
     itsSubsamplingMetadata.subsamplingGrid      = subsamplingGrid;
-    itsSubsamplingMetadata.strategy             = static_cast<SubsampleStrategy> (strategy);
 }
 void Session::setCloudType (uint8_t cloudType)
 {

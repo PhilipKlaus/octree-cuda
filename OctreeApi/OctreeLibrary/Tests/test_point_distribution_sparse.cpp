@@ -71,7 +71,6 @@ TEST_CASE ("Test point distributing sparse", "[distributing sparse]")
     metadata.memoryType                  = ClOUD_DEVICE;
 
     SubsampleMetadata subsampleMetadata {
-            RANDOM_POINT,
             128,
             true,
             true

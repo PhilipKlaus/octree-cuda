@@ -18,7 +18,6 @@ add_library(${PROJECT_NAME} STATIC
 
         # Kernel
         src/kernel/kernel_executor.cuh
-        src/kernel/first_point_subsampling.cuh
         src/kernel/hierarchical_merging.cuh
         src/kernel/octree_initialization.cuh
         src/kernel/point_count_propagation.cuh
@@ -33,8 +32,7 @@ add_library(${PROJECT_NAME} STATIC
         src/misc/timing.cuh
 
         # OctreeProcessor
-        src/octree_processor/pipeline/first_point_subsampling.cu
-        src/octree_processor/pipeline/random_subsampling.cu
+        src/octree_processor/random_subsampling.cu
         src/octree_processor/benchmarking.cu
         src/octree_processor/debugging.cu
         src/octree_processor/octree_processor.cu
