@@ -17,6 +17,11 @@ public:
     virtual uint8_t* getCloudHost ()   = 0;
     virtual uint8_t* getCloudDevice () = 0;
 
+    const PointCloudMetadata& getMetadata ()
+    {
+        return itsMetadata;
+    }
+
 protected:
     uint8_t* itsSourceCloud;
     PointCloudMetadata itsMetadata;

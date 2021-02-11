@@ -48,11 +48,7 @@ TEST_CASE ("Test node subsampling", "[subsampling]")
     metadata.cloudType                    = CLOUD_FLOAT_UINT8_T;
     metadata.memoryType                   = ClOUD_DEVICE;
 
-    SubsampleMetadata subsampleMetadata {
-            128,
-            true,
-            true
-    };
+    SubsampleMetadata subsampleMetadata{128, true, true};
 
     auto cpuData = cuboid->toHost ();
 

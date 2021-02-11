@@ -6,7 +6,9 @@ add_executable(OctreeTest
         test_tools.cpp
         test_initial_point_counting_sparse.cpp
         test_merging_sparse.cpp
-        test_point_distribution_sparse.cpp test_subsampling_sparse.cpp)
+        test_point_distribution_sparse.cpp
+        test_subsampling_sparse.cpp
+        test_point_cloud_host.cpp test_point_cloud_device.cpp)
 
 ####################
 # ADD CUDA SUPPORT #

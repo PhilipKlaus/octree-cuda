@@ -26,7 +26,7 @@ uint8_t* PointCloudDevice::getCloudHost ()
         uint64_t cloudByteSize = itsMetadata.pointAmount * itsMetadata.pointDataStride;
         itsHostCloud           = std::make_unique<uint8_t[]> (cloudByteSize);
         gpuErrchk (cudaMemcpy (
-                itsHostCloud.get (), itsHostCloud.get (), sizeof (uint8_t) * cloudByteSize, cudaMemcpyDeviceToHost));
+                itsHostCloud.get (), itsSourceCloud, sizeof (uint8_t) * cloudByteSize, cudaMemcpyDeviceToHost));
         spdlog::info ("Copied point cloud from device->host");
     }
     return itsHostCloud.get ();

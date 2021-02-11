@@ -61,8 +61,7 @@ void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mer
     s->configureChunking (chunkingGrid, mergingThreshold);
 }
 
-void ocpi_configure_subsampling (
-        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
+void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
 {
     auto s = Session::ToSession (session);
     s->configureSubsampling (subsamplingGrid, averaging, replacementScheme);

@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/point_distributing.cuh
         src/kernel/random_subsampling.cuh
         src/kernel/subsample_evaluating.cuh
+        src/kernel/kernel_helpers.cuh
 
         # Misc
         src/misc/tools.cu
@@ -37,6 +38,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_processor/debugging.cu
         src/octree_processor/octree_processor.cu
         src/octree_processor/dummy.cpp
+        src/octree_processor/octree_chunking.cu
 
         # Data export
         src/octree_exporter/octree_exporter.cuh

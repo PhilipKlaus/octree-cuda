@@ -22,7 +22,7 @@ void export_json_data (
     statistics["chunking"]["grid"]             = metadata.chunkingGrid;
     statistics["chunking"]["mergingThreshold"] = metadata.mergingThreshold;
 
-    statistics["subsampling"]["grid"] = subsampleMetadata.subsamplingGrid;
+    statistics["subsampling"]["grid"]     = subsampleMetadata.subsamplingGrid;
     statistics["subsampling"]["strategy"] = "RANDOM POINT";
 
     statistics["resultNodes"]["octreeNodes"]      = metadata.leafNodeAmount + metadata.parentNodeAmount;

@@ -4,10 +4,10 @@
 
 #pragma once
 
+#include "octree_data.cuh"
 #include "octree_metadata.h"
 #include "point_cloud.cuh"
 #include "types.cuh"
-#include "octree_data.cuh"
 
 class OctreeProcessor
 {
@@ -24,19 +24,15 @@ public:
     void operator= (const OctreeProcessor&) = delete;
 
 public:
-    // Benchmarking
-    void exportOctreeStatistics (const string& filePath);
+    ///@{
+    ///@name Chunking
+    void initialPointCounting ();
+    void performCellMerging ();
+    void distributePoints ();
+    void performSubsampling ();
+    ///@}
 
     void exportHistogram (const string& filePath, uint32_t binWidth);
-
-    // Octree pipeline
-    void initialPointCounting ();
-
-    void performCellMerging ();
-
-    void distributePoints ();
-
-    void performSubsampling ();
 
     // Calculation tools
     void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);

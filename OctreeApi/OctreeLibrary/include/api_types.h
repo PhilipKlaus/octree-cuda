@@ -44,4 +44,9 @@ struct PointCloudMetadata
     Vector3<double> scale;
     CloudType cloudType;
     CloudMemory memoryType;
+
+    double cubicSize () const
+    {
+        return bbCubic.max.x - bbCubic.min.x;
+    }
 };
