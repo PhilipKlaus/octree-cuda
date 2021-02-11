@@ -18,6 +18,8 @@ namespace chunking {
  * The kernel evaluates the point counts of all its children nodes (cells).
  * If the sum is higher than zero, the sparse index of the parent node (cell)
  * is added to the dense-to-sparse LUT for further processing.
+ * After the propagation the actual sparse Node amount is known and the octree
+ * datastructure can be allocated.
  *
  * @param countingGrid Holds the amount of points per node (cell).
  * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
@@ -57,14 +59,15 @@ __global__ void kernelPropagatePointCounts (
     uint32_t denseIndex = cellOffset + index;
 
     // Calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * LowerGridSize * 2) + (coords.x * 2); // int: 0 -> Child 0
-    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;                                             // int: 4 -> child 4
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + LowerGridSize;                                   // int: 1 -> child 1
-    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;                                             // int: 5 -> child 5
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;                                         // int: 2 -> child 2
-    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;                                             // int: 6 -> child 6
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + LowerGridSize;                                   // int: 3 -> child 3
-    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;                                             // int: 7 -> child 7
+    uint32_t chunk_0_0_0_index = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * LowerGridSize * 2) +
+                                 (coords.x * 2);                    // int: 0 -> Child 0
+    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;             // int: 4 -> child 4
+    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + LowerGridSize; // int: 1 -> child 1
+    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;             // int: 5 -> child 5
+    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;         // int: 2 -> child 2
+    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;             // int: 6 -> child 6
+    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + LowerGridSize; // int: 3 -> child 3
+    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;             // int: 7 -> child 7
 
     // Create pointers to the 8 underlying cells
     uint32_t* chunk_0_0_0 = countingGrid + chunk_0_0_0_index;

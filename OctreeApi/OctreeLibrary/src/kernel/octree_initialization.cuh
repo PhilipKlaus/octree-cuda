@@ -1,3 +1,9 @@
+/**
+ * @file octree_initialization.cuh
+ * @author Philip Klaus
+ * @brief Contains code for initializing the base level (leafs) of the octree.
+ */
+
 #pragma once
 
 #include "octree_metadata.h"
@@ -6,32 +12,40 @@
 
 namespace chunking {
 
-__global__ void kernelOctreeInitialization (
+/**
+ * Initializes the leaf nodes of the octree and adds sparse-to-dense mappings.
+ *
+ * @param octreeSparse The octree datastructure.
+ * @param countingGrid Holds the amount of points per cell (dense).
+ * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
+ * @param sparseToDenseLUT Holds the sparse-to-dense node mapping.
+ * @param nodeAmount The maximum amount of nodees (cells).
+ */
+__global__ void kernelInitLeafNodes (
         Chunk* octreeSparse,
-        const uint32_t* densePointCount,
+        const uint32_t* countingGrid,
         const int* denseToSparseLUT,
         int* sparseToDenseLUT,
         uint32_t nodeAmount)
 {
-    int indexDense = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (indexDense >= nodeAmount)
+    if (index >= nodeAmount)
     {
         return;
     }
 
-    int sparseVoxelIndex = denseToSparseLUT[indexDense];
+    int sparseVoxelIndex = denseToSparseLUT[index];
 
     if (sparseVoxelIndex == -1)
     {
         return;
     }
 
-    sparseToDenseLUT[sparseVoxelIndex] = indexDense;
+    sparseToDenseLUT[sparseVoxelIndex] = index;
 
     Chunk* chunk      = octreeSparse + sparseVoxelIndex;
-    chunk->pointCount = densePointCount[indexDense];
-
+    chunk->pointCount = countingGrid[index];
     chunk->childrenChunks[0] = -1;
     chunk->childrenChunks[1] = -1;
     chunk->childrenChunks[2] = -1;
@@ -40,8 +54,6 @@ __global__ void kernelOctreeInitialization (
     chunk->childrenChunks[5] = -1;
     chunk->childrenChunks[6] = -1;
     chunk->childrenChunks[7] = -1;
-
-    assert (chunk->pointCount != 0);
 }
 
 } // namespace chunking

@@ -45,7 +45,6 @@ void OctreeProcessor::initialPointCounting ()
 
 void OctreeProcessor::performCellMerging ()
 {
-
     float timeAccumulated = 0;
 
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
@@ -85,7 +84,7 @@ void OctreeProcessor::performCellMerging ()
 void OctreeProcessor::initLowestOctreeHierarchy ()
 {
     float time = executeKernel (
-            chunking::kernelOctreeInitialization,
+            chunking::kernelInitLeafNodes,
             itsOctreeData->getNodes (0),
             itsOctree->devicePointer (),
             itsDensePointCountPerVoxel->devicePointer (),
