@@ -3,10 +3,8 @@
 //
 
 #include "hierarchical_merging.cuh"
-#include "octree_initialization.cuh"
 #include "octree_processor.h"
 #include "ply_exporter.cuh"
-#include "point_count_propagation.cuh"
 #include "point_distributing.cuh"
 #include "potree_exporter.cuh"
 
@@ -46,70 +44,6 @@ OctreeProcessor::OctreeProcessor (
 //###################
 //#     Pipeline    #
 //###################
-
-void OctreeProcessor::performCellMerging ()
-{
-    // Allocate the temporary sparseIndexCounter
-    auto nodeAmountSparse = createGpuU32 (1, "nodeAmountSparse");
-    // !IMPORTANT! initialize it with the current sparse node counts (from base level)
-    gpuErrchk (cudaMemcpy (
-            nodeAmountSparse->devicePointer (),
-            &itsMetadata.nodeAmountSparse,
-            1 * sizeof (uint32_t),
-            cudaMemcpyHostToDevice));
-
-    float timeAccumulated = 0;
-
-    // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for (uint32_t i = 0; i < itsMetadata.depth; ++i)
-    {
-        float time = executeKernel (
-                chunking::kernelPropagatePointCounts,
-                itsOctreeData->getNodes (i + 1),
-                itsDensePointCountPerVoxel->devicePointer (),
-                itsDenseToSparseLUT->devicePointer (),
-                nodeAmountSparse->devicePointer (),
-                itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getGridSize (i + 1),
-                itsOctreeData->getGridSize (i),
-                itsOctreeData->getNodeOffset (i + 1),
-                itsOctreeData->getNodeOffset (i));
-
-        itsTimeMeasurement.emplace_back (
-                "propagatePointCounts_" + std::to_string (itsOctreeData->getGridSize (i)), time);
-        timeAccumulated += time;
-    }
-
-    spdlog::info ("'propagatePointCounts' took {:f} [ms]", timeAccumulated);
-
-    // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
-    itsMetadata.nodeAmountSparse = nodeAmountSparse->toHost ()[0];
-    itsOctree                    = createGpuOctree (itsMetadata.nodeAmountSparse, "octreeSparse");
-
-    // Allocate the conversion LUT from sparse to dense
-    itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
-    itsSparseToDenseLUT->memset (-1);
-
-    initLowestOctreeHierarchy ();
-    mergeHierarchical ();
-}
-
-
-void OctreeProcessor::initLowestOctreeHierarchy ()
-{
-    float time = executeKernel (
-            chunking::kernelOctreeInitialization,
-            itsOctreeData->getNodes (0),
-            itsOctree->devicePointer (),
-            itsDensePointCountPerVoxel->devicePointer (),
-            itsDenseToSparseLUT->devicePointer (),
-            itsSparseToDenseLUT->devicePointer (),
-            itsOctreeData->getNodes (0));
-
-    itsTimeMeasurement.emplace_back ("initLowestOctreeHierarchy", time);
-    spdlog::info ("'initLowestOctreeHierarchy' took {:f} [ms]", time);
-}
-
 
 void OctreeProcessor::mergeHierarchical ()
 {

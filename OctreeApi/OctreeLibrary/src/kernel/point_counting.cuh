@@ -20,7 +20,7 @@ namespace chunking {
  * dense-to-sparse LUT is created.
  *
  * @tparam coordinateType The data type of the 3D coordinates in the cloud.
- * @param cellPointCounter Holds the amount of points per cell (dense).
+ * @param countingGrid Holds the amount of points per cell (dense).
  * @param filledNodeCounter Holds the amount of filled (non-empty) cells (sparse).
  * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
  * @param cloud Holds point cloud related data.
@@ -28,7 +28,7 @@ namespace chunking {
  */
 template <typename coordinateType>
 __global__ void kernelPointCounting (
-        uint32_t* cellPointCounter,
+        uint32_t* countingGrid,
         uint32_t* filledNodeCounter,
         int* denseToSparseLUT,
         KernelStructs::Cloud cloud,
@@ -43,7 +43,7 @@ __global__ void kernelPointCounting (
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
 
     auto denseIndex = mapPointToGrid<coordinateType> (point, gridding);
-    auto previous   = atomicAdd ((cellPointCounter + denseIndex), 1);
+    auto previous   = atomicAdd ((countingGrid + denseIndex), 1);
 
     if (previous == 0)
     {

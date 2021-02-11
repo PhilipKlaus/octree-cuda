@@ -25,9 +25,6 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
     auto denseCount       = octree->getDensePointCountPerVoxel ();
     auto denseToSparseLUT = octree->getDenseToSparseLUT ();
 
-    // Require that all cells are filled and that there is no empty space
-    REQUIRE (octree->getMetadata ().nodeAmountSparse == pow (128, 3));
-
     // Require that the sum of the accumulated point counts equaly to the actual point amount of the octree
     uint32_t sum = 0;
     for (uint32_t i = 0; i < static_cast<uint32_t> (pow (128, 3)); ++i)
