@@ -1,34 +1,49 @@
+/**
+ * @file point_distribution.cuh
+ * @author Philip Klaus
+ * @brief Contains code to distribute cloud points to their target leaf nodes
+ */
+
 #pragma once
 
 #include "kernel_executor.cuh"
-#include "octree_metadata.h"
-#include "tools.cuh"
 #include "types.cuh"
-
+#include "kernel_structs.cuh"
 
 namespace chunking {
 
+/**
+ * Distributes 3D points from the point cloud to the leaf nodes of the octree.
+ * The CUDA kernel iteratively tests whether the target node is marked
+ * as finished. If it is finished the point index is stored in the nodes
+ * point-LUT else the kernel tests the next higher parent node.
+ *
+ * @tparam coordinateType
+ * @param octree
+ * @param dataLUT
+ * @param denseToSparseLUT
+ * @param tmpIndexRegister
+ * @param cloud
+ * @param gridding
+ */
 template <typename coordinateType>
 __global__ void kernelDistributePoints (
         Chunk* octree,
-        uint8_t* cloud,
         uint32_t* dataLUT,
         int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
-        PointCloudMetadata metadata,
-        uint32_t gridSize)
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (index >= metadata.pointAmount)
+    if (index >= cloud.points)
     {
         return;
     }
 
-    Vector3<coordinateType>* point =
-            reinterpret_cast<Vector3<coordinateType>*> (cloud + index * metadata.pointDataStride);
+    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
 
-    auto denseVoxelIndex  = tools::calculateGridIndex (point, metadata, gridSize);
-    auto sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
+    auto sparseVoxelIndex = denseToSparseLUT[ mapPointToGrid<coordinateType> (point, gridding)];
 
     bool isFinished = octree[sparseVoxelIndex].isFinished;
 

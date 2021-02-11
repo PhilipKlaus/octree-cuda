@@ -1,16 +1,17 @@
 /**
  * @file octree_chunking.cu
  * @author Philip Klaus
- * @brief Contains implementations of chunking-related methods
+ * @brief Contains implementations of chunking-related Octreeprocessor methods
  */
 
 #include "kernel_executor.cuh"
 #include "octree_processor.h"
 
+#include "hierarchical_merging.cuh"
 #include "octree_initialization.cuh"
 #include "point_count_propagation.cuh"
 #include "point_counting.cuh"
-#include "hierarchical_merging.cuh"
+#include "point_distributing.cuh"
 
 
 void OctreeProcessor::initialPointCounting ()
@@ -125,4 +126,27 @@ void OctreeProcessor::mergeHierarchical ()
     }
 
     spdlog::info ("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
+}
+
+void OctreeProcessor::distributePoints ()
+{
+    auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
+    tmpIndexRegister->memset (0);
+
+    auto& meta                       = itsCloud->getMetadata ();
+    Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount};
+    KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride};
+    KernelStructs::Gridding gridding = {itsOctreeData->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
+
+    float time = Kernel::distributePoints (
+            config,
+            itsOctree->devicePointer (),
+            itsLeafLut->devicePointer (),
+            itsDenseToSparseLUT->devicePointer (),
+            tmpIndexRegister->devicePointer (),
+            cloud,
+            gridding);
+
+    itsTimeMeasurement.emplace_back ("distributePointsSparse", time);
+    spdlog::info ("'distributePoints' took {:f} [ms]", time);
 }

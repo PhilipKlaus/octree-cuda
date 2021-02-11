@@ -4,9 +4,8 @@
 
 #include "octree_processor.h"
 #include "ply_exporter.cuh"
-#include "point_distributing.cuh"
 #include "potree_exporter.cuh"
-
+#include "tools.cuh"
 
 OctreeProcessor::OctreeProcessor (
         uint8_t* pointCloud,
@@ -38,30 +37,6 @@ OctreeProcessor::OctreeProcessor (
     // Create data LUT
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
     spdlog::info ("Prepared empty SparseOctree");
-}
-
-//###################
-//#     Pipeline    #
-//###################
-
-void OctreeProcessor::distributePoints ()
-{
-    // Create temporary indexRegister for assigning an index for each point within its chunk area
-    auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
-    tmpIndexRegister->memset (0);
-
-    float time = Kernel::distributePoints (
-            {itsMetadata.cloudMetadata.cloudType, itsMetadata.cloudMetadata.pointAmount},
-            itsOctree->devicePointer (),
-            itsCloud->getCloudDevice (),
-            itsLeafLut->devicePointer (),
-            itsDenseToSparseLUT->devicePointer (),
-            tmpIndexRegister->devicePointer (),
-            itsMetadata.cloudMetadata,
-            itsOctreeData->getGridSize (0));
-
-    itsTimeMeasurement.emplace_back ("distributePointsSparse", time);
-    spdlog::info ("'distributePoints' took {:f} [ms]", time);
 }
 
 
