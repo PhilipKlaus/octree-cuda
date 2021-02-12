@@ -46,23 +46,28 @@ namespace Kernel {
 template <typename... Arguments>
 float evaluateSubsamples (KernelConfig config, Arguments&&... args)
 {
+    // Calculate kernel dimensions
+    dim3 grid, block;
+
+    auto blocks = ceil (static_cast<double> (config.threadAmount) / 128);
+    auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+    auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+    block = dim3 (128, 1, 1);
+    grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                subsampling::kernelEvaluateSubsamples<float>, config.threadAmount, std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelEvaluateSubsamples<float><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
     else
     {
-        // Calculate kernel dimensions
-        dim3 grid, block;
-
-        auto blocks = ceil (static_cast<double> (config.threadAmount) / BLOCK_SIZE_MAX);
-        auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
-        auto gridY  = ceil (blocks / GRID_SIZE_MAX);
-
-        block = dim3 (BLOCK_SIZE_MAX, 1, 1);
-        grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
-
         tools::KernelTimer timer;
         timer.start ();
         subsampling::kernelEvaluateSubsamples<double><<<grid, block>>> (std::forward<Arguments> (args)...);
