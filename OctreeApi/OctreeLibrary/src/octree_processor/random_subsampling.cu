@@ -53,30 +53,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
     if (voxel.isParent)
     {
         // Prepare and update the SubsampleConfig on the GPU
-        uint32_t accumulatedPoints = 0;
         SubsampleSet subsampleSet{};
-        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
-
-        SubsampleSetTest test{};
-        auto* config = (SubsampleConfigTest*)(&test);
-
-        for (uint8_t i = 0; i < 8; ++i)
-        {
-            int childIndex = voxel.childrenChunks[i];
-            if(childIndex != -1) {
-                Chunk child = h_octreeSparse[childIndex];
-                config[i].pointAmount = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
-                config[i].averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
-                config[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
-                config[i].lutAdress =
-                        child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
-            }
-            else {
-                config[i].pointAmount = 0;
-                config[i].averagingAdress = nullptr;
-                config[i].lutAdress = nullptr;
-            }
-        }
+        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
@@ -90,7 +68,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         // Evaluate how many points fall in each cell
         timings.subsampleEvaluation += Kernel::evaluateSubsamples (
                 kernelConfig,
-                test,
+                subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 cloud,
                 gridding);
@@ -120,7 +98,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         // Perform averaging in parallel for all child nodes
         timings.averaging += Kernel::performAveraging (
                 kernelConfig,
-                test,
+                subsampleSet,
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 cloud,
@@ -129,7 +107,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
                 kernelConfig,
-                test,
+                subsampleSet,
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),

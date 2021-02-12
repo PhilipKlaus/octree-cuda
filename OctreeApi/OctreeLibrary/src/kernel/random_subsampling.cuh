@@ -11,14 +11,14 @@ namespace subsampling {
 
 template <typename coordinateType, typename colorType>
 __global__ void kernelPerformAveraging (
-        SubsampleSetTest test,
+        SubsampleSet test,
         Averaging* parentAveragingData,
         int* denseToSparseLUT,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    SubsampleConfig* config = (SubsampleConfig*)(&test);
     int gridIndex = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)
@@ -52,10 +52,10 @@ __global__ void kernelPerformAveraging (
 }
 
 
-// Move point indices from old (child LUT) to new (parent LUT)
+// Move point indices from old (child LUT) to new (parent LUT
 template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
-        SubsampleSetTest test,
+        SubsampleSet test,
         uint32_t* parentDataLUT,
         uint32_t* countingGrid,
         int* denseToSparseLUT,
@@ -66,7 +66,7 @@ __global__ void kernelRandomPointSubsample (
         bool replacementScheme)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    SubsampleConfig* config = (SubsampleConfig*)(&test);
     int gridIndex = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)

@@ -50,7 +50,6 @@ void OctreeProcessor::performSubsampling ()
     auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
     auto denseToSpareLUT = createGpuI32 (nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount      = createGpuU32 (1, "voxelCount");
-    auto subsampleData   = createGpuSubsample (8, "subsampleData");
 
     pointCountGrid->memset (0);
     denseToSpareLUT->memset (-1);
@@ -90,55 +89,28 @@ void OctreeProcessor::performSubsampling ()
 uint32_t OctreeProcessor::prepareSubsampleConfig (
         SubsampleSet& subsampleSet,
         Chunk& voxel,
-        const unique_ptr<Chunk[]>& h_octreeSparse,
-        uint32_t& accumulatedPoints)
+        const unique_ptr<Chunk[]>& h_octreeSparse)
 {
     uint32_t maxPoints = 0;
-    uint32_t i = 0;
-    for (int childIndex : voxel.childrenChunks)
+    auto* config = (SubsampleConfig*)(&subsampleSet);
+
+    for (uint8_t i = 0; i < 8; ++i)
     {
-        if (childIndex != -1)
-        {
-            SubsampleConfig* config;
-            switch (i)
-            {
-            case 0:
-                config = &subsampleSet.child_0;
-                break;
-            case 1:
-                config = &subsampleSet.child_1;
-                break;
-            case 2:
-                config = &subsampleSet.child_2;
-                break;
-            case 3:
-                config = &subsampleSet.child_3;
-                break;
-            case 4:
-                config = &subsampleSet.child_4;
-                break;
-            case 5:
-                config = &subsampleSet.child_5;
-                break;
-            case 6:
-                config = &subsampleSet.child_6;
-                break;
-            default:
-                config = &subsampleSet.child_7;
-                break;
-            }
+        int childIndex = voxel.childrenChunks[i];
+        if(childIndex != -1) {
             Chunk child = h_octreeSparse[childIndex];
-            config->lutAdress =
+            config[i].pointAmount = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            maxPoints = max(maxPoints, config[i].pointAmount);
+            config[i].averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
+            config[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
+            config[i].lutAdress =
                     child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
-            config->averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
-            config->lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
-            config->pointOffsetLower = accumulatedPoints;
-            uint32_t points = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
-            maxPoints = max(maxPoints, points);
-            accumulatedPoints += points;
-            config->pointOffsetUpper = accumulatedPoints;
         }
-        ++i;
+        else {
+            config[i].pointAmount = 0;
+            config[i].averagingAdress = nullptr;
+            config[i].lutAdress = nullptr;
+        }
     }
     return maxPoints;
 }

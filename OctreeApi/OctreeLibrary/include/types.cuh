@@ -15,30 +15,9 @@ struct Averaging
 struct SubsampleConfig
 {
     uint32_t* lutAdress;
-    Averaging* averagingAdress;
-    uint32_t lutStartIndex;
-    uint32_t pointOffsetLower;
-    uint32_t pointOffsetUpper;
-};
-
-struct SubsampleConfigTest
-{
-    uint32_t* lutAdress;
     uint32_t lutStartIndex;
     Averaging* averagingAdress;
     uint32_t pointAmount;
-};
-
-struct __align__ (16) SubsampleSetTest
-{
-    SubsampleConfig child_0;
-    SubsampleConfig child_1;
-    SubsampleConfig child_2;
-    SubsampleConfig child_3;
-    SubsampleConfig child_4;
-    SubsampleConfig child_5;
-    SubsampleConfig child_6;
-    SubsampleConfig child_7;
 };
 
 struct __align__ (16) SubsampleSet

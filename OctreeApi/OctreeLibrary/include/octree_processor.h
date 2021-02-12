@@ -90,8 +90,7 @@ private:
     uint32_t OctreeProcessor::prepareSubsampleConfig (
             SubsampleSet& subsampleSet,
             Chunk& voxel,
-            const unique_ptr<Chunk[]>& h_octreeSparse,
-            uint32_t& accumulatedPoints);
+            const unique_ptr<Chunk[]>& h_octreeSparse);
 
     float initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
 

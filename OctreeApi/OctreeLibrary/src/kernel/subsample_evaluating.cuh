@@ -11,13 +11,13 @@ namespace subsampling {
 
 template <typename coordinateType>
 __global__ void kernelEvaluateSubsamples (
-        SubsampleSetTest test,
+        SubsampleSet test,
         uint32_t* densePointCount,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    SubsampleConfig* config = (SubsampleConfig*)(&test);
     int gridIndex = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)

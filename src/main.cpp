@@ -65,15 +65,17 @@ auto cloudType           = 0;
 std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
 */
 
-/*uint32_t pointAmount     = 119701547;
+
+uint32_t pointAmount     = 119701547;
 uint32_t pointDataStride = 27;
 float scaleX             = 0.01f;
 float scaleY             = 0.01f;
 float scaleZ             = 0.01f;
 auto cloudType           = 1;
 std::string plyFile      = "morrobay_fused_headerless.ply";
-*/
 
+
+/*
 uint32_t pointAmount     = 47111095;
 uint32_t pointDataStride = 27;
 float scaleX             = 0.001f;
@@ -81,7 +83,7 @@ float scaleY             = 0.001f;
 float scaleZ             = 0.001f;
 auto cloudType           = 1;
 std::string plyFile      = "lifeboat_headerless.ply";
-
+*/
 // Read in ply
 auto ply = readPly (plyFile);
 
