@@ -4,58 +4,47 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
+#include "kernel_helpers.cuh"
+#include "kernel_structs.cuh"
 
 namespace subsampling {
 
 template <typename coordinateType, typename colorType>
 __global__ void kernelPerformAveraging (
-        uint8_t* cloud,
-        SubsampleSet subsampleSet,
+        SubsampleSetTest test,
         Averaging* parentAveragingData,
         int* denseToSparseLUT,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength,
-        uint32_t accumulatedPoints)
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding)
 {
-    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (thread >= accumulatedPoints)
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    int gridIndex = blockIdx.z;
+
+    if (index >= config[gridIndex].pointAmount)
     {
         return;
     }
 
     // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT     = nullptr;
-    Averaging* childAveraging  = nullptr;
-    uint32_t childDataLUTStart = 0;
+    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
+    Averaging* childAveraging  = config[gridIndex].averagingAdress;
+    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
 
-    SubsampleConfig* config = reinterpret_cast<SubsampleConfig*> (&subsampleSet);
-
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        if (thread < config[i].pointOffsetUpper)
-        {
-            childDataLUT      = config[i].lutAdress;
-            childAveraging    = config[i].averagingAdress;
-            childDataLUTStart = config[i].lutStartIndex;
-            thread -= config[i].pointOffsetLower;
-            break;
-        }
-    }
-
-    uint8_t* targetCloudByte = cloud + childDataLUT[childDataLUTStart + thread] * metadata.pointDataStride;
+    uint8_t* targetCloudByte = cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride;
 
     // Get the coordinates & colors from the point within the point cloud
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
     Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
-    // 1. Calculate the index within the dense grid of the evaluateSubsamples
-    auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
+    // Calculate cell index
+    auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
     int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
     bool hasAveragingData = (childAveraging != nullptr);
 
-    Averaging* averagingData = childAveraging + thread;
+    Averaging* averagingData = childAveraging + index;
     atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
     atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? averagingData->r : color->x);
     atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? averagingData->g : color->y);
@@ -174,19 +163,34 @@ namespace Kernel {
 template <typename... Arguments>
 float performAveraging (KernelConfig config, Arguments&&... args)
 {
+    // Calculate kernel dimensions
+    dim3 grid, block;
+
+    auto blocks = ceil (static_cast<double> (config.threadAmount) / 128);
+    auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+    auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+    block = dim3 (128, 1, 1);
+    grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                subsampling::kernelPerformAveraging<float, uint8_t>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelPerformAveraging<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
     else
     {
-        return executeKernel (
-                subsampling::kernelPerformAveraging<double, uint8_t>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelPerformAveraging<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
 }
 

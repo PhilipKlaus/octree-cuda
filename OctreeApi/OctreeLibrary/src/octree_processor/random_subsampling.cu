@@ -119,14 +119,12 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 
         // Perform averaging in parallel for all child nodes
         timings.averaging += Kernel::performAveraging (
-                {metadata.cloudType, accumulatedPoints},
-                itsCloud->getCloudDevice (),
-                subsampleSet,
+                kernelConfig,
+                test,
                 itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                metadata,
-                itsSubsampleMetadata.subsamplingGrid,
-                accumulatedPoints);
+                cloud,
+                gridding);
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
