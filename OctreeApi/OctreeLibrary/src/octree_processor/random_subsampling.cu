@@ -16,6 +16,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         uint32_t sparseVoxelIndex,
         uint32_t level,
         GpuArrayU32& subsampleCountingGrid,
+        GpuAveraging & averagingGrid,
         GpuArrayI32& subsampleDenseToSparseLUT,
         GpuArrayU32& subsampleSparseVoxelCount,
         GpuRandomState& randomStates,
@@ -37,6 +38,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                     childIndex,
                     level - 1,
                     subsampleCountingGrid,
+                    averagingGrid,
                     subsampleDenseToSparseLUT,
                     subsampleSparseVoxelCount,
                     randomStates,
@@ -70,6 +72,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 kernelConfig,
                 subsampleSet,
                 subsampleCountingGrid->devicePointer (),
+                averagingGrid->devicePointer(),
                 cloud,
                 gridding);
 
@@ -94,22 +97,14 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         itsParentLut.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
         itsAveragingData.insert (make_pair (sparseVoxelIndex, move (averagingData)));
 
-
-        // Perform averaging in parallel for all child nodes
-        timings.averaging += Kernel::performAveraging (
-                kernelConfig,
-                subsampleSet,
-                itsAveragingData[sparseVoxelIndex]->devicePointer (),
-                subsampleDenseToSparseLUT->devicePointer (),
-                cloud,
-                gridding);
-
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
                 kernelConfig,
                 subsampleSet,
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
+                itsAveragingData[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
+                averagingGrid->devicePointer(),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
                 cloud,

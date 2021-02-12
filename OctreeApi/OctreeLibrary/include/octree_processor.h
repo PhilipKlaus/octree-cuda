@@ -82,6 +82,7 @@ private:
             uint32_t sparseVoxelIndex,
             uint32_t level,
             GpuArrayU32& subsampleCountingGrid,
+            GpuAveraging & averagingGrid,
             GpuArrayI32& subsampleDenseToSparseLUT,
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,

@@ -9,16 +9,17 @@
 
 namespace subsampling {
 
-template <typename coordinateType>
+template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
         SubsampleSet test,
         uint32_t* densePointCount,
+        Averaging* averagingGrid,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     SubsampleConfig* config = (SubsampleConfig*)(&test);
-    int gridIndex = blockIdx.z;
+    int gridIndex           = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)
     {
@@ -26,17 +27,26 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT      = config[gridIndex].lutAdress;
+    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
     uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
+    Averaging* childAveraging  = config[gridIndex].averagingAdress;
 
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride);
+    // Get the coordinates & colors from the point within the point cloud
+    uint8_t* targetCloudByte       = cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride;
+    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
+    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    // Increase point count in cell
-    auto oldIndex = atomicAdd ((densePointCount + denseVoxelIndex), 1);
+    atomicAdd ((densePointCount + denseVoxelIndex), 1);
+
+    bool hasAveragingData    = (childAveraging != nullptr);
+    Averaging* averagingData = childAveraging + index;
+    atomicAdd (&(averagingGrid[denseVoxelIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
+    atomicAdd (&(averagingGrid[denseVoxelIndex].r), hasAveragingData ? averagingData->r : color->x);
+    atomicAdd (&(averagingGrid[denseVoxelIndex].g), hasAveragingData ? averagingData->g : color->y);
+    atomicAdd (&(averagingGrid[denseVoxelIndex].b), hasAveragingData ? averagingData->b : color->z);
 }
 } // namespace subsampling
 
@@ -61,7 +71,7 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     {
         tools::KernelTimer timer;
         timer.start ();
-        subsampling::kernelEvaluateSubsamples<float><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
         timer.stop ();
         gpuErrchk (cudaGetLastError ());
         return timer.getMilliseconds ();
@@ -70,7 +80,7 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     {
         tools::KernelTimer timer;
         timer.start ();
-        subsampling::kernelEvaluateSubsamples<double><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
         timer.stop ();
         gpuErrchk (cudaGetLastError ());
         return timer.getMilliseconds ();

@@ -48,6 +48,7 @@ void OctreeProcessor::performSubsampling ()
 
     // Prepare data strucutres for the subsampling
     auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
+    auto averagingGrid  = createGpuAveraging (nodesBaseLevel, "averagingGrid");
     auto denseToSpareLUT = createGpuI32 (nodesBaseLevel, "denseToSpareLUT");
     auto voxelCount      = createGpuU32 (1, "voxelCount");
 
@@ -69,6 +70,7 @@ void OctreeProcessor::performSubsampling ()
             getRootIndex (),
             itsMetadata.depth,
             pointCountGrid,
+            averagingGrid,
             denseToSpareLUT,
             voxelCount,
             randomStates,
