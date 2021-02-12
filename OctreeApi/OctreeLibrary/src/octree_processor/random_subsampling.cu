@@ -55,24 +55,47 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         // Prepare and update the SubsampleConfig on the GPU
         uint32_t accumulatedPoints = 0;
         SubsampleSet subsampleSet{};
-        prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
+        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse, accumulatedPoints);
+
+        SubsampleSetTest test{};
+        auto* config = (SubsampleConfigTest*)(&test);
+
+        for (uint8_t i = 0; i < 8; ++i)
+        {
+            int childIndex = voxel.childrenChunks[i];
+            if(childIndex != -1) {
+                Chunk child = h_octreeSparse[childIndex];
+                config[i].pointAmount = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+                config[i].averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
+                config[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
+                config[i].lutAdress =
+                        child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
+            }
+            else {
+                config[i].pointAmount = 0;
+                config[i].averagingAdress = nullptr;
+                config[i].lutAdress = nullptr;
+            }
+        }
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
+        Kernel::KernelConfig kernelConfig      = {metadata.cloudType, maxPoints};
+        KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
+        KernelStructs::Gridding gridding = {itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
+
         // Evaluate the subsample points in parallel for all child nodes
         timings.subsampleEvaluation += Kernel::evaluateSubsamples (
-                {metadata.cloudType, accumulatedPoints},
-                itsCloud->getCloudDevice (),
-                subsampleSet,
+                kernelConfig,
+                test,
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
-                metadata,
-                itsSubsampleMetadata.subsamplingGrid,
-                accumulatedPoints);
+                cloud,
+                gridding);
 
 
         // Reserve memory for a data LUT for the parent node

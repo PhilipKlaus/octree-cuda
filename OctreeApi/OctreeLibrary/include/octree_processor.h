@@ -87,7 +87,7 @@ private:
             GpuRandomState& randomStates,
             GpuArrayU32& randomIndices);
 
-    void OctreeProcessor::prepareSubsampleConfig (
+    uint32_t OctreeProcessor::prepareSubsampleConfig (
             SubsampleSet& subsampleSet,
             Chunk& voxel,
             const unique_ptr<Chunk[]>& h_octreeSparse,

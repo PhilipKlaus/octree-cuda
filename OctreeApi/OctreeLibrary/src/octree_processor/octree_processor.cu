@@ -87,12 +87,13 @@ void OctreeProcessor::performSubsampling ()
 }
 
 
-void OctreeProcessor::prepareSubsampleConfig (
+uint32_t OctreeProcessor::prepareSubsampleConfig (
         SubsampleSet& subsampleSet,
         Chunk& voxel,
         const unique_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& accumulatedPoints)
 {
+    uint32_t maxPoints = 0;
     uint32_t i = 0;
     for (int childIndex : voxel.childrenChunks)
     {
@@ -132,11 +133,14 @@ void OctreeProcessor::prepareSubsampleConfig (
             config->averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
             config->lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
             config->pointOffsetLower = accumulatedPoints;
-            accumulatedPoints += child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            uint32_t points = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            maxPoints = max(maxPoints, points);
+            accumulatedPoints += points;
             config->pointOffsetUpper = accumulatedPoints;
         }
         ++i;
     }
+    return maxPoints;
 }
 
 void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)

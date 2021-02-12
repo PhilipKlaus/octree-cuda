@@ -4,49 +4,38 @@
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-
+#include "kernel_helpers.cuh"
+#include "kernel_structs.cuh"
 
 namespace subsampling {
 
 template <typename coordinateType>
 __global__ void kernelEvaluateSubsamples (
-        uint8_t* cloud,
-        SubsampleSet subsampleSet,
+        SubsampleSetTest test,
         uint32_t* densePointCount,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength,
-        uint32_t accumulatedPoints)
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (index >= accumulatedPoints)
+    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    int gridIndex = blockIdx.z;
+
+    if (index >= config[gridIndex].pointAmount)
     {
         return;
     }
 
     // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT     = nullptr;
-    uint32_t childDataLUTStart = 0;
-
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-
-    for (int i = 0; i < 8; ++i)
-    {
-        if (index < config[i].pointOffsetUpper)
-        {
-            childDataLUT      = config[i].lutAdress;
-            childDataLUTStart = config[i].lutStartIndex;
-            index -= config[i].pointOffsetLower;
-            break;
-        }
-    }
+    uint32_t* childDataLUT      = config[gridIndex].lutAdress;
+    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
 
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud + childDataLUT[childDataLUTStart + index] * metadata.pointDataStride);
+            cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride);
 
     // 1. Calculate the index within the dense grid of the evaluateSubsamples
-    auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
+    auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
     // 2. We are only interested in the first point within a cell
     auto oldIndex = atomicAdd ((densePointCount + denseVoxelIndex), 1);
@@ -73,8 +62,22 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     }
     else
     {
-        return executeKernel (
-                subsampling::kernelEvaluateSubsamples<double>, config.threadAmount, std::forward<Arguments> (args)...);
+        // Calculate kernel dimensions
+        dim3 grid, block;
+
+        auto blocks = ceil (static_cast<double> (config.threadAmount) / BLOCK_SIZE_MAX);
+        auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+        auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+        block = dim3 (BLOCK_SIZE_MAX, 1, 1);
+        grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelEvaluateSubsamples<double><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
 }
 
