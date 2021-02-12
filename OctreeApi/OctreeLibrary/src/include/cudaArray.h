@@ -54,7 +54,7 @@ public:
         return itsElements;
     }
 
-    void memset (dataType value)
+    void memset (int value)
     {
         gpuErrchk (cudaMemset (itsData, value, itsElements * sizeof (dataType)));
     }

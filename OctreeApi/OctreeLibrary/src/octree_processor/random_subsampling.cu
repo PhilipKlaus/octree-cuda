@@ -87,27 +87,15 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
         KernelStructs::Gridding gridding = {itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        // Evaluate the subsample points in parallel for all child nodes
+        // Evaluate how many points fall in each cell
         timings.subsampleEvaluation += Kernel::evaluateSubsamples (
                 kernelConfig,
                 test,
                 subsampleCountingGrid->devicePointer (),
-                subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
                 cloud,
                 gridding);
 
-
-        // Reserve memory for a data LUT for the parent node
-        auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];
-
-        // Create LUT and averaging data for parent node
-        auto subsampleLUT  = createGpuU32 (amountUsedVoxels, "subsampleLUT_" + to_string (sparseVoxelIndex));
-        auto averagingData = createGpuAveraging (amountUsedVoxels, "averagingData_" + to_string (sparseVoxelIndex));
-        itsParentLut.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
-        itsAveragingData.insert (make_pair (sparseVoxelIndex, move (averagingData)));
-
-        // Prepare random point indices and reset averaging data
+        // Prepare one random point index per cell
         uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
         timings.generateRandoms += executeKernel (
                 subsampling::kernelGenerateRandoms,
@@ -115,9 +103,19 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 randomStates->devicePointer (),
                 randomIndices->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                itsAveragingData[sparseVoxelIndex]->devicePointer (),
+                subsampleSparseVoxelCount->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 threads);
+
+        // Reserve memory for a data LUT for the parent node
+        auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];
+        // Create LUT and averaging data for parent node
+        auto subsampleLUT  = createGpuU32 (amountUsedVoxels, "subsampleLUT_" + to_string (sparseVoxelIndex));
+        auto averagingData = createGpuAveraging (amountUsedVoxels, "averagingData_" + to_string (sparseVoxelIndex));
+        averagingData->memset(0);
+        itsParentLut.insert (make_pair (sparseVoxelIndex, move (subsampleLUT)));
+        itsAveragingData.insert (make_pair (sparseVoxelIndex, move (averagingData)));
+
 
         // Perform averaging in parallel for all child nodes
         timings.averaging += Kernel::performAveraging (

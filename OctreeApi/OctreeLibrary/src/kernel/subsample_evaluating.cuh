@@ -13,8 +13,6 @@ template <typename coordinateType>
 __global__ void kernelEvaluateSubsamples (
         SubsampleSetTest test,
         uint32_t* densePointCount,
-        int* denseToSparseLUT,
-        uint32_t* sparseIndexCounter,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
@@ -34,18 +32,11 @@ __global__ void kernelEvaluateSubsamples (
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
             cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride);
 
-    // 1. Calculate the index within the dense grid of the evaluateSubsamples
+    // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    // 2. We are only interested in the first point within a cell
+    // Increase point count in cell
     auto oldIndex = atomicAdd ((densePointCount + denseVoxelIndex), 1);
-
-    // 3. If the thread is the first one -> increase map from the dense grid to the sparse grid
-    if (oldIndex == 0)
-    {
-        auto sparseVoxelIndex             = atomicAdd (sparseIndexCounter, 1);
-        denseToSparseLUT[denseVoxelIndex] = sparseVoxelIndex;
-    }
 }
 } // namespace subsampling
 

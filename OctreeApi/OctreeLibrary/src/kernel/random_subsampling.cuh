@@ -147,33 +147,25 @@ __global__ void kernelGenerateRandoms (
         curandState_t* states,
         uint32_t* randomIndices,
         int* denseToSparseLUT,
-        Averaging* averagingData,
+        uint32_t* sparseIndexCounter,
         uint32_t* countingGrid,
         uint32_t gridNodes)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (index >= gridNodes)
+    bool cellIsEmpty = countingGrid[index] == 0;
+
+    if (index >= gridNodes || cellIsEmpty)
     {
         return;
     }
 
-    int sparseIndex = denseToSparseLUT[index];
-
-    if (sparseIndex == -1)
-    {
-        return;
-    }
+    auto sparseIndex             = atomicAdd (sparseIndexCounter, 1);
+    denseToSparseLUT[index] = sparseIndex;
 
     // Generate random value for point picking
     randomIndices[sparseIndex] =
             static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
-
-    // Reset Averaging data
-    averagingData[sparseIndex].r          = 0.f;
-    averagingData[sparseIndex].g          = 0.f;
-    averagingData[sparseIndex].b          = 0.f;
-    averagingData[sparseIndex].pointCount = 0;
 }
 } // namespace subsampling
 
