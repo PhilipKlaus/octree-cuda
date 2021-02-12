@@ -128,17 +128,15 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
-                {metadata.cloudType, accumulatedPoints},
-                itsCloud->getCloudDevice (),
-                subsampleSet,
+                kernelConfig,
+                test,
                 itsParentLut[sparseVoxelIndex]->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 subsampleSparseVoxelCount->devicePointer (),
-                metadata,
-                itsSubsampleMetadata.subsamplingGrid,
+                cloud,
+                gridding,
                 randomIndices->devicePointer (),
-                accumulatedPoints,
                 itsSubsampleMetadata.useReplacementScheme);
     }
 

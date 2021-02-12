@@ -55,49 +55,36 @@ __global__ void kernelPerformAveraging (
 // Move point indices from old (child LUT) to new (parent LUT)
 template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
-        uint8_t* cloud,
-        SubsampleSet subsampleSet,
+        SubsampleSetTest test,
         uint32_t* parentDataLUT,
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength,
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
-        uint32_t accumulatedPoints,
         bool replacementScheme)
 {
-    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (thread >= accumulatedPoints)
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    SubsampleConfigTest* config = (SubsampleConfigTest*)(&test);
+    int gridIndex = blockIdx.z;
+
+    if (index >= config[gridIndex].pointAmount)
     {
         return;
     }
-
     // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT     = nullptr;
-    uint32_t childDataLUTStart = 0;
+    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
+    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
 
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        if (thread < config[i].pointOffsetUpper)
-        {
-            childDataLUT      = config[i].lutAdress;
-            childDataLUTStart = config[i].lutStartIndex;
-            thread -= config[i].pointOffsetLower;
-            break;
-        }
-    }
-
-    uint32_t lutItem = childDataLUT[childDataLUTStart + thread];
+    uint32_t lutItem = childDataLUT[childDataLUTStart + index];
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
-            reinterpret_cast<Vector3<coordinateType>*> (cloud + lutItem * metadata.pointDataStride);
+            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + lutItem * cloud.dataStride);
 
-    // 1. Calculate the index within the dense grid of the evaluateSubsamples
-    auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
+    // Calculate cell index
+    auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
     int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
@@ -111,8 +98,8 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled point to parent
     parentDataLUT[sparseIndex] = lutItem;
-    childDataLUT[childDataLUTStart + thread] =
-            replacementScheme ? childDataLUT[childDataLUTStart + thread] : INVALID_INDEX;
+    childDataLUT[childDataLUTStart + index] =
+            replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
 
     // Reset all subsampling data data
     denseToSparseLUT[denseVoxelIndex] = -1;
@@ -197,17 +184,34 @@ float performAveraging (KernelConfig config, Arguments&&... args)
 template <typename... Arguments>
 float randomPointSubsampling (KernelConfig config, Arguments&&... args)
 {
+    // Calculate kernel dimensions
+    dim3 grid, block;
+
+    auto blocks = ceil (static_cast<double> (config.threadAmount) / 128);
+    auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+    auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+    block = dim3 (128, 1, 1);
+    grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                subsampling::kernelRandomPointSubsample<float>, config.threadAmount, std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
     else
     {
-        return executeKernel (
-                subsampling::kernelRandomPointSubsample<double>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
 }
 } // namespace Kernel
