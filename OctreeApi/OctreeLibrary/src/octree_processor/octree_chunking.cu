@@ -73,8 +73,7 @@ void OctreeProcessor::performCellMerging ()
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
-    itsOctree                    = createGpuOctree (itsMetadata.nodeAmountSparse, "octreeSparse");
-
+    itsOctreeData->createOctree(itsMetadata.nodeAmountSparse);
     // Allocate the conversion LUT from sparse to dense
     itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     itsSparseToDenseLUT->memset (-1);
@@ -88,7 +87,7 @@ void OctreeProcessor::initLowestOctreeHierarchy ()
     float time = executeKernel (
             chunking::kernelInitLeafNodes,
             itsOctreeData->getNodes (0),
-            itsOctree->devicePointer (),
+            itsOctreeData->getDevice(),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
@@ -109,7 +108,7 @@ void OctreeProcessor::mergeHierarchical ()
         float time = executeKernel (
                 chunking::kernelMergeHierarchical,
                 itsOctreeData->getNodes (i + 1),
-                itsOctree->devicePointer (),
+                itsOctreeData->getDevice(),
                 itsDensePointCountPerVoxel->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
@@ -140,7 +139,7 @@ void OctreeProcessor::distributePoints ()
 
     float time = Kernel::distributePoints (
             config,
-            itsOctree->devicePointer (),
+            itsOctreeData->getDevice(),
             itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),

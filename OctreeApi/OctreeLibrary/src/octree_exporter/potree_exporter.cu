@@ -34,7 +34,7 @@ constexpr uint8_t COLOR_SIZE         = COLOR_ELEMENT_SIZE * 3;
 template <typename coordinateType, typename colorType>
 PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
@@ -312,7 +312,7 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 //----------------------------------------------------------------------------------------------------------------------
 template PotreeExporter<float, uint8_t>::PotreeExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
@@ -326,7 +326,7 @@ template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& p
 //----------------------------------------------------------------------------------------------------------------------
 template PotreeExporter<double, uint8_t>::PotreeExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,

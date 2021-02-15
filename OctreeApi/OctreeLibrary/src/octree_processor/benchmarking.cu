@@ -6,7 +6,7 @@
 
 
 void OctreeProcessor::calculatePointVarianceInLeafNoes (
-        const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
+        const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
 {
     Chunk chunk = h_octreeSparse[nodeIndex];
 
@@ -32,7 +32,7 @@ void OctreeProcessor::calculatePointVarianceInLeafNoes (
 
 
 void OctreeProcessor::evaluateOctreeProperties (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
+        const shared_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
         uint32_t& pointSum,
@@ -98,7 +98,7 @@ void OctreeProcessor::updateOctreeStatistics ()
 
 
 void OctreeProcessor::histogramBinning (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
+        const shared_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
         uint32_t binWidth,

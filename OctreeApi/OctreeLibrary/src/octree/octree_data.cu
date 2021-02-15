@@ -38,3 +38,26 @@ uint32_t OctreeData::getOverallNodes ()
 {
     return itsNodeAmountDense;
 }
+void OctreeData::createOctree (uint32_t nodeAmountSparse)
+{
+    itsOctree = createGpuOctree (nodeAmountSparse, "octreeSparse");
+}
+void OctreeData::copyToHost ()
+{
+    auto start = std::chrono::high_resolution_clock::now ();
+    itsOctreeHost = itsOctree->toHost();
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info("Copied octree from device to host in: {}s", elapsed.count());
+}
+const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
+{
+    if(!itsOctreeHost) {
+        copyToHost();
+    }
+    return itsOctreeHost;
+}
+Chunk* OctreeData::getDevice ()
+{
+    return itsOctree->devicePointer();
+}

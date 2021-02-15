@@ -33,7 +33,7 @@ add_library(${PROJECT_NAME} STATIC
         src/misc/timing.cuh
 
         # OctreeProcessor
-        src/octree_processor/random_subsampling.cu
+        src/octree_processor/octree_subsampling.cu
         src/octree_processor/benchmarking.cu
         src/octree_processor/debugging.cu
         src/octree_processor/octree_processor.cu
@@ -53,7 +53,6 @@ add_library(${PROJECT_NAME} STATIC
         src/point_cloud.cu
 
         # Octree
-        include/octree.cuh
         include/octree_data.cuh
         src/octree/octree_data.cu)
 

@@ -4,7 +4,7 @@
 template <typename coordinateType, typename colorType>
 PlyExporter<coordinateType, colorType>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
@@ -218,7 +218,7 @@ void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<float, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
@@ -232,7 +232,7 @@ template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<double, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,

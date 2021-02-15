@@ -53,7 +53,7 @@ public:
 
     unique_ptr<int[]> getSparseToDenseLUT () const;
 
-    unique_ptr<Chunk[]> getOctreeSparse () const;
+    shared_ptr<Chunk[]> getOctreeSparse () const;
 
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
@@ -66,18 +66,8 @@ private:
     void initLowestOctreeHierarchy ();
 
     // Subsampling
-    SubsamplingTimings firstPointSubsampling (
-            const unique_ptr<Chunk[]>& h_octreeSparse,
-            const unique_ptr<int[]>& h_sparseToDenseLUT,
-            uint32_t sparseVoxelIndex,
-            uint32_t level,
-            GpuArrayU32& subsampleCountingGrid,
-            GpuArrayI32& subsampleDenseToSparseLUT,
-            GpuArrayU32& subsampleSparseVoxelCount,
-            GpuSubsample& subsampleConfig);
-
     SubsamplingTimings randomSubsampling (
-            const unique_ptr<Chunk[]>& h_octreeSparse,
+            const shared_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
             uint32_t level,
@@ -91,9 +81,7 @@ private:
     uint32_t OctreeProcessor::prepareSubsampleConfig (
             SubsampleSet& subsampleSet,
             Chunk& voxel,
-            const unique_ptr<Chunk[]>& h_octreeSparse);
-
-    float initRandomStates (unsigned int seed, GpuRandomState& states, uint32_t nodeAmount);
+            const shared_ptr<Chunk[]>& h_octreeSparse);
 
     // Exporting
     uint32_t exportTreeNode (
@@ -108,7 +96,7 @@ private:
     uint32_t getRootIndex ();
 
     void evaluateOctreeProperties (
-            const unique_ptr<Chunk[]>& h_octreeSparse,
+            const shared_ptr<Chunk[]>& h_octreeSparse,
             uint32_t& leafNodes,
             uint32_t& parentNodes,
             uint32_t& pointSum,
@@ -117,10 +105,10 @@ private:
             uint32_t nodeIndex) const;
 
     void calculatePointVarianceInLeafNoes (
-            const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& ean, uint32_t nodeIndex) const;
+            const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& ean, uint32_t nodeIndex) const;
 
     void histogramBinning (
-            const unique_ptr<Chunk[]>& h_octreeSparse,
+            const shared_ptr<Chunk[]>& h_octreeSparse,
             std::vector<uint32_t>& counts,
             uint32_t min,
             uint32_t binWidth,
@@ -136,7 +124,6 @@ private:
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
     GpuArrayU32 itsTmpCounting;
-    GpuOctree itsOctree;
 
     // Metadata
     OctreeMetadata itsMetadata;
