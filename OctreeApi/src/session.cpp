@@ -2,13 +2,16 @@
 // Created by KlausP on 01.11.2020.
 //
 
-#include <session.h>
-
-#include "json_exporter.h"
-#include "octree_processor.h"
 #include "spdlog/spdlog.h"
+#include <driver_types.h>
 #include <iostream>
 #include <memory>
+
+#include "session.h"
+#include "json_exporter.h"
+#include "octree_processor.h"
+#include "defines.cuh"
+#include "octree_metadata.h"
 
 Session* Session::ToSession (void* session)
 {
@@ -17,7 +20,7 @@ Session* Session::ToSession (void* session)
     {
         return s;
     }
-    throw runtime_error ("No Session is currently initialized!");
+    throw std::runtime_error ("No Session is currently initialized!");
 }
 
 Session::Session (int device) : itsDevice (device)
@@ -51,7 +54,7 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
-    itsProcessor = std::make_unique<OctreeProcessor> (
+    itsProcessor = std::make_unique<OctreeProcessorPimpl> (
             itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
 
     itsProcessor->initialPointCounting ();
@@ -62,9 +65,9 @@ void Session::generateOctree ()
     spdlog::debug ("octree generated");
 }
 
-void Session::exportPotree (const string& directory)
+void Session::exportPotree (const std::string& directory)
 {
-    itsProcessor->exportPlyNodes (directory);
+    itsProcessor->exportPotree (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
@@ -76,8 +79,8 @@ void Session::exportMemoryReport (const std::string& filename)
 
 void Session::exportJsonReport (const std::string& filename)
 {
-    itsProcessor->updateOctreeStatistics ();
-    export_json_data (filename, itsProcessor->getMetadata (), itsCloudMetadata, itsSubsamplingMetadata, itsProcessor->getTimings ());
+    itsProcessor->updateStatistics();
+    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsCloudMetadata, itsSubsamplingMetadata, itsProcessor->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 

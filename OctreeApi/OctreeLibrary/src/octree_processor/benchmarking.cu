@@ -2,10 +2,10 @@
 // Created by KlausP on 13.11.2020.
 //
 
-#include "octree_processor.h"
+#include "octree_processpr_impl.cuh"
 
 
-void OctreeProcessor::calculatePointVarianceInLeafNoes (
+void OctreeProcessorPimpl::OctreeProcessorImpl::calculatePointVarianceInLeafNoes (
         const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
 {
     Chunk chunk = h_octreeSparse[nodeIndex];
@@ -31,7 +31,7 @@ void OctreeProcessor::calculatePointVarianceInLeafNoes (
 }
 
 
-void OctreeProcessor::evaluateOctreeProperties (
+void OctreeProcessorPimpl::OctreeProcessorImpl::evaluateOctreeProperties (
         const shared_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
@@ -68,7 +68,7 @@ void OctreeProcessor::evaluateOctreeProperties (
 }
 
 
-void OctreeProcessor::updateOctreeStatistics ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::updateOctreeStatistics ()
 {
     // Reset Octree statistics
     itsMetadata.leafNodeAmount         = 0;
@@ -97,7 +97,7 @@ void OctreeProcessor::updateOctreeStatistics ()
 }
 
 
-void OctreeProcessor::histogramBinning (
+void OctreeProcessorPimpl::OctreeProcessorImpl::histogramBinning (
         const shared_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
@@ -128,7 +128,7 @@ void OctreeProcessor::histogramBinning (
 }
 
 
-void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth)
+void OctreeProcessorPimpl::OctreeProcessorImpl::exportHistogram (const string& filePath, uint32_t binWidth)
 {
     updateOctreeStatistics ();
 

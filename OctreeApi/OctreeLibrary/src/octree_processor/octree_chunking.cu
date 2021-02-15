@@ -5,7 +5,7 @@
  */
 
 #include "kernel_executor.cuh"
-#include "octree_processor.h"
+#include "octree_processpr_impl.cuh"
 
 #include "hierarchical_merging.cuh"
 #include "octree_initialization.cuh"
@@ -14,7 +14,7 @@
 #include "point_distributing.cuh"
 
 
-void OctreeProcessor::initialPointCounting ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::initialPointCounting ()
 {
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
@@ -45,7 +45,7 @@ void OctreeProcessor::initialPointCounting ()
     spdlog::info ("[kernel] kernelPointCounting took {:f} [ms]", time);
 }
 
-void OctreeProcessor::performCellMerging ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::performCellMerging ()
 {
     float timeAccumulated = 0;
 
@@ -82,7 +82,7 @@ void OctreeProcessor::performCellMerging ()
     mergeHierarchical ();
 }
 
-void OctreeProcessor::initLowestOctreeHierarchy ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::initLowestOctreeHierarchy ()
 {
     float time = executeKernel (
             chunking::kernelInitLeafNodes,
@@ -98,7 +98,7 @@ void OctreeProcessor::initLowestOctreeHierarchy ()
 }
 
 
-void OctreeProcessor::mergeHierarchical ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::mergeHierarchical ()
 {
     itsTmpCounting->memset (0);
 
@@ -128,7 +128,7 @@ void OctreeProcessor::mergeHierarchical ()
     spdlog::info ("[kernel] kernelMergeHierarchical took {:f}[ms]", timeAccumulated);
 }
 
-void OctreeProcessor::distributePoints ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::distributePoints ()
 {
     auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);

@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <api_types.h>
 #include <cstdint>
 
 struct SubsampleMetadata

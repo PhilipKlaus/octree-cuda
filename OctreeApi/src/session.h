@@ -45,7 +45,7 @@ public:
 private:
     int itsDevice;
     uint8_t* itsPointCloud;
-    std::unique_ptr<OctreeProcessor> itsProcessor;
+    std::unique_ptr<OctreeProcessorPimpl> itsProcessor;
 
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;

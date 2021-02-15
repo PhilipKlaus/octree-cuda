@@ -3,11 +3,68 @@
 //
 
 #include "octree_processor.h"
+#include "octree_processpr_impl.cuh"
 #include "ply_exporter.cuh"
 #include "potree_exporter.cuh"
 #include "tools.cuh"
 
-OctreeProcessor::OctreeProcessor (
+OctreeProcessorPimpl::OctreeProcessorPimpl (
+        uint8_t* pointCloud,
+        uint32_t chunkingGrid,
+        uint32_t mergingThreshold,
+        PointCloudMetadata cloudMetadata,
+        SubsampleMetadata subsamplingMetadata) {
+ itsProcessor = std::make_unique<OctreeProcessorPimpl::OctreeProcessorImpl>(pointCloud, chunkingGrid, mergingThreshold, cloudMetadata, subsamplingMetadata);
+}
+
+void OctreeProcessorPimpl::initialPointCounting () {
+    itsProcessor->initialPointCounting();
+}
+
+void OctreeProcessorPimpl::performCellMerging () {
+    itsProcessor->performCellMerging();
+}
+void OctreeProcessorPimpl::distributePoints () {
+    itsProcessor->distributePoints();
+}
+void OctreeProcessorPimpl::performSubsampling () {
+    itsProcessor->performSubsampling();
+}
+
+void OctreeProcessorPimpl::exportPlyNodes (const std::string& folderPath)
+{
+    itsProcessor->exportPlyNodes(folderPath);
+}
+
+void OctreeProcessorPimpl::exportPotree (const std::string& folderPath)
+{
+    itsProcessor->exportPlyNodes(folderPath);
+}
+void OctreeProcessorPimpl::updateStatistics ()
+{
+    itsProcessor->updateOctreeStatistics();
+}
+const std::vector<std::tuple<std::string, float>>& OctreeProcessorPimpl::getTimings ()
+{
+    return itsProcessor->getTimings();
+}
+void OctreeProcessorPimpl::exportHistogram (const std::string& filePath, uint32_t binWidth)
+{
+    itsProcessor->exportHistogram(filePath, binWidth);
+}
+
+const OctreeMetadata& OctreeProcessorPimpl::getOctreeMetadata ()
+{
+    return itsProcessor->getMetadata();
+}
+
+OctreeProcessorPimpl::~OctreeProcessorPimpl ()
+{
+    // Empty destructor - necessary becaus of PIMPL
+    // https://stackoverflow.com/questions/9954518/stdunique-ptr-with-an-incomplete-type-wont-compile
+}
+
+OctreeProcessorPimpl::OctreeProcessorImpl::OctreeProcessorImpl (
         uint8_t* pointCloud,
         uint32_t chunkingGrid,
         uint32_t mergingThreshold,
@@ -38,7 +95,7 @@ OctreeProcessor::OctreeProcessor (
     spdlog::info ("Prepared empty SparseOctree");
 }
 
-void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
+void OctreeProcessorPimpl::OctreeProcessorImpl::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -64,7 +121,7 @@ void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t d
 }
 
 // ToDo: call appropriate export function!!!
-void OctreeProcessor::exportPlyNodes (const string& folderPath)
+void OctreeProcessorPimpl::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
     auto start = std::chrono::high_resolution_clock::now ();
     /*PlyExporter<coordinateType, colorType> plyExporter (

@@ -1,10 +1,10 @@
 #include "kernel_executor.cuh"
-#include "octree_processor.h"
+#include "octree_processpr_impl.cuh"
 #include "random_subsampling.cuh"
 #include "subsample_evaluating.cuh"
 
 
-void OctreeProcessor::performSubsampling ()
+void OctreeProcessorPimpl::OctreeProcessorImpl::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
@@ -49,7 +49,7 @@ void OctreeProcessor::performSubsampling ()
 }
 
 
-SubsamplingTimings OctreeProcessor::randomSubsampling (
+SubsamplingTimings OctreeProcessorPimpl::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
@@ -156,7 +156,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 }
 
 
-uint32_t OctreeProcessor::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
+uint32_t OctreeProcessorPimpl::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
     uint32_t maxPoints = 0;
     auto* config       = (SubsampleConfig*)(&subsampleSet);

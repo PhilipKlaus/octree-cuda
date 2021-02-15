@@ -54,7 +54,9 @@ add_library(${PROJECT_NAME} STATIC
 
         # Octree
         include/octree_data.cuh
-        src/octree/octree_data.cu)
+        src/octree/octree_data.cu
+
+        include/octree_processpr_impl.cuh)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE
