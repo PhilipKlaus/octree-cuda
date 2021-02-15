@@ -100,12 +100,9 @@ __global__ void kernelGenerateRandoms (
         return;
     }
 
-    auto sparseIndex             = atomicAdd (sparseIndexCounter, 1);
-    denseToSparseLUT[index] = sparseIndex;
+    uint32_t sparseIndex = denseToSparseLUT[index];
 
-    // Generate random value for point picking
-    randomIndices[sparseIndex] =
-            static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
+    randomIndices[sparseIndex] = static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
 }
 } // namespace subsampling
 

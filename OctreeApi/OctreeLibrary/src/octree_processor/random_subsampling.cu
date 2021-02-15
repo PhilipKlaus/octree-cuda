@@ -73,6 +73,8 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
                 subsampleSet,
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer(),
+                subsampleDenseToSparseLUT->devicePointer (),
+                subsampleSparseVoxelCount->devicePointer (),
                 cloud,
                 gridding);
 

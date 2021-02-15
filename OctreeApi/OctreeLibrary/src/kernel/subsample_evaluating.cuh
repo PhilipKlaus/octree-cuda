@@ -14,6 +14,8 @@ __global__ void kernelEvaluateSubsamples (
         SubsampleSet test,
         uint32_t* densePointCount,
         Averaging* averagingGrid,
+        int* denseToSparseLUT,
+        uint32_t* sparseIndexCounter,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
@@ -39,7 +41,7 @@ __global__ void kernelEvaluateSubsamples (
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    atomicAdd ((densePointCount + denseVoxelIndex), 1);
+    uint32_t old = atomicAdd ((densePointCount + denseVoxelIndex), 1);
 
     bool hasAveragingData    = (childAveraging != nullptr);
     Averaging* averagingData = childAveraging + index;
@@ -47,6 +49,10 @@ __global__ void kernelEvaluateSubsamples (
     atomicAdd (&(averagingGrid[denseVoxelIndex].r), hasAveragingData ? averagingData->r : color->x);
     atomicAdd (&(averagingGrid[denseVoxelIndex].g), hasAveragingData ? averagingData->g : color->y);
     atomicAdd (&(averagingGrid[denseVoxelIndex].b), hasAveragingData ? averagingData->b : color->z);
+
+    if(old == 0) {
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (sparseIndexCounter, 1);
+    }
 }
 } // namespace subsampling
 

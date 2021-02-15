@@ -53,6 +53,7 @@ add_library(${PROJECT_NAME} STATIC
         src/point_cloud.cu
 
         # Octree
+        include/octree.cuh
         include/octree_data.cuh
         src/octree/octree_data.cu)
 
