@@ -62,3 +62,7 @@ Chunk* OctreeData::getDevice ()
 {
     return itsOctree->devicePointer ();
 }
+const Chunk& OctreeData::getNode (uint32_t index)
+{
+    return getHost()[index];
+}

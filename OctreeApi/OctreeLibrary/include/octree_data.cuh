@@ -25,8 +25,11 @@ public:
     uint32_t getGridSize (uint8_t level);
     uint32_t getNodeOffset (uint8_t level);
     uint32_t getOverallNodes ();
+
     const std::shared_ptr<Chunk[]>& getHost ();
     Chunk* getDevice ();
+
+    const Chunk& getNode(uint32_t index);
 
 private:
     void initialize ();

@@ -29,7 +29,6 @@ void OctreeProcessor::performSubsampling ()
     auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
 
     timings = randomSubsampling (
-            h_octreeSparse,
             h_sparseToDenseLUT,
             getRootIndex (),
             itsMetadata.depth,
@@ -51,7 +50,6 @@ void OctreeProcessor::performSubsampling ()
 
 
 SubsamplingTimings OctreeProcessor::randomSubsampling (
-        const shared_ptr<Chunk[]>& h_octreeSparse,
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
@@ -62,18 +60,17 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         GpuRandomState& randomStates,
         GpuArrayU32& randomIndices)
 {
-    PointCloudMetadata cloudMetadata = itsCloud->getMetadata ();
-
-    Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};
 
+    auto& cloudMetadata = itsCloud->getMetadata ();
+    auto& node = itsOctreeData->getNode(sparseVoxelIndex);
+
     // Depth first traversal
-    for (int childIndex : voxel.childrenChunks)
+    for (int childIndex : node.childrenChunks)
     {
         if (childIndex != -1)
         {
             SubsamplingTimings childTiming = randomSubsampling (
-                    h_octreeSparse,
                     h_sparseToDenseLUT,
                     childIndex,
                     level - 1,
@@ -91,11 +88,11 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
     }
 
     // Now we can assure that all direct children have subsamples
-    if (voxel.isParent)
+    if (node.isParent)
     {
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
-        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, voxel, h_octreeSparse);
+        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
@@ -159,18 +156,17 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 }
 
 
-uint32_t OctreeProcessor::prepareSubsampleConfig (
-        SubsampleSet& subsampleSet, Chunk& voxel, const shared_ptr<Chunk[]>& h_octreeSparse)
+uint32_t OctreeProcessor::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
     uint32_t maxPoints = 0;
     auto* config       = (SubsampleConfig*)(&subsampleSet);
-
+    auto& node = itsOctreeData->getNode(parentIndex);
     for (uint8_t i = 0; i < 8; ++i)
     {
-        int childIndex = voxel.childrenChunks[i];
+        int childIndex = node.childrenChunks[i];
         if (childIndex != -1)
         {
-            Chunk child               = h_octreeSparse[childIndex];
+            Chunk child               = itsOctreeData->getNode(childIndex);
             config[i].pointAmount     = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
             maxPoints                 = max (maxPoints, config[i].pointAmount);
             config[i].averagingAdress = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;

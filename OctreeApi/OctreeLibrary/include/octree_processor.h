@@ -20,7 +20,6 @@ public:
             SubsampleMetadata subsamplingMetadata);
 
     OctreeProcessor (const OctreeProcessor&) = delete;
-
     void operator= (const OctreeProcessor&) = delete;
 
 public:
@@ -53,7 +52,6 @@ private:
 
     // Subsampling
     SubsamplingTimings randomSubsampling (
-            const shared_ptr<Chunk[]>& h_octreeSparse,
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
             uint32_t level,
@@ -64,8 +62,7 @@ private:
             GpuRandomState& randomStates,
             GpuArrayU32& randomIndices);
 
-    uint32_t OctreeProcessor::prepareSubsampleConfig (
-            SubsampleSet& subsampleSet, Chunk& voxel, const shared_ptr<Chunk[]>& h_octreeSparse);
+    uint32_t OctreeProcessor::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
 
     // Exporting
     uint32_t exportTreeNode (
