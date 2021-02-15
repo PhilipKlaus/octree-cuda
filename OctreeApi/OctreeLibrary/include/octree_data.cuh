@@ -6,26 +6,27 @@
 
 #pragma once
 
+#include "types.cuh"
+#include "octree_metadata.h"
 #include <cstdint>
 #include <vector>
-#include "types.cuh"
 
 class OctreeData
 {
 public:
     OctreeData (uint32_t chunkingGrid);
-    OctreeData(const OctreeData&) = delete;
+    OctreeData (const OctreeData&) = delete;
 
-    void createOctree(uint32_t nodeAmountSparse);
-    void copyToHost();
+    void createOctree (uint32_t nodeAmountSparse);
+    void copyToHost ();
 
     uint8_t getDepth ();
     uint32_t getNodes (uint8_t level);
     uint32_t getGridSize (uint8_t level);
     uint32_t getNodeOffset (uint8_t level);
     uint32_t getOverallNodes ();
-    const std::shared_ptr<Chunk[]>& getHost();
-    Chunk* getDevice();
+    const std::shared_ptr<Chunk[]>& getHost ();
+    Chunk* getDevice ();
 
 private:
     void initialize ();

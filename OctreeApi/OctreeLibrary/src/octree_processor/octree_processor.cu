@@ -71,14 +71,20 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
     PotreeExporter<double, uint8_t> potreeExporter (
-            itsCloud, itsOctreeData->getHost(), itsLeafLut, itsParentLut, itsAveragingData, itsMetadata, itsSubsampleMetadata);
+            itsCloud,
+            itsOctreeData->getHost (),
+            itsLeafLut,
+            itsParentLut,
+            itsAveragingData,
+            itsMetadata,
+            itsSubsampleMetadata);
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
     spdlog::info ("Copy from device to host tooks {} seconds", elapsed.count ());
 
     start = std::chrono::high_resolution_clock::now ();
     potreeExporter.exportOctree (folderPath);
-    finish                           = std::chrono::high_resolution_clock::now ();
+    finish  = std::chrono::high_resolution_clock::now ();
     elapsed = finish - start;
     spdlog::info ("Export tooks {} seconds", elapsed.count ());
     itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count () * 1000);

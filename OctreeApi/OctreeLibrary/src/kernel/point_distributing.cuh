@@ -7,8 +7,8 @@
 #pragma once
 
 #include "kernel_executor.cuh"
-#include "types.cuh"
 #include "kernel_structs.cuh"
+#include "types.cuh"
 
 namespace chunking {
 
@@ -43,7 +43,7 @@ __global__ void kernelDistributePoints (
 
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
 
-    auto sparseVoxelIndex = denseToSparseLUT[ mapPointToGrid<coordinateType> (point, gridding)];
+    auto sparseVoxelIndex = denseToSparseLUT[mapPointToGrid<coordinateType> (point, gridding)];
 
     bool isFinished = octree[sparseVoxelIndex].isFinished;
 

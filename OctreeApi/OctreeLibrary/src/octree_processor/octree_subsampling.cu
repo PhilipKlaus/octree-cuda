@@ -160,29 +160,29 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
 
 
 uint32_t OctreeProcessor::prepareSubsampleConfig (
-        SubsampleSet& subsampleSet,
-        Chunk& voxel,
-        const shared_ptr<Chunk[]>& h_octreeSparse)
+        SubsampleSet& subsampleSet, Chunk& voxel, const shared_ptr<Chunk[]>& h_octreeSparse)
 {
     uint32_t maxPoints = 0;
-    auto* config = (SubsampleConfig*)(&subsampleSet);
+    auto* config       = (SubsampleConfig*)(&subsampleSet);
 
     for (uint8_t i = 0; i < 8; ++i)
     {
         int childIndex = voxel.childrenChunks[i];
-        if(childIndex != -1) {
-            Chunk child = h_octreeSparse[childIndex];
-            config[i].pointAmount = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
-            maxPoints = max(maxPoints, config[i].pointAmount);
-            config[i].averagingAdress  = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
-            config[i].lutStartIndex    = child.isParent ? 0 : child.chunkDataIndex;
+        if (childIndex != -1)
+        {
+            Chunk child               = h_octreeSparse[childIndex];
+            config[i].pointAmount     = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
+            maxPoints                 = max (maxPoints, config[i].pointAmount);
+            config[i].averagingAdress = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;
+            config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
             config[i].lutAdress =
                     child.isParent ? itsParentLut[childIndex]->devicePointer () : itsLeafLut->devicePointer ();
         }
-        else {
-            config[i].pointAmount = 0;
+        else
+        {
+            config[i].pointAmount     = 0;
             config[i].averagingAdress = nullptr;
-            config[i].lutAdress = nullptr;
+            config[i].lutAdress       = nullptr;
         }
     }
     return maxPoints;

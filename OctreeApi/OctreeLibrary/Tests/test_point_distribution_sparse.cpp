@@ -9,7 +9,7 @@
 
 uint32_t testOctreenodeSparse (
         uint8_t* cpuPointCloud,
-        const unique_ptr<Chunk[]>& octree,
+        const shared_ptr<Chunk[]>& octree,
         const unique_ptr<uint32_t[]>& dataLUT,
         const unique_ptr<int[]>& sparseToDense,
         uint32_t level,

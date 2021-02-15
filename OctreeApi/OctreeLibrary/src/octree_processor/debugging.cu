@@ -37,7 +37,7 @@ unique_ptr<int[]> OctreeProcessor::getSparseToDenseLUT () const
 
 shared_ptr<Chunk[]> OctreeProcessor::getOctreeSparse () const
 {
-    return itsOctreeData->getHost();
+    return itsOctreeData->getHost ();
 }
 
 

@@ -7,7 +7,7 @@
 #include "tools.cuh"
 
 void testSubsampleTree (
-        const unique_ptr<Chunk[]>& octree,
+        const shared_ptr<Chunk[]>& octree,
         unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& subsampleLUT,
         uint32_t index,
         uint32_t level)

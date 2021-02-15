@@ -1,11 +1,11 @@
 #pragma once
 
 #include "kernel_executor.cuh"
+#include "kernel_helpers.cuh"
+#include "kernel_structs.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_helpers.cuh"
-#include "kernel_structs.cuh"
 
 namespace subsampling {
 
@@ -50,7 +50,8 @@ __global__ void kernelEvaluateSubsamples (
     atomicAdd (&(averagingGrid[denseVoxelIndex].g), hasAveragingData ? averagingData->g : color->y);
     atomicAdd (&(averagingGrid[denseVoxelIndex].b), hasAveragingData ? averagingData->b : color->z);
 
-    if(old == 0) {
+    if (old == 0)
+    {
         denseToSparseLUT[denseVoxelIndex] = atomicAdd (sparseIndexCounter, 1);
     }
 }

@@ -18,8 +18,8 @@ public:
             OctreeMetadata metadata,
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
-            itsSubsampleMetadata (subsampleMetadata), itsCloud (pointCloud->getCloudHost ()),
-            itsOctree (octree), itsLeafLut (leafLut->toHost ()), itsAbsorbedNodes (0), itsPointsExported (0)
+            itsSubsampleMetadata (subsampleMetadata), itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
+            itsLeafLut (leafLut->toHost ()), itsAbsorbedNodes (0), itsPointsExported (0)
     {
         std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
             itsParentLut.insert (make_pair (lutItem.first, lutItem.second->toHost ()));

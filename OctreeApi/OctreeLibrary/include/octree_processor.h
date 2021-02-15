@@ -34,9 +34,6 @@ public:
 
     void exportHistogram (const string& filePath, uint32_t binWidth);
 
-    // Calculation tools
-    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
-
     // Data export
     void exportPlyNodes (const string& folderPath);
 
@@ -72,16 +69,14 @@ private:
             uint32_t sparseVoxelIndex,
             uint32_t level,
             GpuArrayU32& subsampleCountingGrid,
-            GpuAveraging & averagingGrid,
+            GpuAveraging& averagingGrid,
             GpuArrayI32& subsampleDenseToSparseLUT,
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,
             GpuArrayU32& randomIndices);
 
     uint32_t OctreeProcessor::prepareSubsampleConfig (
-            SubsampleSet& subsampleSet,
-            Chunk& voxel,
-            const shared_ptr<Chunk[]>& h_octreeSparse);
+            SubsampleSet& subsampleSet, Chunk& voxel, const shared_ptr<Chunk[]>& h_octreeSparse);
 
     // Exporting
     uint32_t exportTreeNode (
@@ -113,6 +108,8 @@ private:
             uint32_t min,
             uint32_t binWidth,
             uint32_t nodeIndex) const;
+
+    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
 private:
     // Point cloud

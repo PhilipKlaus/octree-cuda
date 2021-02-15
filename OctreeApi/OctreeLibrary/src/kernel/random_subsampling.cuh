@@ -1,11 +1,11 @@
 #pragma once
 
 #include "kernel_executor.cuh"
+#include "kernel_helpers.cuh"
+#include "kernel_structs.cuh"
 #include "octree_metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_helpers.cuh"
-#include "kernel_structs.cuh"
 
 namespace subsampling {
 
@@ -24,9 +24,9 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* randomIndices,
         bool replacementScheme)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     SubsampleConfig* config = (SubsampleConfig*)(&test);
-    int gridIndex = blockIdx.z;
+    int gridIndex           = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)
     {
@@ -56,18 +56,18 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled point to parent
-    parentDataLUT[sparseIndex] = lutItem;
+    parentDataLUT[sparseIndex]   = lutItem;
     parentAveraging[sparseIndex] = averagingGrid[denseVoxelIndex];
     childDataLUT[childDataLUTStart + index] =
             replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
 
     // Reset all subsampling data data
-    denseToSparseLUT[denseVoxelIndex] = -1;
-    *sparseIndexCounter               = 0;
+    denseToSparseLUT[denseVoxelIndex]         = -1;
+    *sparseIndexCounter                       = 0;
     averagingGrid[denseVoxelIndex].pointCount = 0;
-    averagingGrid[denseVoxelIndex].r = 0;
-    averagingGrid[denseVoxelIndex].g = 0;
-    averagingGrid[denseVoxelIndex].b = 0;
+    averagingGrid[denseVoxelIndex].r          = 0;
+    averagingGrid[denseVoxelIndex].g          = 0;
+    averagingGrid[denseVoxelIndex].b          = 0;
 }
 
 // http://ianfinlayson.net/class/cpsc425/notes/cuda-random
@@ -102,7 +102,8 @@ __global__ void kernelGenerateRandoms (
 
     uint32_t sparseIndex = denseToSparseLUT[index];
 
-    randomIndices[sparseIndex] = static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
+    randomIndices[sparseIndex] =
+            static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
 }
 } // namespace subsampling
 

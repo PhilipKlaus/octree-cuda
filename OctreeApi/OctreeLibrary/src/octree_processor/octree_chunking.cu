@@ -41,8 +41,8 @@ void OctreeProcessor::initialPointCounting ()
             cloud,
             gridding);
 
-    itsTimeMeasurement.emplace_back ("initialPointCount", time);
-    spdlog::info ("'pointCounting' took {:f} [ms]", time);
+    itsTimeMeasurement.emplace_back ("kernelPointCounting", time);
+    spdlog::info ("[kernel] kernelPointCounting took {:f} [ms]", time);
 }
 
 void OctreeProcessor::performCellMerging ()
@@ -65,15 +65,15 @@ void OctreeProcessor::performCellMerging ()
                 itsOctreeData->getNodeOffset (i));
 
         itsTimeMeasurement.emplace_back (
-                "propagatePointCounts_" + std::to_string (itsOctreeData->getGridSize (i)), time);
+                "kernelPropagatePointCounts_" + std::to_string (itsOctreeData->getGridSize (i)), time);
         timeAccumulated += time;
     }
 
-    spdlog::info ("'propagatePointCounts' took {:f} [ms]", timeAccumulated);
+    spdlog::info ("[kernel] kernelPropagatePointCounts took {:f}[ms]", timeAccumulated);
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
-    itsOctreeData->createOctree(itsMetadata.nodeAmountSparse);
+    itsOctreeData->createOctree (itsMetadata.nodeAmountSparse);
     // Allocate the conversion LUT from sparse to dense
     itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
     itsSparseToDenseLUT->memset (-1);
@@ -87,14 +87,14 @@ void OctreeProcessor::initLowestOctreeHierarchy ()
     float time = executeKernel (
             chunking::kernelInitLeafNodes,
             itsOctreeData->getNodes (0),
-            itsOctreeData->getDevice(),
+            itsOctreeData->getDevice (),
             itsDensePointCountPerVoxel->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
             itsOctreeData->getNodes (0));
 
-    itsTimeMeasurement.emplace_back ("initLowestOctreeHierarchy", time);
-    spdlog::info ("'initLowestOctreeHierarchy' took {:f} [ms]", time);
+    itsTimeMeasurement.emplace_back ("kernelInitLeafNodes", time);
+    spdlog::info ("[kernel] kernelInitLeafNodes took {:f}[ms]", time);
 }
 
 
@@ -108,7 +108,7 @@ void OctreeProcessor::mergeHierarchical ()
         float time = executeKernel (
                 chunking::kernelMergeHierarchical,
                 itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getDevice(),
+                itsOctreeData->getDevice (),
                 itsDensePointCountPerVoxel->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
@@ -121,10 +121,11 @@ void OctreeProcessor::mergeHierarchical ()
                 itsOctreeData->getNodeOffset (i));
 
         timeAccumulated += time;
-        itsTimeMeasurement.emplace_back ("mergeHierarchical_" + std::to_string (itsOctreeData->getGridSize (i)), time);
+        itsTimeMeasurement.emplace_back (
+                "kernelMergeHierarchical_" + std::to_string (itsOctreeData->getGridSize (i)), time);
     }
 
-    spdlog::info ("'mergeHierarchical' took {:f} [ms]", timeAccumulated);
+    spdlog::info ("[kernel] kernelMergeHierarchical took {:f}[ms]", timeAccumulated);
 }
 
 void OctreeProcessor::distributePoints ()
@@ -139,13 +140,13 @@ void OctreeProcessor::distributePoints ()
 
     float time = Kernel::distributePoints (
             config,
-            itsOctreeData->getDevice(),
+            itsOctreeData->getDevice (),
             itsLeafLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             cloud,
             gridding);
 
-    itsTimeMeasurement.emplace_back ("distributePointsSparse", time);
-    spdlog::info ("'distributePoints' took {:f} [ms]", time);
+    itsTimeMeasurement.emplace_back ("kernelDistributePoints", time);
+    spdlog::info ("[kernel] kernelDistributePoints took {:f}[ms]", time);
 }
