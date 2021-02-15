@@ -182,7 +182,7 @@ void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth
     string data   = "data:[";
     string label  = "'Point Distribution: binWidth(" + to_string (binWidth) + "), mergingThreshold(" +
                    to_string (itsMetadata.mergingThreshold) + "), points(" +
-                   to_string (itsMetadata.cloudMetadata.pointAmount) + ")'";
+                   to_string (itsCloud->getMetadata ().pointAmount) + ")'";
 
     for (uint32_t i = 0; i < binAmount; ++i)
     {

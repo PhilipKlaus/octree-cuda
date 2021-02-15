@@ -16,10 +16,12 @@ public:
             const unordered_map<uint32_t, GpuArrayU32>& parentLut,
             const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
             OctreeMetadata metadata,
+            PointCloudMetadata cloudMetadata,
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
-            itsSubsampleMetadata (subsampleMetadata), itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
-            itsLeafLut (leafLut->toHost ()), itsAbsorbedNodes (0), itsPointsExported (0)
+            itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
+            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree), itsLeafLut (leafLut->toHost ()),
+            itsAbsorbedNodes (0), itsPointsExported (0)
     {
         std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
             itsParentLut.insert (make_pair (lutItem.first, lutItem.second->toHost ()));
@@ -65,6 +67,7 @@ protected:
     uint32_t itsPointsExported;
     uint32_t itsAbsorbedNodes;
     OctreeMetadata itsMetadata;
+    PointCloudMetadata itsCloudMetadata;
     SubsampleMetadata itsSubsampleMetadata;
     uint8_t* itsCloud;
     shared_ptr<Chunk[]> itsOctree;

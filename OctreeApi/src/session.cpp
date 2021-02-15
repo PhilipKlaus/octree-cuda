@@ -44,18 +44,15 @@ Session::~Session ()
 
 void Session::setPointCloudHost (uint8_t* pointCloud)
 {
-    itsPointCloud  = pointCloud;
-    itsCloudMemory = CLOUD_HOST;
+    itsPointCloud               = pointCloud;
+    itsCloudMetadata.memoryType = CLOUD_HOST;
     spdlog::debug ("set point cloud data from host");
 }
 
 void Session::generateOctree ()
 {
-    PointCloudMetadata cloudMetadata{
-            itsPointAmount, itsDataStride, itsBoundingBox, itsOffset, itsScale, itsCloudType, itsCloudMemory};
-
     itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsMergingThreshold, cloudMetadata, itsSubsamplingMetadata);
+            itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
 
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
@@ -80,7 +77,7 @@ void Session::exportMemoryReport (const std::string& filename)
 void Session::exportJsonReport (const std::string& filename)
 {
     itsProcessor->updateOctreeStatistics ();
-    export_json_data (filename, itsProcessor->getMetadata (), itsSubsamplingMetadata, itsProcessor->getTimings ());
+    export_json_data (filename, itsProcessor->getMetadata (), itsCloudMetadata, itsSubsamplingMetadata, itsProcessor->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
@@ -104,31 +101,31 @@ void Session::configureSubsampling (uint32_t subsamplingGrid, bool averaging, bo
 }
 void Session::setCloudType (uint8_t cloudType)
 {
-    itsCloudType = static_cast<CloudType> (cloudType);
+    itsCloudMetadata.cloudType = static_cast<CloudType> (cloudType);
 }
 
 void Session::setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    itsBoundingBox = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
+    itsCloudMetadata.bbCubic = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
 }
 
 
 void Session::setCloudPointAmount (uint32_t pointAmount)
 {
-    itsPointAmount = pointAmount;
+    itsCloudMetadata.pointAmount = pointAmount;
 }
 
 void Session::setCloudDataStride (uint32_t dataStride)
 {
-    itsDataStride = dataStride;
+    itsCloudMetadata.pointDataStride = dataStride;
 }
 
 void Session::setCloudScale (double x, double y, double z)
 {
-    itsScale = {x, y, z};
+    itsCloudMetadata.scale = {x, y, z};
 }
 
 void Session::setCloudOffset (double x, double y, double z)
 {
-    itsOffset = {x, y, z};
+    itsCloudMetadata.cloudOffset = {x, y, z};
 }

@@ -32,28 +32,17 @@ public:
     void performSubsampling ();
     ///@}
 
-    void exportHistogram (const string& filePath, uint32_t binWidth);
-
-    // Data export
-    void exportPlyNodes (const string& folderPath);
-
-    // Debugging methods
     const OctreeMetadata& getMetadata () const;
 
+    void exportHistogram (const string& filePath, uint32_t binWidth);
+    void exportPlyNodes (const string& folderPath);
     void updateOctreeStatistics ();
-
     unique_ptr<uint32_t[]> getDataLUT () const;
-
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel () const;
-
     unique_ptr<int[]> getDenseToSparseLUT () const;
-
     unique_ptr<int[]> getSparseToDenseLUT () const;
-
     shared_ptr<Chunk[]> getOctreeSparse () const;
-
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
-
     const std::vector<std::tuple<std::string, float>>& getTimings () const;
 
 private:

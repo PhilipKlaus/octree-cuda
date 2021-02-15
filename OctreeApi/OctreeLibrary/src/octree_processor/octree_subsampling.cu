@@ -62,7 +62,7 @@ SubsamplingTimings OctreeProcessor::randomSubsampling (
         GpuRandomState& randomStates,
         GpuArrayU32& randomIndices)
 {
-    PointCloudMetadata cloudMetadata = itsMetadata.cloudMetadata;
+    PointCloudMetadata cloudMetadata = itsCloud->getMetadata ();
 
     Chunk voxel                = h_octreeSparse[sparseVoxelIndex];
     SubsamplingTimings timings = {};

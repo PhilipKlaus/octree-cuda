@@ -47,19 +47,10 @@ private:
     uint8_t* itsPointCloud;
     std::unique_ptr<OctreeProcessor> itsProcessor;
 
-    // Cloud metadata
-    CloudType itsCloudType     = CloudType::CLOUD_FLOAT_UINT8_T;
-    CloudMemory itsCloudMemory = CloudMemory::CLOUD_HOST;
-    uint32_t itsPointAmount    = 0;
-    uint32_t itsDataStride     = 0;
-    Vector3<double> itsScale   = {};
-    Vector3<double> itsOffset  = {};
-    BoundingBox itsBoundingBox = {};
-
-    // Chunking
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;
 
+    PointCloudMetadata itsCloudMetadata      = {};
     SubsampleMetadata itsSubsamplingMetadata = {};
 };
 

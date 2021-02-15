@@ -39,9 +39,10 @@ PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata) :
         OctreeExporter<coordinateType, colorType> (
-                pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, subsamplingMetadata)
+                pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -85,7 +86,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
 
 
-        uint32_t dataStride = this->itsMetadata.cloudMetadata.pointDataStride;
+        uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
 
         uint64_t bufferOffset  = 0;
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
@@ -198,7 +199,7 @@ inline uint8_t PotreeExporter<coordinateType, colorType>::writeCoordinatesBuffer
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
 {
     auto* point = reinterpret_cast<coordinateType*> (this->itsCloud + pointByteIndex);
-    auto scale  = this->itsMetadata.cloudMetadata.scale;
+    auto scale  = this->itsCloudMetadata.scale;
 
     auto* dst = reinterpret_cast<int32_t*> (buffer.get () + bufferOffset);
     dst[0]    = static_cast<int32_t> (std::floor (point[0] / scale.x));
@@ -255,8 +256,8 @@ template <typename coordinateType, typename colorType>
 void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 {
     // Prepare metadata for export
-    auto bbCubic = this->itsMetadata.cloudMetadata.bbCubic;
-    auto scale   = this->itsMetadata.cloudMetadata.scale;
+    auto bbCubic = this->itsCloudMetadata.bbCubic;
+    auto scale   = this->itsCloudMetadata.scale;
     auto spacing = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsampleMetadata.subsamplingGrid;
 
     // Common metadata
@@ -317,6 +318,7 @@ template PotreeExporter<float, uint8_t>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
 
 template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& path);
@@ -331,6 +333,7 @@ template PotreeExporter<double, uint8_t>::PotreeExporter (
         const unordered_map<uint32_t, GpuArrayU32>& parentLut,
         const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
         OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
 
 template void PotreeExporter<double, uint8_t>::exportOctree (const std::string& path);

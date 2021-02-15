@@ -22,7 +22,6 @@ OctreeProcessor::OctreeProcessor (
     itsMetadata.nodeAmountDense  = itsOctreeData->getOverallNodes ();
     itsMetadata.chunkingGrid     = chunkingGrid;
     itsMetadata.mergingThreshold = mergingThreshold;
-    itsMetadata.cloudMetadata    = cloudMetadata;
     itsSubsampleMetadata         = subsamplingMetadata;
 
     if (cloudMetadata.memoryType == CLOUD_HOST)
@@ -49,14 +48,15 @@ void OctreeProcessor::calculateVoxelBB (PointCloudMetadata& metadata, uint32_t d
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    double min      = itsMetadata.cloudMetadata.bbCubic.min.x;
-    double max      = itsMetadata.cloudMetadata.bbCubic.max.x;
+    auto& cloudMeta = itsCloud->getMetadata ();
+    double min      = cloudMeta.bbCubic.min.x;
+    double max      = cloudMeta.bbCubic.max.x;
     double side     = max - min;
     auto cubicWidth = side / itsOctreeData->getGridSize (level);
 
-    metadata.bbCubic.min.x = itsMetadata.cloudMetadata.bbCubic.min.x + coords.x * cubicWidth;
-    metadata.bbCubic.min.y = itsMetadata.cloudMetadata.bbCubic.min.y + coords.y * cubicWidth;
-    metadata.bbCubic.min.z = itsMetadata.cloudMetadata.bbCubic.min.z + coords.z * cubicWidth;
+    metadata.bbCubic.min.x = cloudMeta.bbCubic.min.x + coords.x * cubicWidth;
+    metadata.bbCubic.min.y = cloudMeta.bbCubic.min.y + coords.y * cubicWidth;
+    metadata.bbCubic.min.z = cloudMeta.bbCubic.min.z + coords.z * cubicWidth;
     metadata.bbCubic.max.x = metadata.bbCubic.min.x + cubicWidth;
     metadata.bbCubic.max.y = metadata.bbCubic.min.y + cubicWidth;
     metadata.bbCubic.max.z = metadata.bbCubic.min.z + cubicWidth;
@@ -77,6 +77,7 @@ void OctreeProcessor::exportPlyNodes (const string& folderPath)
             itsParentLut,
             itsAveragingData,
             itsMetadata,
+            itsCloud->getMetadata (),
             itsSubsampleMetadata);
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;

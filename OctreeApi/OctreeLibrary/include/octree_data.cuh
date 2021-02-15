@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "types.cuh"
 #include "octree_metadata.h"
+#include "types.cuh"
 #include <cstdint>
 #include <vector>
 
