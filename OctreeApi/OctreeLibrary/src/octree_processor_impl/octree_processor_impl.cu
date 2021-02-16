@@ -70,51 +70,69 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
     auto &tracker = TimeTracker::getInstance();
 
     auto start = std::chrono::high_resolution_clock::now ();
-    /*PlyExporter<coordinateType, colorType> plyExporter (
-            itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
-    plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<float, uint8_t> potreeExporter (
-            itsCloud,
-            itsOctreeData->getHost (),
-            itsLeafLut,
-            itsParentLut,
-            itsAveragingData,
-            itsMetadata,
-            itsCloud->getMetadata (),
-            itsSubsampleMetadata);
+
+    if(itsCloud->getMetadata().cloudType == CLOUD_FLOAT_UINT8_T) {
+        PotreeExporter<float, uint8_t> potreeExporter (
+                itsCloud,
+                itsOctreeData->getHost (),
+                itsLeafLut,
+                itsParentLut,
+                itsAveragingData,
+                itsMetadata,
+                itsCloud->getMetadata (),
+                itsSubsampleMetadata);
+        potreeExporter.exportOctree(folderPath);
+    }
+    else {
+        PotreeExporter<double, uint8_t> potreeExporter (
+                itsCloud,
+                itsOctreeData->getHost (),
+                itsLeafLut,
+                itsParentLut,
+                itsAveragingData,
+                itsMetadata,
+                itsCloud->getMetadata (),
+                itsSubsampleMetadata);
+        potreeExporter.exportOctree(folderPath);
+    }
+
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackMemCpyTime(elapsed.count() * 1000, "Several octree data", false);
-
-    start = std::chrono::high_resolution_clock::now ();
-    potreeExporter.exportOctree (folderPath);
-    finish  = std::chrono::high_resolution_clock::now ();
-    elapsed = finish - start;
     tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data");
 }
 
-// ToDo: call appropriate export function!!!
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
-    /*auto &tracker = TimeTracker::getInstance();
+    auto &tracker = TimeTracker::getInstance();
 
     auto start = std::chrono::high_resolution_clock::now ();
-    PotreeExporter<double, uint8_t> potreeExporter (
-            itsCloud,
-            itsOctreeData->getHost (),
-            itsLeafLut,
-            itsParentLut,
-            itsAveragingData,
-            itsMetadata,
-            itsCloud->getMetadata (),
-            itsSubsampleMetadata);
+
+    if(itsCloud->getMetadata().cloudType == CLOUD_FLOAT_UINT8_T) {
+        PlyExporter<float, uint8_t> plyExporter (
+                itsCloud,
+                itsOctreeData->getHost (),
+                itsLeafLut,
+                itsParentLut,
+                itsAveragingData,
+                itsMetadata,
+                itsCloud->getMetadata (),
+                itsSubsampleMetadata);
+        plyExporter.exportOctree(folderPath);
+    }
+    else {
+        PotreeExporter<double, uint8_t> plyExporter (
+                itsCloud,
+                itsOctreeData->getHost (),
+                itsLeafLut,
+                itsParentLut,
+                itsAveragingData,
+                itsMetadata,
+                itsCloud->getMetadata (),
+                itsSubsampleMetadata);
+        plyExporter.exportOctree(folderPath);
+    }
+
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackMemCpyTime(elapsed.count() * 1000, "Several octree data", false);
-
-    start = std::chrono::high_resolution_clock::now ();
-    potreeExporter.exportOctree (folderPath);
-    finish  = std::chrono::high_resolution_clock::now ();
-    elapsed = finish - start;
-    tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data"); */
+    tracker.trackCpuTime(elapsed.count() * 1000, "Export ply data");
 }
