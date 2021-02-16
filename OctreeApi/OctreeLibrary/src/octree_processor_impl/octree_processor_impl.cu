@@ -65,8 +65,7 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
     metadata.cloudOffset   = metadata.bbCubic.min;
 }
 
-// ToDo: call appropriate export function!!!
-void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
+void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
     auto &tracker = TimeTracker::getInstance();
 
@@ -74,7 +73,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
     plyExporter.exportOctree (folderPath);*/
-    PotreeExporter<double, uint8_t> potreeExporter (
+    PotreeExporter<float, uint8_t> potreeExporter (
             itsCloud,
             itsOctreeData->getHost (),
             itsLeafLut,
@@ -92,4 +91,30 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
     finish  = std::chrono::high_resolution_clock::now ();
     elapsed = finish - start;
     tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data");
+}
+
+// ToDo: call appropriate export function!!!
+void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
+{
+    /*auto &tracker = TimeTracker::getInstance();
+
+    auto start = std::chrono::high_resolution_clock::now ();
+    PotreeExporter<double, uint8_t> potreeExporter (
+            itsCloud,
+            itsOctreeData->getHost (),
+            itsLeafLut,
+            itsParentLut,
+            itsAveragingData,
+            itsMetadata,
+            itsCloud->getMetadata (),
+            itsSubsampleMetadata);
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    tracker.trackMemCpyTime(elapsed.count() * 1000, "Several octree data", false);
+
+    start = std::chrono::high_resolution_clock::now ();
+    potreeExporter.exportOctree (folderPath);
+    finish  = std::chrono::high_resolution_clock::now ();
+    elapsed = finish - start;
+    tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data"); */
 }

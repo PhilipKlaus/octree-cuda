@@ -27,10 +27,15 @@ public:
     void performSubsampling ();
     ///@}
 
-    const OctreeMetadata& getMetadata () const;
-
+    ///@{
+    ///@name Chunking
     void exportHistogram (const string& filePath, uint32_t binWidth);
     void exportPlyNodes (const string& folderPath);
+    void exportPotree (const string& folderPath);
+    ///@}
+
+    const OctreeMetadata& getMetadata () const;
+
     void updateOctreeStatistics ();
     unique_ptr<uint32_t[]> getDataLUT () const;
     unique_ptr<uint32_t[]> getDensePointCountPerVoxel () const;
@@ -40,12 +45,13 @@ public:
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
 private:
-    // Merging
+    
+    uint32_t getRootIndex ();
     void mergeHierarchical ();
-
     void initLowestOctreeHierarchy ();
+    uint32_t prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
+    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
-    // Subsampling
     SubsamplingTimings randomSubsampling (
             const unique_ptr<int[]>& h_sparseToDenseLUT,
             uint32_t sparseVoxelIndex,
@@ -56,20 +62,6 @@ private:
             GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,
             GpuArrayU32& randomIndices);
-
-    uint32_t prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
-
-    // Exporting
-    uint32_t exportTreeNode (
-            uint8_t* cpuPointCloud,
-            const unique_ptr<Chunk[]>& octreeSparse,
-            const unique_ptr<uint32_t[]>& dataLUT,
-            const string& level,
-            uint32_t index,
-            const string& folder);
-
-    // Benchmarking
-    uint32_t getRootIndex ();
 
     void evaluateOctreeProperties (
             const shared_ptr<Chunk[]>& h_octreeSparse,
@@ -89,9 +81,6 @@ private:
             uint32_t min,
             uint32_t binWidth,
             uint32_t nodeIndex) const;
-
-    void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
-
 private:
     // Point cloud
     PointCloud itsCloud;

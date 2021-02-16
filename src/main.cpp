@@ -65,15 +65,23 @@ auto cloudType           = 0;
 std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
 */
 
+uint32_t pointAmount     = 25836417;
+uint32_t pointDataStride = 15;
+float scaleX             = 0.001f;
+float scaleY             = 0.001f;
+float scaleZ             = 0.001f;
+auto cloudType           = 0;
+std::string plyFile      = "heidentor_color_raw.ply";
 
-uint32_t pointAmount     = 119701547;
+
+/*uint32_t pointAmount     = 119701547;
 uint32_t pointDataStride = 27;
 float scaleX             = 0.01f;
 float scaleY             = 0.01f;
 float scaleZ             = 0.01f;
 auto cloudType           = 1;
 std::string plyFile      = "morrobay_fused_headerless.ply";
-
+*/
 
 /*
 uint32_t pointAmount     = 47111095;
@@ -88,7 +96,7 @@ std::string plyFile      = "lifeboat_headerless.ply";
 auto ply = readPly (plyFile);
 
 // Calculate BB
-auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
+auto realBB  = calculateRealBB<float> (ply, pointAmount, pointDataStride);
 auto cubicBB = calculateCubicBB (realBB);
 
 auto start = std::chrono::high_resolution_clock::now ();

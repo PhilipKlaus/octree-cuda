@@ -37,7 +37,7 @@ void OctreeProcessor::exportPlyNodes (const std::string& folderPath)
 
 void OctreeProcessor::exportPotree (const std::string& folderPath)
 {
-    itsProcessor->exportPlyNodes (folderPath);
+    itsProcessor->exportPotree (folderPath);
 }
 
 void OctreeProcessor::updateStatistics ()

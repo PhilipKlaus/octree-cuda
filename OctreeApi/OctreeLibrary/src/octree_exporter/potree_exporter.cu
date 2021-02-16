@@ -146,6 +146,7 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     discoveredNodes[this->getRootIndex ()] = true;
     toVisit.push_back (this->getRootIndex ());
 
+    spdlog::error("{}", thread::hardware_concurrency ());
     ThreadPool pool (thread::hardware_concurrency ());
 
     while (!toVisit.empty ())
