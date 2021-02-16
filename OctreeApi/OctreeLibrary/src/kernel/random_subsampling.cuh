@@ -1,15 +1,89 @@
+/**
+ * @file random_subsampling.cuh
+ * @author Philip Klaus
+ * @brief Contains code for a randomized subampling of points within 8 child nodes.
+ */
+
 #pragma once
 
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
 #include "kernel_structs.cuh"
-#include "octree_metadata.h"
+#include "metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
 
 namespace subsampling {
 
-// Move point indices from old (child LUT) to new (parent LUT
+/**
+ * Initializes a CUDA random state.
+ * @param seed The actual seed for the randomization.
+ * @param states The CUDA random states which shoul be initialized.
+ * @param cellAmount The amount of cells for which the kernel is called.
+ */
+__global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uint32_t cellAmount)
+{
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    if (index >= cellAmount)
+    {
+        return;
+    }
+
+    curand_init (seed, index, 0, &states[index]);
+}
+
+/**
+ * Generates one random number, depending on the point amount in a cell.
+ * Important! This kernel does not generate a random point index, instead it generates
+ * a random number between [0 <-> points-in-a-cell]. The actual assignment from this
+ * generated random number to a 3D point is performed in kernelRandomPointSubsample.
+ *
+ * @param states The initialized random states.
+ * @param randomIndices An array for storing one randomly generated number per filled cell.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param countingGrid Holds the amount of points per cell.
+ * @param cellAmount The amount of cells for which the kernel is called.
+ */
+__global__ void kernelGenerateRandoms (
+        curandState_t* states,
+        uint32_t* randomIndices,
+        const int* denseToSparseLUT,
+        const uint32_t* countingGrid,
+        uint32_t cellAmount)
+{
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    bool cellIsEmpty = countingGrid[index] == 0;
+
+    if (index >= cellAmount || cellIsEmpty)
+    {
+        return;
+    }
+
+    uint32_t sparseIndex = denseToSparseLUT[index];
+
+    randomIndices[sparseIndex] =
+            static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
+}
+
+/**
+ * Evaluates on random point per cell and assign its averaging and point-lut data to the parent node.
+ * Furthermore this kernel resets all temporary needed data structures.
+ *
+ * @tparam coordinateType The datatype of the 3D coordinates.
+ * @tparam colorType The datatype of the point colors.
+ * @param parentDataLUT The point-LUT of the parent node.
+ * @param parentAveraging The averaging data of the parent node.
+ * @param countingGrid Holds the amount of points per cell.
+ * @param averagingGrid Holds the averaging data from all 8 child nodes.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param filledCellCounter Hlds the amount of filled cells (!=0) wihtin the counting grid.
+ * @param cloud Holds the point cloud data.
+ * @param gridding Holds data necessary to map a 3D point to a cell.
+ * @param randomIndices Holds the previously generated random numbers for each subsampling cell.
+ * @param replacementScheme Determines if the replacement scheme or the averaging scheme should be applied.
+ */
 template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
         SubsampleSet test,
@@ -18,7 +92,7 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* countingGrid,
         Averaging* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* sparseIndexCounter,
+        uint32_t* filledCellCounter,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
@@ -32,78 +106,41 @@ __global__ void kernelRandomPointSubsample (
     {
         return;
     }
-    // Determine child index and pick appropriate LUT data
+    // Access child node data
     uint32_t* childDataLUT     = config[gridIndex].lutAdress;
     uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-
     uint32_t lutItem = childDataLUT[childDataLUTStart + index];
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
             reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + lutItem * cloud.dataStride);
 
-    // Calculate cell index
+    // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
-
     int sparseIndex = denseToSparseLUT[denseVoxelIndex];
 
-    // 2. We are only interested in the last point within a node -> Implicitly reset the countingGrid
+    // Decrease the point counter per cell
     auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
 
+    // If the actual thread does not handle the randomly chosen point, exit now.
     if (sparseIndex == -1 || oldIndex != randomIndices[sparseIndex])
     {
         return;
     }
 
-    // Move subsampled point to parent
+    // Move subsampled averaging and point-LUT data to parent node
     parentDataLUT[sparseIndex]   = lutItem;
     parentAveraging[sparseIndex] = averagingGrid[denseVoxelIndex];
     childDataLUT[childDataLUTStart + index] =
             replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
 
-    // Reset all subsampling data data
+    // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex]         = -1;
-    *sparseIndexCounter                       = 0;
+    *filledCellCounter                       = 0;
     averagingGrid[denseVoxelIndex].pointCount = 0;
     averagingGrid[denseVoxelIndex].r          = 0;
     averagingGrid[denseVoxelIndex].g          = 0;
     averagingGrid[denseVoxelIndex].b          = 0;
-}
-
-// http://ianfinlayson.net/class/cpsc425/notes/cuda-random
-__global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uint32_t nodeAmount)
-{
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-
-    if (index >= nodeAmount)
-    {
-        return;
-    }
-
-    curand_init (seed, index, 0, &states[index]);
-}
-
-__global__ void kernelGenerateRandoms (
-        curandState_t* states,
-        uint32_t* randomIndices,
-        int* denseToSparseLUT,
-        uint32_t* sparseIndexCounter,
-        uint32_t* countingGrid,
-        uint32_t gridNodes)
-{
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-
-    bool cellIsEmpty = countingGrid[index] == 0;
-
-    if (index >= gridNodes || cellIsEmpty)
-    {
-        return;
-    }
-
-    uint32_t sparseIndex = denseToSparseLUT[index];
-
-    randomIndices[sparseIndex] =
-            static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
 }
 } // namespace subsampling
 

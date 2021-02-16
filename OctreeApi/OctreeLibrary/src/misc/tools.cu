@@ -1,6 +1,6 @@
 #include "../include/tools.cuh"
 #include "defines.cuh"
-#include "octree_metadata.h"
+#include "metadata.h"
 #include "types.cuh"
 
 

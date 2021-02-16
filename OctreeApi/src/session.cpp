@@ -7,11 +7,11 @@
 #include <iostream>
 #include <memory>
 
-#include "session.h"
-#include "json_exporter.h"
-#include "octree_processor.h"
 #include "defines.cuh"
-#include "octree_metadata.h"
+#include "json_exporter.h"
+#include "metadata.h"
+#include "octree_processor.h"
+#include "session.h"
 
 Session* Session::ToSession (void* session)
 {
@@ -54,7 +54,7 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
-    itsProcessor = std::make_unique<OctreeProcessorPimpl> (
+    itsProcessor = std::make_unique<OctreeProcessor> (
             itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
 
     itsProcessor->initialPointCounting ();
@@ -79,8 +79,13 @@ void Session::exportMemoryReport (const std::string& filename)
 
 void Session::exportJsonReport (const std::string& filename)
 {
-    itsProcessor->updateStatistics();
-    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsCloudMetadata, itsSubsamplingMetadata, itsProcessor->getTimings ());
+    itsProcessor->updateStatistics ();
+    export_json_data (
+            filename,
+            itsProcessor->getOctreeMetadata (),
+            itsCloudMetadata,
+            itsSubsamplingMetadata,
+            itsProcessor->getTimings ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 

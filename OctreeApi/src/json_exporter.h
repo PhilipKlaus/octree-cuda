@@ -5,7 +5,7 @@
 #pragma once
 
 #include "eventWatcher.h"
-#include "octree_metadata.h"
+#include "metadata.h"
 #include <iomanip>
 #include <json.hpp>
 

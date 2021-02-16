@@ -4,7 +4,8 @@
 
 #pragma once
 
-#include "api_types.h"
+
+#include "metadata.h"
 #include <cstdint>
 #include <types.cuh>
 

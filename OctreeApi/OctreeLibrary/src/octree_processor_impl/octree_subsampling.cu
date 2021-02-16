@@ -1,10 +1,10 @@
 #include "kernel_executor.cuh"
-#include "octree_processpr_impl.cuh"
+#include "octree_processor_impl.cuh"
 #include "random_subsampling.cuh"
 #include "subsample_evaluating.cuh"
 
 
-void OctreeProcessorPimpl::OctreeProcessorImpl::performSubsampling ()
+void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
     auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
@@ -49,7 +49,7 @@ void OctreeProcessorPimpl::OctreeProcessorImpl::performSubsampling ()
 }
 
 
-SubsamplingTimings OctreeProcessorPimpl::OctreeProcessorImpl::randomSubsampling (
+SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT,
         uint32_t sparseVoxelIndex,
         uint32_t level,
@@ -63,7 +63,7 @@ SubsamplingTimings OctreeProcessorPimpl::OctreeProcessorImpl::randomSubsampling 
     SubsamplingTimings timings = {};
 
     auto& cloudMetadata = itsCloud->getMetadata ();
-    auto& node = itsOctreeData->getNode(sparseVoxelIndex);
+    auto& node          = itsOctreeData->getNode (sparseVoxelIndex);
 
     // Depth first traversal
     for (int childIndex : node.childrenChunks)
@@ -123,7 +123,6 @@ SubsamplingTimings OctreeProcessorPimpl::OctreeProcessorImpl::randomSubsampling 
                 randomStates->devicePointer (),
                 randomIndices->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
                 subsampleCountingGrid->devicePointer (),
                 threads);
 
@@ -156,17 +155,17 @@ SubsamplingTimings OctreeProcessorPimpl::OctreeProcessorImpl::randomSubsampling 
 }
 
 
-uint32_t OctreeProcessorPimpl::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
+uint32_t OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
     uint32_t maxPoints = 0;
     auto* config       = (SubsampleConfig*)(&subsampleSet);
-    auto& node = itsOctreeData->getNode(parentIndex);
+    auto& node         = itsOctreeData->getNode (parentIndex);
     for (uint8_t i = 0; i < 8; ++i)
     {
         int childIndex = node.childrenChunks[i];
         if (childIndex != -1)
         {
-            Chunk child               = itsOctreeData->getNode(childIndex);
+            Chunk child               = itsOctreeData->getNode (childIndex);
             config[i].pointAmount     = child.isParent ? itsParentLut[childIndex]->pointCount () : child.pointCount;
             maxPoints                 = max (maxPoints, config[i].pointAmount);
             config[i].averagingAdress = child.isParent ? itsAveragingData[childIndex]->devicePointer () : nullptr;

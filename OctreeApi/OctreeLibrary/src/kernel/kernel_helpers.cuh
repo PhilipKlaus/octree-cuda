@@ -1,6 +1,5 @@
 #pragma once
 
-#include "api_types.h"
 #include "kernel_structs.cuh"
 #include <cstdint>
 #include <cuda_runtime_api.h>

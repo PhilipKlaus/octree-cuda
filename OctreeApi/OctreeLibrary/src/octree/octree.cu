@@ -1,12 +1,12 @@
-#include "octree_data.cuh"
+#include "octree.cuh"
 #include "tools.cuh"
 
-OctreeData::OctreeData (uint32_t chunkingGrid) : itsDepth (0), itsChunkingGrid (chunkingGrid), itsNodeAmountDense (0)
+Octree::Octree (uint32_t chunkingGrid) : itsDepth (0), itsChunkingGrid (chunkingGrid), itsNodeAmountDense (0)
 {
     initialize ();
 }
 
-void OctreeData::initialize ()
+void Octree::initialize ()
 {
     itsDepth = tools::getOctreeLevel (itsChunkingGrid);
 
@@ -18,31 +18,31 @@ void OctreeData::initialize ()
         itsNodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 }
-uint8_t OctreeData::getDepth ()
+uint8_t Octree::getDepth ()
 {
     return itsDepth;
 }
-uint32_t OctreeData::getNodes (uint8_t level)
+uint32_t Octree::getNodes (uint8_t level)
 {
     return itsNodesPerLevel[level];
 }
-uint32_t OctreeData::getGridSize (uint8_t level)
+uint32_t Octree::getGridSize (uint8_t level)
 {
     return itsGridSizePerLevel[level];
 }
-uint32_t OctreeData::getNodeOffset (uint8_t level)
+uint32_t Octree::getNodeOffset (uint8_t level)
 {
     return itsNodeOffsetperLevel[level];
 }
-uint32_t OctreeData::getOverallNodes ()
+uint32_t Octree::getOverallNodes ()
 {
     return itsNodeAmountDense;
 }
-void OctreeData::createOctree (uint32_t nodeAmountSparse)
+void Octree::createOctree (uint32_t nodeAmountSparse)
 {
     itsOctree = createGpuOctree (nodeAmountSparse, "octreeSparse");
 }
-void OctreeData::copyToHost ()
+void Octree::copyToHost ()
 {
     auto start                            = std::chrono::high_resolution_clock::now ();
     itsOctreeHost                         = itsOctree->toHost ();
@@ -50,7 +50,7 @@ void OctreeData::copyToHost ()
     std::chrono::duration<double> elapsed = finish - start;
     spdlog::info ("[memcpy] Copied octree from device to host in: {}s", elapsed.count ());
 }
-const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
+const std::shared_ptr<Chunk[]>& Octree::getHost ()
 {
     if (!itsOctreeHost)
     {
@@ -58,11 +58,11 @@ const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
     }
     return itsOctreeHost;
 }
-Chunk* OctreeData::getDevice ()
+Chunk* Octree::getDevice ()
 {
     return itsOctree->devicePointer ();
 }
-const Chunk& OctreeData::getNode (uint32_t index)
+const Chunk& Octree::getNode (uint32_t index)
 {
-    return getHost()[index];
+    return getHost ()[index];
 }

@@ -1,14 +1,11 @@
 #pragma once
 
-//#include "octree_data.cuh"
-//#include "octree_metadata.h"
-//#include "point_cloud.cuh"
-#include "types.cuh"
+#include "../point_cloud/point_cloud.cuh"
+#include "octree.cuh"
 #include "octree_processor.h"
-#include "octree_data.cuh"
-#include "point_cloud.cuh"
+#include "types.cuh"
 
-class OctreeProcessorPimpl::OctreeProcessorImpl
+class OctreeProcessor::OctreeProcessorImpl
 {
 public:
     OctreeProcessorImpl (
@@ -112,7 +109,7 @@ private:
     SubsampleMetadata itsSubsampleMetadata;
 
     // Octree
-    std::unique_ptr<OctreeData> itsOctreeData;
+    std::unique_ptr<Octree> itsOctreeData;
 
     // Subsampling
     unordered_map<uint32_t, GpuArrayU32> itsParentLut;
@@ -122,4 +119,3 @@ private:
     std::vector<std::tuple<std::string, float>>
             itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)
 };
-

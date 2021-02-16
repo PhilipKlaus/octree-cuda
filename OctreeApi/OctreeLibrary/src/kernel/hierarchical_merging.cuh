@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "octree_metadata.h"
+#include "metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
 

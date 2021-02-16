@@ -1,26 +1,47 @@
+/**
+ * @file subsample_evaluation.cuh
+ * @author Philip Klaus
+ * @brief Contains code for evaluating subsample points and for summarizing color information inside subsampling cells
+ */
 #pragma once
 
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
 #include "kernel_structs.cuh"
-#include "octree_metadata.h"
+#include "metadata.h"
 #include "tools.cuh"
 #include "types.cuh"
 
 namespace subsampling {
 
+
+/**
+ * Places a 3-dimensional grid over 8 octree children nodes and maps the points inside to a target cell.
+ * The kernel counts how many points fall into each cell of the counting grid.
+ * Furthermore all color information from all points in a cell are summed up (needed for color averaging)
+ *
+ * @tparam coordinateType The datatype of the 3D coordinates.
+ * @tparam colorType The datatype of the point colors.
+ * @param subsampleSet Contains meta information necessary for accessing child node data.
+ * @param countingGrid The actual counting grid, holding the amount of points per cell.
+ * @param averagingGrid Hold the summarized color information per cell.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param filledCellCounter Counts how many cells in the counting grid are actually filled.
+ * @param cloud Holds the point cloud data.
+ * @param gridding Holds data necessary to map a 3D point to a cell.
+ */
 template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
-        SubsampleSet test,
-        uint32_t* densePointCount,
+        SubsampleSet subsampleSet,
+        uint32_t* countingGrid,
         Averaging* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* sparseIndexCounter,
+        uint32_t* filledCellCounter,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
     int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfig* config = (SubsampleConfig*)(&test);
+    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
     int gridIndex           = blockIdx.z;
 
     if (index >= config[gridIndex].pointAmount)
@@ -28,7 +49,7 @@ __global__ void kernelEvaluateSubsamples (
         return;
     }
 
-    // Determine child index and pick appropriate LUT data
+    // Access child node data
     uint32_t* childDataLUT     = config[gridIndex].lutAdress;
     uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
     Averaging* childAveraging  = config[gridIndex].averagingAdress;
@@ -41,8 +62,10 @@ __global__ void kernelEvaluateSubsamples (
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    uint32_t old = atomicAdd ((densePointCount + denseVoxelIndex), 1);
+    // Increase the point counter for the cell
+    uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
+    // Accumulate color information
     bool hasAveragingData    = (childAveraging != nullptr);
     Averaging* averagingData = childAveraging + index;
     atomicAdd (&(averagingGrid[denseVoxelIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
@@ -50,9 +73,11 @@ __global__ void kernelEvaluateSubsamples (
     atomicAdd (&(averagingGrid[denseVoxelIndex].g), hasAveragingData ? averagingData->g : color->y);
     atomicAdd (&(averagingGrid[denseVoxelIndex].b), hasAveragingData ? averagingData->b : color->z);
 
+    // If the thread handles the first point in a cell: increase the filledCellCounter and retrieve / store the sparse
+    // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (sparseIndexCounter, 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (filledCellCounter, 1);
     }
 }
 } // namespace subsampling

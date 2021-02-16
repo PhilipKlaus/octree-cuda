@@ -6,16 +6,15 @@
 
 #pragma once
 
-#include "octree_metadata.h"
 #include "types.cuh"
 #include <cstdint>
 #include <vector>
 
-class OctreeData
+class Octree
 {
 public:
-    OctreeData (uint32_t chunkingGrid);
-    OctreeData (const OctreeData&) = delete;
+    Octree (uint32_t chunkingGrid);
+    Octree (const Octree&) = delete;
 
     void createOctree (uint32_t nodeAmountSparse);
     void copyToHost ();
@@ -29,7 +28,7 @@ public:
     const std::shared_ptr<Chunk[]>& getHost ();
     Chunk* getDevice ();
 
-    const Chunk& getNode(uint32_t index);
+    const Chunk& getNode (uint32_t index);
 
 private:
     void initialize ();

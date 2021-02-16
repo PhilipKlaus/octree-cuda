@@ -6,7 +6,6 @@
 #define OCTREE_API_SESSION_H
 
 #include "octree_processor.h"
-#include <api_types.h>
 #include <memory>
 #include <string>
 
@@ -45,7 +44,7 @@ public:
 private:
     int itsDevice;
     uint8_t* itsPointCloud;
-    std::unique_ptr<OctreeProcessorPimpl> itsProcessor;
+    std::unique_ptr<OctreeProcessor> itsProcessor;
 
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;

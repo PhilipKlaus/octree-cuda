@@ -1,7 +1,7 @@
 #pragma once
 
-#include "octree_metadata.h"
-#include "point_cloud.cuh"
+#include "../point_cloud/point_cloud.cuh"
+#include "metadata.h"
 #include "types.cuh"
 
 
