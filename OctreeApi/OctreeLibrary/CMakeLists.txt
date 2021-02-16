@@ -51,7 +51,11 @@ add_library(${PROJECT_NAME} STATIC
 
         # Octree data
         src/include/octree.cuh
-        src/octree/octree.cu
+        src/data/octree.cu
+
+        # Subsampling data
+        src/include/subsampling_data.cuh
+        src/data/subsampling_data.cu
 
         # Point cloud
         src/include/point_cloud.cuh

@@ -6,13 +6,12 @@ PlyExporter<coordinateType, colorType>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
+        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata) :
         OctreeExporter<coordinateType, colorType> (
-                pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata, cloudMetadata, subsamplingMetadata)
+                pointCloud, octree, leafeLut, subsamples, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -32,8 +31,9 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     // ToDo: read from config + change in kernel;
     bool isAveraging = true;
 
-    uint32_t pointsInNode = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
-    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
+    uint32_t pointsInNode =
+            isParent ? this->itsSubsamples->getLutSize (nodeIndex) : this->itsOctree[nodeIndex].pointCount;
+    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
     uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
 
@@ -57,7 +57,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
 
                     if (isAveraging)
                     {
-                        const std::unique_ptr<Averaging[]>& averaging = this->itsAveraging[nodeIndex];
+                        const std::unique_ptr<Averaging[]>& averaging = this->itsSubsamples->getAvgHost (nodeIndex);
                         writeColorAveraged (buffer, bufferOffset, nodeIndex, u);
                     }
 
@@ -181,17 +181,17 @@ void PlyExporter<coordinateType, colorType>::writeColorAveraged (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
     uint8_t colorSize      = sizeof (colorType);
-    uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
+    uint32_t sumPointCount = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].pointCount;
 
-    auto r = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    auto r = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].r / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &r, colorSize);
 
     bufferOffset += colorSize;
-    auto g = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    auto g = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].g / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &g, colorSize);
 
     bufferOffset += colorSize;
-    auto b = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    auto b = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].b / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &b, colorSize);
 }
 
@@ -220,8 +220,7 @@ template PlyExporter<float, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
+        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
@@ -235,8 +234,7 @@ template PlyExporter<double, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
+        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);

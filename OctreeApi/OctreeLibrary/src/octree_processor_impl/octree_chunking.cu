@@ -42,7 +42,7 @@ void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
             cloud,
             gridding);
 
-    TimeTracker::getInstance().trackKernelTime(time, "kernelPointCounting");
+    TimeTracker::getInstance ().trackKernelTime (time, "kernelPointCounting");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
@@ -65,7 +65,7 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
                 itsOctreeData->getNodeOffset (i));
     }
 
-    TimeTracker::getInstance().trackKernelTime(timeAccumulated, "kernelPropagatePointCounts");
+    TimeTracker::getInstance ().trackKernelTime (timeAccumulated, "kernelPropagatePointCounts");
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
@@ -89,7 +89,7 @@ void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
             itsSparseToDenseLUT->devicePointer (),
             itsOctreeData->getNodes (0));
 
-    TimeTracker::getInstance().trackKernelTime(time, "kernelInitLeafNodes");
+    TimeTracker::getInstance ().trackKernelTime (time, "kernelInitLeafNodes");
 }
 
 
@@ -115,7 +115,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsOctreeData->getNodeOffset (i + 1),
                 itsOctreeData->getNodeOffset (i));
     }
-    TimeTracker::getInstance().trackKernelTime(timeAccumulated, "kernelMergeHierarchical");
+    TimeTracker::getInstance ().trackKernelTime (timeAccumulated, "kernelMergeHierarchical");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
@@ -137,5 +137,5 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
             cloud,
             gridding);
 
-    TimeTracker::getInstance().trackKernelTime(time, "kernelDistributePoints");
+    TimeTracker::getInstance ().trackKernelTime (time, "kernelDistributePoints");
 }

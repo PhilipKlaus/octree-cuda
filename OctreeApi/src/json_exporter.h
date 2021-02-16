@@ -5,8 +5,8 @@
 #pragma once
 
 #include "memory_tracker.cuh"
-#include "time_tracker.cuh"
 #include "metadata.cuh"
+#include "time_tracker.cuh"
 #include <iomanip>
 #include <json.hpp>
 
@@ -57,35 +57,35 @@ void export_json_data (
     statistics["cloud"]["scale"]["y"]            = cloudMetadata.scale.y;
     statistics["cloud"]["scale"]["z"]            = cloudMetadata.scale.z;
 
-    auto &tracker = TimeTracker::getInstance();
+    auto& tracker            = TimeTracker::getInstance ();
     float accumulatedCpuTime = 0;
-    for (auto const& cpuTime : tracker.getCpuTimings())
+    for (auto const& cpuTime : tracker.getCpuTimings ())
     {
         statistics["timings"]["cpu"][std::get<1> (cpuTime)] = std::get<0> (cpuTime);
         accumulatedCpuTime += std::get<0> (cpuTime);
     }
 
     float accumulatedGpuTime = 0;
-    for (auto const& gpuTime : tracker.getKernelTimings())
+    for (auto const& gpuTime : tracker.getKernelTimings ())
     {
         statistics["timings"]["gpu"][std::get<1> (gpuTime)] = std::get<0> (gpuTime);
         accumulatedGpuTime += std::get<0> (gpuTime);
     }
 
     float accumulatedMemCpyTime = 0;
-    for (auto const& memCpyTime : tracker.getMemCpyTimings())
+    for (auto const& memCpyTime : tracker.getMemCpyTimings ())
     {
         statistics["timings"]["memcpy"][std::get<1> (memCpyTime)] = std::get<0> (memCpyTime);
         accumulatedMemCpyTime += std::get<0> (memCpyTime);
     }
 
-    statistics["timings"]["accumulatedCpuTime"] = accumulatedCpuTime;
-    statistics["timings"]["accumulatedGpuTime"] = accumulatedGpuTime;
+    statistics["timings"]["accumulatedCpuTime"]    = accumulatedCpuTime;
+    statistics["timings"]["accumulatedGpuTime"]    = accumulatedGpuTime;
     statistics["timings"]["accumulatedMemCpyTime"] = accumulatedMemCpyTime;
-    statistics["timings"]["accumulatedOverall"] = accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime;
+    statistics["timings"]["accumulatedOverall"]    = accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime;
 
 
-    MemoryTracker& watcher                     = MemoryTracker::getInstance ();
+    MemoryTracker& watcher                    = MemoryTracker::getInstance ();
     statistics["memory"]["peak"]              = watcher.getMemoryPeak ();
     statistics["memory"]["reserveEvents"]     = watcher.getMemoryReserveEvents ();
     statistics["memory"]["cumulatedReserved"] = watcher.getCumulatedMemoryReservation ();

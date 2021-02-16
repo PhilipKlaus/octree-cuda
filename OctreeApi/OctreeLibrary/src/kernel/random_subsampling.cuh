@@ -109,7 +109,7 @@ __global__ void kernelRandomPointSubsample (
     // Access child node data
     uint32_t* childDataLUT     = config[gridIndex].lutAdress;
     uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-    uint32_t lutItem = childDataLUT[childDataLUTStart + index];
+    uint32_t lutItem           = childDataLUT[childDataLUTStart + index];
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
@@ -117,7 +117,7 @@ __global__ void kernelRandomPointSubsample (
 
     // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
-    int sparseIndex = denseToSparseLUT[denseVoxelIndex];
+    int sparseIndex      = denseToSparseLUT[denseVoxelIndex];
 
     // Decrease the point counter per cell
     auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
@@ -136,7 +136,7 @@ __global__ void kernelRandomPointSubsample (
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex]         = -1;
-    *filledCellCounter                       = 0;
+    *filledCellCounter                        = 0;
     averagingGrid[denseVoxelIndex].pointCount = 0;
     averagingGrid[denseVoxelIndex].r          = 0;
     averagingGrid[denseVoxelIndex].g          = 0;

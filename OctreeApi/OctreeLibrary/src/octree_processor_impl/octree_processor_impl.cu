@@ -5,8 +5,8 @@
 #include "octree_processor_impl.cuh"
 #include "ply_exporter.cuh"
 #include "potree_exporter.cuh"
-#include "tools.cuh"
 #include "time_tracker.cuh"
+#include "tools.cuh"
 
 OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
         uint8_t* pointCloud,
@@ -67,72 +67,72 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
-    auto &tracker = TimeTracker::getInstance();
+    auto& tracker = TimeTracker::getInstance ();
 
     auto start = std::chrono::high_resolution_clock::now ();
 
-    if(itsCloud->getMetadata().cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         PotreeExporter<float, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
                 itsLeafLut,
-                itsParentLut,
-                itsAveragingData,
+                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
-        potreeExporter.exportOctree(folderPath);
+        potreeExporter.exportOctree (folderPath);
     }
-    else {
+    else
+    {
         PotreeExporter<double, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
                 itsLeafLut,
-                itsParentLut,
-                itsAveragingData,
+                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
-        potreeExporter.exportOctree(folderPath);
+        potreeExporter.exportOctree (folderPath);
     }
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data");
+    tracker.trackCpuTime (elapsed.count () * 1000, "Export potree data");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
-    auto &tracker = TimeTracker::getInstance();
+    auto& tracker = TimeTracker::getInstance ();
 
     auto start = std::chrono::high_resolution_clock::now ();
 
-    if(itsCloud->getMetadata().cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         PlyExporter<float, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
                 itsLeafLut,
-                itsParentLut,
-                itsAveragingData,
+                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
-        plyExporter.exportOctree(folderPath);
+        plyExporter.exportOctree (folderPath);
     }
-    else {
+    else
+    {
         PotreeExporter<double, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
                 itsLeafLut,
-                itsParentLut,
-                itsAveragingData,
+                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
-        plyExporter.exportOctree(folderPath);
+        plyExporter.exportOctree (folderPath);
     }
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackCpuTime(elapsed.count() * 1000, "Export ply data");
+    tracker.trackCpuTime (elapsed.count () * 1000, "Export ply data");
 }

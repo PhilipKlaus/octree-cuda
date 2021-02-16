@@ -1,10 +1,23 @@
+/**
+ * @file octree_exporter-cuh
+ * @author Philip Klaus
+ * @brief Contains an octree-exporter base class definition
+ */
+
 #pragma once
 
 #include "metadata.cuh"
 #include "point_cloud.cuh"
+#include "subsampling_data.cuh"
 #include "types.cuh"
 
 
+/**
+ * OctreeExporter acts as a base class (abstract class) for several octree exporters.
+ *
+ * @tparam coordinateType The datatype of the 3D point coordinates.
+ * @tparam colorType The datatype of the 3D point colors.
+ */
 template <typename coordinateType, typename colorType>
 class OctreeExporter
 {
@@ -13,25 +26,15 @@ public:
             const PointCloud& pointCloud,
             const shared_ptr<Chunk[]>& octree,
             const GpuArrayU32& leafLut,
-            const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-            const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
+            const std::shared_ptr<SubsamplingData>& subsamples,
             OctreeMetadata metadata,
             PointCloudMetadata cloudMetadata,
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
             itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
             itsCloud (pointCloud->getCloudHost ()), itsOctree (octree), itsLeafLut (leafLut->toHost ()),
-            itsAbsorbedNodes (0), itsPointsExported (0)
-    {
-        std::for_each (parentLut.cbegin (), parentLut.cend (), [&] (const auto& lutItem) {
-            itsParentLut.insert (make_pair (lutItem.first, lutItem.second->toHost ()));
-            itsParentLutCounts.insert (make_pair (lutItem.first, lutItem.second->pointCount ()));
-        });
-
-        std::for_each (parentAveraging.cbegin (), parentAveraging.cend (), [&] (const auto& averagingItem) {
-            itsAveraging.insert (make_pair (averagingItem.first, averagingItem.second->toHost ()));
-        });
-    }
+            itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples)
+    {}
 
     virtual void exportOctree (const std::string& path) = 0;
 
@@ -54,14 +57,13 @@ protected:
     uint32_t getPointsInNode (uint32_t nodeIndex)
     {
         bool isParent = isParentNode (nodeIndex);
-        return (isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount);
+        return (isParent ? this->itsSubsamples->getLutSize (nodeIndex) : this->itsOctree[nodeIndex].pointCount);
     }
 
     uint32_t getChildNodeIndex (uint32_t nodeIndex, uint8_t child)
     {
         return this->itsOctree[nodeIndex].childrenChunks[child];
     }
-
 
 protected:
     uint32_t itsPointsExported;
@@ -72,7 +74,5 @@ protected:
     uint8_t* itsCloud;
     shared_ptr<Chunk[]> itsOctree;
     unique_ptr<uint32_t[]> itsLeafLut;
-    unordered_map<uint32_t, unique_ptr<uint32_t[]>> itsParentLut;
-    unordered_map<uint32_t, uint32_t> itsParentLutCounts;
-    unordered_map<uint32_t, unique_ptr<Averaging[]>> itsAveraging;
+    std::shared_ptr<SubsamplingData> itsSubsamples;
 };

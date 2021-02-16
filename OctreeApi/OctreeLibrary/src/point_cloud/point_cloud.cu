@@ -1,5 +1,5 @@
-#include "time_tracker.cuh"
 #include "point_cloud.cuh"
+#include "time_tracker.cuh"
 
 PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
 {
@@ -7,9 +7,9 @@ PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : 
 
     auto start = std::chrono::high_resolution_clock::now ();
     itsDeviceCloud->toGPU (itsSourceCloud);
-    auto stop = std::chrono::high_resolution_clock::now ();
+    auto stop                             = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = stop - start;
-    TimeTracker::getInstance().trackMemCpyTime(elapsed.count() * 1000, "point cloud", true);
+    TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, "point cloud", true);
 }
 uint8_t* PointCloudHost::getCloudHost ()
 {

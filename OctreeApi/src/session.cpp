@@ -80,11 +80,7 @@ void Session::exportMemoryReport (const std::string& filename)
 void Session::exportJsonReport (const std::string& filename)
 {
     itsProcessor->updateStatistics ();
-    export_json_data (
-            filename,
-            itsProcessor->getOctreeMetadata (),
-            itsCloudMetadata,
-            itsSubsamplingMetadata);
+    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsCloudMetadata, itsSubsamplingMetadata);
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 

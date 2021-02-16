@@ -22,8 +22,7 @@ public:
             const PointCloud& pointCloud,
             const std::shared_ptr<Chunk[]>& octree,
             const GpuArrayU32& leafeLut,
-            const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-            const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
+            const std::shared_ptr<SubsamplingData>& subsamples,
             OctreeMetadata metadata,
             PointCloudMetadata cloudMetadata,
             SubsampleMetadata subsamplingMetadata);
@@ -34,15 +33,16 @@ private:
     void createBinaryHierarchyFiles ();
     ExportResult exportNode (uint32_t nodeIndex);
     void breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile);
+    inline uint8_t getChildMask (uint32_t nodeIndex);
+    void createMetadataFile ();
+    void exportBuffers (std::ofstream& pointFile, std::ofstream& hierarchyFile);
+
     inline uint8_t writeCoordinatesBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
     inline uint8_t writeColorsBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex);
     inline uint8_t writeSimpleColorsBuffered (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
-    inline uint8_t getChildMask (uint32_t nodeIndex);
-    void createMetadataFile ();
-    void exportBuffers (std::ofstream& pointFile, std::ofstream& hierarchyFile);
 
 private:
     std::string itsExportFolder;

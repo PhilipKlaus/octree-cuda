@@ -5,8 +5,8 @@
  */
 #pragma once
 
-#include <fstream>
 #include "spdlog/spdlog.h"
+#include <fstream>
 
 using namespace std::chrono;
 

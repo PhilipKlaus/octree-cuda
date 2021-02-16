@@ -1,9 +1,16 @@
+/**
+ * @file octree_processor_impl.cuh
+ * @author Philip Klaus
+ * @brief Contains the implementation of the OctreeProcessorImpl
+ */
 #pragma once
 
 #include "octree.cuh"
 #include "octree_processor.cuh"
 #include "point_cloud.cuh"
+#include "subsampling_data.cuh"
 #include "types.cuh"
+
 
 class OctreeProcessor::OctreeProcessorImpl
 {
@@ -42,10 +49,8 @@ public:
     unique_ptr<int[]> getDenseToSparseLUT () const;
     unique_ptr<int[]> getSparseToDenseLUT () const;
     shared_ptr<Chunk[]> getOctreeSparse () const;
-    unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
 
 private:
-    
     uint32_t getRootIndex ();
     void mergeHierarchical ();
     void initLowestOctreeHierarchy ();
@@ -81,6 +86,7 @@ private:
             uint32_t min,
             uint32_t binWidth,
             uint32_t nodeIndex) const;
+
 private:
     // Point cloud
     PointCloud itsCloud;
@@ -98,8 +104,5 @@ private:
 
     // Octree
     std::unique_ptr<Octree> itsOctreeData;
-
-    // Subsampling
-    unordered_map<uint32_t, GpuArrayU32> itsParentLut;
-    unordered_map<uint32_t, GpuAveraging> itsAveragingData;
+    std::shared_ptr<SubsamplingData> itsSubsamples;
 };
