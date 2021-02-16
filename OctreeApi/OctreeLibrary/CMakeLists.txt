@@ -8,18 +8,17 @@ project(OctreeLibrary LANGUAGES CUDA CXX)
 add_library(${PROJECT_NAME} STATIC
 
         # Public Headers
-        include/octree_processor.h
-        include/eventWatcher.h
-        include/metadata.h
+        include/octree_processor.cuh
+        include/memory_tracker.cuh
+        include/time_tracker.cuh
+        include/metadata.cuh
         include/defines.cuh
 
         # Private Headers
-        src/include/cudaArray.h
+        src/include/cudaArray.cuh
         src/include/tools.cuh
         src/include/types.cuh
         src/include/kernel_structs.cuh
-        src/include/octree.cuh
-        src/point_cloud/point_cloud.cuh
 
         # CUDA Kernels
         src/kernel/kernel_executor.cuh
@@ -55,7 +54,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree/octree.cu
 
         # Point cloud
-        src/point_cloud/point_cloud.cuh
+        src/include/point_cloud.cuh
         src/point_cloud/point_cloud.cu
 
         # Misc

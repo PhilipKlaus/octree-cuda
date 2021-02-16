@@ -1,14 +1,20 @@
-//
-// Created by KlausP on 03.02.2021.
-//
+/**
+ * @file point_cloud.cuh
+ * @author Philip Klaus
+ * @brief Contains code for wrapping point cloud data.
+ */
 
 #pragma once
 
 
-#include "metadata.h"
+#include "metadata.cuh"
+#include "types.cuh"
 #include <cstdint>
-#include <types.cuh>
 
+/**
+ * An interface for a generic point cloud.
+ * It provides methods for accessing point cloud data residing on host and device.
+ */
 class IPointCloud
 {
 public:
@@ -28,6 +34,9 @@ protected:
     PointCloudMetadata itsMetadata;
 };
 
+/**
+ * A point cloud which memory resides on the host-side.
+ */
 class PointCloudHost : public IPointCloud
 {
 public:
@@ -39,6 +48,9 @@ private:
     GpuArrayU8 itsDeviceCloud;
 };
 
+/**
+ * A point cloud which memory resides on the device-side.
+ */
 class PointCloudDevice : public IPointCloud
 {
 public:

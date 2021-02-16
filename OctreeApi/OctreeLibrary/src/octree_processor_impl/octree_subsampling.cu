@@ -2,6 +2,7 @@
 #include "octree_processor_impl.cuh"
 #include "random_subsampling.cuh"
 #include "subsample_evaluating.cuh"
+#include "time_tracker.cuh"
 
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
@@ -39,13 +40,10 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
             randomStates,
             randomIndices);
 
-
-    itsTimeMeasurement.emplace_back ("subsampleEvaluation", timings.subsampleEvaluation);
-    itsTimeMeasurement.emplace_back ("generateRandoms", timings.generateRandoms);
-    itsTimeMeasurement.emplace_back ("subsampling", timings.subsampling);
-    spdlog::info ("[kernel] kernelEvaluateSubsamples took: {}[ms]", timings.subsampleEvaluation);
-    spdlog::info ("[kernel] kernelGenerateRandoms took: {}[ms]", timings.generateRandoms);
-    spdlog::info ("[kernel] kernelRandomPointSubsample took: {}[ms]", timings.subsampling);
+    auto &tracker = TimeTracker().getInstance();
+    tracker.trackKernelTime(timings.subsampleEvaluation, "kernelEvaluateSubsamples");
+    tracker.trackKernelTime(timings.generateRandoms, "kernelGenerateRandoms");
+    tracker.trackKernelTime(timings.subsampling, "kernelRandomPointSubsample");
 }
 
 

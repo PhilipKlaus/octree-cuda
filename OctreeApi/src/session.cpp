@@ -9,8 +9,8 @@
 
 #include "defines.cuh"
 #include "json_exporter.h"
-#include "metadata.h"
-#include "octree_processor.h"
+#include "metadata.cuh"
+#include "octree_processor.cuh"
 #include "session.h"
 
 Session* Session::ToSession (void* session)
@@ -27,7 +27,7 @@ Session::Session (int device) : itsDevice (device)
 {
     spdlog::debug ("session created");
     setDevice ();
-    EventWatcher::getInstance ().reservedMemoryEvent (0, "Session created");
+    MemoryTracker::getInstance ().reservedMemoryEvent (0, "Session created");
 }
 
 void Session::setDevice () const
@@ -73,7 +73,7 @@ void Session::exportPotree (const std::string& directory)
 
 void Session::exportMemoryReport (const std::string& filename)
 {
-    EventWatcher::getInstance ().configureMemoryReport (filename);
+    MemoryTracker::getInstance ().configureMemoryReport (filename);
     spdlog::debug ("Export memory report to: {}", filename);
 }
 
@@ -84,8 +84,7 @@ void Session::exportJsonReport (const std::string& filename)
             filename,
             itsProcessor->getOctreeMetadata (),
             itsCloudMetadata,
-            itsSubsamplingMetadata,
-            itsProcessor->getTimings ());
+            itsSubsamplingMetadata);
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 

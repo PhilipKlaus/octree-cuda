@@ -1,6 +1,6 @@
 #include "../include/tools.cuh"
 #include "defines.cuh"
-#include "metadata.h"
+#include "metadata.cuh"
 #include "types.cuh"
 
 

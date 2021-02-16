@@ -4,7 +4,7 @@
 
 #include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include <octree_processor.h>
+#include <octree_processor.cuh>
 
 
 uint32_t testOctreenodeSparse (

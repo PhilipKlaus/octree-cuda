@@ -4,7 +4,7 @@
 
 #include "../src/include/tools.cuh"
 #include "catch2/catch.hpp"
-#include "octree_processor.h"
+#include "octree_processor.cuh"
 
 
 TEST_CASE ("Test cell merging sparse", "[merging sparse]")

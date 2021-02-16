@@ -1,30 +1,34 @@
-//
-// Created by KlausP on 20.10.2020.
-//
-
+/**
+ * @file memory_tracker.h
+ * @author Philip Klaus
+ * @brief Contains a tracker for tracking CUDA memory allocations and de-allocations.
+ */
 #pragma once
 
 #include <fstream>
-
 #include "spdlog/spdlog.h"
 
-
 using namespace std::chrono;
-
 
 constexpr double GB = 1000000000.0;
 
 
-class EventWatcher
+/**
+ * A Memory tracker which tracks CUDA memory allocations and de-allocations.
+ * The tracker is globally available and implemented as a singleton.
+ * Its main purpose is to show the allocated GPU memory per data structure and to ensure
+ * that all of the allocated GPU memory is deallocated in the end.
+ */
+class MemoryTracker
 {
 public:
-    static EventWatcher& getInstance ()
+    static MemoryTracker& getInstance ()
     {
-        static EventWatcher instance;
+        static MemoryTracker instance;
         return instance;
     }
 
-    ~EventWatcher ()
+    ~MemoryTracker ()
     {
         std::string data;
         std::string labels;
@@ -101,7 +105,7 @@ public:
     }
 
 private:
-    EventWatcher ()
+    MemoryTracker ()
     {
         itsMemoryPeak                 = 0;
         itsMemoryConsumption          = 0;
@@ -117,8 +121,8 @@ private:
     }
 
 public:
-    EventWatcher (EventWatcher const&) = delete;
-    void operator= (EventWatcher const&) = delete;
+    MemoryTracker (MemoryTracker const&) = delete;
+    void operator= (MemoryTracker const&) = delete;
 
 private:
     std::string itsMemoryReportFileName;

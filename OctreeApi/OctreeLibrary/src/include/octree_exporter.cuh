@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../point_cloud/point_cloud.cuh"
-#include "metadata.h"
+#include "metadata.cuh"
+#include "point_cloud.cuh"
 #include "types.cuh"
 
 

@@ -8,7 +8,7 @@
 #include <string>
 
 #include "defines.cuh"
-#include "eventWatcher.h"
+#include "memory_tracker.cuh"
 
 using namespace std;
 
@@ -78,5 +78,5 @@ private:
     uint64_t itsMemory;
     uint32_t itsElements;
     dataType* itsData;
-    EventWatcher& itsWatcher = EventWatcher::getInstance ();
+    MemoryTracker& itsWatcher = MemoryTracker::getInstance ();
 };

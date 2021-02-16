@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "metadata.h"
+#include "metadata.cuh"
 #include "types.cuh"
 #include <cuda_runtime_api.h>
 #include <memory>

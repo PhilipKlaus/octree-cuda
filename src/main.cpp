@@ -91,8 +91,6 @@ auto ply = readPly (plyFile);
 auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
 auto cubicBB = calculateCubicBB (realBB);
 
-spdlog::info("realBB: {}, {}, {} - {}, {}, {}", realBB[0], realBB[1], realBB[2], realBB[3], realBB[4], realBB[5]);
-spdlog::info("cubicBB: {}, {}, {} - {}, {}, {}", cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 auto start = std::chrono::high_resolution_clock::now ();
 
 // Configurate and create octree
@@ -110,7 +108,7 @@ ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacemen
 ocpi_generate_octree (session);
 ocpi_export_potree (session, R"(./export)");
 //ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
-//ocpi_export_json_report (session, R"(./export/statistics.json)");
+ocpi_export_json_report (session, R"(./export/statistics.json)");
 //ocpi_export_memory_report (session, R"(./export/memory_report.html)");
 
 ocpi_destroy_session (session);

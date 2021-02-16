@@ -4,8 +4,9 @@
 
 #pragma once
 
-#include "eventWatcher.h"
-#include "metadata.h"
+#include "memory_tracker.cuh"
+#include "time_tracker.cuh"
+#include "metadata.cuh"
 #include <iomanip>
 #include <json.hpp>
 
@@ -14,8 +15,7 @@ void export_json_data (
         const std::string filePath,
         const OctreeMetadata& metadata,
         const PointCloudMetadata& cloudMetadata,
-        const SubsampleMetadata& subsampleMetadata,
-        const std::vector<std::tuple<std::string, float>>& timings)
+        const SubsampleMetadata& subsampleMetadata)
 {
     nlohmann::ordered_json statistics;
     statistics["depth"] = metadata.depth;
@@ -57,16 +57,35 @@ void export_json_data (
     statistics["cloud"]["scale"]["y"]            = cloudMetadata.scale.y;
     statistics["cloud"]["scale"]["z"]            = cloudMetadata.scale.z;
 
-    float accumulatedTime = 0;
-    for (auto const& timeEntry : timings)
+    auto &tracker = TimeTracker::getInstance();
+    float accumulatedCpuTime = 0;
+    for (auto const& cpuTime : tracker.getCpuTimings())
     {
-        statistics["timeMeasurements"][std::get<0> (timeEntry)] = std::get<1> (timeEntry);
-        accumulatedTime += std::get<1> (timeEntry);
+        statistics["timings"]["cpu"][std::get<1> (cpuTime)] = std::get<0> (cpuTime);
+        accumulatedCpuTime += std::get<0> (cpuTime);
     }
-    statistics["timeMeasurements"]["accumulatedGPUTime"] = accumulatedTime;
+
+    float accumulatedGpuTime = 0;
+    for (auto const& gpuTime : tracker.getKernelTimings())
+    {
+        statistics["timings"]["gpu"][std::get<1> (gpuTime)] = std::get<0> (gpuTime);
+        accumulatedGpuTime += std::get<0> (gpuTime);
+    }
+
+    float accumulatedMemCpyTime = 0;
+    for (auto const& memCpyTime : tracker.getMemCpyTimings())
+    {
+        statistics["timings"]["memcpy"][std::get<1> (memCpyTime)] = std::get<0> (memCpyTime);
+        accumulatedMemCpyTime += std::get<0> (memCpyTime);
+    }
+
+    statistics["timings"]["accumulatedCpuTime"] = accumulatedCpuTime;
+    statistics["timings"]["accumulatedGpuTime"] = accumulatedGpuTime;
+    statistics["timings"]["accumulatedMemCpyTime"] = accumulatedMemCpyTime;
+    statistics["timings"]["accumulatedOverall"] = accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime;
 
 
-    EventWatcher& watcher                     = EventWatcher::getInstance ();
+    MemoryTracker& watcher                     = MemoryTracker::getInstance ();
     statistics["memory"]["peak"]              = watcher.getMemoryPeak ();
     statistics["memory"]["reserveEvents"]     = watcher.getMemoryReserveEvents ();
     statistics["memory"]["cumulatedReserved"] = watcher.getCumulatedMemoryReservation ();

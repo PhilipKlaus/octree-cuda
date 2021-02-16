@@ -51,9 +51,3 @@ uint32_t OctreeProcessor::OctreeProcessorImpl::getRootIndex ()
 {
     return itsMetadata.nodeAmountSparse - 1;
 }
-
-
-const std::vector<std::tuple<std::string, float>>& OctreeProcessor::OctreeProcessorImpl::getTimings () const
-{
-    return itsTimeMeasurement;
-}

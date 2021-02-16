@@ -9,7 +9,7 @@
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
 #include "kernel_structs.cuh"
-#include "metadata.h"
+#include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
 

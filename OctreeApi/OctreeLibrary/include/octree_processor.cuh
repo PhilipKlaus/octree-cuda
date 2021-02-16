@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "metadata.h"
+#include "metadata.cuh"
 #include <memory>
 #include <string>
 #include <vector>
@@ -35,7 +35,6 @@ public:
     void exportHistogram (const std::string& filePath, uint32_t binWidth);
 
     void updateStatistics ();
-    const std::vector<std::tuple<std::string, float>>& getTimings ();
     const OctreeMetadata& getOctreeMetadata ();
 
 private:

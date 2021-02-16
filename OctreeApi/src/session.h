@@ -5,7 +5,7 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
-#include "octree_processor.h"
+#include "octree_processor.cuh"
 #include <memory>
 #include <string>
 

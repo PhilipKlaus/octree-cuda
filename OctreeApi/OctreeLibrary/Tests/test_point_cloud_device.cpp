@@ -1,5 +1,5 @@
-#include "../src/point_cloud/point_cloud.cuh"
 #include "catch2/catch.hpp"
+#include "point_cloud.cuh"
 
 TEST_CASE ("A PointCloudDevice should")
 {

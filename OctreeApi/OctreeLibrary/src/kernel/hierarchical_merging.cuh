@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "metadata.h"
+#include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
 

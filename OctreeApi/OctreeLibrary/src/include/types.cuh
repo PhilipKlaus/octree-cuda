@@ -3,7 +3,7 @@
 #include <curand_kernel.h>
 #include <memory>
 
-#include "cudaArray.h"
+#include "cudaArray.cuh"
 
 
 struct Averaging

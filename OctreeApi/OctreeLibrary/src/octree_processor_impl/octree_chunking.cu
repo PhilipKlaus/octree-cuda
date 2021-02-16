@@ -1,11 +1,12 @@
 /**
  * @file octree_chunking.cu
  * @author Philip Klaus
- * @brief Contains implementations of chunking-related Octreeprocessor methods
+ * @brief Contains implementations of chunking-related OctreeProcessorImpl methods
  */
 
 #include "kernel_executor.cuh"
 #include "octree_processor_impl.cuh"
+#include "time_tracker.cuh"
 
 #include "hierarchical_merging.cuh"
 #include "octree_initialization.cuh"
@@ -41,8 +42,7 @@ void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
             cloud,
             gridding);
 
-    itsTimeMeasurement.emplace_back ("kernelPointCounting", time);
-    spdlog::info ("[kernel] kernelPointCounting took {:f} [ms]", time);
+    TimeTracker::getInstance().trackKernelTime(time, "kernelPointCounting");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
@@ -52,7 +52,7 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
     for (uint32_t i = 0; i < itsMetadata.depth; ++i)
     {
-        float time = executeKernel (
+        timeAccumulated += executeKernel (
                 chunking::kernelPropagatePointCounts,
                 itsOctreeData->getNodes (i + 1),
                 itsDensePointCountPerVoxel->devicePointer (),
@@ -63,13 +63,9 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
                 itsOctreeData->getGridSize (i),
                 itsOctreeData->getNodeOffset (i + 1),
                 itsOctreeData->getNodeOffset (i));
-
-        itsTimeMeasurement.emplace_back (
-                "kernelPropagatePointCounts_" + std::to_string (itsOctreeData->getGridSize (i)), time);
-        timeAccumulated += time;
     }
 
-    spdlog::info ("[kernel] kernelPropagatePointCounts took {:f}[ms]", timeAccumulated);
+    TimeTracker::getInstance().trackKernelTime(timeAccumulated, "kernelPropagatePointCounts");
 
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
@@ -93,8 +89,7 @@ void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
             itsSparseToDenseLUT->devicePointer (),
             itsOctreeData->getNodes (0));
 
-    itsTimeMeasurement.emplace_back ("kernelInitLeafNodes", time);
-    spdlog::info ("[kernel] kernelInitLeafNodes took {:f}[ms]", time);
+    TimeTracker::getInstance().trackKernelTime(time, "kernelInitLeafNodes");
 }
 
 
@@ -102,10 +97,10 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
 {
     itsTmpCounting->memset (0);
 
-    float timeAccumulated = 0;
+    float timeAccumulated = 0.f;
     for (uint32_t i = 0; i < itsMetadata.depth; ++i)
     {
-        float time = executeKernel (
+        timeAccumulated += executeKernel (
                 chunking::kernelMergeHierarchical,
                 itsOctreeData->getNodes (i + 1),
                 itsOctreeData->getDevice (),
@@ -119,13 +114,8 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsOctreeData->getGridSize (i),
                 itsOctreeData->getNodeOffset (i + 1),
                 itsOctreeData->getNodeOffset (i));
-
-        timeAccumulated += time;
-        itsTimeMeasurement.emplace_back (
-                "kernelMergeHierarchical_" + std::to_string (itsOctreeData->getGridSize (i)), time);
     }
-
-    spdlog::info ("[kernel] kernelMergeHierarchical took {:f}[ms]", timeAccumulated);
+    TimeTracker::getInstance().trackKernelTime(timeAccumulated, "kernelMergeHierarchical");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
@@ -147,6 +137,5 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
             cloud,
             gridding);
 
-    itsTimeMeasurement.emplace_back ("kernelDistributePoints", time);
-    spdlog::info ("[kernel] kernelDistributePoints took {:f}[ms]", time);
+    TimeTracker::getInstance().trackKernelTime(time, "kernelDistributePoints");
 }

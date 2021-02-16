@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../point_cloud/point_cloud.cuh"
 #include "octree.cuh"
-#include "octree_processor.h"
+#include "octree_processor.cuh"
+#include "point_cloud.cuh"
 #include "types.cuh"
 
 class OctreeProcessor::OctreeProcessorImpl
@@ -38,7 +38,6 @@ public:
     unique_ptr<int[]> getSparseToDenseLUT () const;
     shared_ptr<Chunk[]> getOctreeSparse () const;
     unordered_map<uint32_t, GpuArrayU32> const& getSubsampleLUT () const;
-    const std::vector<std::tuple<std::string, float>>& getTimings () const;
 
 private:
     // Merging
@@ -114,8 +113,4 @@ private:
     // Subsampling
     unordered_map<uint32_t, GpuArrayU32> itsParentLut;
     unordered_map<uint32_t, GpuAveraging> itsAveragingData;
-
-    // Benchmarking
-    std::vector<std::tuple<std::string, float>>
-            itsTimeMeasurement; // Holds all time measurements in the form (measurementName, time)
 };

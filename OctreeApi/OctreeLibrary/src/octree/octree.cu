@@ -1,5 +1,6 @@
 #include "octree.cuh"
 #include "tools.cuh"
+#include "time_tracker.cuh"
 
 Octree::Octree (uint32_t chunkingGrid) : itsDepth (0), itsChunkingGrid (chunkingGrid), itsNodeAmountDense (0)
 {
@@ -48,7 +49,7 @@ void Octree::copyToHost ()
     itsOctreeHost                         = itsOctree->toHost ();
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("[memcpy] Copied octree from device to host in: {}s", elapsed.count ());
+    TimeTracker::getInstance().trackMemCpyTime(elapsed.count() * 1000, "octree structure", false);
 }
 const std::shared_ptr<Chunk[]>& Octree::getHost ()
 {

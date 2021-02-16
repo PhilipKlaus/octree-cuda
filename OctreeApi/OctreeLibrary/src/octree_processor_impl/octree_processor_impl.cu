@@ -6,7 +6,7 @@
 #include "ply_exporter.cuh"
 #include "potree_exporter.cuh"
 #include "tools.cuh"
-
+#include "time_tracker.cuh"
 
 OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
         uint8_t* pointCloud,
@@ -17,6 +17,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 {
     itsOctreeData = std::make_unique<Octree> (chunkingGrid);
 
+    // ToDo: Move itsMeatadata to OctreeData
     // Initialize metadata
     itsMetadata                  = {};
     itsMetadata.depth            = itsOctreeData->getDepth ();
@@ -36,7 +37,6 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     // Create data LUT
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
-    spdlog::info ("Prepared empty SparseOctree");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
@@ -68,6 +68,8 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 // ToDo: call appropriate export function!!!
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
+    auto &tracker = TimeTracker::getInstance();
+
     auto start = std::chrono::high_resolution_clock::now ();
     /*PlyExporter<coordinateType, colorType> plyExporter (
             itsCloudData, itsOctree, itsDataLUT, itsSubsampleLUTs, itsAveragingData, itsMetadata);
@@ -83,12 +85,11 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
             itsSubsampleMetadata);
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("Copy from device to host tooks {} seconds", elapsed.count ());
+    tracker.trackMemCpyTime(elapsed.count() * 1000, "Several octree data", false);
 
     start = std::chrono::high_resolution_clock::now ();
     potreeExporter.exportOctree (folderPath);
     finish  = std::chrono::high_resolution_clock::now ();
     elapsed = finish - start;
-    spdlog::info ("Export tooks {} seconds", elapsed.count ());
-    itsTimeMeasurement.emplace_back ("exportPotree", elapsed.count () * 1000);
+    tracker.trackCpuTime(elapsed.count() * 1000, "Export potree data");
 }

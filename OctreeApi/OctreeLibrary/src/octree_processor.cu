@@ -1,4 +1,4 @@
-#include "octree_processor.h"
+#include "octree_processor.cuh"
 #include "octree_processor_impl.cuh"
 
 OctreeProcessor::OctreeProcessor (
@@ -39,14 +39,12 @@ void OctreeProcessor::exportPotree (const std::string& folderPath)
 {
     itsProcessor->exportPlyNodes (folderPath);
 }
+
 void OctreeProcessor::updateStatistics ()
 {
     itsProcessor->updateOctreeStatistics ();
 }
-const std::vector<std::tuple<std::string, float>>& OctreeProcessor::getTimings ()
-{
-    return itsProcessor->getTimings ();
-}
+
 void OctreeProcessor::exportHistogram (const std::string& filePath, uint32_t binWidth)
 {
     itsProcessor->exportHistogram (filePath, binWidth);

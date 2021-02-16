@@ -3,7 +3,7 @@
 //
 
 #include "catch2/catch.hpp"
-#include "octree_processor.h"
+#include "octree_processor.cuh"
 #include "tools.cuh"
 
 void testSubsampleTree (

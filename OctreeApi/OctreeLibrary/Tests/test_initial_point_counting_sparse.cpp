@@ -4,7 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "tools.cuh"
-#include <octree_processor.h>
+#include <octree_processor.cuh>
 
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]")

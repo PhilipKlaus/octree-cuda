@@ -1,10 +1,15 @@
+#include "time_tracker.cuh"
 #include "point_cloud.cuh"
 
 PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
 {
     itsDeviceCloud = createGpuU8 (itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
+
+    auto start = std::chrono::high_resolution_clock::now ();
     itsDeviceCloud->toGPU (itsSourceCloud);
-    spdlog::info ("[memcpy] Copied point cloud from host->device");
+    auto stop = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = stop - start;
+    TimeTracker::getInstance().trackMemCpyTime(elapsed.count() * 1000, "point cloud", true);
 }
 uint8_t* PointCloudHost::getCloudHost ()
 {
