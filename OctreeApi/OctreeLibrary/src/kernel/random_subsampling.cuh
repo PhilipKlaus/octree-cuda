@@ -1,140 +1,31 @@
+/**
+ * @file random_subsampling.cuh
+ * @author Philip Klaus
+ * @brief Contains code for a randomized subampling of points within 8 child nodes.
+ */
+
 #pragma once
 
-#include "octree_metadata.h"
+#include "kernel_executor.cuh"
+#include "kernel_helpers.cuh"
+#include "kernel_structs.cuh"
+#include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
-#include "kernel_executor.cuh"
 
 namespace subsampling {
 
-template <typename coordinateType, typename colorType>
-__global__ void kernelPerformAveraging (
-        uint8_t* cloud,
-        SubsampleSet subsampleSet,
-        Averaging* parentAveragingData,
-        int* denseToSparseLUT,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength,
-        uint32_t accumulatedPoints)
-{
-    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (thread >= accumulatedPoints)
-    {
-        return;
-    }
-
-    // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT     = nullptr;
-    Averaging* childAveraging  = nullptr;
-    uint32_t childDataLUTStart = 0;
-
-    SubsampleConfig* config = reinterpret_cast<SubsampleConfig*>(&subsampleSet);
-
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        if (thread < config[i].pointOffsetUpper)
-        {
-            childDataLUT      = config[i].lutAdress;
-            childAveraging    = config[i].averagingAdress;
-            childDataLUTStart = config[i].lutStartIndex;
-            thread -= config[i].pointOffsetLower;
-            break;
-        }
-    }
-
-    uint8_t *targetCloudByte = cloud + childDataLUT[childDataLUTStart + thread] * metadata.pointDataStride;
-
-    // Get the coordinates & colors from the point within the point cloud
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
-    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
-
-    // 1. Calculate the index within the dense grid of the evaluateSubsamples
-    auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
-
-    int sparseIndex = denseToSparseLUT[denseVoxelIndex];
-
-    bool hasAveragingData = (childAveraging != nullptr);
-
-    Averaging *averagingData = childAveraging + thread;
-    atomicAdd (&(parentAveragingData[sparseIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
-    atomicAdd (&(parentAveragingData[sparseIndex].r), hasAveragingData ? averagingData->r : color->x);
-    atomicAdd (&(parentAveragingData[sparseIndex].g), hasAveragingData ? averagingData->g : color->y);
-    atomicAdd (&(parentAveragingData[sparseIndex].b), hasAveragingData ? averagingData->b : color->z);
-}
-
-
-// Move point indices from old (child LUT) to new (parent LUT)
-template <typename coordinateType>
-__global__ void kernelRandomPointSubsample (
-        uint8_t* cloud,
-        SubsampleSet subsampleSet,
-        uint32_t* parentDataLUT,
-        uint32_t* countingGrid,
-        int* denseToSparseLUT,
-        uint32_t* sparseIndexCounter,
-        PointCloudMetadata metadata,
-        uint32_t gridSideLength,
-        uint32_t* randomIndices,
-        uint32_t accumulatedPoints,
-        bool replacementScheme)
-{
-    int thread = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (thread >= accumulatedPoints)
-    {
-        return;
-    }
-
-    // Determine child index and pick appropriate LUT data
-    uint32_t* childDataLUT     = nullptr;
-    uint32_t childDataLUTStart = 0;
-
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        if (thread < config[i].pointOffsetUpper)
-        {
-            childDataLUT      = config[i].lutAdress;
-            childDataLUTStart = config[i].lutStartIndex;
-            thread -= config[i].pointOffsetLower;
-            break;
-        }
-    }
-
-    uint32_t lutItem = childDataLUT[childDataLUTStart + thread];
-
-    // Get the point within the point cloud
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (
-            cloud + lutItem * metadata.pointDataStride);
-
-    // 1. Calculate the index within the dense grid of the evaluateSubsamples
-    auto denseVoxelIndex = tools::calculateGridIndex (point, metadata, gridSideLength);
-
-    int sparseIndex = denseToSparseLUT[denseVoxelIndex];
-
-    // 2. We are only interested in the last point within a node -> Implicitly reset the countingGrid
-    auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
-
-    if (sparseIndex == -1 || oldIndex != randomIndices[sparseIndex])
-    {
-        return;
-    }
-
-    // Move subsampled point to parent
-    parentDataLUT[sparseIndex] = lutItem;
-    childDataLUT[childDataLUTStart + thread] = replacementScheme ? childDataLUT[childDataLUTStart + thread] : INVALID_INDEX;
-
-    // Reset all subsampling data data
-    denseToSparseLUT[denseVoxelIndex] = -1;
-    *sparseIndexCounter               = 0;
-}
-
-// http://ianfinlayson.net/class/cpsc425/notes/cuda-random
-__global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uint32_t nodeAmount)
+/**
+ * Initializes a CUDA random state.
+ * @param seed The actual seed for the randomization.
+ * @param states The CUDA random states which shoul be initialized.
+ * @param cellAmount The amount of cells for which the kernel is called.
+ */
+__global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uint32_t cellAmount)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (index >= nodeAmount)
+    if (index >= cellAmount)
     {
         return;
     }
@@ -142,77 +33,150 @@ __global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uin
     curand_init (seed, index, 0, &states[index]);
 }
 
+/**
+ * Generates one random number, depending on the point amount in a cell.
+ * Important! This kernel does not generate a random point index, instead it generates
+ * a random number between [0 <-> points-in-a-cell]. The actual assignment from this
+ * generated random number to a 3D point is performed in kernelRandomPointSubsample.
+ *
+ * @param states The initialized random states.
+ * @param randomIndices An array for storing one randomly generated number per filled cell.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param countingGrid Holds the amount of points per cell.
+ * @param cellAmount The amount of cells for which the kernel is called.
+ */
 __global__ void kernelGenerateRandoms (
         curandState_t* states,
         uint32_t* randomIndices,
-        int* denseToSparseLUT,
-        Averaging* averagingData,
-        uint32_t* countingGrid,
-        uint32_t gridNodes)
+        const int* denseToSparseLUT,
+        const uint32_t* countingGrid,
+        uint32_t cellAmount)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (index >= gridNodes)
+    bool cellIsEmpty = countingGrid[index] == 0;
+
+    if (index >= cellAmount || cellIsEmpty)
     {
         return;
     }
 
-    int sparseIndex = denseToSparseLUT[index];
+    uint32_t sparseIndex = denseToSparseLUT[index];
 
-    if (sparseIndex == -1)
-    {
-        return;
-    }
-
-    // Generate random value for point picking
     randomIndices[sparseIndex] =
             static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
+}
 
-    // Reset Averaging data
-    averagingData[sparseIndex].r          = 0.f;
-    averagingData[sparseIndex].g          = 0.f;
-    averagingData[sparseIndex].b          = 0.f;
-    averagingData[sparseIndex].pointCount = 0;
+/**
+ * Evaluates on random point per cell and assign its averaging and point-lut data to the parent node.
+ * Furthermore this kernel resets all temporary needed data structures.
+ *
+ * @tparam coordinateType The datatype of the 3D coordinates.
+ * @tparam colorType The datatype of the point colors.
+ * @param parentDataLUT The point-LUT of the parent node.
+ * @param parentAveraging The averaging data of the parent node.
+ * @param countingGrid Holds the amount of points per cell.
+ * @param averagingGrid Holds the averaging data from all 8 child nodes.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param filledCellCounter Hlds the amount of filled cells (!=0) wihtin the counting grid.
+ * @param cloud Holds the point cloud data.
+ * @param gridding Holds data necessary to map a 3D point to a cell.
+ * @param randomIndices Holds the previously generated random numbers for each subsampling cell.
+ * @param replacementScheme Determines if the replacement scheme or the averaging scheme should be applied.
+ */
+template <typename coordinateType>
+__global__ void kernelRandomPointSubsample (
+        SubsampleSet test,
+        uint32_t* parentDataLUT,
+        Averaging* parentAveraging,
+        uint32_t* countingGrid,
+        Averaging* averagingGrid,
+        int* denseToSparseLUT,
+        uint32_t* filledCellCounter,
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding,
+        uint32_t* randomIndices,
+        bool replacementScheme)
+{
+    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    SubsampleConfig* config = (SubsampleConfig*)(&test);
+    int gridIndex           = blockIdx.z;
+
+    if (index >= config[gridIndex].pointAmount)
+    {
+        return;
+    }
+    // Access child node data
+    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
+    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
+    uint32_t lutItem           = childDataLUT[childDataLUTStart + index];
+
+    // Get the point within the point cloud
+    Vector3<coordinateType>* point =
+            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + lutItem * cloud.dataStride);
+
+    // Calculate the dense and sparse cell index
+    auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
+    int sparseIndex      = denseToSparseLUT[denseVoxelIndex];
+
+    // Decrease the point counter per cell
+    auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
+
+    // If the actual thread does not handle the randomly chosen point, exit now.
+    if (sparseIndex == -1 || oldIndex != randomIndices[sparseIndex])
+    {
+        return;
+    }
+
+    // Move subsampled averaging and point-LUT data to parent node
+    parentDataLUT[sparseIndex]   = lutItem;
+    parentAveraging[sparseIndex] = averagingGrid[denseVoxelIndex];
+    childDataLUT[childDataLUTStart + index] =
+            replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
+
+    // Reset all temporary data structures
+    denseToSparseLUT[denseVoxelIndex]         = -1;
+    *filledCellCounter                        = 0;
+    averagingGrid[denseVoxelIndex].pointCount = 0;
+    averagingGrid[denseVoxelIndex].r          = 0;
+    averagingGrid[denseVoxelIndex].g          = 0;
+    averagingGrid[denseVoxelIndex].b          = 0;
 }
 } // namespace subsampling
 
 namespace Kernel {
 
 template <typename... Arguments>
-float performAveraging (KernelConfig config, Arguments&&... args)
-{
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
-    {
-        return executeKernel (
-                subsampling::kernelPerformAveraging<float, uint8_t>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
-    }
-    else
-    {
-        return executeKernel (
-                subsampling::kernelPerformAveraging<double, uint8_t>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
-    }
-}
-
-template <typename... Arguments>
 float randomPointSubsampling (KernelConfig config, Arguments&&... args)
 {
+    // Calculate kernel dimensions
+    dim3 grid, block;
+
+    auto blocks = ceil (static_cast<double> (config.threadAmount) / 128);
+    auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+    auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+    block = dim3 (128, 1, 1);
+    grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                subsampling::kernelRandomPointSubsample<float>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
     else
     {
-        return executeKernel (
-                subsampling::kernelRandomPointSubsample<double>,
-                config.threadAmount,
-                std::forward<Arguments> (args)...);
+        tools::KernelTimer timer;
+        timer.start ();
+        subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
+        timer.stop ();
+        gpuErrchk (cudaGetLastError ());
+        return timer.getMilliseconds ();
     }
 }
-}
+} // namespace Kernel

@@ -1,6 +1,6 @@
 #include "../include/tools.cuh"
 #include "defines.cuh"
-#include "octree_metadata.h"
+#include "metadata.cuh"
 #include "types.cuh"
 
 
@@ -25,7 +25,7 @@ __global__ void kernel_point_cloud_cuboid (uint8_t* out, uint32_t n, uint32_t si
 
 namespace tools {
 
-uint32_t getOctreeLevel (uint32_t gridSize)
+uint8_t getOctreeLevel (uint32_t gridSize)
 {
     switch (gridSize)
     {
@@ -133,7 +133,7 @@ GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata&
 {
     coordinateType boundingBoxMax = static_cast<coordinateType> (sideLength) - 0.5;
     metadata.pointAmount          = static_cast<uint32_t> (pow (sideLength, 3.0));
-    metadata.bbCubic.min          = Vector3<double >{0.5, 0.5, 0.5};
+    metadata.bbCubic.min          = Vector3<double>{0.5, 0.5, 0.5};
     metadata.bbCubic.max          = Vector3<double>{boundingBoxMax, boundingBoxMax, boundingBoxMax};
     metadata.cloudOffset          = Vector3<double>{0.5, 0.5, 0.5};
     metadata.scale                = {1.0, 1.0, 1.0};
@@ -179,6 +179,3 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
 template GpuArrayU8 generate_point_cloud_cuboid<float> (uint32_t sideLength, PointCloudMetadata& metadata);
 
 } // namespace tools
-
-
-

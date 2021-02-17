@@ -3,8 +3,7 @@
 #include <curand_kernel.h>
 #include <memory>
 
-#include "../src/include/cudaArray.h"
-
+#include "cudaArray.cuh"
 
 
 struct Averaging
@@ -16,13 +15,13 @@ struct Averaging
 struct SubsampleConfig
 {
     uint32_t* lutAdress;
-    Averaging* averagingAdress;
     uint32_t lutStartIndex;
-    uint32_t pointOffsetLower;
-    uint32_t pointOffsetUpper;
+    Averaging* averagingAdress;
+    uint32_t pointAmount;
 };
 
-struct __align__(16) SubsampleSet {
+struct __align__ (16) SubsampleSet
+{
     SubsampleConfig child_0;
     SubsampleConfig child_1;
     SubsampleConfig child_2;

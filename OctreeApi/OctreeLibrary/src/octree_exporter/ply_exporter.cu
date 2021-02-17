@@ -4,19 +4,21 @@
 template <typename coordinateType, typename colorType>
 PlyExporter<coordinateType, colorType>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata) :
-        OctreeExporter<coordinateType, colorType> (pointCloud, octree, leafeLut, parentLut, parentAveraging, metadata)
+        const std::shared_ptr<SubsamplingData>& subsamples,
+        OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
+        SubsampleMetadata subsamplingMetadata) :
+        OctreeExporter<coordinateType, colorType> (
+                pointCloud, octree, leafeLut, subsamples, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
 void PlyExporter<coordinateType, colorType>::exportOctree (const std::string& path)
 {
     exportNode (this->getRootIndex (), "r", path);
-    spdlog::info ("Exported {}/{} points to: {}", itsPointsExported, this->itsMetadata.cloudMetadata.pointAmount, path);
+    spdlog::info ("Exported {}/{} points to: {}", itsPointsExported, this->itsCloudMetadata.pointAmount, path);
 }
 
 template <typename coordinateType, typename colorType>
@@ -29,11 +31,11 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     // ToDo: read from config + change in kernel;
     bool isAveraging = true;
 
-    PointCloudMetadata cloudMetadata = this->itsMetadata.cloudMetadata;
-    uint32_t pointsInNode = isParent ? this->itsParentLutCounts[nodeIndex] : this->itsOctree[nodeIndex].pointCount;
-    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsParentLut[nodeIndex] : this->itsLeafLut;
+    uint32_t pointsInNode =
+            isParent ? this->itsSubsamples->getLutSize (nodeIndex) : this->itsOctree[nodeIndex].pointCount;
+    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
-    uint32_t dataStride = cloudMetadata.pointDataStride;
+    uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
 
     if (isFinished)
     {
@@ -55,7 +57,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
 
                     if (isAveraging)
                     {
-                        const std::unique_ptr<Averaging[]>& averaging = this->itsAveraging[nodeIndex];
+                        const std::unique_ptr<Averaging[]>& averaging = this->itsSubsamples->getAvgHost (nodeIndex);
                         writeColorAveraged (buffer, bufferOffset, nodeIndex, u);
                     }
 
@@ -117,7 +119,7 @@ void PlyExporter<coordinateType, colorType>::createPlyHeader (string& header, ui
     string coordinateType;
     string colorType;
 
-    switch (itsMetadata.cloudMetadata.cloudType)
+    switch (this->itsCloudMetadata.cloudType)
     {
     case CLOUD_FLOAT_UINT8_T:
         coordinateType = "float";
@@ -179,17 +181,17 @@ void PlyExporter<coordinateType, colorType>::writeColorAveraged (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
     uint8_t colorSize      = sizeof (colorType);
-    uint32_t sumPointCount = this->itsAveraging[nodeIndex][pointIndex].pointCount;
+    uint32_t sumPointCount = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].pointCount;
 
-    auto r = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].r / sumPointCount);
+    auto r = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].r / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &r, colorSize);
 
     bufferOffset += colorSize;
-    auto g = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].g / sumPointCount);
+    auto g = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].g / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &g, colorSize);
 
     bufferOffset += colorSize;
-    auto b = static_cast<colorType> (this->itsAveraging[nodeIndex][pointIndex].b / sumPointCount);
+    auto b = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].b / sumPointCount);
     std::memcpy (buffer.get () + bufferOffset, &b, colorSize);
 }
 
@@ -216,11 +218,12 @@ void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<float, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        const std::shared_ptr<SubsamplingData>& subsamples,
+        OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
+        SubsampleMetadata subsamplingMetadata);
 
 template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path);
 
@@ -229,10 +232,11 @@ template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path
 //----------------------------------------------------------------------------------------------------------------------
 template PlyExporter<double, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
-        const GpuOctree& octree,
+        const std::shared_ptr<Chunk[]>& octree,
         const GpuArrayU32& leafeLut,
-        const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-        const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-        OctreeMetadata metadata);
+        const std::shared_ptr<SubsamplingData>& subsamples,
+        OctreeMetadata metadata,
+        PointCloudMetadata cloudMetadata,
+        SubsampleMetadata subsamplingMetadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);

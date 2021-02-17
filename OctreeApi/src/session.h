@@ -5,8 +5,7 @@
 #ifndef OCTREE_API_SESSION_H
 #define OCTREE_API_SESSION_H
 
-#include "octree_processor.h"
-#include <api_types.h>
+#include "octree_processor.cuh"
 #include <memory>
 #include <string>
 
@@ -34,7 +33,7 @@ public:
 
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
-    void configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme);
+    void configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
 
     void exportPotree (const std::string& directory);
     void exportJsonReport (const std::string& filename);
@@ -47,24 +46,11 @@ private:
     uint8_t* itsPointCloud;
     std::unique_ptr<OctreeProcessor> itsProcessor;
 
-    // Cloud metadata
-    CloudType itsCloudType     = CloudType::CLOUD_FLOAT_UINT8_T;
-    CloudMemory itsCloudMemory = CloudMemory::CLOUD_HOST;
-    uint32_t itsPointAmount    = 0;
-    uint32_t itsDataStride     = 0;
-    Vector3<double> itsScale   = {};
-    Vector3<double> itsOffset  = {};
-    BoundingBox itsBoundingBox = {};
-
-    // Chunking
     uint32_t itsChunkingGrid     = 128;
     uint32_t itsMergingThreshold = 0;
 
-    // Subsampling
-    uint32_t itsSubsamplingGrid                = 128;
-    SubsamplingStrategy itsSubsamplingStrategy = RANDOM_POINT;
-    bool itsUseReplacementScheme = true;
-    bool itsIsAveraging           = false;
+    PointCloudMetadata itsCloudMetadata      = {};
+    SubsampleMetadata itsSubsamplingMetadata = {};
 };
 
 #endif // OCTREE_API_SESSION_H

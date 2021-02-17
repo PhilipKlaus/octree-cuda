@@ -2,11 +2,11 @@
 // Created by KlausP on 13.11.2020.
 //
 
-#include "octree_processor.h"
+#include "octree_processor_impl.cuh"
 
 
-void OctreeProcessor::calculatePointVarianceInLeafNoes (
-        const unique_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
+void OctreeProcessor::OctreeProcessorImpl::calculatePointVarianceInLeafNoes (
+        const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
 {
     Chunk chunk = h_octreeSparse[nodeIndex];
 
@@ -31,9 +31,8 @@ void OctreeProcessor::calculatePointVarianceInLeafNoes (
 }
 
 
-
-void OctreeProcessor::evaluateOctreeProperties (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
+void OctreeProcessor::OctreeProcessorImpl::evaluateOctreeProperties (
+        const shared_ptr<Chunk[]>& h_octreeSparse,
         uint32_t& leafNodes,
         uint32_t& parentNodes,
         uint32_t& pointSum,
@@ -69,7 +68,7 @@ void OctreeProcessor::evaluateOctreeProperties (
 }
 
 
-void OctreeProcessor::updateOctreeStatistics ()
+void OctreeProcessor::OctreeProcessorImpl::updateOctreeStatistics ()
 {
     // Reset Octree statistics
     itsMetadata.leafNodeAmount         = 0;
@@ -98,9 +97,8 @@ void OctreeProcessor::updateOctreeStatistics ()
 }
 
 
-
-void OctreeProcessor::histogramBinning (
-        const unique_ptr<Chunk[]>& h_octreeSparse,
+void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
+        const shared_ptr<Chunk[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
         uint32_t binWidth,
@@ -130,8 +128,7 @@ void OctreeProcessor::histogramBinning (
 }
 
 
-
-void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth)
+void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePath, uint32_t binWidth)
 {
     updateOctreeStatistics ();
 
@@ -185,7 +182,7 @@ void OctreeProcessor::exportHistogram (const string& filePath, uint32_t binWidth
     string data   = "data:[";
     string label  = "'Point Distribution: binWidth(" + to_string (binWidth) + "), mergingThreshold(" +
                    to_string (itsMetadata.mergingThreshold) + "), points(" +
-                   to_string (itsMetadata.cloudMetadata.pointAmount) + ")'";
+                   to_string (itsCloud->getMetadata ().pointAmount) + ")'";
 
     for (uint32_t i = 0; i < binAmount; ++i)
     {

@@ -7,18 +7,21 @@ project(OctreeLibrary LANGUAGES CUDA CXX)
 
 add_library(${PROJECT_NAME} STATIC
 
-        # Headers
-        include/api_types.h
-        include/octree_processor.h
-        src/include/cudaArray.h
-        include/eventWatcher.h
-        include/octree_metadata.h
-        src/include/tools.cuh
-        include/types.cuh
+        # Public Headers
+        include/octree_processor.cuh
+        include/memory_tracker.cuh
+        include/time_tracker.cuh
+        include/metadata.cuh
+        include/defines.cuh
 
-        # Kernel
+        # Private Headers
+        src/include/cudaArray.cuh
+        src/include/tools.cuh
+        src/include/types.cuh
+        src/include/kernel_structs.cuh
+
+        # CUDA Kernels
         src/kernel/kernel_executor.cuh
-        src/kernel/first_point_subsampling.cuh
         src/kernel/hierarchical_merging.cuh
         src/kernel/octree_initialization.cuh
         src/kernel/point_count_propagation.cuh
@@ -26,31 +29,41 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/point_distributing.cuh
         src/kernel/random_subsampling.cuh
         src/kernel/subsample_evaluating.cuh
+        src/kernel/kernel_helpers.cuh
+
+        # OctreeProcessor
+        src/octree_processor.cu
+        src/include/octree_processor_impl.cuh
+        src/octree_processor_impl/octree_subsampling.cu
+        src/octree_processor_impl/benchmarking.cu
+        src/octree_processor_impl/debugging.cu
+        src/octree_processor_impl/octree_processor_impl.cu
+        src/octree_processor_impl/dummy.cpp
+        src/octree_processor_impl/octree_chunking.cu
+
+        # Octree export
+        src/include/octree_exporter.cuh
+        src/include/ply_exporter.cuh
+        src/include/potree_exporter.cuh
+        src/octree_exporter/thread_pool.h
+        src/octree_exporter/ply_exporter.cu
+        src/octree_exporter/potree_exporter.cu
+
+        # Octree data
+        src/include/octree.cuh
+        src/data/octree.cu
+
+        # Subsampling data
+        src/include/subsampling_data.cuh
+        src/data/subsampling_data.cu
+
+        # Point cloud
+        src/include/point_cloud.cuh
+        src/point_cloud/point_cloud.cu
 
         # Misc
         src/misc/tools.cu
-        include/defines.cuh
-        src/misc/timing.cuh
-
-        # OctreeProcessor
-        src/octree_processor/pipeline/first_point_subsampling.cu
-        src/octree_processor/pipeline/random_subsampling.cu
-        src/octree_processor/benchmarking.cu
-        src/octree_processor/debugging.cu
-        src/octree_processor/octree_processor.cu
-        src/octree_processor/dummy.cpp
-
-        # Data export
-        src/octree_exporter/octree_exporter.cuh
-        src/octree_exporter/ply_exporter.cuh
-        src/octree_exporter/ply_exporter.cu
-        src/octree_exporter/potree_exporter.cuh
-        src/octree_exporter/potree_exporter.cu
-        src/octree_exporter/thread_pool.h
-
-        # Point cloud
-        include/point_cloud.cuh
-        src/point_cloud.cu)
+        src/include/timing.cuh)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE

@@ -3,11 +3,11 @@
 //
 
 #include "catch2/catch.hpp"
-#include "octree_processor.h"
+#include "octree_processor.cuh"
 #include "tools.cuh"
 
 void testSubsampleTree (
-        const unique_ptr<Chunk[]>& octree,
+        const shared_ptr<Chunk[]>& octree,
         unordered_map<uint32_t, unique_ptr<CudaArray<uint32_t>>> const& subsampleLUT,
         uint32_t index,
         uint32_t level)
@@ -45,13 +45,15 @@ TEST_CASE ("Test node subsampling", "[subsampling]")
     // Create test data point cloud
     PointCloudMetadata metadata{};
     unique_ptr<CudaArray<uint8_t>> cuboid = tools::generate_point_cloud_cuboid<float> (128, metadata);
-    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
-    metadata.memoryType = ClOUD_DEVICE;
+    metadata.cloudType                    = CLOUD_FLOAT_UINT8_T;
+    metadata.memoryType                   = ClOUD_DEVICE;
 
-    auto cpuData                          = cuboid->toHost ();
+    SubsampleMetadata subsampleMetadata{128, true, true};
+
+    auto cpuData = cuboid->toHost ();
 
     // Create the octree
-    auto octree = make_unique<OctreeProcessor> (cuboid->devicePointer(), 128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (cuboid->devicePointer (), 128, 10000, metadata, subsampleMetadata);
 
     octree->initialPointCounting ();
     octree->performCellMerging (); // All points reside in the 3th level (8x8x8) of the octree

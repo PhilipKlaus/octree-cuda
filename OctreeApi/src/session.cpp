@@ -2,13 +2,16 @@
 // Created by KlausP on 01.11.2020.
 //
 
-#include <session.h>
-
-#include "json_exporter.h"
-#include "octree_processor.h"
 #include "spdlog/spdlog.h"
+#include <driver_types.h>
 #include <iostream>
 #include <memory>
+
+#include "defines.cuh"
+#include "json_exporter.h"
+#include "metadata.cuh"
+#include "octree_processor.cuh"
+#include "session.h"
 
 Session* Session::ToSession (void* session)
 {
@@ -17,14 +20,14 @@ Session* Session::ToSession (void* session)
     {
         return s;
     }
-    throw runtime_error ("No Session is currently initialized!");
+    throw std::runtime_error ("No Session is currently initialized!");
 }
 
 Session::Session (int device) : itsDevice (device)
 {
     spdlog::debug ("session created");
     setDevice ();
-    EventWatcher::getInstance ().reservedMemoryEvent (0, "Session created");
+    MemoryTracker::getInstance ().reservedMemoryEvent (0, "Session created");
 }
 
 void Session::setDevice () const
@@ -37,31 +40,22 @@ void Session::setDevice () const
 
 Session::~Session ()
 {
-    itsProcessor.reset();
+    itsProcessor.reset ();
     spdlog::debug ("session destroyed");
 }
 
 
 void Session::setPointCloudHost (uint8_t* pointCloud)
 {
-    itsPointCloud  = pointCloud;
-    itsCloudMemory = CLOUD_HOST;
+    itsPointCloud               = pointCloud;
+    itsCloudMetadata.memoryType = CLOUD_HOST;
     spdlog::debug ("set point cloud data from host");
 }
 
 void Session::generateOctree ()
 {
-    PointCloudMetadata metadata{};
-    metadata.memoryType      = itsCloudMemory;
-    metadata.cloudType       = itsCloudType;
-    metadata.pointAmount     = itsPointAmount;
-    metadata.pointDataStride = itsDataStride;
-    metadata.scale           = itsScale;
-    metadata.cloudOffset     = itsOffset;
-    metadata.bbCubic         = itsBoundingBox;
-
     itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsSubsamplingGrid, itsMergingThreshold, metadata, itsSubsamplingStrategy, itsIsAveraging, itsUseReplacementScheme);
+            itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
 
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
@@ -71,22 +65,22 @@ void Session::generateOctree ()
     spdlog::debug ("octree generated");
 }
 
-void Session::exportPotree (const string& directory)
+void Session::exportPotree (const std::string& directory)
 {
-    itsProcessor->exportPlyNodes(directory);
+    itsProcessor->exportPotree (directory);
     spdlog::debug ("Export Octree to: {}", directory);
 }
 
 void Session::exportMemoryReport (const std::string& filename)
 {
-    EventWatcher::getInstance ().configureMemoryReport (filename);
+    MemoryTracker::getInstance ().configureMemoryReport (filename);
     spdlog::debug ("Export memory report to: {}", filename);
 }
 
 void Session::exportJsonReport (const std::string& filename)
 {
-    itsProcessor->updateOctreeStatistics ();
-    export_json_data (filename, itsProcessor->getMetadata (), itsProcessor->getTimings ());
+    itsProcessor->updateStatistics ();
+    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsCloudMetadata, itsSubsamplingMetadata);
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
@@ -102,40 +96,39 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
     itsMergingThreshold = mergingThreshold;
 }
 
-void Session::configureSubsampling (uint32_t subsamplingGrid, uint8_t strategy, bool averaging, bool replacementScheme)
+void Session::configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
 {
-    itsIsAveraging = averaging;
-    itsUseReplacementScheme = replacementScheme;
-    itsSubsamplingGrid     = subsamplingGrid;
-    itsSubsamplingStrategy = static_cast<SubsamplingStrategy> (strategy);
+    itsSubsamplingMetadata.performAveraging     = averaging;
+    itsSubsamplingMetadata.useReplacementScheme = replacementScheme;
+    itsSubsamplingMetadata.subsamplingGrid      = subsamplingGrid;
 }
 void Session::setCloudType (uint8_t cloudType)
 {
-    itsCloudType = static_cast<CloudType> (cloudType);
+    itsCloudMetadata.cloudType = static_cast<CloudType> (cloudType);
 }
 
 void Session::setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    itsBoundingBox = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
+    itsCloudMetadata.bbCubic = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
 }
 
 
 void Session::setCloudPointAmount (uint32_t pointAmount)
 {
-    itsPointAmount = pointAmount;
+    itsCloudMetadata.pointAmount = pointAmount;
 }
 
 void Session::setCloudDataStride (uint32_t dataStride)
 {
-    itsDataStride = dataStride;
+    itsCloudMetadata.pointDataStride = dataStride;
 }
 
 void Session::setCloudScale (double x, double y, double z)
 {
-    itsScale = {x, y, z};
+    itsCloudMetadata.scale = {x, y, z};
 }
 
 void Session::setCloudOffset (double x, double y, double z)
 {
-    itsOffset = {x, y, z};
+    itsCloudMetadata.cloudOffset = {x, y, z};
 }

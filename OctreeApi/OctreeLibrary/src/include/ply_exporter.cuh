@@ -7,11 +7,12 @@ class PlyExporter : public OctreeExporter<coordinateType, colorType>
 public:
     PlyExporter (
             const PointCloud& pointCloud,
-            const GpuOctree& octree,
+            const std::shared_ptr<Chunk[]>& octree,
             const GpuArrayU32& leafeLut,
-            const unordered_map<uint32_t, GpuArrayU32>& parentLut,
-            const unordered_map<uint32_t, GpuAveraging>& parentAveraging,
-            OctreeMetadata metadata);
+            const std::shared_ptr<SubsamplingData>& subsamples,
+            OctreeMetadata metadata,
+            PointCloudMetadata cloudMetadata,
+            SubsampleMetadata subsamplingMetadata);
 
     void exportOctree (const std::string& path) override;
 

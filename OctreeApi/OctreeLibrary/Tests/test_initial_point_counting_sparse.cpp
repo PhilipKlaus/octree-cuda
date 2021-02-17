@@ -4,7 +4,7 @@
 
 #include "catch2/catch.hpp"
 #include "tools.cuh"
-#include <octree_processor.h>
+#include <octree_processor.cuh>
 
 
 TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
@@ -12,20 +12,18 @@ TEST_CASE ("Test initial sparse point counting", "[counting sparse]")
     // Create test data point octree
     PointCloudMetadata metadata{};
     unique_ptr<CudaArray<uint8_t>> cloud = tools::generate_point_cloud_cuboid<float> (128, metadata);
-    metadata.cloudType = CLOUD_FLOAT_UINT8_T;
-    metadata.memoryType = ClOUD_DEVICE;
+    metadata.cloudType                   = CLOUD_FLOAT_UINT8_T;
+    metadata.memoryType                  = ClOUD_DEVICE;
 
+    SubsampleMetadata subsampleMetadata{128, true, true};
     // Create the octree
-    auto octree = make_unique<OctreeProcessor>(cloud->devicePointer(), 128, 128, 10000, metadata, RANDOM_POINT);
+    auto octree = make_unique<OctreeProcessor> (cloud->devicePointer (), 128, 10000, metadata, subsampleMetadata);
 
     // Perform initial point counting
     octree->initialPointCounting ();
 
     auto denseCount       = octree->getDensePointCountPerVoxel ();
     auto denseToSparseLUT = octree->getDenseToSparseLUT ();
-
-    // Require that all cells are filled and that there is no empty space
-    REQUIRE (octree->getMetadata ().nodeAmountSparse == pow (128, 3));
 
     // Require that the sum of the accumulated point counts equaly to the actual point amount of the octree
     uint32_t sum = 0;

@@ -4,15 +4,64 @@
 
 #pragma once
 
-#include <api_types.h>
 #include <cstdint>
 
+
+// ToDo: Check if pragma is necessary
+#pragma pack(push, 1)
+template <typename T>
+struct Vector3
+{
+    T x, y, z;
+};
+#pragma pack(pop)
+
+
+enum CloudType
+{
+    CLOUD_FLOAT_UINT8_T,
+    CLOUD_DOUBLE_UINT8_T
+};
+
+enum CloudMemory
+{
+    CLOUD_HOST,
+    ClOUD_DEVICE
+};
+
+struct BoundingBox
+{
+    Vector3<double> min;
+    Vector3<double> max;
+};
+
+struct PointCloudMetadata
+{
+    uint32_t pointAmount;
+    uint32_t pointDataStride;
+    BoundingBox bbCubic;
+    Vector3<double> cloudOffset;
+    Vector3<double> scale;
+    CloudType cloudType;
+    CloudMemory memoryType;
+
+    double cubicSize () const
+    {
+        return bbCubic.max.x - bbCubic.min.x;
+    }
+};
+
+struct SubsampleMetadata
+{
+    uint32_t subsamplingGrid;
+    bool performAveraging;
+    bool useReplacementScheme;
+};
 
 struct OctreeMetadata
 {
     uint32_t depth;               // The depth of the octree // ToDo: -1
     uint32_t chunkingGrid;        // Side length of the grid used for chunking
-    uint32_t subsamplingGrid;     // Side length of the grid used for subsampling
     uint32_t nodeAmountSparse;    // The actual amount of sparse nodes (amount leafs + amount parents)
     uint32_t leafNodeAmount;      // The amount of child nodes
     uint32_t parentNodeAmount;    // The amount of parent nodes
@@ -23,8 +72,4 @@ struct OctreeMetadata
     float stdevPointsPerLeafNode; // Standard deviation of points per leaf node
     uint32_t minPointsPerNode;    // Minimum amount of points in a node
     uint32_t maxPointsPerNode;    // Maximum amount of points in a node
-    PointCloudMetadata cloudMetadata; // The cloud metadata;
-    SubsamplingStrategy strategy;                     // The subsampling strategy
-    bool performAveraging;
-    bool useReplacementScheme;
 };
