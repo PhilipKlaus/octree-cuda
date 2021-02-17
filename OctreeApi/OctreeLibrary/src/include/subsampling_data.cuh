@@ -19,10 +19,10 @@ public:
     uint32_t getAvgSize (uint32_t index);
 
     uint32_t* getLutDevice (uint32_t index);
-    Averaging* getAvgDevice (uint32_t index);
+    uint64_t* getAvgDevice (uint32_t index);
 
     const std::unique_ptr<uint32_t[]>& getLutHost (uint32_t index);
-    const std::unique_ptr<Averaging[]>& getAvgHost (uint32_t index);
+    const std::unique_ptr<uint64_t[]>& getAvgHost (uint32_t index);
 
     void copyToHost ();
 
@@ -30,5 +30,5 @@ private:
     unordered_map<uint32_t, GpuArrayU32> itsLutDevice;
     unordered_map<uint32_t, GpuAveraging> itsAvgDevice;
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
-    unordered_map<uint32_t, std::unique_ptr<Averaging[]>> itsAvgHost;
+    unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
 };

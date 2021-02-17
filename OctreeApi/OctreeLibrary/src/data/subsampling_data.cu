@@ -17,7 +17,7 @@ uint32_t* SubsamplingData::getLutDevice (uint32_t index)
     return itsLutDevice[index]->devicePointer ();
 }
 
-Averaging* SubsamplingData::getAvgDevice (uint32_t index)
+uint64_t* SubsamplingData::getAvgDevice (uint32_t index)
 {
     return itsAvgDevice[index]->devicePointer ();
 }
@@ -41,7 +41,7 @@ const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t index)
     return itsLutHost[index];
 }
 
-const std::unique_ptr<Averaging[]>& SubsamplingData::getAvgHost (uint32_t index)
+const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t index)
 {
     if (itsAvgHost.find (index) == itsAvgHost.end ())
     {

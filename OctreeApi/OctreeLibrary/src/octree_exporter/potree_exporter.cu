@@ -213,13 +213,11 @@ template <typename coordinateType, typename colorType>
 inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorsBuffered (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
-    uint32_t sumPointCount = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].pointCount;
-
-    auto* dst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
-    dst[0]    = static_cast<uint16_t> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].r / sumPointCount);
-    dst[1]    = static_cast<uint16_t> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].g / sumPointCount);
-    dst[2]    = static_cast<uint16_t> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].b / sumPointCount);
-
+    uint64_t encoded = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex];
+    auto* dst        = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
+    dst[0]           = static_cast<uint16_t> (encoded >> 46);
+    dst[1]           = static_cast<uint16_t> (encoded >> 28);
+    dst[2]           = static_cast<uint16_t> (encoded >> 10);
     return 3 * sizeof (uint16_t);
 }
 

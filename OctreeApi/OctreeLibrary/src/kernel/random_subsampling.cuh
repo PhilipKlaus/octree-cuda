@@ -88,9 +88,9 @@ template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
         SubsampleSet test,
         uint32_t* parentDataLUT,
-        Averaging* parentAveraging,
+        uint64_t* parentAveraging,
         uint32_t* countingGrid,
-        Averaging* averagingGrid,
+        uint64_t* averagingGrid,
         int* denseToSparseLUT,
         uint32_t* filledCellCounter,
         KernelStructs::Cloud cloud,
@@ -130,17 +130,18 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled averaging and point-LUT data to parent node
     parentDataLUT[sparseIndex]   = lutItem;
-    parentAveraging[sparseIndex] = averagingGrid[denseVoxelIndex];
+    uint64_t encoded             = averagingGrid[denseVoxelIndex];
+    uint16_t amount              = static_cast<uint16_t> (encoded & 0x3FF);
+    parentAveraging[sparseIndex] = ((((encoded >> 46) & 0xFFFF) / amount) << 46) |
+                                   ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
+                                   ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
     childDataLUT[childDataLUTStart + index] =
             replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
 
     // Reset all temporary data structures
-    denseToSparseLUT[denseVoxelIndex]         = -1;
-    *filledCellCounter                        = 0;
-    averagingGrid[denseVoxelIndex].pointCount = 0;
-    averagingGrid[denseVoxelIndex].r          = 0;
-    averagingGrid[denseVoxelIndex].g          = 0;
-    averagingGrid[denseVoxelIndex].b          = 0;
+    denseToSparseLUT[denseVoxelIndex] = -1;
+    *filledCellCounter                = 0;
+    averagingGrid[denseVoxelIndex]    = 0;
 }
 } // namespace subsampling
 

@@ -34,7 +34,7 @@ template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
         SubsampleSet subsampleSet,
         uint32_t* countingGrid,
-        Averaging* averagingGrid,
+        uint64_t* averagingGrid,
         int* denseToSparseLUT,
         uint32_t* filledCellCounter,
         KernelStructs::Cloud cloud,
@@ -52,7 +52,7 @@ __global__ void kernelEvaluateSubsamples (
     // Access child node data
     uint32_t* childDataLUT     = config[gridIndex].lutAdress;
     uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-    Averaging* childAveraging  = config[gridIndex].averagingAdress;
+    uint64_t* childAveraging   = config[gridIndex].averagingAdress;
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* targetCloudByte       = cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride;
@@ -66,12 +66,14 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // Accumulate color information
-    bool hasAveragingData    = (childAveraging != nullptr);
-    Averaging* averagingData = childAveraging + index;
-    atomicAdd (&(averagingGrid[denseVoxelIndex].pointCount), hasAveragingData ? averagingData->pointCount : 1);
-    atomicAdd (&(averagingGrid[denseVoxelIndex].r), hasAveragingData ? averagingData->r : color->x);
-    atomicAdd (&(averagingGrid[denseVoxelIndex].g), hasAveragingData ? averagingData->g : color->y);
-    atomicAdd (&(averagingGrid[denseVoxelIndex].b), hasAveragingData ? averagingData->b : color->z);
+    bool hasAveragingData   = (childAveraging != nullptr);
+    uint64_t* averagingData = childAveraging + index;
+
+    uint64_t encoded = hasAveragingData
+                               ? *averagingData
+                               : (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
+                                         static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
+    atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
     // If the thread handles the first point in a cell: increase the filledCellCounter and retrieve / store the sparse
     // index for the appropriate dense cell

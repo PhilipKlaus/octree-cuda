@@ -5,18 +5,11 @@
 
 #include "cudaArray.cuh"
 
-
-struct Averaging
-{
-    uint32_t r, g, b;
-    uint32_t pointCount;
-};
-
 struct SubsampleConfig
 {
     uint32_t* lutAdress;
     uint32_t lutStartIndex;
-    Averaging* averagingAdress;
+    uint64_t* averagingAdress;
     uint32_t pointAmount;
 };
 
@@ -58,7 +51,7 @@ using GpuArrayU32    = GpuArray<uint32_t>;
 using GpuArrayI32    = GpuArray<int>;
 using GpuOctree      = GpuArray<Chunk>;
 using GpuSubsample   = GpuArray<SubsampleConfig>;
-using GpuAveraging   = GpuArray<Averaging>;
+using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
 
 template <typename T, typename... Args>
@@ -104,7 +97,7 @@ std::unique_ptr<CudaArray<curandState_t>> createGpuRandom (Args&&... args)
 }
 
 template <typename... Args>
-std::unique_ptr<CudaArray<Averaging>> createGpuAveraging (Args&&... args)
+std::unique_ptr<CudaArray<uint64_t>> createGpuAveraging (Args&&... args)
 {
-    return createGpu<Averaging> (std::forward<Args> (args)...);
+    return createGpu<uint64_t> (std::forward<Args> (args)...);
 }

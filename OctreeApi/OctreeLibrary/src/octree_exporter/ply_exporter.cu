@@ -57,7 +57,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
 
                     if (isAveraging)
                     {
-                        const std::unique_ptr<Averaging[]>& averaging = this->itsSubsamples->getAvgHost (nodeIndex);
+                        const std::unique_ptr<uint64_t[]>& averaging = this->itsSubsamples->getAvgHost (nodeIndex);
                         writeColorAveraged (buffer, bufferOffset, nodeIndex, u);
                     }
 
@@ -180,18 +180,18 @@ template <typename coordinateType, typename colorType>
 void PlyExporter<coordinateType, colorType>::writeColorAveraged (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
-    uint8_t colorSize      = sizeof (colorType);
-    uint32_t sumPointCount = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].pointCount;
+    uint8_t colorSize = sizeof (colorType);
+    uint64_t encoded  = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex];
 
-    auto r = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].r / sumPointCount);
+    auto r = static_cast<colorType> (encoded >> 46);
     std::memcpy (buffer.get () + bufferOffset, &r, colorSize);
 
     bufferOffset += colorSize;
-    auto g = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].g / sumPointCount);
+    auto g = static_cast<colorType> (encoded >> 28);
     std::memcpy (buffer.get () + bufferOffset, &g, colorSize);
 
     bufferOffset += colorSize;
-    auto b = static_cast<colorType> (this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex].b / sumPointCount);
+    auto b = static_cast<colorType> (encoded >> 10);
     std::memcpy (buffer.get () + bufferOffset, &b, colorSize);
 }
 
