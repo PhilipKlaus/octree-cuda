@@ -17,6 +17,7 @@ void export_json_data (
         const PointCloudMetadata& cloudMetadata,
         const SubsampleMetadata& subsampleMetadata)
 {
+    auto start = std::chrono::high_resolution_clock::now ();
     nlohmann::ordered_json statistics;
     statistics["depth"] = metadata.depth;
 
@@ -79,10 +80,19 @@ void export_json_data (
         accumulatedMemCpyTime += std::get<0> (memCpyTime);
     }
 
+    float accumulatedMallocTime = 0;
+    for (auto const& memAllocTime : tracker.getMemAllocTimings ())
+    {
+        statistics["timings"]["cudamalloc"][std::get<1> (memAllocTime)] = std::get<0> (memAllocTime);
+        accumulatedMallocTime += std::get<0> (memAllocTime);
+    }
+
     statistics["timings"]["accumulatedCpuTime"]    = accumulatedCpuTime;
     statistics["timings"]["accumulatedGpuTime"]    = accumulatedGpuTime;
     statistics["timings"]["accumulatedMemCpyTime"] = accumulatedMemCpyTime;
-    statistics["timings"]["accumulatedOverall"]    = accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime;
+    statistics["timings"]["accumulatedMallocTime"] = accumulatedMallocTime;
+    statistics["timings"]["accumulatedOverall"] =
+            accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime + accumulatedMallocTime;
 
 
     MemoryTracker& watcher                    = MemoryTracker::getInstance ();
@@ -98,4 +108,8 @@ void export_json_data (
     std::ofstream file (filePath);
     file << std::setw (4) << statistics;
     file.close ();
+
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info("Exporting metadata took: {} s", elapsed.count());
 }

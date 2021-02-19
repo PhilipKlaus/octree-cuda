@@ -45,11 +45,7 @@ void Octree::createOctree (uint32_t nodeAmountSparse)
 }
 void Octree::copyToHost ()
 {
-    auto start                            = std::chrono::high_resolution_clock::now ();
-    itsOctreeHost                         = itsOctree->toHost ();
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, "octree structure", false);
+    itsOctreeHost = itsOctree->toHost ();
 }
 const std::shared_ptr<Chunk[]>& Octree::getHost ()
 {

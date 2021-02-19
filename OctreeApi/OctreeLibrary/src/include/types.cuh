@@ -1,8 +1,8 @@
 #pragma once
 
+#include "cuda_array.cuh"
 #include <curand_kernel.h>
 #include <memory>
-#include "cuda_array.cuh"
 
 struct SubsampleConfig
 {

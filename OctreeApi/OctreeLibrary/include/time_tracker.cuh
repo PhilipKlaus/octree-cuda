@@ -4,6 +4,7 @@
  * @brief Contains a tracker for runtime measurments
  */
 
+#pragma once
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
@@ -45,13 +46,26 @@ public:
         spdlog::info (stream.str ());
     }
 
-    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice)
+    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent=true)
     {
         memCopyTimings.emplace_back (ms, measurement);
-        std::stringstream stream;
-        stream << (hostToDevice ? "[host -> device] " : "[device -> host] ") << measurement << " took: " << ms
-               << " [ms]";
-        spdlog::info (stream.str ());
+        if(!silent) {
+            std::stringstream stream;
+            stream << (hostToDevice ? "[host -> device] " : "[device -> host] ") << measurement << " took: " << ms
+                   << " [ms]";
+            spdlog::info (stream.str ());
+        }
+    }
+
+    void trackMemAllocTime (float ms, const std::string& measurement, bool silent=true)
+    {
+        memAllocTimings.emplace_back (ms, measurement);
+        if(!silent)
+        {
+            std::stringstream stream;
+            stream << "[cudaMalloc] for '" << measurement << "' took: " << ms << " [ms]";
+            spdlog::info (stream.str ());
+        }
     }
 
     const std::vector<std::tuple<float, std::string>>& getCpuTimings () const
@@ -69,8 +83,14 @@ public:
         return memCopyTimings;
     }
 
+    const std::vector<std::tuple<float, std::string>>& getMemAllocTimings () const
+    {
+        return memAllocTimings;
+    }
+
 private:
     std::vector<std::tuple<float, std::string>> cpuTimings;
     std::vector<std::tuple<float, std::string>> kernelTimings;
     std::vector<std::tuple<float, std::string>> memCopyTimings;
+    std::vector<std::tuple<float, std::string>> memAllocTimings;
 };
