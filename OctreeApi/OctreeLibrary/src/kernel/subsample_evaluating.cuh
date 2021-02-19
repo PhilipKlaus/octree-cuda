@@ -100,25 +100,27 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
-
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
-    {
-        tools::KernelTimer timer;
-        timer.start ();
+#ifdef CUDA_TIMINGS
+    tools::KernelTimer timer;
+    timer.start ();
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
         subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-        timer.stop ();
-        gpuErrchk (cudaGetLastError ());
-        return timer.getMilliseconds ();
     }
-    else
-    {
-        tools::KernelTimer timer;
-        timer.start ();
+    else {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-        timer.stop ();
-        gpuErrchk (cudaGetLastError ());
-        return timer.getMilliseconds ();
     }
+    timer.stop ();
+    gpuErrchk (cudaGetLastError ());
+    return timer.getMilliseconds ();
+#else
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
+        subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else {
+        subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    return 0;
+#endif
 }
 
 } // namespace Kernel
