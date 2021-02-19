@@ -15,7 +15,6 @@ add_library(${PROJECT_NAME} STATIC
         include/defines.cuh
 
         # Private Headers
-        src/include/cudaArray.cuh
         src/include/tools.cuh
         src/include/types.cuh
         src/include/kernel_structs.cuh
@@ -50,6 +49,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_exporter/potree_exporter.cu
 
         # Octree data
+        src/data/cuda_array.cuh
         src/include/octree.cuh
         src/data/octree.cu
 
@@ -70,7 +70,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/kernel
         src/misc
         src/include
-        src/octree_exporter)
+        src/octree_exporter
+        src/data)
 
 ####################
 # ADD CUDA SUPPORT #

@@ -2,8 +2,7 @@
 
 #include <curand_kernel.h>
 #include <memory>
-
-#include "cudaArray.cuh"
+#include "cuda_array.cuh"
 
 struct SubsampleConfig
 {
