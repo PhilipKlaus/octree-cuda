@@ -59,4 +59,28 @@ void SubsamplingData::copyToHost ()
     std::for_each (itsAvgDevice.cbegin (), itsAvgDevice.cend (), [&] (const auto& averagingItem) {
         itsAvgHost.insert (make_pair (averagingItem.first, averagingItem.second->toHost ()));
     });
+
+    itsPointsPerSubsampleHost = itsPointsPerSubsample->toHost()[linearIdx];
+}
+
+
+SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t nodeAmount) : itsLinearCounter(0)
+{
+    itsOutput = createGpuU8(estimatedPoints * (sizeof (uint64_t) + sizeof (uint32_t)), "output");
+    itsPointsPerSubsample = createGpuU32(nodeAmount, "pointCounts");
+    itsPointsPerSubsample->memset (0);
+}
+
+uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
+{
+    itsLinearLut[sparseIdx] = itsLinearCounter;
+    return itsLinearCounter++;
+}
+uint32_t* SubsamplingData::getPointsPerSubsampleDevice ()
+{
+    return itsPointsPerSubsample->devicePointer();
+}
+uint32_t SubsamplingData::copyPointCount (uint32_t linearIdx)
+{
+    return itsPointsPerSubsample->toHost()[linearIdx];
 }

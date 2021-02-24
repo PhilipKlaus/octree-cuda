@@ -64,7 +64,6 @@ private:
             GpuArrayU32& subsampleCountingGrid,
             GpuAveraging& averagingGrid,
             GpuArrayI32& subsampleDenseToSparseLUT,
-            GpuArrayU32& subsampleSparseVoxelCount,
             GpuRandomState& randomStates,
             GpuArrayU32& randomIndices);
 

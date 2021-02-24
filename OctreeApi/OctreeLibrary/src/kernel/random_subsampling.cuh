@@ -92,7 +92,6 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* filledCellCounter,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
@@ -140,7 +139,6 @@ __global__ void kernelRandomPointSubsample (
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
-    *filledCellCounter                = 0;
     averagingGrid[denseVoxelIndex]    = 0;
 }
 } // namespace subsampling

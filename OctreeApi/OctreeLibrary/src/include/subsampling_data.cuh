@@ -12,6 +12,7 @@
 class SubsamplingData
 {
 public:
+    SubsamplingData(uint32_t estimatedPoints, uint32_t nodeAmount);
     void createLUT (uint32_t pointAmount, uint32_t index);
     void createAvg (uint32_t pointAmount, uint32_t index);
 
@@ -26,9 +27,21 @@ public:
 
     void copyToHost ();
 
+    // ----------------
+
+    uint32_t addLinearLutEntry(uint32_t sparseIdx);
+    uint32_t * getPointsPerSubsampleDevice ();
+    uint32_t copyPointCount(uint32_t linearIdx);
+
 private:
     unordered_map<uint32_t, GpuArrayU32> itsLutDevice;
     unordered_map<uint32_t, GpuAveraging> itsAvgDevice;
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
+
+    GpuArrayU8 itsOutput;
+    GpuArrayU32 itsPointsPerSubsample;
+    std::unique_ptr<uint32_t[]> itsPointsPerSubsampleHost;
+    uint32_t itsLinearCounter;
+    unordered_map<uint32_t, uint32_t> itsLinearLut; // Maps sparse indices to linear indices
 };

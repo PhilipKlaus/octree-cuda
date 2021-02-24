@@ -7,8 +7,20 @@
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
-    itsSubsamples           = std::make_shared<SubsamplingData> ();
-    auto h_octreeSparse     = itsOctreeData->getHost ();
+    auto h_octreeSparse = itsOctreeData->getHost ();
+
+    uint32_t pointSum = 0;
+    evaluateOctreeProperties (
+            h_octreeSparse,
+            itsMetadata.leafNodeAmount,
+            itsMetadata.parentNodeAmount,
+            pointSum,
+            itsMetadata.minPointsPerNode,
+            itsMetadata.maxPointsPerNode,
+            getRootIndex ());
+
+    itsSubsamples = std::make_shared<SubsamplingData> (
+            itsCloud->getMetadata ().pointAmount * 2.2, itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount);
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
     auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
 
@@ -16,11 +28,9 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
     auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
     auto averagingGrid   = createGpuAveraging (nodesBaseLevel, "averagingGrid");
     auto denseToSpareLUT = createGpuI32 (nodesBaseLevel, "denseToSpareLUT");
-    auto voxelCount      = createGpuU32 (1, "voxelCount");
 
     pointCountGrid->memset (0);
     denseToSpareLUT->memset (-1);
-    voxelCount->memset (0);
 
     SubsamplingTimings timings = {};
 
@@ -37,7 +47,6 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
             pointCountGrid,
             averagingGrid,
             denseToSpareLUT,
-            voxelCount,
             randomStates,
             randomIndices);
 
@@ -57,7 +66,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         GpuArrayU32& subsampleCountingGrid,
         GpuAveraging& averagingGrid,
         GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
         GpuRandomState& randomStates,
         GpuArrayU32& randomIndices)
 {
@@ -78,7 +86,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     subsampleCountingGrid,
                     averagingGrid,
                     subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
                     randomStates,
                     randomIndices);
 
@@ -91,6 +98,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     // Now we can assure that all direct children have subsamples
     if (node.isParent)
     {
+        auto linearIdx = itsSubsamples->addLinearLutEntry(sparseVoxelIndex);
+
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
         uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
@@ -112,7 +121,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
+                itsSubsamples->getPointsPerSubsampleDevice (),
+                linearIdx,
                 cloud,
                 gridding);
 
@@ -128,7 +138,7 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 threads);
 
         // Create point-LUT and averaging data
-        auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];
+        auto amountUsedVoxels = itsSubsamples->copyPointCount(linearIdx);
         itsSubsamples->createLUT (amountUsedVoxels, sparseVoxelIndex);
         itsSubsamples->createAvg (amountUsedVoxels, sparseVoxelIndex);
 
@@ -141,7 +151,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
                 cloud,
                 gridding,
                 randomIndices->devicePointer (),

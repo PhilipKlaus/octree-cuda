@@ -26,7 +26,8 @@ namespace subsampling {
  * @param countingGrid The actual counting grid, holding the amount of points per cell.
  * @param averagingGrid Hold the summarized color information per cell.
  * @param denseToSparseLUT Maps dense to sparse indices.
- * @param filledCellCounter Counts how many cells in the counting grid are actually filled.
+ * @param pointsPerSubsample Counts how many cells in the counting grid are actually filled.
+ * @param linearIdx The linear index in pointsPerSubsample.
  * @param cloud Holds the point cloud data.
  * @param gridding Holds data necessary to map a 3D point to a cell.
  */
@@ -36,7 +37,8 @@ __global__ void kernelEvaluateSubsamples (
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* filledCellCounter,
+        uint32_t* pointsPerSubsample,
+        uint32_t linearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
@@ -75,11 +77,11 @@ __global__ void kernelEvaluateSubsamples (
                                          static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
-    // If the thread handles the first point in a cell: increase the filledCellCounter and retrieve / store the sparse
+    // If the thread handles the first point in a cell: increase the pointsPerSubsample and retrieve / store the sparse
     // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (filledCellCounter, 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd ((pointsPerSubsample + linearIdx), 1);
     }
 }
 } // namespace subsampling
