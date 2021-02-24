@@ -40,13 +40,16 @@ __global__ void kernelEvaluateSubsamples (
         uint32_t* pointsPerSubsample,
         uint32_t linearIdx,
         KernelStructs::Cloud cloud,
-        KernelStructs::Gridding gridding)
+        KernelStructs::Gridding gridding,
+        Chunk* octree)
 {
     int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
     int gridIndex           = blockIdx.z;
-
-    if (index >= config[gridIndex].pointAmount)
+    bool isParent           = config[gridIndex].isParent;
+    int childIdx            = config[gridIndex].sparseIdx;
+    if (childIdx == -1 || (isParent && index >= pointsPerSubsample[config[gridIndex].linearIdx]) ||
+        (!isParent && index >= octree[childIdx].pointCount))
     {
         return;
     }
@@ -105,20 +108,24 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
 #ifdef CUDA_TIMINGS
     tools::KernelTimer timer;
     timer.start ();
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-    else {
+    else
+    {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     timer.stop ();
     gpuErrchk (cudaGetLastError ());
     return timer.getMilliseconds ();
 #else
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-    else {
+    else
+    {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     return 0;

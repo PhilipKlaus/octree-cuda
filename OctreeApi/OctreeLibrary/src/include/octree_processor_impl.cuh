@@ -54,7 +54,7 @@ private:
     uint32_t getRootIndex ();
     void mergeHierarchical ();
     void initLowestOctreeHierarchy ();
-    uint32_t prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
+    void prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
     void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     SubsamplingTimings randomSubsampling (

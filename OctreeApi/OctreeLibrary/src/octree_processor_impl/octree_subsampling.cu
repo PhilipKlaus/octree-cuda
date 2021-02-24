@@ -102,14 +102,14 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
-        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
+        prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
 
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
-        Kernel::KernelConfig kernelConfig = {metadata.cloudType, maxPoints};
+        Kernel::KernelConfig kernelConfig = {metadata.cloudType,  itsMetadata.maxPointsPerNode};
         KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
@@ -124,7 +124,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsamples->getPointsPerSubsampleDevice (),
                 linearIdx,
                 cloud,
-                gridding);
+                gridding,
+                itsOctreeData->getDevice());
 
         // Prepare one random point index per cell
         uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
@@ -154,26 +155,28 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 cloud,
                 gridding,
                 randomIndices->devicePointer (),
-                itsSubsampleMetadata.useReplacementScheme);
+                itsSubsampleMetadata.useReplacementScheme,
+                itsSubsamples->getPointsPerSubsampleDevice(),
+                itsOctreeData->getDevice());
     }
 
     return timings;
 }
 
 
-uint32_t OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
+void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
-    uint32_t maxPoints = 0;
     auto* config       = (SubsampleConfig*)(&subsampleSet);
     auto& node         = itsOctreeData->getNode (parentIndex);
     for (uint8_t i = 0; i < 8; ++i)
     {
         int childIndex = node.childrenChunks[i];
+        config[i].sparseIdx     = childIndex;
         if (childIndex != -1)
         {
             Chunk child               = itsOctreeData->getNode (childIndex);
-            config[i].pointAmount     = child.isParent ? itsSubsamples->getLutSize (childIndex) : child.pointCount;
-            maxPoints                 = max (maxPoints, config[i].pointAmount);
+            config[i].linearIdx     = itsSubsamples->getLinearIdx(childIndex);
+            config[i].isParent     = child.isParent;
             config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
             config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
             config[i].lutAdress =
@@ -181,10 +184,9 @@ uint32_t OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (Subsample
         }
         else
         {
-            config[i].pointAmount     = 0;
             config[i].averagingAdress = nullptr;
             config[i].lutAdress       = nullptr;
+            config[i].isParent       = false;
         }
     }
-    return maxPoints;
 }

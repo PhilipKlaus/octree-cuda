@@ -9,7 +9,9 @@ struct SubsampleConfig
     uint32_t* lutAdress;
     uint32_t lutStartIndex;
     uint64_t* averagingAdress;
-    uint32_t pointAmount;
+    uint32_t linearIdx;
+    int sparseIdx;
+    bool isParent;
 };
 
 struct __align__ (16) SubsampleSet

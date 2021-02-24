@@ -60,7 +60,7 @@ void SubsamplingData::copyToHost ()
         itsAvgHost.insert (make_pair (averagingItem.first, averagingItem.second->toHost ()));
     });
 
-    itsPointsPerSubsampleHost = itsPointsPerSubsample->toHost()[linearIdx];
+    itsPointsPerSubsampleHost = itsPointsPerSubsample->toHost();
 }
 
 
@@ -83,4 +83,8 @@ uint32_t* SubsamplingData::getPointsPerSubsampleDevice ()
 uint32_t SubsamplingData::copyPointCount (uint32_t linearIdx)
 {
     return itsPointsPerSubsample->toHost()[linearIdx];
+}
+uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
+{
+    return itsLinearLut[sparseIndex];
 }

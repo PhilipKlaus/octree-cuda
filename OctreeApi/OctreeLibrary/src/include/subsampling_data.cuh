@@ -32,6 +32,7 @@ public:
     uint32_t addLinearLutEntry(uint32_t sparseIdx);
     uint32_t * getPointsPerSubsampleDevice ();
     uint32_t copyPointCount(uint32_t linearIdx);
+    uint32_t getLinearIdx(uint32_t sparseIndex);
 
 private:
     unordered_map<uint32_t, GpuArrayU32> itsLutDevice;
