@@ -28,25 +28,25 @@ uint64_t* SubsamplingData::getAvgDevice (uint32_t index)
 
 uint32_t SubsamplingData::getPointAmount (uint32_t sparseIndex)
 {
-    return itsPointsPerSubsampleHost[getLinearIdx(sparseIndex)];
+    return itsNodeOutputHost[getLinearIdx(sparseIndex)].pointCount;
 }
 
-const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t index)
+const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t sparseIndex)
 {
-    if (itsLutHost.find (index) == itsLutHost.end ())
+    if (itsLutHost.find (sparseIndex) == itsLutHost.end ())
     {
-        itsLutHost[index] = itsLutDevice[index]->toHost ();
+        itsLutHost[sparseIndex] = itsLutDevice[sparseIndex]->toHost ();
     }
-    return itsLutHost[index];
+    return itsLutHost[sparseIndex];
 }
 
-const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t index)
+const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t sparseIndex)
 {
-    if (itsAvgHost.find (index) == itsAvgHost.end ())
+    if (itsAvgHost.find (sparseIndex) == itsAvgHost.end ())
     {
-        itsAvgHost[index] = itsAvgDevice[index]->toHost ();
+        itsAvgHost[sparseIndex] = itsAvgDevice[sparseIndex]->toHost ();
     }
-    return itsAvgHost[index];
+    return itsAvgHost[sparseIndex];
 }
 
 void SubsamplingData::copyToHost ()
@@ -59,15 +59,16 @@ void SubsamplingData::copyToHost ()
         itsAvgHost.insert (make_pair (averagingItem.first, averagingItem.second->toHost ()));
     });
 
-    itsPointsPerSubsampleHost = itsPointsPerSubsample->toHost();
+    itsNodeOutputHost = itsNodeOutput->toHost();
 }
 
 
 SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t nodeAmount) : itsLinearCounter(0)
 {
     itsOutput = createGpuU8(estimatedPoints * (sizeof (uint64_t) + sizeof (uint32_t)), "output");
-    itsPointsPerSubsample = createGpuU32(nodeAmount, "pointCounts");
-    itsPointsPerSubsample->memset (0);
+
+    itsNodeOutput = createGpuNodeOutput(nodeAmount, "nodeOutput");
+    itsNodeOutput->memset (0);
 }
 
 uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
@@ -75,16 +76,17 @@ uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
     itsLinearLut[sparseIdx] = itsLinearCounter;
     return itsLinearCounter++;
 }
-uint32_t* SubsamplingData::getPointsPerSubsampleDevice ()
+NodeOutput* SubsamplingData::getNodeOutputDevice ()
 {
-    return itsPointsPerSubsample->devicePointer();
+    return itsNodeOutput->devicePointer();
 }
 
 // ToDo: to be removed
-uint32_t SubsamplingData::copyPointCount (uint32_t linearIdx)
+NodeOutput SubsamplingData::getNodeOutputHost (uint32_t linearIdx)
 {
-    return itsPointsPerSubsample->toHost()[linearIdx];
+    return itsNodeOutput->toHost()[linearIdx];
 }
+
 uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
 {
     return itsLinearLut[sparseIndex];

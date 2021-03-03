@@ -29,8 +29,8 @@ public:
     // ----------------
 
     uint32_t addLinearLutEntry(uint32_t sparseIdx);
-    uint32_t * getPointsPerSubsampleDevice ();
-    uint32_t copyPointCount(uint32_t linearIdx);
+    NodeOutput * getNodeOutputDevice ();
+    NodeOutput getNodeOutputHost (uint32_t linearIdx);
     uint32_t getLinearIdx(uint32_t sparseIndex);
 
 private:
@@ -40,8 +40,8 @@ private:
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
 
     GpuArrayU8 itsOutput;
-    GpuArrayU32 itsPointsPerSubsample;
-    std::unique_ptr<uint32_t[]> itsPointsPerSubsampleHost;
+    GpuNodeOutput itsNodeOutput;
+    std::unique_ptr<NodeOutput[]> itsNodeOutputHost;
     uint32_t itsLinearCounter;
     unordered_map<uint32_t, uint32_t> itsLinearLut; // Maps sparse indices to linear indices
 };

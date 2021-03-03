@@ -122,7 +122,7 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
-                itsSubsamples->getPointsPerSubsampleDevice (),
+                itsSubsamples->getNodeOutputDevice (),
                 linearIdx,
                 cloud,
                 gridding,
@@ -140,9 +140,9 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 threads);
 
         // Create point-LUT and averaging data
-        auto amountUsedVoxels = itsSubsamples->copyPointCount(linearIdx);
-        itsSubsamples->createLUT (amountUsedVoxels, sparseVoxelIndex);
-        itsSubsamples->createAvg (amountUsedVoxels, sparseVoxelIndex);
+        auto nodeOutput = itsSubsamples->getNodeOutputHost (linearIdx);
+        itsSubsamples->createLUT (nodeOutput.pointCount, sparseVoxelIndex);
+        itsSubsamples->createAvg (nodeOutput.pointCount, sparseVoxelIndex);
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
@@ -157,7 +157,7 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 gridding,
                 randomIndices->devicePointer (),
                 itsSubsampleMetadata.useReplacementScheme,
-                itsSubsamples->getPointsPerSubsampleDevice(),
+                itsSubsamples->getNodeOutputDevice (),
                 itsOctreeData->getDevice());
     }
 

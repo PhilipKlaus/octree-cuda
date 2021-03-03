@@ -96,7 +96,7 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
         bool replacementScheme,
-        uint32_t* pointsPerSubsample,
+        NodeOutput* nodeOutput,
         Chunk *octree)
 {
     int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
@@ -104,7 +104,8 @@ __global__ void kernelRandomPointSubsample (
     int gridIndex           = blockIdx.z;
     bool isParent           = config[gridIndex].isParent;
     int childIdx            = config[gridIndex].sparseIdx;
-    if (childIdx == -1 || (isParent && index >= pointsPerSubsample[config[gridIndex].linearIdx]) ||
+
+    if (childIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
         (!isParent && index >= octree[childIdx].pointCount))
     {
         return;

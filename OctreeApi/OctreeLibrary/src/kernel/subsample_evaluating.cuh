@@ -37,7 +37,7 @@ __global__ void kernelEvaluateSubsamples (
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* pointsPerSubsample,
+        NodeOutput* nodeOutput,
         uint32_t linearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
@@ -45,10 +45,11 @@ __global__ void kernelEvaluateSubsamples (
 {
     int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-    int gridIndex           = blockIdx.z;
+    int gridIndex           = blockIdx.z; // 0 ... 7
     bool isParent           = config[gridIndex].isParent;
     int childIdx            = config[gridIndex].sparseIdx;
-    if (childIdx == -1 || (isParent && index >= pointsPerSubsample[config[gridIndex].linearIdx]) ||
+
+    if (childIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
         (!isParent && index >= octree[childIdx].pointCount))
     {
         return;
@@ -84,7 +85,7 @@ __global__ void kernelEvaluateSubsamples (
     // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd ((pointsPerSubsample + linearIdx), 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&((nodeOutput + linearIdx)->pointCount), 1);
     }
 }
 } // namespace subsampling
