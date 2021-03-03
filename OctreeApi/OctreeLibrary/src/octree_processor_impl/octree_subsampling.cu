@@ -109,7 +109,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
-        Kernel::KernelConfig kernelConfig = {metadata.cloudType,  itsMetadata.maxPointsPerNode};
+        // ToDo: Find more sprecise amount of threads
+        Kernel::KernelConfig kernelConfig = {metadata.cloudType,  itsMetadata.maxPointsPerNode * 8};
         KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
