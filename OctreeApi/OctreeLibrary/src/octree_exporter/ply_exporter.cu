@@ -32,7 +32,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     bool isAveraging = true;
 
     uint32_t pointsInNode =
-            isParent ? this->itsSubsamples->getLutSize (nodeIndex) : this->itsOctree[nodeIndex].pointCount;
+            isParent ? this->itsSubsamples->getPointAmount (nodeIndex) : this->itsOctree[nodeIndex].pointCount;
     const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
     uint32_t dataStride = this->itsCloudMetadata.pointDataStride;

@@ -1,10 +1,12 @@
 #include "subsampling_data.cuh"
 
+// ToDo: to be removed
 void SubsamplingData::createLUT (uint32_t pointAmount, uint32_t index)
 {
     itsLutDevice[index] = std::move (createGpuU32 (pointAmount, "subsampleLUT_" + to_string (index)));
 }
 
+// ToDo: to be removed
 void SubsamplingData::createAvg (uint32_t pointAmount, uint32_t index)
 {
     auto averaging = createGpuAveraging (pointAmount, "averagingData_" + to_string (index));
@@ -12,24 +14,21 @@ void SubsamplingData::createAvg (uint32_t pointAmount, uint32_t index)
     itsAvgDevice[index] = std::move (averaging);
 }
 
+// ToDo: to be removed
 uint32_t* SubsamplingData::getLutDevice (uint32_t index)
 {
     return itsLutDevice[index]->devicePointer ();
 }
 
+// ToDo: to be removed
 uint64_t* SubsamplingData::getAvgDevice (uint32_t index)
 {
     return itsAvgDevice[index]->devicePointer ();
 }
 
-uint32_t SubsamplingData::getLutSize (uint32_t index)
+uint32_t SubsamplingData::getPointAmount (uint32_t sparseIndex)
 {
-    return itsLutDevice[index]->pointCount ();
-}
-
-uint32_t SubsamplingData::getAvgSize (uint32_t index)
-{
-    return itsAvgDevice[index]->pointCount ();
+    return itsPointsPerSubsampleHost[getLinearIdx(sparseIndex)];
 }
 
 const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t index)
@@ -80,6 +79,8 @@ uint32_t* SubsamplingData::getPointsPerSubsampleDevice ()
 {
     return itsPointsPerSubsample->devicePointer();
 }
+
+// ToDo: to be removed
 uint32_t SubsamplingData::copyPointCount (uint32_t linearIdx)
 {
     return itsPointsPerSubsample->toHost()[linearIdx];

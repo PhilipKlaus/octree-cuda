@@ -16,8 +16,7 @@ public:
     void createLUT (uint32_t pointAmount, uint32_t index);
     void createAvg (uint32_t pointAmount, uint32_t index);
 
-    uint32_t getLutSize (uint32_t index);
-    uint32_t getAvgSize (uint32_t index);
+    uint32_t getPointAmount (uint32_t index);
 
     uint32_t* getLutDevice (uint32_t index);
     uint64_t* getAvgDevice (uint32_t index);
