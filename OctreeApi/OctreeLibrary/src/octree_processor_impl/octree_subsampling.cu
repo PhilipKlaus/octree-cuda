@@ -128,6 +128,12 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 gridding,
                 itsOctreeData->getDevice());
 
+        Kernel::calcNodeByteOffset(
+                {metadata.cloudType, 1},
+                itsSubsamples->getNodeOutputDevice (),
+                linearIdx
+                );
+
         // Prepare one random point index per cell
         uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
         timings.generateRandoms += executeKernel (

@@ -12,7 +12,7 @@
 #include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
-
+#include <inttypes.h>
 namespace subsampling {
 
 /**
@@ -97,7 +97,7 @@ __global__ void kernelRandomPointSubsample (
         uint32_t* randomIndices,
         bool replacementScheme,
         NodeOutput* nodeOutput,
-        Chunk *octree)
+        Chunk* octree)
 {
     int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     SubsampleConfig* config = (SubsampleConfig*)(&test);
@@ -146,6 +146,21 @@ __global__ void kernelRandomPointSubsample (
     denseToSparseLUT[denseVoxelIndex] = -1;
     averagingGrid[denseVoxelIndex]    = 0;
 }
+
+template <typename coordinateType, typename colorType>
+__global__ void kernelCalcNodeByteOffset (NodeOutput* nodeOutput, uint32_t linearIndex)
+{
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    if (index > 0)
+    {
+        return;
+    }
+    nodeOutput[linearIndex].byteOffset = (linearIndex == 0) ? 0
+                                                            : (nodeOutput[linearIndex - 1].byteOffset) +
+                                                                      (nodeOutput[linearIndex - 1].pointCount * 3 *
+                                                                       (sizeof (coordinateType) + sizeof (colorType)));
+}
+
 } // namespace subsampling
 
 namespace Kernel {
@@ -166,23 +181,61 @@ float randomPointSubsampling (KernelConfig config, Arguments&&... args)
 #ifdef CUDA_TIMINGS
     tools::KernelTimer timer;
     timer.start ();
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-    else {
+    else
+    {
         subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     timer.stop ();
     gpuErrchk (cudaGetLastError ());
     return timer.getMilliseconds ();
 #else
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
         subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-    else {
+    else
+    {
         subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     return 0;
 #endif
 }
+
+template <typename... Arguments>
+float calcNodeByteOffset (KernelConfig config, Arguments&&... args)
+{
+    auto block = dim3 (1, 1, 1);
+    auto grid  = dim3 (1, 1, 1);
+
+#ifdef CUDA_TIMINGS
+    tools::KernelTimer timer;
+    timer.start ();
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::kernelCalcNodeByteOffset<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::kernelCalcNodeByteOffset<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    timer.stop ();
+    gpuErrchk (cudaGetLastError ());
+    return timer.getMilliseconds ();
+#else
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::kernelCalcNodeByteOffset<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::kernelCalcNodeByteOffset<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    return 0;
+#endif
+}
+
 } // namespace Kernel
