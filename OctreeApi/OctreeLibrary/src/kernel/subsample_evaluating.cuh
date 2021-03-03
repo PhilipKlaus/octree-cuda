@@ -14,6 +14,12 @@
 
 namespace subsampling {
 
+template <typename colorType>
+__device__ uint64_t encodeColors (Vector3<colorType>* color)
+{
+    return (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
+           static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
+}
 
 /**
  * Places a 3-dimensional grid over 8 octree children nodes and maps the points inside to a target cell.
@@ -43,25 +49,24 @@ __global__ void kernelEvaluateSubsamples (
         KernelStructs::Gridding gridding,
         Chunk* octree)
 {
-    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-    int gridIndex           = blockIdx.z; // 0 ... 7
-    bool isParent           = config[gridIndex].isParent;
-    int childIdx            = config[gridIndex].sparseIdx;
+    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (childIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
-        (!isParent && index >= octree[childIdx].pointCount))
+    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
+    int gridIndex           = blockIdx.z;                  // The child-index (0...7) of the node
+    bool isParent           = config[gridIndex].isParent;  // Is the node a parent?
+    int sparseIdx           = config[gridIndex].sparseIdx; // Sparse index of the node
+
+    if (sparseIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
+        (!isParent && index >= octree[sparseIdx].pointCount))
     {
         return;
     }
 
-    // Access child node data
-    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
-    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-    uint64_t* childAveraging   = config[gridIndex].averagingAdress;
+    // Calculate target point index
+    uint32_t pointIndex = *(config[gridIndex].lutAdress + config[gridIndex].lutStartIndex + index);
 
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* targetCloudByte       = cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride;
+    uint8_t* targetCloudByte       = cloud.raw + pointIndex * cloud.dataStride;
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
     Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
@@ -71,14 +76,8 @@ __global__ void kernelEvaluateSubsamples (
     // Increase the point counter for the cell
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
-    // Accumulate color information
-    bool hasAveragingData   = (childAveraging != nullptr);
-    uint64_t* averagingData = childAveraging + index;
-
-    uint64_t encoded = hasAveragingData
-                               ? *averagingData
-                               : (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
-                                         static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
+    // Encode the point color and add it up
+    uint64_t encoded = isParent ? *(config[gridIndex].averagingAdress + index) : encodeColors(color);
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
     // If the thread handles the first point in a cell: increase the pointsPerSubsample and retrieve / store the sparse
