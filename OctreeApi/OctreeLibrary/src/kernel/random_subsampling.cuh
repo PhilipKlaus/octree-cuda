@@ -99,25 +99,25 @@ __global__ void kernelRandomPointSubsample (
         NodeOutput* nodeOutput,
         Chunk* octree)
 {
-    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
     SubsampleConfig* config = (SubsampleConfig*)(&test);
     int gridIndex           = blockIdx.z;
     bool isParent           = config[gridIndex].isParent;
     int childIdx            = config[gridIndex].sparseIdx;
 
-    if (childIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
-        (!isParent && index >= octree[childIdx].pointCount))
+    if (childIdx == -1 || (isParent && localPointIdx >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
+        (!isParent && localPointIdx >= octree[childIdx].pointCount))
     {
         return;
     }
-    // Access child node data
-    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
-    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-    uint32_t lutItem           = childDataLUT[childDataLUTStart + index];
+
+    // Calculate global target point index
+    uint32_t globalPointIdx = *(config[gridIndex].lutAdress + config[gridIndex].lutStartIndex + localPointIdx);
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
-            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + lutItem * cloud.dataStride);
+            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + globalPointIdx * cloud.dataStride);
 
     // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -133,14 +133,12 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    parentDataLUT[sparseIndex]   = lutItem;
+    parentDataLUT[sparseIndex]   = globalPointIdx;
     uint64_t encoded             = averagingGrid[denseVoxelIndex];
     uint16_t amount              = static_cast<uint16_t> (encoded & 0x3FF);
     parentAveraging[sparseIndex] = ((((encoded >> 46) & 0xFFFF) / amount) << 46) |
                                    ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
                                    ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
-    childDataLUT[childDataLUTStart + index] =
-            replacementScheme ? childDataLUT[childDataLUTStart + index] : INVALID_INDEX;
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;

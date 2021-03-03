@@ -49,24 +49,24 @@ __global__ void kernelEvaluateSubsamples (
         KernelStructs::Gridding gridding,
         Chunk* octree)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
     int gridIndex           = blockIdx.z;                  // The child-index (0...7) of the node
     bool isParent           = config[gridIndex].isParent;  // Is the node a parent?
     int sparseIdx           = config[gridIndex].sparseIdx; // Sparse index of the node
 
-    if (sparseIdx == -1 || (isParent && index >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
-        (!isParent && index >= octree[sparseIdx].pointCount))
+    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
+        (!isParent && localPointIdx >= octree[sparseIdx].pointCount))
     {
         return;
     }
 
-    // Calculate target point index
-    uint32_t pointIndex = *(config[gridIndex].lutAdress + config[gridIndex].lutStartIndex + index);
+    // Calculate global target point index
+    uint32_t globalPointIdx = *(config[gridIndex].lutAdress + config[gridIndex].lutStartIndex + localPointIdx);
 
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* targetCloudByte       = cloud.raw + pointIndex * cloud.dataStride;
+    uint8_t* targetCloudByte       = cloud.raw + globalPointIdx * cloud.dataStride;
     Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
     Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
@@ -77,7 +77,7 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // Encode the point color and add it up
-    uint64_t encoded = isParent ? *(config[gridIndex].averagingAdress + index) : encodeColors(color);
+    uint64_t encoded = isParent ? *(config[gridIndex].averagingAdress + localPointIdx) : encodeColors(color);
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
     // If the thread handles the first point in a cell: increase the pointsPerSubsample and retrieve / store the sparse
