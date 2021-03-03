@@ -155,10 +155,10 @@ __global__ void kernelCalcNodeByteOffset (NodeOutput* nodeOutput, uint32_t linea
     {
         return;
     }
-    nodeOutput[linearIndex].byteOffset = (linearIndex == 0) ? 0
-                                                            : (nodeOutput[linearIndex - 1].byteOffset) +
-                                                                      (nodeOutput[linearIndex - 1].pointCount * 3 *
-                                                                       (sizeof (coordinateType) + sizeof (colorType)));
+    (nodeOutput + linearIndex)->byteOffset =
+            (linearIndex == 0) ? 0
+                               : (nodeOutput[linearIndex - 1].byteOffset) + (nodeOutput[linearIndex - 1].pointCount *
+                                                                             (sizeof (uint64_t) + sizeof (uint32_t)));
 }
 
 } // namespace subsampling

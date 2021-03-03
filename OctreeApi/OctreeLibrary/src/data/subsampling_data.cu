@@ -91,3 +91,7 @@ uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
 {
     return itsLinearLut[sparseIndex];
 }
+uint8_t* SubsamplingData::getOutputDevice ()
+{
+    return itsOutput->devicePointer();
+}

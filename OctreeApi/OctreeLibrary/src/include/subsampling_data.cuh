@@ -32,6 +32,7 @@ public:
     NodeOutput * getNodeOutputDevice ();
     NodeOutput getNodeOutputHost (uint32_t linearIdx);
     uint32_t getLinearIdx(uint32_t sparseIndex);
+    uint8_t *getOutputDevice();
 
 private:
     unordered_map<uint32_t, GpuArrayU32> itsLutDevice;
