@@ -14,14 +14,9 @@ class SubsamplingData
 {
 public:
     SubsamplingData(uint32_t estimatedPoints, uint32_t nodeAmount);
-    void createLUT (uint32_t pointAmount, uint32_t index);
-    void createAvg (uint32_t pointAmount, uint32_t index);
-
     uint32_t getPointAmount (uint32_t index);
 
-    uint32_t* getLutDevice (uint32_t index);
-    uint64_t* getAvgDevice (uint32_t index);
-
+    // ToDo: To be removed
     const std::unique_ptr<uint32_t[]>& getLutHost (uint32_t index);
     const std::unique_ptr<uint64_t[]>& getAvgHost (uint32_t index);
 
