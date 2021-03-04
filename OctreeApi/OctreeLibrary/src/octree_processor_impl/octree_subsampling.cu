@@ -51,6 +51,7 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
             randomIndices);
 
     auto& tracker = TimeTracker::getInstance ();
+    tracker.trackKernelTime (timings.offsetCalcuation, "kernelCalcNodeByteOffset");
     tracker.trackKernelTime (timings.subsampleEvaluation, "kernelEvaluateSubsamples");
     tracker.trackKernelTime (timings.generateRandoms, "kernelGenerateRandoms");
     tracker.trackKernelTime (timings.subsampling, "kernelRandomPointSubsample");
@@ -102,9 +103,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
-        //spdlog::error(0);
         prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
-        //spdlog::error(1);
+
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
@@ -116,8 +116,8 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
-       // spdlog::error(2);
+        timings.offsetCalcuation += Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+
         // Evaluate how many points fall in each cell
         timings.subsampleEvaluation += Kernel::evaluateSubsamples (
                 kernelConfig,
@@ -133,8 +133,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsOctreeData->getDevice (),
                 itsLeafLut->devicePointer());
 
-        //spdlog::error(3);
-
         // Prepare one random point index per cell
         uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
         timings.generateRandoms += executeKernel (
@@ -146,19 +144,10 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 threads);
 
-        //spdlog::error(4);
-
-        // Create point-LUT and averaging data
-        //auto nodeOutput = itsSubsamples->getNodeOutputHost (linearIdx);
-        //itsSubsamples->createLUT (nodeOutput.pointCount, sparseVoxelIndex);
-        //itsSubsamples->createAvg (nodeOutput.pointCount, sparseVoxelIndex);
-
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
                 kernelConfig,
                 subsampleSet,
-                //itsSubsamples->getLutDevice (sparseVoxelIndex),
-                //itsSubsamples->getAvgDevice (sparseVoxelIndex),
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
@@ -170,8 +159,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 linearIdx,
                 itsOctreeData->getDevice (),
                 itsLeafLut->devicePointer());
-
-        //spdlog::error(5);
     }
 
     return timings;

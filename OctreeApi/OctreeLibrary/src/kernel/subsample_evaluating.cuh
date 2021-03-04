@@ -67,7 +67,6 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Get pointer to the output data entry
-    //uint32_t *dst = reinterpret_cast<uint32_t*>(output + nodeOutput[childLinearIdx].pointOffset + localPointIdx * (sizeof (uint32_t) + sizeof (uint64_t)));
     OutputData *src = output + nodeOutput[childLinearIdx].pointOffset + localPointIdx;
 
     // Calculate global target point index

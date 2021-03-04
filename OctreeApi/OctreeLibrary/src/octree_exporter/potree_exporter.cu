@@ -220,10 +220,7 @@ template <typename coordinateType, typename colorType>
 inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorsBuffered (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
-    //uint64_t encoded = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex];
-    // uint8_t *out = this->itsSubsamples->getOutputHost (nodeIndex) + sizeof (uint32_t) + pointIndex * (sizeof (uint32_t) * 3);
     uint64_t encoded = (this->itsSubsamples->getOutputHost (nodeIndex) + pointIndex)->encoded;
-    //spdlog::error("r: {}, g: {}, b:{}", static_cast<uint16_t> (encoded >> 46), static_cast<uint16_t> (encoded >> 28), static_cast<uint16_t> (encoded >> 10));
     auto* dst        = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
     dst[0]           = static_cast<uint16_t> (encoded >> 46);
     dst[1]           = static_cast<uint16_t> (encoded >> 28);

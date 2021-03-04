@@ -38,15 +38,15 @@ struct Chunk
 
 struct SubsamplingTimings
 {
+    float offsetCalcuation;
     float subsampleEvaluation;
     float generateRandoms;
-    float averaging;
     float subsampling;
 };
 
 struct NodeOutput {
     uint32_t pointCount;
-    uint64_t pointOffset;
+    uint32_t pointOffset;
 };
 
 struct OutputData {

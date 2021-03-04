@@ -87,8 +87,6 @@ __global__ void kernelGenerateRandoms (
 template <typename coordinateType>
 __global__ void kernelRandomPointSubsample (
         SubsampleSet test,
-        // uint32_t* parentDataLUT,
-        // uint64_t* parentAveraging,
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
@@ -104,26 +102,24 @@ __global__ void kernelRandomPointSubsample (
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&test);
-    int gridIndex           = blockIdx.z;
-    bool isParent           = config[gridIndex].isParent;
-    int sparseIdx            = config[gridIndex].sparseIdx;
-    int childLinearIdx      = config[gridIndex].linearIdx; // Is 0 if isParent = false
+    bool isParent           = config[blockIdx.z].isParent;
+    int sparseIdx            = config[blockIdx.z].sparseIdx;
+    uint32_t childLinearIdx      = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput[childLinearIdx].pointCount) ||
-        (!isParent && localPointIdx >= octree[sparseIdx].pointCount))
+    NodeOutput *childInfo = (nodeOutput + childLinearIdx);
+    Chunk *childNode = sparseIdx == -1  ? nullptr : (octree + sparseIdx);
+
+    if (sparseIdx == -1 || (isParent && localPointIdx >= childInfo->pointCount) ||
+        (!isParent && localPointIdx >= childNode->pointCount))
     {
         return;
     }
 
     // Get pointer to the output data entry
-    //uint64_t byteOffset = nodeOutput[childLinearIdx].byteOffset / sizeof(uint32_t);
-    //uint32_t *dst = reinterpret_cast<uint32_t*> (output) + byteOffset + (localPointIdx * 3);
-    // uint32_t *dst = reinterpret_cast<uint32_t*>(output + nodeOutput[childLinearIdx].pointOffset + localPointIdx * (sizeof (uint32_t) + sizeof (uint64_t)));
-
-    OutputData *src = output + nodeOutput[childLinearIdx].pointOffset + localPointIdx;
+    OutputData *src = output + childInfo->pointOffset + localPointIdx;
 
     // Calculate global target point index
-    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + octree[sparseIdx].chunkDataIndex + localPointIdx);
+    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + childNode->chunkDataIndex + localPointIdx);
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
@@ -143,28 +139,15 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    // parentDataLUT[sparseIndex]   = globalPointIdx;
-
     OutputData *dst = output + nodeOutput[parentLinearIdx].pointOffset + sparseIndex;
     dst->pointIdx = globalPointIdx;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
     uint16_t amount  = static_cast<uint16_t> (encoded & 0x3FF);
 
-   // encoded = 17944029765304321;//(255 << 46) | (0 << 28) | (0 << 10) | 1;
-    //amount = 1;
-
     dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) |
               ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
               ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
-    //color = 17944029765304321;//(255 << 46) | (0 << 28) | (0 << 10) | 1;
-//17944056608901121
-    // *(dst + 2) =  static_cast<uint32_t >(color & 0xFFFFFFFF);
-    // *(dst + 1) =  static_cast<uint32_t >(color >> 32);
-
-    //*(dst + 1) = static_cast<uint32_t >(color & 0xFFFFFFFF);
-   // *(dst + 2) = static_cast<uint32_t >(color >> 32);
-   //*dst->encoded = co
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
