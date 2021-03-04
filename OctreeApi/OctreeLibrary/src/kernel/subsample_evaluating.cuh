@@ -45,32 +45,30 @@ __global__ void kernelEvaluateSubsamples (
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
         OutputData* output,
-        NodeOutput* nodeOutput,
+        KernelStructs::NodeOutput nodeOutput,
         uint32_t parentLinearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        Chunk* octree,
         uint32_t* leafLut)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-    int gridIndex           = blockIdx.z;                  // The child-index (0...7) of the node
-    bool isParent           = config[gridIndex].isParent;  // Is the child node a parent?
-    int sparseIdx           = config[gridIndex].sparseIdx; // Sparse index of the child node
-    int childLinearIdx      = config[gridIndex].linearIdx; // Is 0 if isParent = false
+    bool isParent           = config[blockIdx.z].isParent;  // Is the child node a parent?
+    int sparseIdx           = config[blockIdx.z].sparseIdx; // Sparse index of the child node
+    int childLinearIdx      = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput[childLinearIdx].pointCount) ||
-        (!isParent && localPointIdx >= octree[sparseIdx].pointCount))
+    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput.pointCount[childLinearIdx]) ||
+        (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
     {
         return;
     }
 
     // Get pointer to the output data entry
-    OutputData *src = output + nodeOutput[childLinearIdx].pointOffset + localPointIdx;
+    OutputData *src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
 
     // Calculate global target point index
-    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + octree[sparseIdx].chunkDataIndex + localPointIdx);
+    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* targetCloudByte       = cloud.raw + globalPointIdx * cloud.dataStride;
@@ -92,7 +90,7 @@ __global__ void kernelEvaluateSubsamples (
     // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&((nodeOutput + parentLinearIdx)->pointCount), 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (nodeOutput.pointCount + parentLinearIdx, 1);
     }
 }
 } // namespace subsampling

@@ -28,7 +28,7 @@ uint64_t* SubsamplingData::getAvgDevice (uint32_t index)
 
 uint32_t SubsamplingData::getPointAmount (uint32_t sparseIndex)
 {
-    return itsNodeOutputHost[getLinearIdx(sparseIndex)].pointCount;
+    return itsPointCountsHost[getLinearIdx(sparseIndex)];
 }
 
 const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t sparseIndex)
@@ -59,7 +59,8 @@ void SubsamplingData::copyToHost ()
         itsAvgHost.insert (make_pair (averagingItem.first, averagingItem.second->toHost ()));
     });
 
-    itsNodeOutputHost = itsNodeOutput->toHost();
+    itsPointCountsHost = itsPointCounts->toHost();
+    itsPointOffsetsHost = itsPointOffsets->toHost();
     itsOutputHost     = itsOutput->toHost();
 }
 
@@ -68,8 +69,10 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t nodeAmount)
 {
     itsOutput = createGpuOutputData(estimatedPoints, "output");
     itsOutput->memset(0);
-    itsNodeOutput = createGpuNodeOutput(nodeAmount, "nodeOutput");
-    itsNodeOutput->memset (0);
+
+    itsPointCounts = createGpuU32(nodeAmount, "pointCounts");
+    itsPointOffsets = createGpuU32(nodeAmount, "pointOffsets");
+    itsPointCounts->memset(0);
 }
 
 uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
@@ -77,16 +80,11 @@ uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
     itsLinearLut[sparseIdx] = itsLinearCounter;
     return itsLinearCounter++;
 }
-NodeOutput* SubsamplingData::getNodeOutputDevice ()
+KernelStructs::NodeOutput SubsamplingData::getNodeOutputDevice ()
 {
-    return itsNodeOutput->devicePointer();
+    return {itsPointCounts->devicePointer(), itsPointOffsets->devicePointer() };
 }
 
-// ToDo: to be removed
-NodeOutput SubsamplingData::getNodeOutputHost (uint32_t linearIdx)
-{
-    return itsNodeOutput->toHost()[linearIdx];
-}
 
 uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
 {
@@ -98,6 +96,6 @@ OutputData* SubsamplingData::getOutputDevice ()
 }
 OutputData* SubsamplingData::getOutputHost (uint32_t sparseIndex)
 {
-    uint64_t byteOffset = itsNodeOutputHost[getLinearIdx(sparseIndex)].pointOffset;
+    uint64_t byteOffset = itsPointOffsetsHost[getLinearIdx(sparseIndex)];
     return (itsOutputHost.get() + byteOffset);
 }

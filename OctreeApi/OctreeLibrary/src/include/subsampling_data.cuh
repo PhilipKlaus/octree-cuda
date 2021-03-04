@@ -5,6 +5,7 @@
  */
 #pragma once
 #include "types.cuh"
+#include "kernel_structs.cuh"
 
 /***
  * The class wraps subsampling-related data structures and handles the copy between host and device.
@@ -29,8 +30,7 @@ public:
     // ----------------
 
     uint32_t addLinearLutEntry(uint32_t sparseIdx);
-    NodeOutput * getNodeOutputDevice ();
-    NodeOutput getNodeOutputHost (uint32_t linearIdx);
+    KernelStructs::NodeOutput getNodeOutputDevice ();
     uint32_t getLinearIdx(uint32_t sparseIndex);
 
     OutputData *getOutputDevice();
@@ -43,9 +43,13 @@ private:
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
 
     GpuOutputData itsOutput;
-    GpuNodeOutput itsNodeOutput;
 
-    std::unique_ptr<NodeOutput[]> itsNodeOutputHost;
+    // NodeOutput
+    GpuArrayU32 itsPointCounts;
+    GpuArrayU32 itsPointOffsets;
+    std::unique_ptr<uint32_t[]> itsPointCountsHost;
+    std::unique_ptr<uint32_t[]> itsPointOffsetsHost;
+
     std::unique_ptr<OutputData[]> itsOutputHost;
     uint32_t itsLinearCounter;
     unordered_map<uint32_t, uint32_t> itsLinearLut; // Maps sparse indices to linear indices

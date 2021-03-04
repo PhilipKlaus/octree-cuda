@@ -94,9 +94,8 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
         OutputData* output,
-        NodeOutput* nodeOutput,
+        KernelStructs::NodeOutput nodeOutput,
         uint32_t parentLinearIdx,
-        Chunk* octree,
         uint32_t *leafLut)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
@@ -106,20 +105,17 @@ __global__ void kernelRandomPointSubsample (
     int sparseIdx            = config[blockIdx.z].sparseIdx;
     uint32_t childLinearIdx      = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
-    NodeOutput *childInfo = (nodeOutput + childLinearIdx);
-    Chunk *childNode = sparseIdx == -1  ? nullptr : (octree + sparseIdx);
-
-    if (sparseIdx == -1 || (isParent && localPointIdx >= childInfo->pointCount) ||
-        (!isParent && localPointIdx >= childNode->pointCount))
+    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput.pointCount[childLinearIdx]) ||
+        (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
     {
         return;
     }
 
     // Get pointer to the output data entry
-    OutputData *src = output + childInfo->pointOffset + localPointIdx;
+    OutputData *src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
 
     // Calculate global target point index
-    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + childNode->chunkDataIndex + localPointIdx);
+    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
 
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
@@ -139,7 +135,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    OutputData *dst = output + nodeOutput[parentLinearIdx].pointOffset + sparseIndex;
+    OutputData *dst = output + nodeOutput.pointOffset[parentLinearIdx] + sparseIndex;
     dst->pointIdx = globalPointIdx;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
@@ -155,16 +151,16 @@ __global__ void kernelRandomPointSubsample (
 }
 
 template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (NodeOutput* nodeOutput, uint32_t linearIndex)
+__global__ void kernelCalcNodeByteOffset (KernelStructs::NodeOutput nodeOutput, uint32_t linearIndex)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index > 0)
     {
         return;
     }
-    (nodeOutput + linearIndex)->pointOffset =
+    *(nodeOutput.pointOffset + linearIndex) =
             (linearIndex == 0) ? 0
-                               : (nodeOutput[linearIndex - 1].pointOffset + nodeOutput[linearIndex - 1].pointCount);
+                               : (nodeOutput.pointOffset[linearIndex - 1] + nodeOutput.pointCount[linearIndex - 1]);
 }
 
 } // namespace subsampling

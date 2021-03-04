@@ -12,6 +12,8 @@ struct SubsampleConfig
     uint32_t linearIdx;
     int sparseIdx;
     bool isParent;
+    uint32_t leafPointAmount;    // Only valid if isParent == false
+    uint32_t leafDataIdx;           // Only valid if isParent == false
 };
 
 struct __align__ (16) SubsampleSet
@@ -44,11 +46,6 @@ struct SubsamplingTimings
     float subsampling;
 };
 
-struct NodeOutput {
-    uint32_t pointCount;
-    uint32_t pointOffset;
-};
-
 struct OutputData {
     uint32_t pointIdx;
     uint64_t encoded;
@@ -64,7 +61,6 @@ using GpuOctree      = GpuArray<Chunk>;
 using GpuSubsample   = GpuArray<SubsampleConfig>;
 using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
-using GpuNodeOutput  = GpuArray<NodeOutput>;
 using GpuOutputData  = GpuArray<OutputData>;
 
 template <typename T, typename... Args>
@@ -119,12 +115,6 @@ template <typename... Args>
 std::unique_ptr<CudaArray<uint64_t>> createGpuAveraging (Args&&... args)
 {
     return createGpu<uint64_t> (std::forward<Args> (args)...);
-}
-
-template <typename... Args>
-std::unique_ptr<CudaArray<NodeOutput>> createGpuNodeOutput (Args&&... args)
-{
-    return createGpu<NodeOutput> (std::forward<Args> (args)...);
 }
 
 template <typename... Args>

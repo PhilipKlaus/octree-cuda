@@ -130,7 +130,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 linearIdx,
                 cloud,
                 gridding,
-                itsOctreeData->getDevice (),
                 itsLeafLut->devicePointer());
 
         // Prepare one random point index per cell
@@ -157,7 +156,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsamples->getOutputDevice(),
                 itsSubsamples->getNodeOutputDevice (),
                 linearIdx,
-                itsOctreeData->getDevice (),
                 itsLeafLut->devicePointer());
     }
 
@@ -178,6 +176,8 @@ void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet&
             Chunk child               = itsOctreeData->getNode (childIndex);
             config[i].linearIdx       = itsSubsamples->getLinearIdx (childIndex); // 0 if not existing
             config[i].isParent        = child.isParent;
+            config[i].leafPointAmount = child.pointCount;
+            config[i].leafDataIdx     = child.chunkDataIndex;
             //config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
             //config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
             //config[i].lutAdress =
