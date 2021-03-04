@@ -82,8 +82,6 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         bool isAveraging  = this->itsSubsampleMetadata.performAveraging;
         bool isParent     = this->isParentNode (nodeIndex);
         auto pointsInNode = this->getPointsInNode (nodeIndex);
-        const std::unique_ptr<uint32_t[]>& lut =
-                isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
 
         uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
@@ -92,15 +90,17 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
-        // Export all point to pointFile
-        for (uint64_t u = 0; u < pointsInNode; ++u)
-        {
-            if (isParent)
+        if(isParent) {
+            OutputData* out = this->itsSubsamples->getOutputHost (nodeIndex);
+
+            // Export all point to pointFile
+            for (uint64_t u = 0; u < pointsInNode; ++u)
             {
-                if (lut[u] != INVALID_INDEX)
+                uint32_t pointIdx = (out + u)->pointIdx;
+                if (pointIdx != INVALID_INDEX)
                 {
                     ++validPoints;
-                    uint64_t pointByteIndex = lut[u] * dataStride;
+                    uint64_t pointByteIndex = pointIdx * dataStride;
                     bufferOffset += writeCoordinatesBuffered (buffer, bufferOffset, pointByteIndex);
 
                     if (isAveraging)
@@ -115,7 +115,12 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
                     }
                 }
             }
-            else
+        }
+        else {
+            uint32_t* lut = this->itsLeafLut.get();
+
+            // Export all point to pointFile
+            for (uint64_t u = 0; u < pointsInNode; ++u)
             {
                 if (lut[this->itsOctree[nodeIndex].chunkDataIndex + u] != INVALID_INDEX)
                 {
@@ -127,6 +132,8 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
                 }
             }
         }
+
+
         nodeByteSize = validPoints * bytesPerPoint;
     }
 
@@ -213,7 +220,10 @@ template <typename coordinateType, typename colorType>
 inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorsBuffered (
         const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
 {
-    uint64_t encoded = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex];
+    //uint64_t encoded = this->itsSubsamples->getAvgHost (nodeIndex)[pointIndex];
+    // uint8_t *out = this->itsSubsamples->getOutputHost (nodeIndex) + sizeof (uint32_t) + pointIndex * (sizeof (uint32_t) * 3);
+    uint64_t encoded = (this->itsSubsamples->getOutputHost (nodeIndex) + pointIndex)->encoded;
+    //spdlog::error("r: {}, g: {}, b:{}", static_cast<uint16_t> (encoded >> 46), static_cast<uint16_t> (encoded >> 28), static_cast<uint16_t> (encoded >> 10));
     auto* dst        = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
     dst[0]           = static_cast<uint16_t> (encoded >> 46);
     dst[1]           = static_cast<uint16_t> (encoded >> 28);

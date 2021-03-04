@@ -98,23 +98,26 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     // Now we can assure that all direct children have subsamples
     if (node.isParent)
     {
-        auto linearIdx = itsSubsamples->addLinearLutEntry(sparseVoxelIndex);
+        auto linearIdx = itsSubsamples->addLinearLutEntry (sparseVoxelIndex);
 
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
+        //spdlog::error(0);
         prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
-
+        //spdlog::error(1);
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // ToDo: Find more sprecise amount of threads
-        Kernel::KernelConfig kernelConfig = {metadata.cloudType,  itsMetadata.maxPointsPerNode * 8};
+        Kernel::KernelConfig kernelConfig = {metadata.cloudType, itsMetadata.maxPointsPerNode * 8};
         KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
+        Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+       // spdlog::error(2);
         // Evaluate how many points fall in each cell
         timings.subsampleEvaluation += Kernel::evaluateSubsamples (
                 kernelConfig,
@@ -122,17 +125,15 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
+                itsSubsamples->getOutputDevice(),
                 itsSubsamples->getNodeOutputDevice (),
                 linearIdx,
                 cloud,
                 gridding,
-                itsOctreeData->getDevice());
+                itsOctreeData->getDevice (),
+                itsLeafLut->devicePointer());
 
-        Kernel::calcNodeByteOffset(
-                {metadata.cloudType, 1},
-                itsSubsamples->getNodeOutputDevice (),
-                linearIdx
-                );
+        //spdlog::error(3);
 
         // Prepare one random point index per cell
         uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
@@ -145,26 +146,32 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 subsampleCountingGrid->devicePointer (),
                 threads);
 
+        //spdlog::error(4);
+
         // Create point-LUT and averaging data
-        auto nodeOutput = itsSubsamples->getNodeOutputHost (linearIdx);
-        itsSubsamples->createLUT (nodeOutput.pointCount, sparseVoxelIndex);
-        itsSubsamples->createAvg (nodeOutput.pointCount, sparseVoxelIndex);
+        //auto nodeOutput = itsSubsamples->getNodeOutputHost (linearIdx);
+        //itsSubsamples->createLUT (nodeOutput.pointCount, sparseVoxelIndex);
+        //itsSubsamples->createAvg (nodeOutput.pointCount, sparseVoxelIndex);
 
         // Distribute the subsampled points in parallel for all child nodes
         timings.subsampling += Kernel::randomPointSubsampling (
                 kernelConfig,
                 subsampleSet,
-                itsSubsamples->getLutDevice (sparseVoxelIndex),
-                itsSubsamples->getAvgDevice (sparseVoxelIndex),
+                //itsSubsamples->getLutDevice (sparseVoxelIndex),
+                //itsSubsamples->getAvgDevice (sparseVoxelIndex),
                 subsampleCountingGrid->devicePointer (),
                 averagingGrid->devicePointer (),
                 subsampleDenseToSparseLUT->devicePointer (),
                 cloud,
                 gridding,
                 randomIndices->devicePointer (),
-                itsSubsampleMetadata.useReplacementScheme,
+                itsSubsamples->getOutputDevice(),
                 itsSubsamples->getNodeOutputDevice (),
-                itsOctreeData->getDevice());
+                linearIdx,
+                itsOctreeData->getDevice (),
+                itsLeafLut->devicePointer());
+
+        //spdlog::error(5);
     }
 
     return timings;
@@ -173,27 +180,27 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
 void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
-    auto* config       = (SubsampleConfig*)(&subsampleSet);
-    auto& node         = itsOctreeData->getNode (parentIndex);
+    auto* config = (SubsampleConfig*)(&subsampleSet);
+    auto& node   = itsOctreeData->getNode (parentIndex);
     for (uint8_t i = 0; i < 8; ++i)
     {
-        int childIndex = node.childrenChunks[i];
-        config[i].sparseIdx     = childIndex;
+        int childIndex      = node.childrenChunks[i];
+        config[i].sparseIdx = childIndex;
         if (childIndex != -1)
         {
             Chunk child               = itsOctreeData->getNode (childIndex);
-            config[i].linearIdx     = itsSubsamples->getLinearIdx(childIndex);
-            config[i].isParent     = child.isParent;
-            config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
-            config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
-            config[i].lutAdress =
-                    child.isParent ? itsSubsamples->getLutDevice (childIndex) : itsLeafLut->devicePointer ();
+            config[i].linearIdx       = itsSubsamples->getLinearIdx (childIndex); // 0 if not existing
+            config[i].isParent        = child.isParent;
+            //config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
+            //config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
+            //config[i].lutAdress =
+            //        child.isParent ? itsSubsamples->getLutDevice (childIndex) : itsLeafLut->devicePointer ();
         }
         else
         {
-            config[i].averagingAdress = nullptr;
-            config[i].lutAdress       = nullptr;
-            config[i].isParent       = false;
+            //config[i].averagingAdress = nullptr;
+            //config[i].lutAdress       = nullptr;
+            config[i].isParent        = false;
         }
     }
 }

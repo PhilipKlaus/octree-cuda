@@ -32,7 +32,9 @@ public:
     NodeOutput * getNodeOutputDevice ();
     NodeOutput getNodeOutputHost (uint32_t linearIdx);
     uint32_t getLinearIdx(uint32_t sparseIndex);
-    uint8_t *getOutputDevice();
+
+    OutputData *getOutputDevice();
+    OutputData*  getOutputHost(uint32_t sparseIndex);
 
 private:
     unordered_map<uint32_t, GpuArrayU32> itsLutDevice;
@@ -40,9 +42,11 @@ private:
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
 
-    GpuArrayU8 itsOutput;
+    GpuOutputData itsOutput;
     GpuNodeOutput itsNodeOutput;
+
     std::unique_ptr<NodeOutput[]> itsNodeOutputHost;
+    std::unique_ptr<OutputData[]> itsOutputHost;
     uint32_t itsLinearCounter;
     unordered_map<uint32_t, uint32_t> itsLinearLut; // Maps sparse indices to linear indices
 };

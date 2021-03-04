@@ -6,9 +6,9 @@
 
 struct SubsampleConfig
 {
-    uint32_t* lutAdress;
-    uint32_t lutStartIndex;
-    uint64_t* averagingAdress;
+    //uint32_t* lutAdress;
+    //uint32_t lutStartIndex;
+    //uint64_t* averagingAdress;
     uint32_t linearIdx;
     int sparseIdx;
     bool isParent;
@@ -46,9 +46,13 @@ struct SubsamplingTimings
 
 struct NodeOutput {
     uint32_t pointCount;
-    uint64_t byteOffset;
+    uint64_t pointOffset;
 };
 
+struct OutputData {
+    uint32_t pointIdx;
+    uint64_t encoded;
+};
 
 template <typename gpuType>
 using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
@@ -61,6 +65,7 @@ using GpuSubsample   = GpuArray<SubsampleConfig>;
 using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
 using GpuNodeOutput  = GpuArray<NodeOutput>;
+using GpuOutputData  = GpuArray<OutputData>;
 
 template <typename T, typename... Args>
 std::unique_ptr<CudaArray<T>> createGpu (Args&&... args)
@@ -120,4 +125,10 @@ template <typename... Args>
 std::unique_ptr<CudaArray<NodeOutput>> createGpuNodeOutput (Args&&... args)
 {
     return createGpu<NodeOutput> (std::forward<Args> (args)...);
+}
+
+template <typename... Args>
+std::unique_ptr<CudaArray<OutputData>> createGpuOutputData (Args&&... args)
+{
+    return createGpu<OutputData> (std::forward<Args> (args)...);
 }

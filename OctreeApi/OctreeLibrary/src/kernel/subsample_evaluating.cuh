@@ -11,6 +11,7 @@
 #include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
+#include <inttypes.h>
 
 namespace subsampling {
 
@@ -43,27 +44,34 @@ __global__ void kernelEvaluateSubsamples (
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
+        OutputData* output,
         NodeOutput* nodeOutput,
-        uint32_t linearIdx,
+        uint32_t parentLinearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        Chunk* octree)
+        Chunk* octree,
+        uint32_t* leafLut)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
     int gridIndex           = blockIdx.z;                  // The child-index (0...7) of the node
-    bool isParent           = config[gridIndex].isParent;  // Is the node a parent?
-    int sparseIdx           = config[gridIndex].sparseIdx; // Sparse index of the node
+    bool isParent           = config[gridIndex].isParent;  // Is the child node a parent?
+    int sparseIdx           = config[gridIndex].sparseIdx; // Sparse index of the child node
+    int childLinearIdx      = config[gridIndex].linearIdx; // Is 0 if isParent = false
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput[config[gridIndex].linearIdx].pointCount) ||
+    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput[childLinearIdx].pointCount) ||
         (!isParent && localPointIdx >= octree[sparseIdx].pointCount))
     {
         return;
     }
 
+    // Get pointer to the output data entry
+    //uint32_t *dst = reinterpret_cast<uint32_t*>(output + nodeOutput[childLinearIdx].pointOffset + localPointIdx * (sizeof (uint32_t) + sizeof (uint64_t)));
+    OutputData *src = output + nodeOutput[childLinearIdx].pointOffset + localPointIdx;
+
     // Calculate global target point index
-    uint32_t globalPointIdx = *(config[gridIndex].lutAdress + config[gridIndex].lutStartIndex + localPointIdx);
+    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + octree[sparseIdx].chunkDataIndex + localPointIdx);
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* targetCloudByte       = cloud.raw + globalPointIdx * cloud.dataStride;
@@ -77,14 +85,15 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // Encode the point color and add it up
-    uint64_t encoded = isParent ? *(config[gridIndex].averagingAdress + localPointIdx) : encodeColors(color);
+    uint64_t encoded = isParent ? src->encoded : encodeColors (color);
+
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
     // If the thread handles the first point in a cell: increase the pointsPerSubsample and retrieve / store the sparse
     // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&((nodeOutput + linearIdx)->pointCount), 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&((nodeOutput + parentLinearIdx)->pointCount), 1);
     }
 }
 } // namespace subsampling
@@ -128,6 +137,7 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
+    gpuErrchk (cudaGetLastError ());
     return 0;
 #endif
 }

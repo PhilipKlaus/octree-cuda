@@ -60,13 +60,14 @@ void SubsamplingData::copyToHost ()
     });
 
     itsNodeOutputHost = itsNodeOutput->toHost();
+    itsOutputHost     = itsOutput->toHost();
 }
 
 
 SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t nodeAmount) : itsLinearCounter(0)
 {
-    itsOutput = createGpuU8(estimatedPoints * (sizeof (uint64_t) + sizeof (uint32_t)), "output");
-
+    itsOutput = createGpuOutputData(estimatedPoints, "output");
+    itsOutput->memset(0);
     itsNodeOutput = createGpuNodeOutput(nodeAmount, "nodeOutput");
     itsNodeOutput->memset (0);
 }
@@ -91,7 +92,12 @@ uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
 {
     return itsLinearLut[sparseIndex];
 }
-uint8_t* SubsamplingData::getOutputDevice ()
+OutputData* SubsamplingData::getOutputDevice ()
 {
     return itsOutput->devicePointer();
+}
+OutputData* SubsamplingData::getOutputHost (uint32_t sparseIndex)
+{
+    uint64_t byteOffset = itsNodeOutputHost[getLinearIdx(sparseIndex)].pointOffset;
+    return (itsOutputHost.get() + byteOffset);
 }

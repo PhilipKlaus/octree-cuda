@@ -74,7 +74,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/data)
 
 # Compile definitions
-# target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
+target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
 
 ####################
 # ADD CUDA SUPPORT #
