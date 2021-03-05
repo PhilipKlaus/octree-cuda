@@ -46,10 +46,11 @@ public:
         spdlog::info (stream.str ());
     }
 
-    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent=true)
+    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent = true)
     {
         memCopyTimings.emplace_back (ms, measurement);
-        if(!silent) {
+        if (!silent)
+        {
             std::stringstream stream;
             stream << (hostToDevice ? "[host -> device] " : "[device -> host] ") << measurement << " took: " << ms
                    << " [ms]";
@@ -57,10 +58,10 @@ public:
         }
     }
 
-    void trackMemAllocTime (float ms, const std::string& measurement, bool silent=true)
+    void trackMemAllocTime (float ms, const std::string& measurement, bool silent = true)
     {
         memAllocTimings.emplace_back (ms, measurement);
-        if(!silent)
+        if (!silent)
         {
             std::stringstream stream;
             stream << "[cudaMalloc] for '" << measurement << "' took: " << ms << " [ms]";

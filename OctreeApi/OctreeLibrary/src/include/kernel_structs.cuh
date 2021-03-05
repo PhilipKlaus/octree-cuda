@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include <cstdint>
 #include "metadata.cuh"
+#include <cstdint>
 
 namespace KernelStructs {
 
@@ -29,7 +29,8 @@ struct Cloud
     uint32_t dataStride; ///< The point cloud data stride
 };
 
-struct NodeOutput {
+struct NodeOutput
+{
     uint32_t* pointCount;
     uint32_t* pointOffset;
 };

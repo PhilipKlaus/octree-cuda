@@ -31,6 +31,7 @@ public:
     void setCloudOffset (double x, double y, double z);
     void setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
+    void initOctree ();
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
     void configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme);

@@ -58,14 +58,7 @@ private:
     void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     SubsamplingTimings randomSubsampling (
-            const unique_ptr<int[]>& h_sparseToDenseLUT,
-            uint32_t sparseVoxelIndex,
-            uint32_t level,
-            GpuArrayU32& subsampleCountingGrid,
-            GpuAveraging& averagingGrid,
-            GpuArrayI32& subsampleDenseToSparseLUT,
-            GpuRandomState& randomStates,
-            GpuArrayU32& randomIndices);
+            const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
 
     void evaluateOctreeProperties (
             const shared_ptr<Chunk[]>& h_octreeSparse,

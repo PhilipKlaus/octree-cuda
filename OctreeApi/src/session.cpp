@@ -54,9 +54,6 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
-    itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
-
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
     itsProcessor->distributePoints ();
@@ -131,4 +128,10 @@ void Session::setCloudScale (double x, double y, double z)
 void Session::setCloudOffset (double x, double y, double z)
 {
     itsCloudMetadata.cloudOffset = {x, y, z};
+}
+
+void Session::initOctree ()
+{
+    itsProcessor = std::make_unique<OctreeProcessor> (
+            itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
 }

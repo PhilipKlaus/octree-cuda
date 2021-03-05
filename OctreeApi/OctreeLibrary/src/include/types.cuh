@@ -6,14 +6,14 @@
 
 struct SubsampleConfig
 {
-    //uint32_t* lutAdress;
-    //uint32_t lutStartIndex;
-    //uint64_t* averagingAdress;
+    // uint32_t* lutAdress;
+    // uint32_t lutStartIndex;
+    // uint64_t* averagingAdress;
     uint32_t linearIdx;
     int sparseIdx;
     bool isParent;
-    uint32_t leafPointAmount;    // Only valid if isParent == false
-    uint32_t leafDataIdx;           // Only valid if isParent == false
+    uint32_t leafPointAmount; // Only valid if isParent == false
+    uint32_t leafDataIdx;     // Only valid if isParent == false
 };
 
 struct __align__ (16) SubsampleSet
@@ -46,7 +46,8 @@ struct SubsamplingTimings
     float subsampling;
 };
 
-struct OutputData {
+struct OutputData
+{
     uint32_t pointIdx;
     uint64_t encoded;
 };
@@ -78,7 +79,7 @@ std::unique_ptr<CudaArray<uint32_t>> createGpuU32 (Args&&... args)
 template <typename... Args>
 std::unique_ptr<CudaArray<uint32_t>> createGpuU64 (Args&&... args)
 {
-    return createGpu<uint64_t > (std::forward<Args> (args)...);
+    return createGpu<uint64_t> (std::forward<Args> (args)...);
 }
 
 template <typename... Args>

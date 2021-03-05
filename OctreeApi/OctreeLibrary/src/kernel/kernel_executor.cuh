@@ -23,7 +23,6 @@ float executeKernel (FunctType kernel, uint32_t threads, Arguments&&... args)
     gpuErrchk (cudaGetLastError ());
     return 0.f;
 #endif
-
 }
 
 

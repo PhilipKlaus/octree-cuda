@@ -65,7 +65,7 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Get pointer to the output data entry
-    OutputData *src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
+    OutputData* src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
 
     // Calculate global target point index
     uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);

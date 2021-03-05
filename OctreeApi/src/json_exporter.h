@@ -111,5 +111,5 @@ void export_json_data (
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info("Exporting metadata took: {} s", elapsed.count());
+    spdlog::info ("Exporting metadata took: {} s", elapsed.count ());
 }

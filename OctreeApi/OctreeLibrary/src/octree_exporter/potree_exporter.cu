@@ -90,7 +90,8 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
-        if(isParent) {
+        if (isParent)
+        {
             OutputData* out = this->itsSubsamples->getOutputHost (nodeIndex);
 
             // Export all point to pointFile
@@ -116,8 +117,9 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
                 }
             }
         }
-        else {
-            uint32_t* lut = this->itsLeafLut.get();
+        else
+        {
+            uint32_t* lut = this->itsLeafLut.get ();
 
             // Export all point to pointFile
             for (uint64_t u = 0; u < pointsInNode; ++u)

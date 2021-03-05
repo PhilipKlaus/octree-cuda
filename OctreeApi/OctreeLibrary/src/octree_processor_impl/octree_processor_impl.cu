@@ -35,8 +35,29 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
         itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudMetadata);
     }
 
-    // Create data LUT
+    //-----------------------------
+    // Create GPU data for chunking
+    //-----------------------------
+
+    // Allocate the dense point count
+    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
+    itsDensePointCountPerVoxel->memset (0);
+
+    // Allocate the conversion LUT from dense to sparse
+    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "DenseToSparseLUT");
+    itsDenseToSparseLUT->memset (-1);
+
+    // Allocate the temporary sparseIndexCounter
+    itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
+    itsTmpCounting->memset (0);
+
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
+
+    //-----------------------------
+    // Create GPU data for subsampling
+    //-----------------------------
+    itsSubsamples = std::make_shared<SubsamplingData> (
+            itsCloud->getMetadata ().pointAmount * 2.2, itsSubsampleMetadata.subsamplingGrid);
 }
 
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
@@ -69,6 +90,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
 {
     auto& tracker = TimeTracker::getInstance ();
 
+    itsSubsamples->copyToHost ();
     auto start = std::chrono::high_resolution_clock::now ();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
@@ -104,6 +126,8 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
     auto& tracker = TimeTracker::getInstance ();
+
+    itsSubsamples->copyToHost ();
 
     auto start = std::chrono::high_resolution_clock::now ();
 

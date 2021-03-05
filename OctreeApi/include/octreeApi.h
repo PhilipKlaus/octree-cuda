@@ -59,7 +59,7 @@ EXPORTED void ocpi_export_memory_report (void* session, const char* filename);
 EXPORTED void ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);
 EXPORTED void ocpi_export_json_report (void* session, const char* filename);
 EXPORTED void ocpi_export_potree (void* session, const char* directory);
-
+EXPORTED void ocpi_init_octree (void* session);
 EXPORTED void ocpi_generate_octree (void* session);
 
 #endif

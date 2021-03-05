@@ -29,6 +29,7 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/random_subsampling.cuh
         src/kernel/subsample_evaluating.cuh
         src/kernel/kernel_helpers.cuh
+        src/kernel/random_initialization.cuh
 
         # OctreeProcessor
         src/octree_processor.cu
@@ -74,7 +75,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/data)
 
 # Compile definitions
-target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
+#target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
 
 ####################
 # ADD CUDA SUPPORT #

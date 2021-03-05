@@ -12,26 +12,8 @@
 #include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
-#include <inttypes.h>
+
 namespace subsampling {
-
-/**
- * Initializes a CUDA random state.
- * @param seed The actual seed for the randomization.
- * @param states The CUDA random states which shoul be initialized.
- * @param cellAmount The amount of cells for which the kernel is called.
- */
-__global__ void kernelInitRandoms (unsigned int seed, curandState_t* states, uint32_t cellAmount)
-{
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-
-    if (index >= cellAmount)
-    {
-        return;
-    }
-
-    curand_init (seed, index, 0, &states[index]);
-}
 
 /**
  * Generates one random number, depending on the point amount in a cell.
@@ -96,14 +78,14 @@ __global__ void kernelRandomPointSubsample (
         OutputData* output,
         KernelStructs::NodeOutput nodeOutput,
         uint32_t parentLinearIdx,
-        uint32_t *leafLut)
+        uint32_t* leafLut)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&test);
     bool isParent           = config[blockIdx.z].isParent;
-    int sparseIdx            = config[blockIdx.z].sparseIdx;
-    uint32_t childLinearIdx      = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
+    int sparseIdx           = config[blockIdx.z].sparseIdx;
+    uint32_t childLinearIdx = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
     if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput.pointCount[childLinearIdx]) ||
         (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
@@ -112,7 +94,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Get pointer to the output data entry
-    OutputData *src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
+    OutputData* src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
 
     // Calculate global target point index
     uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
@@ -135,15 +117,14 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    OutputData *dst = output + nodeOutput.pointOffset[parentLinearIdx] + sparseIndex;
-    dst->pointIdx = globalPointIdx;
+    OutputData* dst = output + nodeOutput.pointOffset[parentLinearIdx] + sparseIndex;
+    dst->pointIdx   = globalPointIdx;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
     uint16_t amount  = static_cast<uint16_t> (encoded & 0x3FF);
 
-    dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) |
-              ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
-              ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
+    dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) | ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
+                   ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
@@ -159,8 +140,7 @@ __global__ void kernelCalcNodeByteOffset (KernelStructs::NodeOutput nodeOutput, 
         return;
     }
     *(nodeOutput.pointOffset + linearIndex) =
-            (linearIndex == 0) ? 0
-                               : (nodeOutput.pointOffset[linearIndex - 1] + nodeOutput.pointCount[linearIndex - 1]);
+            (linearIndex == 0) ? 0 : (nodeOutput.pointOffset[linearIndex - 1] + nodeOutput.pointCount[linearIndex - 1]);
 }
 
 } // namespace subsampling

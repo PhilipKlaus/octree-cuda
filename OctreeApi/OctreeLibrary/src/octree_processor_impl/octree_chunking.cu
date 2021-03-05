@@ -17,18 +17,6 @@
 
 void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
 {
-    // Allocate the dense point count
-    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
-    itsDensePointCountPerVoxel->memset (0);
-
-    // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "DenseToSparseLUT");
-    itsDenseToSparseLUT->memset (-1);
-
-    // Allocate the temporary sparseIndexCounter
-    itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
-    itsTmpCounting->memset (0);
-
     auto& meta                       = itsCloud->getMetadata ();
     Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount};
     KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride};
