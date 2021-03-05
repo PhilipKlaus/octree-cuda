@@ -56,18 +56,15 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // ToDo: Find more sprecise amount of threads
-        Kernel::KernelConfig kernelConfig = {metadata.cloudType, itsMetadata.maxPointsPerNode * 8};
         KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        Timing::KernelTimer timer;
-
-        timer = Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+        Kernel::calcNodeByteOffset ({metadata.cloudType, 1, "kernelCalcNodeByteOffset"}, itsSubsamples->getNodeOutputDevice (), linearIdx);
 
         // Evaluate how many points fall in each cell
-        timer = Kernel::evaluateSubsamples (
-                kernelConfig,
+        Kernel::evaluateSubsamples (
+                {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
                 subsampleSet,
                 itsSubsamples->getCountingGrid_d (),
                 itsSubsamples->getAverageingGrid_d (),
@@ -93,8 +90,8 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 threads);
 
         // Distribute the subsampled points in parallel for all child nodes
-        timer = Kernel::randomPointSubsampling (
-                kernelConfig,
+        Kernel::randomPointSubsampling (
+                {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelRandomPointSubsample"},
                 subsampleSet,
                 itsSubsamples->getCountingGrid_d (),
                 itsSubsamples->getAverageingGrid_d (),

@@ -59,18 +59,14 @@ void export_json_data (
     statistics["cloud"]["scale"]["z"]            = cloudMetadata.scale.z;
 
     auto& tracker            = Timing::TimeTracker::getInstance ();
-    float accumulatedCpuTime = 0;
-    for (auto const& cpuTime : tracker.getCpuTimings ())
-    {
-        statistics["timings"]["cpu"][std::get<1> (cpuTime)] = std::get<0> (cpuTime);
-        accumulatedCpuTime += std::get<0> (cpuTime);
-    }
 
     float accumulatedGpuTime = 0;
     for (auto const& gpuTime : tracker.getKernelTimings ())
     {
-        statistics["timings"]["gpu"][std::get<1> (gpuTime)] = std::get<0> (gpuTime);
-        accumulatedGpuTime += std::get<0> (gpuTime);
+        statistics["timings"]["kernel"][std::get<0>(gpuTime)]["invocations"] = std::get<1>(gpuTime).invocations;
+        statistics["timings"]["kernel"][std::get<0>(gpuTime)]["duration"] = std::get<1>(gpuTime).duration;
+
+        accumulatedGpuTime += std::get<1>(gpuTime).duration;
     }
 
     float accumulatedMemCpyTime = 0;
@@ -87,12 +83,11 @@ void export_json_data (
         accumulatedMallocTime += std::get<0> (memAllocTime);
     }
 
-    statistics["timings"]["accumulatedCpuTime"]    = accumulatedCpuTime;
     statistics["timings"]["accumulatedGpuTime"]    = accumulatedGpuTime;
     statistics["timings"]["accumulatedMemCpyTime"] = accumulatedMemCpyTime;
     statistics["timings"]["accumulatedMallocTime"] = accumulatedMallocTime;
     statistics["timings"]["accumulatedOverall"] =
-            accumulatedCpuTime + accumulatedGpuTime + accumulatedMemCpyTime + accumulatedMallocTime;
+            accumulatedGpuTime + accumulatedMemCpyTime + accumulatedMallocTime;
 
 
     MemoryTracker& watcher                    = MemoryTracker::getInstance ();

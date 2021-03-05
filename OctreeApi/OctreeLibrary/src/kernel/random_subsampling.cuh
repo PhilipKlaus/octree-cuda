@@ -148,7 +148,7 @@ __global__ void kernelCalcNodeByteOffset (KernelStructs::NodeOutput nodeOutput, 
 namespace Kernel {
 
 template <typename... Arguments>
-Timing::KernelTimer randomPointSubsampling (KernelConfig config, Arguments&&... args)
+void randomPointSubsampling (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -160,8 +160,10 @@ Timing::KernelTimer randomPointSubsampling (KernelConfig config, Arguments&&... 
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
+#ifdef CUDA_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
+#endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
@@ -170,19 +172,23 @@ Timing::KernelTimer randomPointSubsampling (KernelConfig config, Arguments&&... 
     {
         subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
+#ifdef CUDA_TIMINGS
     timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
     gpuErrchk (cudaGetLastError ());
-    return timer;
 }
 
 template <typename... Arguments>
-Timing::KernelTimer calcNodeByteOffset (KernelConfig config, Arguments&&... args)
+void calcNodeByteOffset (const KernelConfig& config, Arguments&&... args)
 {
     auto block = dim3 (1, 1, 1);
     auto grid  = dim3 (1, 1, 1);
 
+#ifdef CUDA_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
+#endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         subsampling::kernelCalcNodeByteOffset<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
@@ -191,9 +197,11 @@ Timing::KernelTimer calcNodeByteOffset (KernelConfig config, Arguments&&... args
     {
         subsampling::kernelCalcNodeByteOffset<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
+#ifdef CUDA_TIMINGS
     timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
     gpuErrchk (cudaGetLastError ());
-    return timer;
 }
 
 } // namespace Kernel

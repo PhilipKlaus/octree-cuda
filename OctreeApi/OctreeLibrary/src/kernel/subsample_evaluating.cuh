@@ -99,7 +99,7 @@ __global__ void kernelEvaluateSubsamples (
 namespace Kernel {
 
 template <typename... Arguments>
-Timing::KernelTimer evaluateSubsamples (KernelConfig config, Arguments&&... args)
+void evaluateSubsamples (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -111,8 +111,10 @@ Timing::KernelTimer evaluateSubsamples (KernelConfig config, Arguments&&... args
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
+#ifdef CUDA_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
+#endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
@@ -121,9 +123,11 @@ Timing::KernelTimer evaluateSubsamples (KernelConfig config, Arguments&&... args
     {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
+#ifdef CUDA_TIMINGS
     timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
     gpuErrchk (cudaGetLastError ());
-    return timer;
 }
 
 } // namespace Kernel
