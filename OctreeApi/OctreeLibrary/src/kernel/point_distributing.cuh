@@ -62,17 +62,17 @@ __global__ void kernelDistributePoints (
 namespace Kernel {
 
 template <typename... Arguments>
-float distributePoints (KernelConfig config, Arguments&&... args)
+void distributePoints (KernelConfig config, Arguments&&... args)
 {
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         return executeKernel (
-                chunking::kernelDistributePoints<float>, config.threadAmount, std::forward<Arguments> (args)...);
+                chunking::kernelDistributePoints<float>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
     }
     else
     {
         return executeKernel (
-                chunking::kernelDistributePoints<double>, config.threadAmount, std::forward<Arguments> (args)...);
+                chunking::kernelDistributePoints<double>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
     }
 }
 } // namespace Kernel

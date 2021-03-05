@@ -6,23 +6,22 @@
 
 // https://developer.nvidia.com/blog/cplusplus-11-in-cuda-variadic-templates/
 template <typename FunctType, typename... Arguments>
-float executeKernel (FunctType kernel, uint32_t threads, Arguments&&... args)
+void executeKernel (FunctType kernel, uint32_t threads, const std::string &name, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
     tools::create1DKernel (block, grid, threads);
+
 #ifdef CUDA_TIMINGS
-    tools::KernelTimer timer;
+    Timing::KernelTimer timer;
     timer.start ();
-    kernel<<<grid, block>>> (std::forward<Arguments> (args)...);
-    timer.stop ();
-    gpuErrchk (cudaGetLastError ());
-    return timer.getMilliseconds ();
-#else
-    kernel<<<grid, block>>> (std::forward<Arguments> (args)...);
-    gpuErrchk (cudaGetLastError ());
-    return 0.f;
 #endif
+    kernel<<<grid, block>>> (std::forward<Arguments> (args)...);
+#ifdef CUDA_TIMINGS
+    timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, name);
+#endif
+    gpuErrchk (cudaGetLastError ());
 }
 
 
@@ -32,6 +31,7 @@ struct KernelConfig
 {
     CloudType cloudType;
     uint32_t threadAmount;
+    std::string name;
 };
 
 

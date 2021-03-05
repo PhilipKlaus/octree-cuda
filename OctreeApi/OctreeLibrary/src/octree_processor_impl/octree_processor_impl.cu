@@ -88,8 +88,6 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
-    auto& tracker = TimeTracker::getInstance ();
-
     itsSubsamples->copyToHost ();
     auto start = std::chrono::high_resolution_clock::now ();
 
@@ -117,16 +115,10 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
                 itsSubsampleMetadata);
         potreeExporter.exportOctree (folderPath);
     }
-
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackCpuTime (elapsed.count () * 1000, "Export potree data");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
-    auto& tracker = TimeTracker::getInstance ();
-
     itsSubsamples->copyToHost ();
 
     auto start = std::chrono::high_resolution_clock::now ();
@@ -155,8 +147,4 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
                 itsSubsampleMetadata);
         plyExporter.exportOctree (folderPath);
     }
-
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    tracker.trackCpuTime (elapsed.count () * 1000, "Export ply data");
 }

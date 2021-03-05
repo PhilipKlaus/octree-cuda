@@ -13,6 +13,7 @@ add_library(${PROJECT_NAME} STATIC
         include/time_tracker.cuh
         include/metadata.cuh
         include/defines.cuh
+        include/timing.cuh
 
         # Private Headers
         src/include/tools.cuh
@@ -63,8 +64,7 @@ add_library(${PROJECT_NAME} STATIC
         src/point_cloud/point_cloud.cu
 
         # Misc
-        src/misc/tools.cu
-        src/include/timing.cuh)
+        src/misc/tools.cu)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -75,7 +75,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/data)
 
 # Compile definitions
-#target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
+# target_compile_definitions(${PROJECT_NAME} PRIVATE CUDA_TIMINGS)
 
 ####################
 # ADD CUDA SUPPORT #

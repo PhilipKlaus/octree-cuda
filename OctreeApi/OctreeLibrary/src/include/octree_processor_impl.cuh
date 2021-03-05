@@ -57,7 +57,7 @@ private:
     void prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
     void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
-    SubsamplingTimings randomSubsampling (
+    void randomSubsampling (
             const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
 
     void evaluateOctreeProperties (

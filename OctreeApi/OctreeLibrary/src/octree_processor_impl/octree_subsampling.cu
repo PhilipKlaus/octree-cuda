@@ -22,25 +22,13 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 
     itsSubsamples->configureNodeAmount (itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount);
 
-    auto start = std::chrono::high_resolution_clock::now ();
-    SubsamplingTimings timings = randomSubsampling (h_sparseToDenseLUT, getRootIndex (), itsMetadata.depth);
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    spdlog::error("randomSubsampling took: {} s", elapsed.count());
-
-    auto& tracker = TimeTracker::getInstance ();
-    tracker.trackKernelTime (timings.offsetCalcuation, "kernelCalcNodeByteOffset");
-    tracker.trackKernelTime (timings.subsampleEvaluation, "kernelEvaluateSubsamples");
-    tracker.trackKernelTime (timings.generateRandoms, "kernelGenerateRandoms");
-    tracker.trackKernelTime (timings.subsampling, "kernelRandomPointSubsample");
+    randomSubsampling (h_sparseToDenseLUT, getRootIndex (), itsMetadata.depth);
 }
 
 
-SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
+void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
 {
-    SubsamplingTimings timings = {};
-
     auto& cloudMetadata = itsCloud->getMetadata ();
     auto& node          = itsOctreeData->getNode (sparseVoxelIndex);
 
@@ -49,11 +37,7 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     {
         if (childIndex != -1)
         {
-            SubsamplingTimings childTiming = randomSubsampling (h_sparseToDenseLUT, childIndex, level - 1);
-
-            timings.subsampleEvaluation += childTiming.subsampleEvaluation;
-            timings.generateRandoms += childTiming.generateRandoms;
-            timings.subsampling += childTiming.subsampling;
+            randomSubsampling (h_sparseToDenseLUT, childIndex, level - 1);
         }
     }
 
@@ -77,11 +61,12 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         KernelStructs::Gridding gridding  = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        timings.offsetCalcuation +=
-                Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+        Timing::KernelTimer timer;
+
+        timer = Kernel::calcNodeByteOffset ({metadata.cloudType, 1}, itsSubsamples->getNodeOutputDevice (), linearIdx);
 
         // Evaluate how many points fall in each cell
-        timings.subsampleEvaluation += Kernel::evaluateSubsamples (
+        timer = Kernel::evaluateSubsamples (
                 kernelConfig,
                 subsampleSet,
                 itsSubsamples->getCountingGrid_d (),
@@ -97,9 +82,10 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         // Prepare one random point index per cell
         auto threads = itsSubsamples->getGridCellAmount();
 
-        timings.generateRandoms += executeKernel (
+        executeKernel (
                 subsampling::kernelGenerateRandoms,
                 threads,
+                "kernelGenerateRandoms",
                 itsSubsamples->getRandomStates_d (),
                 itsSubsamples->getRandomIndices_d (),
                 itsSubsamples->getDenseToSparseLut_d (),
@@ -107,7 +93,7 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 threads);
 
         // Distribute the subsampled points in parallel for all child nodes
-        timings.subsampling += Kernel::randomPointSubsampling (
+        timer = Kernel::randomPointSubsampling (
                 kernelConfig,
                 subsampleSet,
                 itsSubsamples->getCountingGrid_d (),
@@ -121,8 +107,6 @@ SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 linearIdx,
                 itsLeafLut->devicePointer ());
     }
-
-    return timings;
 }
 
 

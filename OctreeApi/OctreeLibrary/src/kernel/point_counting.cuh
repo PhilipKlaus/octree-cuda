@@ -64,17 +64,17 @@ namespace Kernel {
  * @return The time for executing kernelPointCounting.
  */
 template <typename... Arguments>
-float pointCounting (const KernelConfig& config, Arguments&&... args)
+void pointCounting (const KernelConfig& config, Arguments&&... args)
 {
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                chunking::kernelPointCounting<float>, config.threadAmount, std::forward<Arguments> (args)...);
+        executeKernel (
+                chunking::kernelPointCounting<float>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
     }
     else
     {
-        return executeKernel (
-                chunking::kernelPointCounting<double>, config.threadAmount, std::forward<Arguments> (args)...);
+        executeKernel (
+                chunking::kernelPointCounting<double>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
     }
 }
 } // namespace Kernel

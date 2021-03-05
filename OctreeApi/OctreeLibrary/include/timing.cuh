@@ -3,7 +3,7 @@
 #include <cuda_runtime_api.h>
 
 
-namespace tools {
+namespace Timing {
 
 class KernelTimer
 {
@@ -22,12 +22,12 @@ public:
     void stop ()
     {
         cudaEventRecord (itsStop);
-        cudaEventSynchronize (itsStop);
     }
 
     float getMilliseconds ()
     {
         float milliseconds = 0;
+        cudaEventSynchronize (itsStop);
         cudaEventElapsedTime (&milliseconds, itsStart, itsStop);
         return milliseconds;
     }

@@ -27,7 +27,7 @@ public:
         gpuErrchk (cudaMalloc ((void**)&itsData, memoryToReserve));
         auto stop                             = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = stop - start;
-        TimeTracker::getInstance ().trackMemAllocTime (elapsed.count () * 1000, itsName);
+        Timing::TimeTracker::getInstance ().trackMemAllocTime (elapsed.count () * 1000, itsName);
 
         spdlog::debug ("Reserved GPU memory: {} bytes, {} elements", elements, memoryToReserve);
     }
@@ -52,7 +52,7 @@ public:
         gpuErrchk (cudaMemcpy (host.get (), itsData, sizeof (dataType) * itsElements, cudaMemcpyDeviceToHost));
         auto stop                             = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = stop - start;
-        TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, itsName, false);
+        Timing::TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, itsName, false);
 
         return host;
     }
@@ -63,7 +63,7 @@ public:
         gpuErrchk (cudaMemcpy (itsData, host, sizeof (dataType) * itsElements, cudaMemcpyHostToDevice));
         auto stop                             = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = stop - start;
-        TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, itsName, true);
+        Timing::TimeTracker::getInstance ().trackMemCpyTime (elapsed.count () * 1000, itsName, true);
     }
 
     uint32_t pointCount () const

@@ -46,7 +46,7 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
     itsCountingGrid->memset (0);
     itsDenseToSparseLut->memset (-1);
 
-    executeKernel (subsampling::kernelInitRandoms, 1024, std::time (0), itsRandomStates->devicePointer (), 1024);
+    executeKernel (subsampling::kernelInitRandoms, 1024, "kernelInitRandoms", std::time (0), itsRandomStates->devicePointer (), 1024);
 }
 
 void SubsamplingData::configureNodeAmount (uint32_t nodeAmount)

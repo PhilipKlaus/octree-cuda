@@ -10,7 +10,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include "timing.cuh"
 
+namespace Timing {
 
 /**
  * A tracker for montoring runtime measurements.
@@ -38,12 +40,12 @@ public:
         spdlog::info (stream.str ());
     }
 
-    void trackKernelTime (float ms, const std::string& measurement)
+    void trackKernelTime (KernelTimer timer, const std::string& measurement)
     {
-        kernelTimings.emplace_back (ms, measurement);
-        std::stringstream stream;
-        stream << "[kernel] " << measurement << " took: " << ms << " [ms]";
-        spdlog::info (stream.str ());
+        kernelTimings.emplace_back (timer, measurement);
+        //std::stringstream stream;
+        //stream << "[kernel] " << measurement << " took: " << ms << " [ms]";
+        //spdlog::info (stream.str ());
     }
 
     void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent = true)
@@ -76,7 +78,14 @@ public:
 
     const std::vector<std::tuple<float, std::string>>& getKernelTimings () const
     {
-        return kernelTimings;
+        spdlog::info("----- KERNEL TIMINGS -----");
+        std::vector<std::tuple<float, std::string>> timings;
+        for (auto entry: kernelTimings) {
+            float ms = std::get<0>(entry).getMilliseconds();
+            timings.emplace_back (ms, std::get<1>(entry));
+            spdlog::info("[kernel] {} took: {} [ms]", std::get<1>(entry), ms);
+        }
+        return timings;
     }
 
     const std::vector<std::tuple<float, std::string>>& getMemCpyTimings () const
@@ -91,7 +100,8 @@ public:
 
 private:
     std::vector<std::tuple<float, std::string>> cpuTimings;
-    std::vector<std::tuple<float, std::string>> kernelTimings;
+    std::vector<std::tuple<KernelTimer, std::string>> kernelTimings;
     std::vector<std::tuple<float, std::string>> memCopyTimings;
     std::vector<std::tuple<float, std::string>> memAllocTimings;
 };
+}

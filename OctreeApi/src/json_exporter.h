@@ -58,7 +58,7 @@ void export_json_data (
     statistics["cloud"]["scale"]["y"]            = cloudMetadata.scale.y;
     statistics["cloud"]["scale"]["z"]            = cloudMetadata.scale.z;
 
-    auto& tracker            = TimeTracker::getInstance ();
+    auto& tracker            = Timing::TimeTracker::getInstance ();
     float accumulatedCpuTime = 0;
     for (auto const& cpuTime : tracker.getCpuTimings ())
     {
