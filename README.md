@@ -21,3 +21,12 @@ Furthermore, the API gathers information and metadata from the OctreeLibrary and
 The file [octree_processor.cuh](https://github.com/PhilipKlaus/octree-cuda/blob/master/OctreeApi/OctreeLibrary/include/octree_processor.cuh) exposes the main LOD functionality. It uses a PIMPL pattern to hide its implementation details which can be found in [octree_processor_impl.cuh](https://github.com/PhilipKlaus/octree-cuda/blob/master/OctreeApi/OctreeLibrary/src/include/octree_processor_impl.cuh) (declarations) and in the folder [OctreeApi/OctreeLibrary/src/octree_processor_impl/](OctreeApi/OctreeLibrary/src/octree_processor_impl) (implementation).
 
 - The CUDA kernels can be found in [OctreeApi/OctreeLibrary/src/kernel](OctreeApi/OctreeLibrary/src/kernel)
+
+## Building
+
+```
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake --build . --config Release
+```
