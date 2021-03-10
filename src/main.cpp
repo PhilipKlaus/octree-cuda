@@ -111,27 +111,13 @@ ocpi_set_point_cloud_host (session, ply.get ());
 ocpi_configure_chunking (session, chunkingGrid, mergingThreshold);
 ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacementScheme);
 
-auto start = std::chrono::high_resolution_clock::now ();
 ocpi_init_octree(session);
-auto finish                           = std::chrono::high_resolution_clock::now ();
-std::chrono::duration<double> elapsed = finish - start;
-spdlog::info("Initializing the octree took: {} s", elapsed.count());
-
-start = std::chrono::high_resolution_clock::now ();
 ocpi_generate_octree (session);
-finish                           = std::chrono::high_resolution_clock::now ();
-elapsed = finish - start;
-spdlog::info("Generating the octree took: {} s", elapsed.count());
-
-start = std::chrono::high_resolution_clock::now ();
 ocpi_export_potree (session, R"(./export)");
-finish                           = std::chrono::high_resolution_clock::now ();
-elapsed = finish - start;
-spdlog::info("Exporting the octree took: {} s", elapsed.count());
 
 //ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
-//ocpi_export_json_report (session, R"(./export/statistics.json)");
-//ocpi_export_memory_report (session, R"(./export/memory_report.html)");
+ocpi_export_json_report (session, R"(./export/statistics.json)");
+ocpi_export_memory_report (session, R"(./export/memory_report.html)");
 
 ocpi_destroy_session (session);
 

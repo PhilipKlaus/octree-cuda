@@ -160,7 +160,7 @@ void randomPointSubsampling (const KernelConfig& config, Arguments&&... args)
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
 #endif
@@ -172,7 +172,7 @@ void randomPointSubsampling (const KernelConfig& config, Arguments&&... args)
     {
         subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
 #endif
@@ -185,7 +185,7 @@ void calcNodeByteOffset (const KernelConfig& config, Arguments&&... args)
     auto block = dim3 (1, 1, 1);
     auto grid  = dim3 (1, 1, 1);
 
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
 #endif
@@ -197,7 +197,7 @@ void calcNodeByteOffset (const KernelConfig& config, Arguments&&... args)
     {
         subsampling::kernelCalcNodeByteOffset<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
 #endif

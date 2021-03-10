@@ -36,4 +36,4 @@ private:
     cudaEvent_t itsStart, itsStop;
 };
 
-}; // namespace tools
+}; // namespace Timing

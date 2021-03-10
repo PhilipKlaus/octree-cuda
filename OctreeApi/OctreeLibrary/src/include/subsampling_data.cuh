@@ -37,7 +37,7 @@ public:
     int32_t* getDenseToSparseLut_d ();
     curandState_t* getRandomStates_d ();
     uint32_t* getRandomIndices_d ();
-    uint32_t getGridCellAmount();
+    uint32_t getGridCellAmount ();
 
 private:
     uint32_t itsGridCellAmount;

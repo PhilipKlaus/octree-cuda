@@ -199,7 +199,6 @@ void PotreeExporter<coordinateType, colorType>::exportBuffers (std::ofstream& po
         ++itsExportedNodes;
         this->itsPointsExported += result.validPoints;
     }
-    spdlog::info ("Exported {} nodes / {} points", itsExportedNodes, this->itsPointsExported);
 }
 
 

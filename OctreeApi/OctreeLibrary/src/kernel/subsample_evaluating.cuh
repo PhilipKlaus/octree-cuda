@@ -111,7 +111,7 @@ void evaluateSubsamples (const KernelConfig& config, Arguments&&... args)
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
 #endif
@@ -123,7 +123,7 @@ void evaluateSubsamples (const KernelConfig& config, Arguments&&... args)
     {
         subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
 #endif

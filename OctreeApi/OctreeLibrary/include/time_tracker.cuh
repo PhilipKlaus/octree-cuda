@@ -6,17 +6,18 @@
 
 #pragma once
 #include "timing.cuh"
+#include <map>
 #include <set>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
 #include <tuple>
 #include <vector>
-#include <map>
 
 namespace Timing {
 
-struct TimingProps {
+struct TimingProps
+{
     float duration;
     uint32_t invocations;
 };
@@ -42,9 +43,10 @@ public:
     void trackKernelTime (KernelTimer timer, const std::string& measurement)
     {
         kernelTimers.emplace_back (timer, measurement);
-        if(kernelOrder.find(measurement) == kernelOrder.end()) {
-            kernelOrder[measurement] = kernelTimings.size();
-            kernelTimings.emplace_back(measurement, TimingProps{0.f, 0});
+        if (kernelOrder.find (measurement) == kernelOrder.end ())
+        {
+            kernelOrder[measurement] = kernelTimings.size ();
+            kernelTimings.emplace_back (measurement, TimingProps{0.f, 0});
         }
     }
 
@@ -73,17 +75,22 @@ public:
 
     const std::vector<std::tuple<std::string, TimingProps>>& getKernelTimings ()
     {
-        spdlog::info("----- KERNEL TIMINGS -----");
-        for (auto &timer: kernelTimers) {
-            float ms = std::get<0>(timer).getMilliseconds();
-            int order = kernelOrder[std::get<1>(timer)];
-            std::get<1>(kernelTimings[order]).duration += ms;
-            std::get<1>(kernelTimings[order]).invocations += 1;
-        }
-        for(auto &timing: kernelTimings) {
-            float dur = std::get<1>(timing).duration;
-            uint32_t inv = std::get<1>(timing).invocations;
-            spdlog::info("[kernel] {:<30} invocations: {} took: {} [ms]", std::get<0>(timing), inv, dur);
+        if (kernelTimers.size () > 0)
+        {
+            spdlog::info ("----- KERNEL TIMINGS -----");
+            for (auto& timer : kernelTimers)
+            {
+                float ms  = std::get<0> (timer).getMilliseconds ();
+                int order = kernelOrder[std::get<1> (timer)];
+                std::get<1> (kernelTimings[order]).duration += ms;
+                std::get<1> (kernelTimings[order]).invocations += 1;
+            }
+            for (auto& timing : kernelTimings)
+            {
+                float dur    = std::get<1> (timing).duration;
+                uint32_t inv = std::get<1> (timing).invocations;
+                spdlog::info ("[kernel] {:<30} invocations: {} took: {} [ms]", std::get<0> (timing), inv, dur);
+            }
         }
         return kernelTimings;
     }
@@ -102,8 +109,9 @@ private:
     std::vector<std::tuple<float, std::string>> memCopyTimings;
     std::vector<std::tuple<float, std::string>> memAllocTimings;
 
+    // Kernel timings
     std::vector<std::tuple<KernelTimer, std::string>> kernelTimers;
     std::vector<std::tuple<std::string, TimingProps>> kernelTimings;
     std::map<std::string, int> kernelOrder;
 };
-}
+} // namespace Timing

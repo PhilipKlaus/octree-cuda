@@ -66,7 +66,7 @@ __global__ void kernelMergeHierarchical (
     // If the chunk exists, calculate the dense indices of the 8 underlying cells
     uint32_t chunk_indices[8];
     chunk_indices[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
-                                 (coords.x * 2);                    // int: 0 -> Child 0
+                       (coords.x * 2);                   // int: 0 -> Child 0
     chunk_indices[4] = chunk_indices[0] + 1;             // int: 4 -> child 4
     chunk_indices[2] = chunk_indices[0] + lowerGridSize; // int: 2 -> child 2
     chunk_indices[6] = chunk_indices[2] + 1;             // int: 6 -> child 6

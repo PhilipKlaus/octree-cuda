@@ -6,18 +6,18 @@
 
 // https://developer.nvidia.com/blog/cplusplus-11-in-cuda-variadic-templates/
 template <typename FunctType, typename... Arguments>
-void executeKernel (FunctType kernel, uint32_t threads, const std::string &name, Arguments&&... args)
+void executeKernel (FunctType kernel, uint32_t threads, const std::string& name, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
     tools::create1DKernel (block, grid, threads);
 
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     Timing::KernelTimer timer;
     timer.start ();
 #endif
     kernel<<<grid, block>>> (std::forward<Arguments> (args)...);
-#ifdef CUDA_TIMINGS
+#ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, name);
 #endif

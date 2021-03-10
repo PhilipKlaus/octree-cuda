@@ -54,18 +54,23 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
+    auto start = std::chrono::high_resolution_clock::now ();
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
     itsProcessor->distributePoints ();
     itsProcessor->performSubsampling ();
-
-    spdlog::debug ("octree generated");
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double>elapsed = finish - start;
+    spdlog::info("Generating the octree took: {} [s]", elapsed.count());
 }
 
 void Session::exportPotree (const std::string& directory)
 {
+    auto start = std::chrono::high_resolution_clock::now ();
     itsProcessor->exportPotree (directory);
-    spdlog::debug ("Export Octree to: {}", directory);
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double>elapsed = finish - start;
+    spdlog::info("Exporting the octree took: {} [s]", directory, elapsed.count());
 }
 
 void Session::exportMemoryReport (const std::string& filename)

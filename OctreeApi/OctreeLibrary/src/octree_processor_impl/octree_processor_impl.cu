@@ -39,6 +39,8 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     // Create GPU data for chunking
     //-----------------------------
 
+    auto start = std::chrono::high_resolution_clock::now ();
+
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
     itsDensePointCountPerVoxel->memset (0);
@@ -53,11 +55,12 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
 
-    //-----------------------------
-    // Create GPU data for subsampling
-    //-----------------------------
     itsSubsamples = std::make_shared<SubsamplingData> (
             itsCloud->getMetadata ().pointAmount * 2.2, itsSubsampleMetadata.subsamplingGrid);
+
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info("Allocating GPU data structures took: {} [s]", elapsed.count());
 }
 
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
@@ -89,7 +92,6 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
     itsSubsamples->copyToHost ();
-    auto start = std::chrono::high_resolution_clock::now ();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
     {

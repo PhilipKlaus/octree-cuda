@@ -36,7 +36,7 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
     itsOutput = createGpuOutputData (estimatedPoints, "output");
     itsOutput->memset (0);
 
-    itsGridCellAmount = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
+    itsGridCellAmount   = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
     itsCountingGrid     = createGpuU32 (itsGridCellAmount, "pointCountGrid");
     itsAveragingGrid    = createGpuAveraging (itsGridCellAmount, "averagingGrid");
     itsDenseToSparseLut = createGpuI32 (itsGridCellAmount, "denseToSpareLUT");
@@ -46,7 +46,13 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
     itsCountingGrid->memset (0);
     itsDenseToSparseLut->memset (-1);
 
-    executeKernel (subsampling::kernelInitRandoms, 1024, "kernelInitRandoms", std::time (0), itsRandomStates->devicePointer (), 1024);
+    executeKernel (
+            subsampling::kernelInitRandoms,
+            1024,
+            "kernelInitRandoms",
+            std::time (0),
+            itsRandomStates->devicePointer (),
+            1024);
 }
 
 void SubsamplingData::configureNodeAmount (uint32_t nodeAmount)
@@ -105,6 +111,7 @@ uint32_t* SubsamplingData::getRandomIndices_d ()
     return itsRandomIndices->devicePointer ();
 }
 
-uint32_t SubsamplingData::getGridCellAmount() {
+uint32_t SubsamplingData::getGridCellAmount ()
+{
     return itsGridCellAmount;
 }

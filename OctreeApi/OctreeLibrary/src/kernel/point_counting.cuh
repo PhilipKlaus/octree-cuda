@@ -69,12 +69,18 @@ void pointCounting (const KernelConfig& config, Arguments&&... args)
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
         executeKernel (
-                chunking::kernelPointCounting<float>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
+                chunking::kernelPointCounting<float>,
+                config.threadAmount,
+                config.name,
+                std::forward<Arguments> (args)...);
     }
     else
     {
         executeKernel (
-                chunking::kernelPointCounting<double>, config.threadAmount, config.name, std::forward<Arguments> (args)...);
+                chunking::kernelPointCounting<double>,
+                config.threadAmount,
+                config.name,
+                std::forward<Arguments> (args)...);
     }
 }
 } // namespace Kernel

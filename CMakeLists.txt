@@ -17,6 +17,15 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/External ${PROJECT_SOURCE_DIR}/src)
 
+#######################
+# COMPILE DEFINITIONS #
+#######################
+OPTION(ENABLE_KERNEL_TIMINGS "Turn Cuda kernel timings on or off" OFF) # Disable by default
+IF(ENABLE_KERNEL_TIMINGS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE KERNEL_TIMINGS)
+ENDIF(ENABLE_KERNEL_TIMINGS)
+
+
 ######################
 # ADD SPDLOG LIBRARY #
 ######################

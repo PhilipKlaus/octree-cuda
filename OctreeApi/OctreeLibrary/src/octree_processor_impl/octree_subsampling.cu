@@ -7,7 +7,7 @@
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
-    auto h_octreeSparse = itsOctreeData->getHost ();
+    auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
 
     uint32_t pointSum = 0;
@@ -56,11 +56,12 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // ToDo: Find more sprecise amount of threads
-        KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
-        KernelStructs::Gridding gridding  = {
+        KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
+        KernelStructs::Gridding gridding = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        Kernel::calcNodeByteOffset ({metadata.cloudType, 1, "kernelCalcNodeByteOffset"}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+        Kernel::calcNodeByteOffset (
+                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"}, itsSubsamples->getNodeOutputDevice (), linearIdx);
 
         // Evaluate how many points fall in each cell
         Kernel::evaluateSubsamples (
@@ -77,7 +78,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsLeafLut->devicePointer ());
 
         // Prepare one random point index per cell
-        auto threads = itsSubsamples->getGridCellAmount();
+        auto threads = itsSubsamples->getGridCellAmount ();
 
         executeKernel (
                 subsampling::kernelGenerateRandoms,
