@@ -3,7 +3,7 @@
 # A Library for generating octree structures for point clouds on the GPU #
 ##########################################################################
 
-project(OctreeLibrary LANGUAGES CUDA CXX)
+project(OctreeLibrary LANGUAGES CUDA)
 
 add_library(${PROJECT_NAME} STATIC
 
@@ -39,7 +39,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_processor_impl/benchmarking.cu
         src/octree_processor_impl/debugging.cu
         src/octree_processor_impl/octree_processor_impl.cu
-        src/octree_processor_impl/dummy.cpp
+        # src/octree_processor_impl/dummy.cpp
         src/octree_processor_impl/octree_chunking.cu
 
         # Octree export
@@ -105,6 +105,11 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_SOURCE_DIR}/External/
 # ADD SPDLOG LIBRARY #
 ######################
 target_link_libraries(${PROJECT_NAME} PRIVATE spdlog::spdlog_header_only)
+
+###########################
+# APPLY WARNINGS SETTINGS #
+###########################
+target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 
 #######################
 # BUILD LIBRARY TESTS #

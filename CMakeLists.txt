@@ -13,10 +13,9 @@ set(CUDA_STANDARD 14)
 ######################
 add_library(project_warnings INTERFACE)
 if (MSVC)
-    # C4068 : unknown pragma -> this expected in a cross-platform code base
     string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    target_compile_options(project_warnings INTERFACE $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:/W4 /WX /wd4068 /wd4793>)
-    target_compile_options(project_warnings INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:-Werror>)
+    target_compile_options(project_warnings INTERFACE $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:/W4 /WX>)
+    # target_compile_options(project_warnings INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:-Werror>)
 else ()
     target_compile_options(project_warnings INTERFACE $<$<NOT:$<COMPILE_LANGUAGE:CUDA>>:-Wall -Wextra -Werror -Wno-unknown-pragmas -Wno-unused-function>)
     target_compile_options(project_warnings INTERFACE $<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler -Werror>)

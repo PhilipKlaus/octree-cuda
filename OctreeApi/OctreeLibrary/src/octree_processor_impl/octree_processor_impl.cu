@@ -60,7 +60,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info("Allocating GPU data structures took: {} [s]", elapsed.count());
+    spdlog::info ("Allocating GPU data structures took: {} [s]", elapsed.count ());
 }
 
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (

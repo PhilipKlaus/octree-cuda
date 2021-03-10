@@ -95,7 +95,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
             OutputData* out = this->itsSubsamples->getOutputHost (nodeIndex);
 
             // Export all point to pointFile
-            for (uint64_t u = 0; u < pointsInNode; ++u)
+            for (uint32_t u = 0; u < pointsInNode; ++u)
             {
                 uint32_t pointIdx = (out + u)->pointIdx;
                 if (pointIdx != INVALID_INDEX)

@@ -60,8 +60,8 @@ void Session::generateOctree ()
     itsProcessor->distributePoints ();
     itsProcessor->performSubsampling ();
     auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double>elapsed = finish - start;
-    spdlog::info("Generating the octree took: {} [s]", elapsed.count());
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info ("Generating the octree took: {} [s]", elapsed.count ());
 }
 
 void Session::exportPotree (const std::string& directory)
@@ -69,8 +69,8 @@ void Session::exportPotree (const std::string& directory)
     auto start = std::chrono::high_resolution_clock::now ();
     itsProcessor->exportPotree (directory);
     auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double>elapsed = finish - start;
-    spdlog::info("Exporting the octree took: {} [s]", elapsed.count());
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info ("Exporting the octree took: {} [s]", elapsed.count ());
 }
 
 void Session::exportMemoryReport (const std::string& filename)
