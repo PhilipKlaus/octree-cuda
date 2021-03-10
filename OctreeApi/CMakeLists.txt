@@ -29,6 +29,8 @@ target_link_libraries(${PROJECT_NAME}
         PUBLIC ${CUDA_nppicc_LIBRARY}
         PUBLIC ${CUDA_nppig_LIBRARY}
         )
+target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
+
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON

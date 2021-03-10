@@ -80,7 +80,7 @@ uint32_t pointDataStride = 27;
 float scaleX             = 0.01f;
 float scaleY             = 0.01f;
 float scaleZ             = 0.01f;
-auto cloudType           = 1;
+uint8_t cloudType           = 1;
 std::string plyFile      = "morrobay_fused_headerless.ply";
 
 /*

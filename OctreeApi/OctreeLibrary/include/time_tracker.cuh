@@ -45,7 +45,7 @@ public:
         kernelTimers.emplace_back (timer, measurement);
         if (kernelOrder.find (measurement) == kernelOrder.end ())
         {
-            kernelOrder[measurement] = kernelTimings.size ();
+            kernelOrder[measurement] = static_cast<int>(kernelTimings.size ());
             kernelTimings.emplace_back (measurement, TimingProps{0.f, 0});
         }
     }
