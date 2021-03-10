@@ -92,12 +92,19 @@ float scaleZ             = 0.001f;
 auto cloudType           = 1;
 std::string plyFile      = "lifeboat_headerless.ply";
 */
+
+auto start = std::chrono::high_resolution_clock::now ();
+
 // Read in ply
 auto ply = readPly (plyFile);
 
 // Calculate BB
 auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
 auto cubicBB = calculateCubicBB (realBB);
+
+auto finish                           = std::chrono::high_resolution_clock::now ();
+std::chrono::duration<double>elapsed = finish - start;
+spdlog::info("Reading cloud and calc bounding box took: {} [s]", elapsed.count());
 
 // Configurate and create octree
 ocpi_set_cloud_type (session, cloudType);

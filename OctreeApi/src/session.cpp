@@ -70,7 +70,7 @@ void Session::exportPotree (const std::string& directory)
     itsProcessor->exportPotree (directory);
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double>elapsed = finish - start;
-    spdlog::info("Exporting the octree took: {} [s]", directory, elapsed.count());
+    spdlog::info("Exporting the octree took: {} [s]", elapsed.count());
 }
 
 void Session::exportMemoryReport (const std::string& filename)

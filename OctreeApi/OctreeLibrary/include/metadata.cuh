@@ -60,7 +60,7 @@ struct SubsampleMetadata
 
 struct OctreeMetadata
 {
-    uint32_t depth;               // The depth of the octree // ToDo: -1
+    uint32_t depth;               // The depth of the octree
     uint32_t chunkingGrid;        // Side length of the grid used for chunking
     uint32_t nodeAmountSparse;    // The actual amount of sparse nodes (amount leafs + amount parents)
     uint32_t leafNodeAmount;      // The amount of child nodes

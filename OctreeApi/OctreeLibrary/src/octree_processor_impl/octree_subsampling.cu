@@ -23,6 +23,7 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
     itsSubsamples->configureNodeAmount (itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount);
 
     randomSubsampling (h_sparseToDenseLUT, getRootIndex (), itsMetadata.depth);
+    cudaDeviceSynchronize();
 }
 
 
