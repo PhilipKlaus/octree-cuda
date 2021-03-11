@@ -32,100 +32,115 @@ int main ()
     void* session;
     ocpi_create_session (&session, 0);
 
-    bool isAveraging = true;
+    bool isAveraging          = true;
     bool useReplacementScheme = true;
-    uint32_t chunkingGrid = 512;
-    uint32_t subsamplingGrid = 128;
+    uint32_t chunkingGrid     = 512;
+    uint32_t subsamplingGrid  = 128;
     uint32_t mergingThreshold = 10000;
 
     // Setup cloud properties
-    /*uint32_t pointAmount     = 25010001;
+    uint32_t pointAmount     = 25010001;
     uint32_t pointDataStride = 15;
     float scaleX             = 0.001f;
     float scaleY             = 0.001f;
     float scaleZ             = 0.001f;
-    auto cloudType           = 0;
-    std::string plyFile      = "wave_headerless.ply";
-    */
+    uint8_t cloudType           = 0;
+    std::string plyFile      = "plane_headerless.ply";
 
- /*        uint32_t pointAmount     = 1344573;
+    /*
+    uint32_t pointAmount     = 1344573;
     uint32_t pointDataStride = 27;
     float scaleX             = 0.01f;
     float scaleY             = 0.01f;
     float scaleZ             = 0.01f;
-    auto cloudType           = 1;
+    uint8_t cloudType           = 1;
     std::string plyFile      = "testsmall_headerless.ply";
-*/
-/*uint32_t pointAmount     = 5138448;
-uint32_t pointDataStride = 43;
-float scaleX             = 0.001f;
-float scaleY             = 0.001f;
-float scaleZ             = 0.001f;
-auto cloudType           = 0;
-std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
-*/
+   */
 
-/*
-uint32_t pointAmount     = 25836417;
-uint32_t pointDataStride = 15;
-float scaleX             = 0.001f;
-float scaleY             = 0.001f;
-float scaleZ             = 0.001f;
-auto cloudType           = 0;
-std::string plyFile      = "heidentor_color_raw.ply";
-*/
+    /*
+    uint32_t pointAmount     = 5138448;
+    uint32_t pointDataStride = 43;
+    float scaleX             = 0.001f;
+    float scaleY             = 0.001f;
+    float scaleZ             = 0.001f;
+    uint8_t cloudType           = 0;
+    std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
+    */
 
-uint32_t pointAmount     = 119701547;
-uint32_t pointDataStride = 27;
-float scaleX             = 0.01f;
-float scaleY             = 0.01f;
-float scaleZ             = 0.01f;
-uint8_t cloudType           = 1;
-std::string plyFile      = "morrobay_fused_headerless.ply";
+    /*
+    uint32_t pointAmount     = 25836417;
+    uint32_t pointDataStride = 15;
+    float scaleX             = 0.001f;
+    float scaleY             = 0.001f;
+    float scaleZ             = 0.001f;
+    uint8_t cloudType           = 0;
+    std::string plyFile      = "heidentor_color_raw.ply";
+    */
 
-/*
-uint32_t pointAmount     = 47111095;
-uint32_t pointDataStride = 27;
-float scaleX             = 0.001f;
-float scaleY             = 0.001f;
-float scaleZ             = 0.001f;
-auto cloudType           = 1;
-std::string plyFile      = "lifeboat_headerless.ply";
-*/
+    /*uint32_t pointAmount     = 119701547;
+    uint32_t pointDataStride = 27;
+    float scaleX             = 0.01f;
+    float scaleY             = 0.01f;
+    float scaleZ             = 0.01f;
+    uint8_t cloudType           = 1;
+    std::string plyFile      = "morrobay_fused_headerless.ply";
+    */
 
-auto start = std::chrono::high_resolution_clock::now ();
+    /*
+    uint32_t pointAmount     = 47111095;
+    uint32_t pointDataStride = 27;
+    float scaleX             = 0.001f;
+    float scaleY             = 0.001f;
+    float scaleZ             = 0.001f;
+    uint8_t cloudType           = 1;
+    std::string plyFile      = "lifeboat_headerless.ply";
+    */
 
-// Read in ply
-auto ply = readPly (plyFile);
+    auto start = std::chrono::high_resolution_clock::now ();
 
-// Calculate BB
-auto realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
-auto cubicBB = calculateCubicBB (realBB);
+    // Read in ply
+    auto ply = readPly (plyFile);
 
-auto finish                           = std::chrono::high_resolution_clock::now ();
-std::chrono::duration<double>elapsed = finish - start;
-spdlog::info("Reading cloud and calc bounding box took: {} [s]", elapsed.count());
+    // Calculate BB
 
-// Configurate and create octree
-ocpi_set_cloud_type (session, cloudType);
-ocpi_set_cloud_point_amount (session, pointAmount);
-ocpi_set_cloud_data_stride (session, pointDataStride);
-ocpi_set_cloud_scale (session, scaleX, scaleY, scaleZ);
-ocpi_set_cloud_offset (session, cubicBB[0], cubicBB[1], cubicBB[2]);
-ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
+    std::vector<double> realBB;
+    std::vector<double> cubicBB;
 
-ocpi_set_point_cloud_host (session, ply.get ());
-ocpi_configure_chunking (session, chunkingGrid, mergingThreshold);
-ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacementScheme);
+    if (cloudType == 0)
+    {
+        realBB  = calculateRealBB<float> (ply, pointAmount, pointDataStride);
+        cubicBB = calculateCubicBB (realBB);
+    }
+    else
+    {
+        realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
+        cubicBB = calculateCubicBB (realBB);
+    }
 
-ocpi_init_octree(session);
-ocpi_generate_octree (session);
-ocpi_export_potree (session, R"(./export)");
 
-//ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
-ocpi_export_json_report (session, R"(./export/statistics.json)");
-ocpi_export_memory_report (session, R"(./export/memory_report.html)");
+    auto finish                           = std::chrono::high_resolution_clock::now ();
+    std::chrono::duration<double> elapsed = finish - start;
+    spdlog::info ("Reading cloud and calc bounding box took: {} [s]", elapsed.count ());
 
-ocpi_destroy_session (session);
+    // Configurate and create octree
+    ocpi_set_cloud_type (session, cloudType);
+    ocpi_set_cloud_point_amount (session, pointAmount);
+    ocpi_set_cloud_data_stride (session, pointDataStride);
+    ocpi_set_cloud_scale (session, scaleX, scaleY, scaleZ);
+    ocpi_set_cloud_offset (session, cubicBB[0], cubicBB[1], cubicBB[2]);
+    ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 
+    ocpi_set_point_cloud_host (session, ply.get ());
+    ocpi_configure_chunking (session, chunkingGrid, mergingThreshold);
+    ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacementScheme);
+
+    ocpi_init_octree (session);
+    ocpi_generate_octree (session);
+    ocpi_export_potree (session, R"(./export)");
+
+    // ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
+    ocpi_export_json_report (session, R"(./export/statistics.json)");
+    ocpi_export_memory_report (session, R"(./export/memory_report.html)");
+
+    ocpi_destroy_session (session);
 }
