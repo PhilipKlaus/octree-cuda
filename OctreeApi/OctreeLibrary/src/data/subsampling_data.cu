@@ -48,9 +48,9 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
 
     executeKernel (
             subsampling::kernelInitRandoms,
-            1024,
+            1024u,
             "kernelInitRandoms",
-            std::time (0),
+            std::time (nullptr),
             itsRandomStates->devicePointer (),
             1024);
 }

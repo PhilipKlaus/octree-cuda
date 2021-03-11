@@ -55,8 +55,8 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
 
-    itsSubsamples = std::make_shared<SubsamplingData> (
-            itsCloud->getMetadata ().pointAmount * 2.2, itsSubsampleMetadata.subsamplingGrid);
+    auto expectedPoints = static_cast<uint32_t>(itsCloud->getMetadata ().pointAmount * 2.2);
+    itsSubsamples = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;

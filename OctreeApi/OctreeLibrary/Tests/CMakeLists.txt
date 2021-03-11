@@ -10,6 +10,8 @@ add_executable(OctreeTest
         test_subsampling_sparse.cpp
         test_point_cloud_host.cpp test_point_cloud_device.cpp)
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
+
 ####################
 # ADD CUDA SUPPORT #
 ####################

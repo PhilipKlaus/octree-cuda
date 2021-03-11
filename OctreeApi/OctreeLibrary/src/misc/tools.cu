@@ -131,7 +131,7 @@ void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount)
 template <typename coordinateType>
 GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata)
 {
-    coordinateType boundingBoxMax = static_cast<coordinateType> (sideLength) - 0.5;
+    coordinateType boundingBoxMax = static_cast<coordinateType> (sideLength) - static_cast<coordinateType>(0.5);
     metadata.pointAmount          = static_cast<uint32_t> (pow (sideLength, 3.0));
     metadata.bbCubic.min          = Vector3<double>{0.5, 0.5, 0.5};
     metadata.bbCubic.max          = Vector3<double>{boundingBoxMax, boundingBoxMax, boundingBoxMax};

@@ -8,6 +8,7 @@ project(OctreeLibrary LANGUAGES CUDA)
 add_library(${PROJECT_NAME} STATIC
 
         # Public Headers
+        include/external_import.cuh
         include/octree_processor.cuh
         include/memory_tracker.cuh
         include/time_tracker.cuh
@@ -66,6 +67,8 @@ add_library(${PROJECT_NAME} STATIC
         # Misc
         src/misc/tools.cu)
 
+set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
+
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE
         src/kernel
@@ -82,12 +85,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 find_package(CUDA REQUIRED)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
-
-# link to cuda
-target_link_libraries(${PROJECT_NAME}
-        PUBLIC ${CUDA_nppicc_LIBRARY}
-        PUBLIC ${CUDA_nppig_LIBRARY}
-        )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
@@ -115,8 +112,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 # BUILD LIBRARY TESTS #
 #######################
 include(CTest)
-option(BUILD_TESTS "build automated tests" ON)
-if (BUILD_TESTS)
+option(BUILD_UNIT_TESTS "build automated tests" OFF)
+if (BUILD_UNIT_TESTS)
     message(STATUS "OctreeCuda build includes automated tests...")
     add_subdirectory(Tests)
 endif ()

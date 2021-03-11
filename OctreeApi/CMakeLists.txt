@@ -10,6 +10,7 @@ add_library(${PROJECT_NAME} SHARED
         src/session.h
         src/session.cpp src/json_exporter.h
         src/json_exporter.h)
+set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
 
 target_include_directories(${PROJECT_NAME} PUBLIC include)
 target_include_directories(${PROJECT_NAME} PRIVATE src)
@@ -24,13 +25,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/../../External)
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
-# link to cuda
-target_link_libraries(${PROJECT_NAME}
-        PUBLIC ${CUDA_nppicc_LIBRARY}
-        PUBLIC ${CUDA_nppig_LIBRARY}
-        )
-target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 
+target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
