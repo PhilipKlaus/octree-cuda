@@ -27,6 +27,6 @@ The file [octree_processor.cuh](https://github.com/PhilipKlaus/octree-cuda/blob/
 ```
 mkdir build
 cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
+cmake -DCMAKE_BUILD_TYPE=Release ../
 cmake --build . --config Release
 ```
