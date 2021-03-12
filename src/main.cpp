@@ -137,7 +137,7 @@ int main ()
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);
-    ocpi_export_potree (session, R"(./export)");
+    //ocpi_export_potree (session, R"(./export)");
 
     // ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
     ocpi_export_json_report (session, R"(./export/statistics.json)");

@@ -76,25 +76,24 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
         OutputData* output,
-        KernelStructs::OutputInfo nodeOutput,
-        uint32_t parentLinearIdx,
-        uint32_t* leafLut)
+        uint32_t* leafLut,
+        Chunk *octree,
+        uint32_t nodeIdx)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&test);
     bool isParent           = config[blockIdx.z].isParent;
     int sparseIdx           = config[blockIdx.z].sparseIdx;
-    uint32_t childLinearIdx = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput.pointCount[childLinearIdx]) ||
+    if (sparseIdx == -1 || (isParent && localPointIdx >= octree[sparseIdx].pointCount) ||
         (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
     {
         return;
     }
 
     // Get pointer to the output data entry
-    OutputData* src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
+    OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
     // Calculate global target point index
     uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
@@ -117,7 +116,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    OutputData* dst = output + nodeOutput.pointOffset[parentLinearIdx] + sparseIndex;
+    OutputData* dst = output + octree[nodeIdx].chunkDataIndex + sparseIndex;
     dst->pointIdx   = globalPointIdx;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
@@ -132,15 +131,15 @@ __global__ void kernelRandomPointSubsample (
 }
 
 template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (KernelStructs::OutputInfo nodeOutput, uint32_t linearIndex)
+__global__ void kernelCalcNodeByteOffset (Chunk *octree, uint32_t nodeIndex, int lastNode)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index > 0)
     {
         return;
     }
-    *(nodeOutput.pointOffset + linearIndex) =
-            (linearIndex == 0) ? 0 : (nodeOutput.pointOffset[linearIndex - 1] + nodeOutput.pointCount[linearIndex - 1]);
+
+    octree[nodeIndex].chunkDataIndex = (lastNode == -1) ? 0 : octree[lastNode].chunkDataIndex + octree[lastNode].pointCount;
 }
 
 } // namespace subsampling

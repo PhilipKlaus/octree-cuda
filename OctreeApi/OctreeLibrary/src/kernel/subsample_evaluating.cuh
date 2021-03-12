@@ -42,38 +42,37 @@ template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
         SubsampleSet subsampleSet,
         uint32_t* countingGrid,
+        Chunk *octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
         OutputData* output,
-        KernelStructs::OutputInfo nodeOutput,
-        uint32_t parentLinearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t* leafLut)
+        uint32_t* leafLut,
+        uint32_t nodeIdx)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
     bool isParent           = config[blockIdx.z].isParent;  // Is the child node a parent?
     int sparseIdx           = config[blockIdx.z].sparseIdx; // Sparse index of the child node
-    int childLinearIdx      = config[blockIdx.z].linearIdx; // Is 0 if isParent = false
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= nodeOutput.pointCount[childLinearIdx]) ||
+    if (sparseIdx == -1 || (isParent && localPointIdx >= octree[sparseIdx].pointCount) ||
         (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
     {
         return;
     }
 
     // Get pointer to the output data entry
-    OutputData* src = output + nodeOutput.pointOffset[childLinearIdx] + localPointIdx;
+    OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
     // Calculate global target point index
     uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* targetCloudByte       = cloud.raw + globalPointIdx * cloud.dataStride;
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
-    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
+    auto* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
+    auto* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -90,7 +89,7 @@ __global__ void kernelEvaluateSubsamples (
     // index for the appropriate dense cell
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (nodeOutput.pointCount + parentLinearIdx, 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&(octree[nodeIdx].pointCount), 1);
     }
 }
 } // namespace subsampling

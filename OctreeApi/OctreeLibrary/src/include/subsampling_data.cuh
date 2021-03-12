@@ -24,6 +24,8 @@ public:
     void copyToHost ();
 
     // ----------------
+    void setActiveParent(uint32_t parentNode);
+    int getLastParent();
 
     uint32_t addLinearLutEntry (uint32_t sparseIdx);
     KernelStructs::OutputInfo getOutputInfo ();
@@ -63,6 +65,9 @@ private:
     GpuArrayI32 itsDenseToSparseLut;
     GpuRandomState itsRandomStates;
     GpuArrayU32 itsRandomIndices;
+
+    // Current output info
+    int itsLastParent;
 
     // Internal data structures
     uint32_t itsLinearCounter;

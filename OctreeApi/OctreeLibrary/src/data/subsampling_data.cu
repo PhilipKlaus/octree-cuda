@@ -31,7 +31,7 @@ void SubsamplingData::copyToHost ()
     itsOutputHost       = itsOutput->toHost ();
 }
 
-SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsamplingGrid) : itsLinearCounter (0)
+SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsamplingGrid) : itsLinearCounter (0), itsLastParent(-1)
 {
     itsOutput = createGpuOutputData (estimatedPoints, "output");
     itsOutput->memset (0);
@@ -114,4 +114,13 @@ uint32_t* SubsamplingData::getRandomIndices_d ()
 uint32_t SubsamplingData::getGridCellAmount ()
 {
     return itsGridCellAmount;
+}
+
+void SubsamplingData::setActiveParent (uint32_t parentNode)
+{
+    itsLastParent = static_cast<int>(parentNode);
+}
+int SubsamplingData::getLastParent ()
+{
+    return itsLastParent;
 }

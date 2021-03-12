@@ -8,7 +8,6 @@ project(OctreeLibrary LANGUAGES CUDA)
 add_library(${PROJECT_NAME} STATIC
 
         # Public Headers
-        include/external_import.cuh
         include/octree_processor.cuh
         include/memory_tracker.cuh
         include/time_tracker.cuh
