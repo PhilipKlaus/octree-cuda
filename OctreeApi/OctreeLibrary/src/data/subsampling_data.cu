@@ -39,7 +39,7 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
     itsGridCellAmount   = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
     itsCountingGrid     = createGpuU32 (itsGridCellAmount, "pointCountGrid");
     itsAveragingGrid    = createGpuAveraging (itsGridCellAmount, "averagingGrid");
-    itsDenseToSparseLut = createGpuI32 (itsGridCellAmount, "denseToSpareLUT");
+    itsDenseToSparseLut = createGpuI32 (itsGridCellAmount, "denseToSpareLUTSubsamples");
     itsRandomStates     = createGpuRandom (1024, "randomStates");
     itsRandomIndices    = createGpuU32 (itsGridCellAmount, "randomIndices");
 

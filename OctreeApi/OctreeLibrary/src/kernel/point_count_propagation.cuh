@@ -38,7 +38,7 @@ __global__ void kernelPropagatePointCounts (
         uint32_t* filledNodeCounter,
         uint32_t cellAmount,
         uint32_t gridSize,
-        uint32_t LowerGridSize,
+        uint32_t lowerGridSize,
         uint32_t cellOffset,
         uint32_t cellOffsetLower)
 {
@@ -53,45 +53,29 @@ __global__ void kernelPropagatePointCounts (
     Vector3<uint32_t> coords{};
     tools::mapFromDenseIdxToDenseCoordinates (coords, index, gridSize);
 
-    auto oldXY = LowerGridSize * LowerGridSize;
+    auto oldXY = lowerGridSize * lowerGridSize;
 
     // The new dense index for the actual chunk
     uint32_t denseIndex = cellOffset + index;
 
     // Calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * LowerGridSize * 2) +
-                                 (coords.x * 2);                    // int: 0 -> Child 0
-    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;             // int: 4 -> child 4
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + LowerGridSize; // int: 1 -> child 1
-    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;             // int: 5 -> child 5
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;         // int: 2 -> child 2
-    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;             // int: 6 -> child 6
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + LowerGridSize; // int: 3 -> child 3
-    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;             // int: 7 -> child 7
+    uint32_t chunk_indices[8];
+    chunk_indices[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
+                       (coords.x * 2);                   // int: 0 -> Child 0
+    chunk_indices[4] = chunk_indices[0] + 1;             // int: 4 -> child 4
+    chunk_indices[2] = chunk_indices[0] + lowerGridSize; // int: 2 -> child 2
+    chunk_indices[6] = chunk_indices[2] + 1;             // int: 6 -> child 6
+    chunk_indices[1] = chunk_indices[0] + oldXY;         // int: 1 -> child 1
+    chunk_indices[5] = chunk_indices[1] + 1;             // int: 5 -> child 5
+    chunk_indices[3] = chunk_indices[1] + lowerGridSize; // int: 3 -> child 3
+    chunk_indices[7] = chunk_indices[3] + 1;             // int: 7 -> child 7
 
-    // Create pointers to the 8 underlying cells
-    uint32_t* chunk_0_0_0 = countingGrid + chunk_0_0_0_index;
-    uint32_t* chunk_0_0_1 = countingGrid + chunk_0_0_1_index;
-    uint32_t* chunk_0_1_0 = countingGrid + chunk_0_1_0_index;
-    uint32_t* chunk_0_1_1 = countingGrid + chunk_0_1_1_index;
-    uint32_t* chunk_1_0_0 = countingGrid + chunk_1_0_0_index;
-    uint32_t* chunk_1_0_1 = countingGrid + chunk_1_0_1_index;
-    uint32_t* chunk_1_1_0 = countingGrid + chunk_1_1_0_index;
-    uint32_t* chunk_1_1_1 = countingGrid + chunk_1_1_1_index;
-
-    // Buffer the point counts within each cell
-    uint32_t chunk_0_0_0_count = *chunk_0_0_0;
-    uint32_t chunk_0_0_1_count = *chunk_0_0_1;
-    uint32_t chunk_0_1_0_count = *chunk_0_1_0;
-    uint32_t chunk_0_1_1_count = *chunk_0_1_1;
-    uint32_t chunk_1_0_0_count = *chunk_1_0_0;
-    uint32_t chunk_1_0_1_count = *chunk_1_0_1;
-    uint32_t chunk_1_1_0_count = *chunk_1_1_0;
-    uint32_t chunk_1_1_1_count = *chunk_1_1_1;
-
-    // Summarize all children counts
-    auto sum = chunk_0_0_0_count + chunk_0_0_1_count + chunk_0_1_0_count + chunk_0_1_1_count + chunk_1_0_0_count +
-               chunk_1_0_1_count + chunk_1_1_0_count + chunk_1_1_1_count;
+    // Sum up point counts from all 8 children
+    uint32_t sum = 0;
+#pragma unroll
+    for(uint8_t i = 0; i < 8; ++i) {
+        sum += *(countingGrid + chunk_indices[i]);
+    }
 
     if (sum > 0)
     {

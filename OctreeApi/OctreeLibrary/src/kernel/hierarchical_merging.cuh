@@ -75,53 +75,27 @@ __global__ void kernelMergeHierarchical (
     chunk_indices[3] = chunk_indices[1] + lowerGridSize; // int: 3 -> child 3
     chunk_indices[7] = chunk_indices[3] + 1;             // int: 7 -> child 7
 
-    // Update the actual (parent) chunk
+    // Update the current node
     Chunk* chunk        = octree + sparseVoxelIndex;
     uint32_t pointCount = countingGrid[denseVoxelIndex];
     bool isFinished     = (pointCount >= threshold);
 
-    // Update the point count
+    // Update the current node
     chunk->pointCount = isFinished ? 0 : pointCount;
     chunk->isParent   = isFinished;
-
-    // Update the isFinished
     chunk->isFinished = isFinished;
 
-    // Assign the sparse indices of the children chunks and calculate the amount of children chunks implicitly
-    int sparseChildIndex     = (countingGrid[chunk_indices[0]] > 0) ? denseToSparseLUT[chunk_indices[0]] : -1;
-    chunk->childrenChunks[0] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[1]] > 0) ? denseToSparseLUT[chunk_indices[1]] : -1;
-    chunk->childrenChunks[1] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[2]] > 0) ? denseToSparseLUT[chunk_indices[2]] : -1;
-    chunk->childrenChunks[2] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[3]] > 0) ? denseToSparseLUT[chunk_indices[3]] : -1;
-    chunk->childrenChunks[3] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[4]] > 0) ? denseToSparseLUT[chunk_indices[4]] : -1;
-    chunk->childrenChunks[4] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[5]] > 0) ? denseToSparseLUT[chunk_indices[5]] : -1;
-    chunk->childrenChunks[5] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[6]] > 0) ? denseToSparseLUT[chunk_indices[6]] : -1;
-    chunk->childrenChunks[6] = sparseChildIndex;
-
-    sparseChildIndex         = (countingGrid[chunk_indices[7]] > 0) ? denseToSparseLUT[chunk_indices[7]] : -1;
-    chunk->childrenChunks[7] = sparseChildIndex;
-
-    // Update all children chunks
+    // Assign children chunks and sum up all point in child nodes
     auto sum = 0;
-    for (auto i = 0; i < 8; ++i)
-    {
+#pragma unroll
+    for(uint8_t i = 0; i < 8; ++i) {
+        chunk->childrenChunks[i] = (countingGrid[chunk_indices[i]] > 0) ? denseToSparseLUT[chunk_indices[i]] : -1;
         if (chunk->childrenChunks[i] != -1)
         {
-            // 6.1. Update isFinished in each child
+            // Update isFinished in each child
             (octree + chunk->childrenChunks[i])->isFinished = isFinished;
 
-            // 6.3. Assign current sparse chunk index to child as parentChunkIndex
+            // Assign current sparse chunk index to child as parentChunkIndex
             (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
 
             sum += (octree + chunk->childrenChunks[i])->pointCount;
@@ -130,13 +104,12 @@ __global__ void kernelMergeHierarchical (
 
     // ##################################################################################
 
-
     if (isFinished && sum > 0)
     {
         // Determine the start index inside the dataLUT for all children chunks
         uint32_t dataLUTIndex = atomicAdd (lutOffset, sum);
-
-        for (auto i = 0; i < 8; ++i)
+#pragma unroll
+        for (uint8_t i = 0; i < 8; ++i)
         {
             if (chunk->childrenChunks[i] != -1)
             {

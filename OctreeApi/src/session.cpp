@@ -28,7 +28,7 @@ Session::Session (int device) : itsDevice (device)
 {
     spdlog::debug ("session created");
     setDevice ();
-    MemoryTracker::getInstance ().reservedMemoryEvent (0, "Session created");
+    MemoryTracker::getInstance ().reservedMemoryEvent (0, "Init");
 }
 
 void Session::setDevice () const

@@ -116,6 +116,11 @@ public:
         return memAllocTimings;
     }
 
+    const std::vector<std::tuple<double, std::string>>& getProcessTimings () const
+    {
+        return processTimings;
+    }
+
     static time_point<steady_clock> start ()
     {
         return std::chrono::high_resolution_clock::now ();

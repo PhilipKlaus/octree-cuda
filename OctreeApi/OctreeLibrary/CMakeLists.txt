@@ -77,6 +77,15 @@ target_include_directories(${PROJECT_NAME} PRIVATE
         src/octree_exporter
         src/data)
 
+###########
+# OPTIONS #
+###########
+IF(ENABLE_KERNEL_TIMINGS)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE KERNEL_TIMINGS)
+    message(STATUS "Enable Cuda kernel timings")
+ENDIF(ENABLE_KERNEL_TIMINGS)
+
+
 ####################
 # ADD CUDA SUPPORT #
 ####################

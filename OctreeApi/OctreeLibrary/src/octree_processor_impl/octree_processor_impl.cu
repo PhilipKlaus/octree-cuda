@@ -42,18 +42,18 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     auto timing = Timing::TimeTracker::start ();
 
     // Allocate the dense point count
-    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
+    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "densePointCountPerVoxel");
     itsDensePointCountPerVoxel->memset (0);
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "DenseToSparseLUT");
+    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "denseToSparseLUTLeaf");
     itsDenseToSparseLUT->memset (-1);
 
     // Allocate the temporary sparseIndexCounter
     itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
     itsTmpCounting->memset (0);
 
-    itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
+    itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "dataLUT");
 
     auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.2);
     itsSubsamples       = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);

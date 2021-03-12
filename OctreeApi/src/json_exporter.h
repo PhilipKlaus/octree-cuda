@@ -40,13 +40,13 @@ void export_json_data (
 
     auto& tracker = Timing::TimeTracker::getInstance ();
 
-    float accumulatedGpuTime = 0;
+    float accumulatedKernelTime = 0;
     for (auto const& gpuTime : tracker.getKernelTimings ())
     {
         statistics["timings"]["kernel"][std::get<0> (gpuTime)]["invocations"] = std::get<1> (gpuTime).invocations;
         statistics["timings"]["kernel"][std::get<0> (gpuTime)]["duration"]    = std::get<1> (gpuTime).duration;
 
-        accumulatedGpuTime += std::get<1> (gpuTime).duration;
+        accumulatedKernelTime += std::get<1> (gpuTime).duration;
     }
 
     double accumulatedMemCpyTime = 0;
@@ -63,10 +63,19 @@ void export_json_data (
         accumulatedMallocTime += std::get<0> (memAllocTime);
     }
 
-    statistics["timings"]["accumulatedGpuTime"]    = accumulatedGpuTime;
-    statistics["timings"]["accumulatedMemCpyTime"] = accumulatedMemCpyTime;
-    statistics["timings"]["accumulatedMallocTime"] = accumulatedMallocTime;
-    statistics["timings"]["accumulatedOverall"]    = accumulatedGpuTime + accumulatedMemCpyTime + accumulatedMallocTime;
+    double accumulatedProcessTimings = 0;
+    for (auto const& memAllocTime : tracker.getProcessTimings ())
+    {
+        statistics["timings"]["process"][std::get<1> (memAllocTime)] = std::get<0> (memAllocTime);
+        accumulatedProcessTimings += std::get<0> (memAllocTime);
+    }
+
+    statistics["timings"]["accumulatedKernelTime"]     = accumulatedKernelTime;
+    statistics["timings"]["accumulatedMemCpyTime"]     = accumulatedMemCpyTime;
+    statistics["timings"]["accumulatedMallocTime"]     = accumulatedMallocTime;
+    statistics["timings"]["accumulatedProcessTimings"] = accumulatedProcessTimings;
+    statistics["timings"]["accumulatedOverall"] =
+            accumulatedKernelTime + accumulatedMemCpyTime + accumulatedMallocTime + accumulatedProcessTimings;
 
 
     MemoryTracker& watcher                    = MemoryTracker::getInstance ();
