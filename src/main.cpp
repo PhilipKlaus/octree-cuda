@@ -39,6 +39,7 @@ int main ()
     uint32_t mergingThreshold = 10000;
 
     // Setup cloud properties
+    /*
     uint32_t pointAmount     = 25010001;
     uint32_t pointDataStride = 15;
     float scaleX             = 0.001f;
@@ -46,6 +47,7 @@ int main ()
     float scaleZ             = 0.001f;
     uint8_t cloudType           = 0;
     std::string plyFile      = "plane_headerless.ply";
+    */
 
     /*
     uint32_t pointAmount     = 1344573;
@@ -77,15 +79,6 @@ int main ()
     std::string plyFile      = "heidentor_color_raw.ply";
     */
 
-    /*uint32_t pointAmount     = 119701547;
-    uint32_t pointDataStride = 27;
-    float scaleX             = 0.01f;
-    float scaleY             = 0.01f;
-    float scaleZ             = 0.01f;
-    uint8_t cloudType           = 1;
-    std::string plyFile      = "morrobay_fused_headerless.ply";
-    */
-
     /*
     uint32_t pointAmount     = 47111095;
     uint32_t pointDataStride = 27;
@@ -95,6 +88,14 @@ int main ()
     uint8_t cloudType           = 1;
     std::string plyFile      = "lifeboat_headerless.ply";
     */
+
+    uint32_t pointAmount     = 119701547;
+    uint32_t pointDataStride = 27;
+    float scaleX             = 0.01f;
+    float scaleY             = 0.01f;
+    float scaleZ             = 0.01f;
+    uint8_t cloudType           = 1;
+    std::string plyFile      = "morrobay_fused_headerless.ply";
 
     auto start = std::chrono::high_resolution_clock::now ();
 

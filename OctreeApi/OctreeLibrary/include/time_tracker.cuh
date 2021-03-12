@@ -22,6 +22,13 @@ struct TimingProps
     uint32_t invocations;
 };
 
+enum Time
+{
+    PROCESS,
+    MEM_CPY,
+    MEM_ALLOC
+};
+
 /**
  * A tracker for montoring gpu related runtimes.
  * The tracker differs between Cuda kernel and Cuda memory related time measurements and
@@ -50,26 +57,30 @@ public:
         }
     }
 
-    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent = true)
+    void trackMemCpyTime (double ms, const std::string& measurement, bool log)
     {
         memCopyTimings.emplace_back (ms, measurement);
-        if (!silent)
+        if (log)
         {
-            std::stringstream stream;
-            stream << (hostToDevice ? "[host -> device] " : "[device -> host] ") << measurement << " took: " << ms
-                   << " [ms]";
-            spdlog::info (stream.str ());
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[memcpy]", measurement, ms);
         }
     }
 
-    void trackMemAllocTime (float ms, const std::string& measurement, bool silent = true)
+    void trackMemAllocTime (double ms, const std::string& measurement, bool log)
     {
         memAllocTimings.emplace_back (ms, measurement);
-        if (!silent)
+        if (log)
         {
-            std::stringstream stream;
-            stream << "[cudaMalloc] for '" << measurement << "' took: " << ms << " [ms]";
-            spdlog::info (stream.str ());
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[cudamalloc]", measurement, ms);
+        }
+    }
+
+    void trackProcessTime (double ms, const std::string& measurement, bool log)
+    {
+        processTimings.emplace_back (ms, measurement);
+        if (log)
+        {
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[process]", measurement, ms);
         }
     }
 
@@ -95,19 +106,46 @@ public:
         return kernelTimings;
     }
 
-    const std::vector<std::tuple<float, std::string>>& getMemCpyTimings () const
+    const std::vector<std::tuple<double, std::string>>& getMemCpyTimings () const
     {
         return memCopyTimings;
     }
 
-    const std::vector<std::tuple<float, std::string>>& getMemAllocTimings () const
+    const std::vector<std::tuple<double, std::string>>& getMemAllocTimings () const
     {
         return memAllocTimings;
     }
 
+    static time_point<steady_clock> start ()
+    {
+        return std::chrono::high_resolution_clock::now ();
+    }
+
+    static double stop (
+            const time_point<steady_clock>& start, const std::string& measurement, Time kind, bool log = true)
+    {
+        auto finish                           = std::chrono::high_resolution_clock::now ();
+        std::chrono::duration<double> elapsed = finish - start;
+        double ms                             = elapsed.count () * 1000;
+        switch (kind)
+        {
+        case Time::PROCESS:
+            getInstance ().trackProcessTime (ms, measurement, log);
+            break;
+        case Time::MEM_ALLOC:
+            getInstance ().trackMemAllocTime (ms, measurement, log);
+            break;
+        default:
+            getInstance ().trackMemCpyTime (ms, measurement, log);
+            break;
+        }
+        return ms;
+    }
+
 private:
-    std::vector<std::tuple<float, std::string>> memCopyTimings;
-    std::vector<std::tuple<float, std::string>> memAllocTimings;
+    std::vector<std::tuple<double, std::string>> memCopyTimings;
+    std::vector<std::tuple<double, std::string>> memAllocTimings;
+    std::vector<std::tuple<double, std::string>> processTimings;
 
     // Kernel timings
     std::vector<std::tuple<KernelTimer, std::string>> kernelTimers;

@@ -12,6 +12,7 @@
 #include "metadata.cuh"
 #include "octree_processor.cuh"
 #include "session.h"
+#include "time_tracker.cuh"
 
 Session* Session::ToSession (void* session)
 {
@@ -54,23 +55,19 @@ void Session::setPointCloudHost (uint8_t* pointCloud)
 
 void Session::generateOctree ()
 {
-    auto start = std::chrono::high_resolution_clock::now ();
+    auto timing = Timing::TimeTracker::start ();
     itsProcessor->initialPointCounting ();
     itsProcessor->performCellMerging ();
     itsProcessor->distributePoints ();
     itsProcessor->performSubsampling ();
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("Generating the octree took: {} [s]", elapsed.count ());
+    Timing::TimeTracker::stop (timing, "Generating octree", Timing::Time::PROCESS);
 }
 
 void Session::exportPotree (const std::string& directory)
 {
-    auto start = std::chrono::high_resolution_clock::now ();
+    auto timing = Timing::TimeTracker::start ();
     itsProcessor->exportPotree (directory);
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("Exporting the octree took: {} [s]", elapsed.count ());
+    Timing::TimeTracker::stop (timing, "Exporting octree", Timing::Time::PROCESS);
 }
 
 void Session::exportMemoryReport (const std::string& filename)
@@ -82,7 +79,7 @@ void Session::exportMemoryReport (const std::string& filename)
 void Session::exportJsonReport (const std::string& filename)
 {
     itsProcessor->updateStatistics ();
-    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsCloudMetadata, itsSubsamplingMetadata);
+    export_json_data (filename, itsProcessor->getOctreeMetadata (), itsSubsamplingMetadata);
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 

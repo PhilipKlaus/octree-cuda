@@ -45,7 +45,7 @@ __global__ void kernelEvaluateSubsamples (
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
         OutputData* output,
-        KernelStructs::NodeOutput nodeOutput,
+        KernelStructs::OutputInfo nodeOutput,
         uint32_t parentLinearIdx,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,

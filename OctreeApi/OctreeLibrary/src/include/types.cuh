@@ -38,14 +38,6 @@ struct Chunk
     bool isParent;             // Denotes if Chunk is a parent or a leaf node
 };
 
-struct SubsamplingTimings
-{
-    float offsetCalcuation;
-    float subsampleEvaluation;
-    float generateRandoms;
-    float subsampling;
-};
-
 struct OutputData
 {
     uint32_t pointIdx;

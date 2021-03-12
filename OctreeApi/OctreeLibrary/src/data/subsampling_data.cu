@@ -67,7 +67,7 @@ uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
     itsLinearLut[sparseIdx] = itsLinearCounter;
     return itsLinearCounter++;
 }
-KernelStructs::NodeOutput SubsamplingData::getNodeOutputDevice ()
+KernelStructs::OutputInfo SubsamplingData::getOutputInfo ()
 {
     return {itsPointCounts->devicePointer (), itsPointOffsets->devicePointer ()};
 }

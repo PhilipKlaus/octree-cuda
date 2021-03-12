@@ -76,7 +76,7 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
         OutputData* output,
-        KernelStructs::NodeOutput nodeOutput,
+        KernelStructs::OutputInfo nodeOutput,
         uint32_t parentLinearIdx,
         uint32_t* leafLut)
 {
@@ -132,7 +132,7 @@ __global__ void kernelRandomPointSubsample (
 }
 
 template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (KernelStructs::NodeOutput nodeOutput, uint32_t linearIndex)
+__global__ void kernelCalcNodeByteOffset (KernelStructs::OutputInfo nodeOutput, uint32_t linearIndex)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index > 0)

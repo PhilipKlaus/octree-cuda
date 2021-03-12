@@ -39,7 +39,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     // Create GPU data for chunking
     //-----------------------------
 
-    auto start = std::chrono::high_resolution_clock::now ();
+    auto timing = Timing::TimeTracker::start ();
 
     // Allocate the dense point count
     itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
@@ -55,12 +55,10 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "Data LUT");
 
-    auto expectedPoints = static_cast<uint32_t>(itsCloud->getMetadata ().pointAmount * 2.2);
-    itsSubsamples = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
+    auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.2);
+    itsSubsamples       = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
 
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("Allocating GPU data structures took: {} [s]", elapsed.count ());
+    Timing::TimeTracker::stop (timing, "Preparing GPU data", Timing::Time::PROCESS);
 }
 
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (

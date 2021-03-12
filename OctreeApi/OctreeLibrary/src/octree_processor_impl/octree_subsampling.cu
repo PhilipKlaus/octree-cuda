@@ -62,7 +62,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
         Kernel::calcNodeByteOffset (
-                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"}, itsSubsamples->getNodeOutputDevice (), linearIdx);
+                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"}, itsSubsamples->getOutputInfo (), linearIdx);
 
         // Evaluate how many points fall in each cell
         Kernel::evaluateSubsamples (
@@ -72,7 +72,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsamples->getAverageingGrid_d (),
                 itsSubsamples->getDenseToSparseLut_d (),
                 itsSubsamples->getOutputDevice (),
-                itsSubsamples->getNodeOutputDevice (),
+                itsSubsamples->getOutputInfo (),
                 linearIdx,
                 cloud,
                 gridding,
@@ -102,7 +102,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 gridding,
                 itsSubsamples->getRandomIndices_d (),
                 itsSubsamples->getOutputDevice (),
-                itsSubsamples->getNodeOutputDevice (),
+                itsSubsamples->getOutputInfo (),
                 linearIdx,
                 itsLeafLut->devicePointer ());
     }

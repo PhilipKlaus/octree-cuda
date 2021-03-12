@@ -27,7 +27,8 @@ public:
         gpuErrchk (cudaMalloc ((void**)&itsData, memoryToReserve));
         auto stop                             = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = stop - start;
-        Timing::TimeTracker::getInstance ().trackMemAllocTime (static_cast<float> (elapsed.count () * 1000), itsName);
+        Timing::TimeTracker::getInstance ().trackMemAllocTime (
+                static_cast<float> (elapsed.count () * 1000), itsName, false);
 
         spdlog::debug ("Reserved GPU memory: {} bytes, {} elements", elements, memoryToReserve);
     }
@@ -65,7 +66,7 @@ public:
         auto stop                             = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = stop - start;
         Timing::TimeTracker::getInstance ().trackMemCpyTime (
-                static_cast<float> (elapsed.count ()) * 1000, itsName, true);
+                static_cast<float> (elapsed.count ()) * 1000, itsName, false);
     }
 
     uint32_t pointCount () const

@@ -3,22 +3,21 @@
 
 PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
 {
-    auto start     = std::chrono::high_resolution_clock::now ();
+    auto timing    = Timing::TimeTracker::start ();
     itsDeviceCloud = createGpuU8 (itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointcloud");
     itsDeviceCloud->toGPU (itsSourceCloud);
-    auto finish                           = std::chrono::high_resolution_clock::now ();
-    std::chrono::duration<double> elapsed = finish - start;
-    spdlog::info ("Copy cloud to GPU (incl. memory alloc.) took: {} [s]", elapsed.count ());
+    Timing::TimeTracker::stop (timing, "Init cuda & prepare cloud", Timing::Time::PROCESS);
 }
+
 uint8_t* PointCloudHost::getCloudHost ()
 {
     return itsSourceCloud;
 }
+
 uint8_t* PointCloudHost::getCloudDevice ()
 {
     return itsDeviceCloud->devicePointer ();
 }
-
 
 PointCloudDevice::PointCloudDevice (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
 {}
@@ -34,6 +33,7 @@ uint8_t* PointCloudDevice::getCloudHost ()
     }
     return itsHostCloud.get ();
 }
+
 uint8_t* PointCloudDevice::getCloudDevice ()
 {
     return itsSourceCloud;

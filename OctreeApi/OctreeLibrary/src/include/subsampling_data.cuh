@@ -26,7 +26,7 @@ public:
     // ----------------
 
     uint32_t addLinearLutEntry (uint32_t sparseIdx);
-    KernelStructs::NodeOutput getNodeOutputDevice ();
+    KernelStructs::OutputInfo getOutputInfo ();
     uint32_t getLinearIdx (uint32_t sparseIndex);
 
     OutputData* getOutputDevice ();
@@ -47,7 +47,7 @@ private:
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
 
-    // Output data
+    // Output Info
     GpuOutputData itsOutput;
     std::unique_ptr<OutputData[]> itsOutputHost;
 
