@@ -1,10 +1,6 @@
 #include "random_initialization.cuh"
 #include "subsampling_data.cuh"
 
-uint32_t SubsamplingData::getPointAmount (uint32_t sparseIndex)
-{
-    return itsPointCountsHost[getLinearIdx (sparseIndex)];
-}
 
 const std::unique_ptr<uint32_t[]>& SubsamplingData::getLutHost (uint32_t sparseIndex)
 {
@@ -26,8 +22,6 @@ const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t sparseI
 
 void SubsamplingData::copyToHost ()
 {
-    itsPointCountsHost  = itsPointCounts->toHost ();
-    itsPointOffsetsHost = itsPointOffsets->toHost ();
     itsOutputHost       = itsOutput->toHost ();
 }
 
@@ -55,36 +49,25 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
             1024);
 }
 
-void SubsamplingData::configureNodeAmount (uint32_t nodeAmount)
-{
-    itsPointCounts  = createGpuU32 (nodeAmount, "pointCounts");
-    itsPointOffsets = createGpuU32 (nodeAmount, "pointOffsets");
-    itsPointCounts->memset (0);
-}
-
 uint32_t SubsamplingData::addLinearLutEntry (uint32_t sparseIdx)
 {
     itsLinearLut[sparseIdx] = itsLinearCounter;
     return itsLinearCounter++;
 }
-KernelStructs::OutputInfo SubsamplingData::getOutputInfo ()
-{
-    return {itsPointCounts->devicePointer (), itsPointOffsets->devicePointer ()};
-}
-
 
 uint32_t SubsamplingData::getLinearIdx (uint32_t sparseIndex)
 {
     return itsLinearLut[sparseIndex];
 }
+
 OutputData* SubsamplingData::getOutputDevice ()
 {
     return itsOutput->devicePointer ();
 }
-OutputData* SubsamplingData::getOutputHost (uint32_t sparseIndex)
+
+OutputData* SubsamplingData::getOutputHost ()
 {
-    uint64_t byteOffset = itsPointOffsetsHost[getLinearIdx (sparseIndex)];
-    return (itsOutputHost.get () + byteOffset);
+    return itsOutputHost.get ();
 }
 
 uint32_t* SubsamplingData::getCountingGrid_d ()

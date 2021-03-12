@@ -20,8 +20,6 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
             itsMetadata.maxPointsPerNode,
             getRootIndex ());
 
-    itsSubsamples->configureNodeAmount (itsMetadata.leafNodeAmount + itsMetadata.parentNodeAmount);
-
     randomSubsampling (h_sparseToDenseLUT, getRootIndex (), itsMetadata.depth);
     cudaDeviceSynchronize ();
 }
@@ -129,15 +127,9 @@ void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet&
             config[i].isParent        = child.isParent;
             config[i].leafPointAmount = child.pointCount;
             config[i].leafDataIdx     = child.chunkDataIndex;
-            // config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
-            // config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
-            // config[i].lutAdress =
-            //        child.isParent ? itsSubsamples->getLutDevice (childIndex) : itsLeafLut->devicePointer ();
         }
         else
         {
-            // config[i].averagingAdress = nullptr;
-            // config[i].lutAdress       = nullptr;
             config[i].isParent = false;
         }
     }

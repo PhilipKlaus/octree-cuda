@@ -90,6 +90,7 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
     itsSubsamples->copyToHost ();
+    itsOctreeData->copyToHost();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
     {
@@ -120,8 +121,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
     itsSubsamples->copyToHost ();
-
-    auto start = std::chrono::high_resolution_clock::now ();
+    itsOctreeData->copyToHost();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
     {

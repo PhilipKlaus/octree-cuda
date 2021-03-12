@@ -56,8 +56,7 @@ protected:
 
     uint32_t getPointsInNode (uint32_t nodeIndex)
     {
-        bool isParent = isParentNode (nodeIndex);
-        return (isParent ? this->itsSubsamples->getPointAmount (nodeIndex) : this->itsOctree[nodeIndex].pointCount);
+        return this->itsOctree[nodeIndex].pointCount;
     }
 
     uint32_t getChildNodeIndex (uint32_t nodeIndex, uint8_t child)

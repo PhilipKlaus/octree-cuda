@@ -14,8 +14,6 @@ class SubsamplingData
 {
 public:
     SubsamplingData (uint32_t estimatedPoints, uint32_t subsamplingGrid);
-    void configureNodeAmount (uint32_t nodeAmount);
-    uint32_t getPointAmount (uint32_t index);
 
     // ToDo: To be removed
     const std::unique_ptr<uint32_t[]>& getLutHost (uint32_t index);
@@ -28,11 +26,10 @@ public:
     int getLastParent();
 
     uint32_t addLinearLutEntry (uint32_t sparseIdx);
-    KernelStructs::OutputInfo getOutputInfo ();
     uint32_t getLinearIdx (uint32_t sparseIndex);
 
     OutputData* getOutputDevice ();
-    OutputData* getOutputHost (uint32_t sparseIndex);
+    OutputData* getOutputHost ();
 
     uint32_t* getCountingGrid_d ();
     uint64_t* getAverageingGrid_d ();
@@ -52,12 +49,6 @@ private:
     // Output Info
     GpuOutputData itsOutput;
     std::unique_ptr<OutputData[]> itsOutputHost;
-
-    // NodeOutput
-    GpuArrayU32 itsPointCounts;
-    GpuArrayU32 itsPointOffsets;
-    std::unique_ptr<uint32_t[]> itsPointCountsHost;
-    std::unique_ptr<uint32_t[]> itsPointOffsetsHost;
 
     // Subsampling data structures
     GpuArrayU32 itsCountingGrid;
