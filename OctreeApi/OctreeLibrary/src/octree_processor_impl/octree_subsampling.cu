@@ -56,7 +56,11 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // ToDo: Find more sprecise amount of threads
-        KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
+        KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride, {
+                1.0 / metadata.scale.x,
+                1.0 / metadata.scale.y,
+                1.0 / metadata.scale.z,
+        }};
         KernelStructs::Gridding gridding = {
                 itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
@@ -100,6 +104,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         // Distribute the subsampled points in parallel for all child nodes
         Kernel::randomPointSubsampling (
                 {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelRandomPointSubsample"},
+                itsCloud->getOutputBuffer_d(),
                 subsampleSet,
                 //itsSubsamples->getCountingGrid_d (),
                 itsCountingGrid->devicePointer(),

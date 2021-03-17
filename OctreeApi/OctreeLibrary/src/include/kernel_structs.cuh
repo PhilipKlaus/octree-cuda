@@ -24,9 +24,10 @@ struct Gridding
 
 struct Cloud
 {
-    uint8_t* raw;        ///< The raw point cloud data
-    uint32_t points;     ///< The amount of points wihtin the point cloud
-    uint32_t dataStride; ///< The point cloud data stride
+    uint8_t* raw;                ///< The raw point cloud data
+    uint32_t points;             ///< The amount of points wihtin the point cloud
+    uint32_t dataStride;         ///< The point cloud data stride
+    Vector3<double> scaleFactor; ///< The bounding box minimum
 };
 
 struct OutputInfo

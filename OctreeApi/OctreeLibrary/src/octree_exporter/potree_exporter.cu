@@ -90,28 +90,23 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
         OutputData* out = this->itsSubsamples->getOutputHost () + this->itsOctree[nodeIndex].chunkDataIndex;
-
+        uint64_t outputStart = this->itsOctree[nodeIndex].chunkDataIndex;
         // Export all point to pointFile
         for (uint32_t u = 0; u < pointsInNode; ++u)
         {
-            uint32_t pointIdx = (out + u)->pointIdx;
-            if (pointIdx != INVALID_INDEX)
-            {
-                ++validPoints;
-                uint64_t pointByteIndex = pointIdx * dataStride;
-                bufferOffset += writeCoordinatesBuffered (buffer, bufferOffset, pointByteIndex);
+            ++validPoints;
 
-                if (isAveraging && isParent)
-                {
-                    bufferOffset += writeColorsBuffered (buffer, bufferOffset, nodeIndex, u);
-                }
+            auto* pointDst = reinterpret_cast<int32_t*> (buffer.get () + bufferOffset);
+            pointDst[0]    = static_cast<int32_t> (std::floor (this->itsOutputBuffer[outputStart + u].x));
+            pointDst[1]    = static_cast<int32_t> (std::floor (this->itsOutputBuffer[outputStart + u].y));
+            pointDst[2]    = static_cast<int32_t> (std::floor (this->itsOutputBuffer[outputStart + u].z));
+            bufferOffset += (3 * sizeof (uint32_t));
 
-                else
-                {
-                    pointByteIndex += (3 * sizeof (coordinateType));
-                    bufferOffset += writeSimpleColorsBuffered (buffer, bufferOffset, pointByteIndex);
-                }
-            }
+            auto* colorDst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
+            colorDst[0]    = static_cast<uint16_t> (this->itsOutputBuffer[outputStart + u].r);
+            colorDst[1]    = static_cast<uint16_t> (this->itsOutputBuffer[outputStart + u].g);
+            colorDst[2]    = static_cast<uint16_t> (this->itsOutputBuffer[outputStart + u].b);
+            bufferOffset += (3 * sizeof (uint16_t));
         }
 
         nodeByteSize = validPoints * bytesPerPoint;
@@ -179,47 +174,6 @@ void PotreeExporter<coordinateType, colorType>::exportBuffers (std::ofstream& po
     }
 }
 
-
-template <typename coordinateType, typename colorType>
-inline uint8_t PotreeExporter<coordinateType, colorType>::writeCoordinatesBuffered (
-        const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
-{
-    auto* point = reinterpret_cast<coordinateType*> (this->itsCloud + pointByteIndex);
-    auto scale  = this->itsCloudMetadata.scale;
-
-    auto* dst = reinterpret_cast<int32_t*> (buffer.get () + bufferOffset);
-    dst[0]    = static_cast<int32_t> (std::floor (point[0] / scale.x));
-    dst[1]    = static_cast<int32_t> (std::floor (point[1] / scale.y));
-    dst[2]    = static_cast<int32_t> (std::floor (point[2] / scale.z));
-
-    return 3 * sizeof (int32_t);
-}
-
-template <typename coordinateType, typename colorType>
-inline uint8_t PotreeExporter<coordinateType, colorType>::writeColorsBuffered (
-        const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint32_t nodeIndex, uint32_t pointIndex)
-{
-    uint64_t encoded = (this->itsSubsamples->getOutputHost () + this->itsOctree[nodeIndex].chunkDataIndex + pointIndex)->encoded;
-    auto* dst        = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
-    dst[0]           = static_cast<uint16_t> (encoded >> 46);
-    dst[1]           = static_cast<uint16_t> (encoded >> 28);
-    dst[2]           = static_cast<uint16_t> (encoded >> 10);
-    return 3 * sizeof (uint16_t);
-}
-
-template <typename coordinateType, typename colorType>
-inline uint8_t PotreeExporter<coordinateType, colorType>::writeSimpleColorsBuffered (
-        const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex)
-{
-    uint32_t colorSize = sizeof (colorType);
-
-    auto* dst = reinterpret_cast<uint16_t*> (buffer.get () + bufferOffset);
-    dst[0]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex]);
-    dst[1]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex + colorSize]);
-    dst[2]    = static_cast<uint16_t> (this->itsCloud[pointByteIndex + colorSize * 2]);
-
-    return 3 * sizeof (uint16_t);
-}
 
 template <typename coordinateType, typename colorType>
 inline uint8_t PotreeExporter<coordinateType, colorType>::getChildMask (uint32_t nodeIndex)

@@ -66,8 +66,9 @@ __global__ void kernelGenerateRandoms (
  * @param randomIndices Holds the previously generated random numbers for each subsampling cell.
  * @param replacementScheme Determines if the replacement scheme or the averaging scheme should be applied.
  */
-template <typename coordinateType>
+template <typename coordinateType, typename colorType>
 __global__ void kernelRandomPointSubsample (
+        OutputBuffer *outputBuffer,
         SubsampleSet test,
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
@@ -95,8 +96,10 @@ __global__ void kernelRandomPointSubsample (
     OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
     // Get the point within the point cloud
-    Vector3<coordinateType>* point =
-            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + src->pointIdx * cloud.dataStride);
+    uint8_t *srcPoint = cloud.raw + src->pointIdx * cloud.dataStride;
+    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (srcPoint);
+    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (srcPoint + 3 * sizeof(coordinateType));
+
 
     // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -120,6 +123,15 @@ __global__ void kernelRandomPointSubsample (
 
     dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) | ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
                    ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
+
+    OutputBuffer * out = outputBuffer + octree[nodeIdx].chunkDataIndex + sparseIndex;
+    out->x = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
+    out->y = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
+    out->z = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
+    // ToDo: Write out averaged colors!!!!!!
+    out->r = color->x;
+    out->g = color->y;
+    out->b = color->z;
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
@@ -161,11 +173,11 @@ void randomPointSubsampling (const KernelConfig& config, Arguments&&... args)
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelRandomPointSubsample<float><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::kernelRandomPointSubsample<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelRandomPointSubsample<double><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::kernelRandomPointSubsample<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
     timer.stop ();

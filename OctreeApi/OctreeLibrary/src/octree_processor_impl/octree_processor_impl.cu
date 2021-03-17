@@ -87,7 +87,7 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
-    itsSubsamples->copyToHost ();
+    //itsSubsamples->copyToHost ();
     itsOctreeData->copyToHost();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)

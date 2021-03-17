@@ -106,13 +106,19 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
 
     auto& meta                       = itsCloud->getMetadata ();
     Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount, "kernelDistributePoints"};
-    KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride};
+    KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride,
+                                        {
+                                          1.0 / meta.scale.x,
+                                          1.0 / meta.scale.y,
+                                          1.0 / meta.scale.z,
+                                  }};
     KernelStructs::Gridding gridding = {itsOctreeData->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
 
     Kernel::distributePoints (
             config,
             itsOctreeData->getDevice (),
             itsSubsamples->getOutputDevice(),
+            itsCloud->getOutputBuffer_d(),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             cloud,

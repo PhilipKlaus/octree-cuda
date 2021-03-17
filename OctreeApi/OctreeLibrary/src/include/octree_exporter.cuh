@@ -32,7 +32,7 @@ public:
             itsMetadata (metadata),
             itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
             itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
-            itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples)
+            itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples), itsOutputBuffer(std::move(pointCloud->getOutputBuffer_h()))
     {}
 
     virtual void exportOctree (const std::string& path) = 0;
@@ -72,4 +72,5 @@ protected:
     uint8_t* itsCloud;
     shared_ptr<Chunk[]> itsOctree;
     std::shared_ptr<SubsamplingData> itsSubsamples;
+    std::unique_ptr<OutputBuffer[]> itsOutputBuffer;
 };
