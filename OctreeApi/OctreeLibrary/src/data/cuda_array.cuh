@@ -17,7 +17,7 @@ template <typename dataType>
 class CudaArray
 {
 public:
-    CudaArray (uint32_t elements, const std::string& name) : itsElements (elements), itsName (name)
+    CudaArray (uint64_t elements, const std::string& name) : itsElements (elements), itsName (name)
     {
         auto memoryToReserve = itsElements * sizeof (dataType);
         itsMemory            = memoryToReserve;
@@ -96,7 +96,7 @@ public:
 private:
     std::string itsName;
     uint64_t itsMemory;
-    uint32_t itsElements;
+    uint64_t itsElements;
     dataType* itsData;
     MemoryTracker& itsWatcher = MemoryTracker::getInstance ();
 };

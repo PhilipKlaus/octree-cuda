@@ -19,7 +19,10 @@ class IPointCloud
 {
 public:
     IPointCloud (uint8_t* source, PointCloudMetadata metadata) : itsSourceCloud (source), itsMetadata (metadata)
-    {}
+    {
+        auto expectedPoints = static_cast<uint64_t> (itsMetadata.pointAmount * 2.2);
+        itsOutput = createGpuOutputBuffer(expectedPoints, "outputBuffer");
+    }
     virtual ~IPointCloud ()            = default;
     virtual uint8_t* getCloudHost ()   = 0;
     virtual uint8_t* getCloudDevice () = 0;
@@ -29,8 +32,17 @@ public:
         return itsMetadata;
     }
 
+    OutputBuffer * getOutputBuffer_d() {
+        return itsOutput->devicePointer();
+    }
+
+    std::unique_ptr<OutputBuffer[]> getOutputBuffer_h() {
+        return itsOutput->toHost();
+    }
+
 protected:
     uint8_t* itsSourceCloud;
+    GpuOutputBuffer itsOutput;
     PointCloudMetadata itsMetadata;
 };
 

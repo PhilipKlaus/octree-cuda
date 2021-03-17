@@ -61,7 +61,7 @@ add_library(${PROJECT_NAME} STATIC
 
         # Point cloud
         src/include/point_cloud.cuh
-        src/point_cloud/point_cloud.cu
+        src/data/point_cloud.cu
 
         # Misc
         src/misc/tools.cu)

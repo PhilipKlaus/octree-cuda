@@ -40,6 +40,12 @@ struct OutputData
     uint64_t encoded;
 };
 
+struct OutputBuffer
+{
+    int32_t x, y, z;
+    uint16_t r, g, b;
+};
+
 template <typename gpuType>
 using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8     = GpuArray<uint8_t>;
@@ -49,6 +55,7 @@ using GpuOctree      = GpuArray<Chunk>;
 using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
 using GpuOutputData  = GpuArray<OutputData>;
+using GpuOutputBuffer  = GpuArray<OutputBuffer>;
 
 template <typename T, typename... Args>
 std::unique_ptr<CudaArray<T>> createGpu (Args&&... args)
@@ -108,4 +115,10 @@ template <typename... Args>
 std::unique_ptr<CudaArray<OutputData>> createGpuOutputData (Args&&... args)
 {
     return createGpu<OutputData> (std::forward<Args> (args)...);
+}
+
+template <typename... Args>
+std::unique_ptr<CudaArray<OutputBuffer>> createGpuOutputBuffer (Args&&... args)
+{
+    return createGpu<OutputBuffer> (std::forward<Args> (args)...);
 }
