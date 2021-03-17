@@ -40,6 +40,10 @@ public:
         return itsOutput->toHost();
     }
 
+    uint64_t getOutputBufferSize() {
+        return itsOutput->pointCount() * sizeof(OutputBuffer);
+    }
+
 protected:
     uint8_t* itsSourceCloud;
     GpuOutputBuffer itsOutput;

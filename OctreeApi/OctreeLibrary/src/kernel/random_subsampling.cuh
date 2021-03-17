@@ -121,17 +121,21 @@ __global__ void kernelRandomPointSubsample (
     uint64_t encoded = averagingGrid[denseVoxelIndex];
     auto amount  = static_cast<uint16_t> (encoded & 0x3FF);
 
-    dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) | ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
-                   ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
+    uint64_t decoded [3] = {
+            ((encoded >> 46) & 0xFFFF) / amount,
+            ((encoded >> 28) & 0xFFFF) / amount,
+            ((encoded >> 10) & 0xFFFF) / amount
+    };
+    dst->encoded = (decoded [0] << 46) | (decoded [1] << 28) | (decoded [2] << 10) | 1;
 
     OutputBuffer * out = outputBuffer + octree[nodeIdx].chunkDataIndex + sparseIndex;
     out->x = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
     out->y = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
     out->z = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
     // ToDo: Write out averaged colors!!!!!!
-    out->r = color->x;
-    out->g = color->y;
-    out->b = color->z;
+    out->r = static_cast<uint16_t> (decoded[0]);
+    out->g = static_cast<uint16_t> (decoded[1]);
+    out->b = static_cast<uint16_t> (decoded[2]);
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;

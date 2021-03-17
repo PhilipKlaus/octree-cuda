@@ -62,6 +62,7 @@ void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
     hierarchyFile.open (itsExportFolder + HIERARCHY_FILE_NAME, std::ios::binary);
 
     breathFirstExport (pointFile, hierarchyFile);
+    pointFile.write (reinterpret_cast<const char*> (this->itsOutputBuffer.get()), this->itsOutputBufferSize);
 
     pointFile.close ();
     hierarchyFile.close ();
@@ -128,14 +129,23 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     discoveredNodes[this->getRootIndex ()] = true;
     toVisit.push_back (this->getRootIndex ());
 
-    ThreadPool pool (thread::hardware_concurrency ());
+    //ThreadPool pool (thread::hardware_concurrency ());
 
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
 
-        itsFutureResults.push_back (pool.enqueue ([this, node] { return std::move (exportNode (node)); }));
+        //itsFutureResults.push_back (pool.enqueue ([this, node] { return std::move (exportNode (node)); }));
+        uint8_t bitmask = getChildMask (node);
+        uint8_t type    = bitmask == 0 ? 1 : 0;
+        uint64_t byteOffset = this->getDataIndex(node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        uint64_t byteSize = this->getPointsInNode (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        HierarchyFileEntry entry{type, bitmask, this->getPointsInNode (node), byteOffset, byteSize};
+        hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
+
+        this->itsPointsExported += this->getPointsInNode (node);
+        ++itsExportedNodes;
 
         for (auto i = 0; i < 8; ++i)
         {
@@ -149,7 +159,7 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
         }
     }
 
-    exportBuffers (pointFile, hierarchyFile);
+    //exportBuffers (pointFile, hierarchyFile);
 }
 
 template <typename coordinateType, typename colorType>

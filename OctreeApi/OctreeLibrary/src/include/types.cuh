@@ -40,11 +40,13 @@ struct OutputData
     uint64_t encoded;
 };
 
+#pragma pack(push, 1)
 struct OutputBuffer
 {
     int32_t x, y, z;
     uint16_t r, g, b;
 };
+#pragma pack(pop)
 
 template <typename gpuType>
 using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;

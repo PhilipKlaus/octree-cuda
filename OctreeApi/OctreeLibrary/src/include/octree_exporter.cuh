@@ -31,7 +31,7 @@ public:
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
             itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
-            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
+            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree), itsOutputBufferSize(pointCloud->getOutputBufferSize()),
             itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples), itsOutputBuffer(std::move(pointCloud->getOutputBuffer_h()))
     {}
 
@@ -63,6 +63,11 @@ protected:
         return this->itsOctree[nodeIndex].childrenChunks[child];
     }
 
+    uint64_t getDataIndex (uint32_t nodeIndex)
+    {
+        return this->itsOctree[nodeIndex].chunkDataIndex;
+    }
+
 protected:
     uint32_t itsPointsExported;
     uint32_t itsAbsorbedNodes;
@@ -73,4 +78,5 @@ protected:
     shared_ptr<Chunk[]> itsOctree;
     std::shared_ptr<SubsamplingData> itsSubsamples;
     std::unique_ptr<OutputBuffer[]> itsOutputBuffer;
+    uint64_t itsOutputBufferSize;
 };

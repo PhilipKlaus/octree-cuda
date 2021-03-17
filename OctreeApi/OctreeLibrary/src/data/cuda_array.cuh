@@ -69,7 +69,7 @@ public:
                 static_cast<float> (elapsed.count ()) * 1000, itsName, false);
     }
 
-    uint32_t pointCount () const
+    uint64_t pointCount () const
     {
         return itsElements;
     }
