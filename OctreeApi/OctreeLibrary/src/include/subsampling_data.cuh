@@ -25,15 +25,10 @@ public:
     void setActiveParent(uint32_t parentNode);
     int getLastParent();
 
-    uint32_t addLinearLutEntry (uint32_t sparseIdx);
-    uint32_t getLinearIdx (uint32_t sparseIndex);
-
     OutputData* getOutputDevice ();
     OutputData* getOutputHost ();
 
-    uint32_t* getCountingGrid_d ();
     uint64_t* getAverageingGrid_d ();
-    int32_t* getDenseToSparseLut_d ();
     curandState_t* getRandomStates_d ();
     uint32_t* getRandomIndices_d ();
     uint32_t getGridCellAmount ();
@@ -51,16 +46,10 @@ private:
     std::unique_ptr<OutputData[]> itsOutputHost;
 
     // Subsampling data structures
-    GpuArrayU32 itsCountingGrid;
     GpuAveraging itsAveragingGrid;
-    GpuArrayI32 itsDenseToSparseLut;
     GpuRandomState itsRandomStates;
     GpuArrayU32 itsRandomIndices;
 
     // Current output info
     int itsLastParent;
-
-    // Internal data structures
-    uint32_t itsLinearCounter;
-    unordered_map<uint32_t, uint32_t> itsLinearLut; // Maps sparse indices to linear indices
 };

@@ -24,7 +24,7 @@ void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
 
     Kernel::pointCounting (
             config,
-            itsDensePointCountPerVoxel->devicePointer (),
+            itsCountingGrid->devicePointer (),
             itsTmpCounting->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             cloud,
@@ -40,7 +40,7 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
                 chunking::kernelPropagatePointCounts,
                 itsOctreeData->getNodes (i + 1),
                 "kernelPropagatePointCounts",
-                itsDensePointCountPerVoxel->devicePointer (),
+                itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
                 itsOctreeData->getNodes (i + 1),
@@ -68,7 +68,7 @@ void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
             itsOctreeData->getNodes (0),
             "kernelInitLeafNodes",
             itsOctreeData->getDevice (),
-            itsDensePointCountPerVoxel->devicePointer (),
+            itsCountingGrid->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
             itsOctreeData->getNodes (0));
@@ -86,7 +86,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsOctreeData->getNodes (i + 1),
                 "kernelMergeHierarchical",
                 itsOctreeData->getDevice (),
-                itsDensePointCountPerVoxel->devicePointer (),
+                itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
@@ -112,7 +112,7 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
     Kernel::distributePoints (
             config,
             itsOctreeData->getDevice (),
-            itsLeafLut->devicePointer (),
+            itsPointLut->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             cloud,

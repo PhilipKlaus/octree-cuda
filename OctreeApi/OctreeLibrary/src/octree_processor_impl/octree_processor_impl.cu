@@ -42,18 +42,18 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     auto timing = Timing::TimeTracker::start ();
 
     // Allocate the dense point count
-    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "densePointCountPerVoxel");
-    itsDensePointCountPerVoxel->memset (0);
+    itsCountingGrid = createGpuU32 (itsMetadata.nodeAmountDense, "countingGrid");
+    itsCountingGrid->memset (0);
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "denseToSparseLUTLeaf");
+    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "denseToSparseLut");
     itsDenseToSparseLUT->memset (-1);
 
     // Allocate the temporary sparseIndexCounter
-    itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
+    itsTmpCounting = createGpuU32 (1, "tmpCounting");
     itsTmpCounting->memset (0);
 
-    itsLeafLut = createGpuU32 (cloudMetadata.pointAmount, "dataLUT");
+    itsPointLut = createGpuU32 (cloudMetadata.pointAmount, "pointLut");
 
     auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.2);
     itsSubsamples       = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
@@ -97,7 +97,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
         PotreeExporter<float, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsLeafLut,
+                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -109,7 +109,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
         PotreeExporter<double, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsLeafLut,
+                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -128,7 +128,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
         PlyExporter<float, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsLeafLut,
+                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -140,7 +140,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
         PotreeExporter<double, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsLeafLut,
+                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),

@@ -10,6 +10,9 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
     auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
 
+    itsDenseToSparseLUT->memset (-1);
+    itsCountingGrid->memset(0);
+
     uint32_t pointSum = 0;
     evaluateOctreeProperties (
             h_octreeSparse,
@@ -43,8 +46,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     // Now we can assure that all direct children have subsamples
     if (node.isParent)
     {
-        auto linearIdx = itsSubsamples->addLinearLutEntry (sparseVoxelIndex);
-
         // Prepare and update the SubsampleConfig on the GPU
         SubsampleSet subsampleSet{};
         prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
@@ -71,14 +72,15 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         Kernel::evaluateSubsamples (
                 {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
                 subsampleSet,
-                itsSubsamples->getCountingGrid_d (),
+                itsCountingGrid->devicePointer(),
+                //itsSubsamples->getCountingGrid_d (),
                 itsOctreeData->getDevice(),
                 itsSubsamples->getAverageingGrid_d (),
-                itsSubsamples->getDenseToSparseLut_d (),
+                itsDenseToSparseLUT->devicePointer(),
                 itsSubsamples->getOutputDevice (),
                 cloud,
                 gridding,
-                itsLeafLut->devicePointer (),
+                itsPointLut->devicePointer (),
                 sparseVoxelIndex);
 
         // Prepare one random point index per cell
@@ -90,22 +92,24 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 "kernelGenerateRandoms",
                 itsSubsamples->getRandomStates_d (),
                 itsSubsamples->getRandomIndices_d (),
-                itsSubsamples->getDenseToSparseLut_d (),
-                itsSubsamples->getCountingGrid_d (),
+                itsDenseToSparseLUT->devicePointer(),
+                //itsSubsamples->getCountingGrid_d (),
+                itsCountingGrid->devicePointer(),
                 threads);
 
         // Distribute the subsampled points in parallel for all child nodes
         Kernel::randomPointSubsampling (
                 {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelRandomPointSubsample"},
                 subsampleSet,
-                itsSubsamples->getCountingGrid_d (),
+                //itsSubsamples->getCountingGrid_d (),
+                itsCountingGrid->devicePointer(),
                 itsSubsamples->getAverageingGrid_d (),
-                itsSubsamples->getDenseToSparseLut_d (),
+                itsDenseToSparseLUT->devicePointer(),
                 cloud,
                 gridding,
                 itsSubsamples->getRandomIndices_d (),
                 itsSubsamples->getOutputDevice (),
-                itsLeafLut->devicePointer (),
+                itsPointLut->devicePointer (),
                 itsOctreeData->getDevice(),
                 sparseVoxelIndex);
     }
@@ -123,7 +127,6 @@ void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet&
         if (childIndex != -1)
         {
             Chunk child               = itsOctreeData->getNode (childIndex);
-            config[i].linearIdx       = itsSubsamples->getLinearIdx (childIndex); // 0 if not existing
             config[i].isParent        = child.isParent;
             config[i].leafPointAmount = child.pointCount;
             config[i].leafDataIdx     = child.chunkDataIndex;

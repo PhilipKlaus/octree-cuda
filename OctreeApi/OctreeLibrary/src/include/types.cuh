@@ -6,7 +6,6 @@
 
 struct SubsampleConfig
 {
-    uint32_t linearIdx;
     int sparseIdx;
     bool isParent;
     uint32_t leafPointAmount; // Only valid if isParent == false
@@ -45,10 +44,8 @@ template <typename gpuType>
 using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8     = GpuArray<uint8_t>;
 using GpuArrayU32    = GpuArray<uint32_t>;
-using GpuArrayU64    = GpuArray<uint64_t>;
 using GpuArrayI32    = GpuArray<int>;
 using GpuOctree      = GpuArray<Chunk>;
-using GpuSubsample   = GpuArray<SubsampleConfig>;
 using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
 using GpuOutputData  = GpuArray<OutputData>;

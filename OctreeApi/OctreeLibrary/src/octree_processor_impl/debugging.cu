@@ -12,12 +12,12 @@ const OctreeMetadata& OctreeProcessor::OctreeProcessorImpl::getMetadata () const
 
 unique_ptr<uint32_t[]> OctreeProcessor::OctreeProcessorImpl::getDataLUT () const
 {
-    return itsLeafLut->toHost ();
+    return itsPointLut->toHost ();
 }
 
 unique_ptr<uint32_t[]> OctreeProcessor::OctreeProcessorImpl::getDensePointCountPerVoxel () const
 {
-    return itsDensePointCountPerVoxel->toHost ();
+    return itsCountingGrid->toHost ();
 }
 
 unique_ptr<int[]> OctreeProcessor::OctreeProcessorImpl::getDenseToSparseLUT () const
