@@ -64,7 +64,8 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
                 itsOctreeData->getDevice(),
                 sparseVoxelIndex,
-                itsSubsamples->getLastParent());
+                itsSubsamples->getLastParent(),
+                itsTmpCounting->devicePointer());
 
         itsSubsamples->setActiveParent(sparseVoxelIndex);
 
@@ -80,7 +81,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsamples->getOutputDevice (),
                 cloud,
                 gridding,
-                itsPointLut->devicePointer (),
                 sparseVoxelIndex);
 
         // Prepare one random point index per cell
@@ -109,7 +109,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 gridding,
                 itsSubsamples->getRandomIndices_d (),
                 itsSubsamples->getOutputDevice (),
-                itsPointLut->devicePointer (),
                 itsOctreeData->getDevice(),
                 sparseVoxelIndex);
     }

@@ -29,8 +29,8 @@ namespace chunking {
 template <typename coordinateType>
 __global__ void kernelDistributePoints (
         Chunk* octree,
-        uint32_t* dataLUT,
-        int* denseToSparseLUT,
+        OutputData* output,
+        const int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
@@ -54,7 +54,10 @@ __global__ void kernelDistributePoints (
     }
 
     uint32_t dataIndexWithinChunk = atomicAdd (tmpIndexRegister + sparseVoxelIndex, 1);
-    dataLUT[octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk] = index;
+
+    OutputData* dst = output + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk;
+    dst->pointIdx = index;
+    dst->encoded = 0;
 }
 
 } // namespace chunking

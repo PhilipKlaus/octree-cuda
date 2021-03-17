@@ -53,8 +53,6 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsTmpCounting = createGpuU32 (1, "tmpCounting");
     itsTmpCounting->memset (0);
 
-    itsPointLut = createGpuU32 (cloudMetadata.pointAmount, "pointLut");
-
     auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.2);
     itsSubsamples       = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
 
@@ -97,7 +95,6 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
         PotreeExporter<float, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -109,7 +106,6 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
         PotreeExporter<double, uint8_t> potreeExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -128,7 +124,6 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
         PlyExporter<float, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
@@ -140,7 +135,6 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
         PotreeExporter<double, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsPointLut,
                 itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),

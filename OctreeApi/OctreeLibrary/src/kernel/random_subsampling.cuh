@@ -76,13 +76,12 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
         OutputData* output,
-        uint32_t* leafLut,
         Chunk *octree,
         uint32_t nodeIdx)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    SubsampleConfig* config = (SubsampleConfig*)(&test);
+    auto* config = (SubsampleConfig*)(&test);
     bool isParent           = config[blockIdx.z].isParent;
     int sparseIdx           = config[blockIdx.z].sparseIdx;
 
@@ -95,12 +94,9 @@ __global__ void kernelRandomPointSubsample (
     // Get pointer to the output data entry
     OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
-    // Calculate global target point index
-    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
-
     // Get the point within the point cloud
     Vector3<coordinateType>* point =
-            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + globalPointIdx * cloud.dataStride);
+            reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + src->pointIdx * cloud.dataStride);
 
     // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -117,10 +113,10 @@ __global__ void kernelRandomPointSubsample (
 
     // Move subsampled averaging and point-LUT data to parent node
     OutputData* dst = output + octree[nodeIdx].chunkDataIndex + sparseIndex;
-    dst->pointIdx   = globalPointIdx;
+    dst->pointIdx   = src->pointIdx;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
-    uint16_t amount  = static_cast<uint16_t> (encoded & 0x3FF);
+    auto amount  = static_cast<uint16_t> (encoded & 0x3FF);
 
     dst->encoded = ((((encoded >> 46) & 0xFFFF) / amount) << 46) | ((((encoded >> 28) & 0xFFFF) / amount) << 28) |
                    ((((encoded >> 10) & 0xFFFF) / amount) << 10) | 1;
@@ -131,7 +127,7 @@ __global__ void kernelRandomPointSubsample (
 }
 
 template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (Chunk *octree, uint32_t nodeIndex, int lastNode)
+__global__ void kernelCalcNodeByteOffset (Chunk *octree, uint32_t nodeIndex, int lastNode, uint32_t *leafOffset)
 {
     int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index > 0)
@@ -139,7 +135,7 @@ __global__ void kernelCalcNodeByteOffset (Chunk *octree, uint32_t nodeIndex, int
         return;
     }
 
-    octree[nodeIndex].chunkDataIndex = (lastNode == -1) ? 0 : octree[lastNode].chunkDataIndex + octree[lastNode].pointCount;
+    octree[nodeIndex].chunkDataIndex = (lastNode == -1) ? leafOffset[0] : octree[lastNode].chunkDataIndex + octree[lastNode].pointCount;
 }
 
 } // namespace subsampling

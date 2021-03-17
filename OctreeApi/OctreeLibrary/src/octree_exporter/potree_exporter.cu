@@ -35,13 +35,12 @@ template <typename coordinateType, typename colorType>
 PotreeExporter<coordinateType, colorType>::PotreeExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
         const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata) :
         OctreeExporter<coordinateType, colorType> (
-                pointCloud, octree, leafeLut, subsamples, metadata, cloudMetadata, subsamplingMetadata)
+                pointCloud, octree, subsamples, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -90,51 +89,30 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
-        if (isParent)
+        OutputData* out = this->itsSubsamples->getOutputHost () + this->itsOctree[nodeIndex].chunkDataIndex;
+
+        // Export all point to pointFile
+        for (uint32_t u = 0; u < pointsInNode; ++u)
         {
-            OutputData* out = this->itsSubsamples->getOutputHost () + this->itsOctree[nodeIndex].chunkDataIndex;
-
-            // Export all point to pointFile
-            for (uint32_t u = 0; u < pointsInNode; ++u)
+            uint32_t pointIdx = (out + u)->pointIdx;
+            if (pointIdx != INVALID_INDEX)
             {
-                uint32_t pointIdx = (out + u)->pointIdx;
-                if (pointIdx != INVALID_INDEX)
+                ++validPoints;
+                uint64_t pointByteIndex = pointIdx * dataStride;
+                bufferOffset += writeCoordinatesBuffered (buffer, bufferOffset, pointByteIndex);
+
+                if (isAveraging && isParent)
                 {
-                    ++validPoints;
-                    uint64_t pointByteIndex = pointIdx * dataStride;
-                    bufferOffset += writeCoordinatesBuffered (buffer, bufferOffset, pointByteIndex);
-
-                    if (isAveraging)
-                    {
-                        bufferOffset += writeColorsBuffered (buffer, bufferOffset, nodeIndex, u);
-                    }
-
-                    else
-                    {
-                        pointByteIndex += (3 * sizeof (coordinateType));
-                        bufferOffset += writeSimpleColorsBuffered (buffer, bufferOffset, pointByteIndex);
-                    }
+                    bufferOffset += writeColorsBuffered (buffer, bufferOffset, nodeIndex, u);
                 }
-            }
-        }
-        else
-        {
-            uint32_t* lut = this->itsLeafLut.get ();
 
-            // Export all point to pointFile
-            for (uint64_t u = 0; u < pointsInNode; ++u)
-            {
-                if (lut[this->itsOctree[nodeIndex].chunkDataIndex + u] != INVALID_INDEX)
+                else
                 {
-                    ++validPoints;
-                    uint32_t pointByteIndex = lut[this->itsOctree[nodeIndex].chunkDataIndex + u] * dataStride;
-                    bufferOffset += writeCoordinatesBuffered (buffer, bufferOffset, pointByteIndex);
-                    pointByteIndex += sizeof (coordinateType) * 3;
+                    pointByteIndex += (3 * sizeof (coordinateType));
                     bufferOffset += writeSimpleColorsBuffered (buffer, bufferOffset, pointByteIndex);
                 }
             }
         }
-
 
         nodeByteSize = validPoints * bytesPerPoint;
     }
@@ -320,7 +298,6 @@ void PotreeExporter<coordinateType, colorType>::createMetadataFile ()
 template PotreeExporter<float, uint8_t>::PotreeExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
         const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
@@ -334,7 +311,6 @@ template void PotreeExporter<float, uint8_t>::exportOctree (const std::string& p
 template PotreeExporter<double, uint8_t>::PotreeExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
         const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,

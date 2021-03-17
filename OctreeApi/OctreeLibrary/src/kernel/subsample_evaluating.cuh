@@ -48,12 +48,11 @@ __global__ void kernelEvaluateSubsamples (
         OutputData* output,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t* leafLut,
         uint32_t nodeIdx)
 {
     int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
+    auto* config = (SubsampleConfig*)(&subsampleSet);
     bool isParent           = config[blockIdx.z].isParent;  // Is the child node a parent?
     int sparseIdx           = config[blockIdx.z].sparseIdx; // Sparse index of the child node
 
@@ -66,11 +65,8 @@ __global__ void kernelEvaluateSubsamples (
     // Get pointer to the output data entry
     OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
-    // Calculate global target point index
-    uint32_t globalPointIdx = isParent ? src->pointIdx : *(leafLut + config[blockIdx.z].leafDataIdx + localPointIdx);
-
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* targetCloudByte       = cloud.raw + globalPointIdx * cloud.dataStride;
+    uint8_t* targetCloudByte       = cloud.raw + (src->pointIdx) * cloud.dataStride;
     auto* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
     auto* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
 

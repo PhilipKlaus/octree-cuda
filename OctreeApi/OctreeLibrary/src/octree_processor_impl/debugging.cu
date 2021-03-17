@@ -12,7 +12,7 @@ const OctreeMetadata& OctreeProcessor::OctreeProcessorImpl::getMetadata () const
 
 unique_ptr<uint32_t[]> OctreeProcessor::OctreeProcessorImpl::getDataLUT () const
 {
-    return itsPointLut->toHost ();
+    return nullptr;
 }
 
 unique_ptr<uint32_t[]> OctreeProcessor::OctreeProcessorImpl::getDensePointCountPerVoxel () const

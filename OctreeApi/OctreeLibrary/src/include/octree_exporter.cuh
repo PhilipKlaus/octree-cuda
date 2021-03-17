@@ -25,14 +25,13 @@ public:
     OctreeExporter (
             const PointCloud& pointCloud,
             const shared_ptr<Chunk[]>& octree,
-            const GpuArrayU32& leafLut,
             const std::shared_ptr<SubsamplingData>& subsamples,
             OctreeMetadata metadata,
             PointCloudMetadata cloudMetadata,
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
             itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
-            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree), itsLeafLut (leafLut->toHost ()),
+            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
             itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples)
     {}
 
@@ -72,6 +71,5 @@ protected:
     SubsampleMetadata itsSubsampleMetadata;
     uint8_t* itsCloud;
     shared_ptr<Chunk[]> itsOctree;
-    unique_ptr<uint32_t[]> itsLeafLut;
     std::shared_ptr<SubsamplingData> itsSubsamples;
 };

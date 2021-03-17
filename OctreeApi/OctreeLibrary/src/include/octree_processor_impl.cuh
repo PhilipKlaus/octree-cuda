@@ -83,7 +83,6 @@ private:
     PointCloud itsCloud;
 
     // Required data structures for calculation
-    GpuArrayU32 itsPointLut;
     GpuArrayU32 itsCountingGrid;
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;

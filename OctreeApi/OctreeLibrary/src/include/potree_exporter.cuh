@@ -21,7 +21,6 @@ public:
     PotreeExporter (
             const PointCloud& pointCloud,
             const std::shared_ptr<Chunk[]>& octree,
-            const GpuArrayU32& leafeLut,
             const std::shared_ptr<SubsamplingData>& subsamples,
             OctreeMetadata metadata,
             PointCloudMetadata cloudMetadata,
