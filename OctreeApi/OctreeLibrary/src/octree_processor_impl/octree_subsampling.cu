@@ -76,13 +76,13 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         // Evaluate how many points fall in each cell
         Kernel::evaluateSubsamples (
                 {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
+                itsCloud->getOutputBuffer_d(),
                 subsampleSet,
                 itsCountingGrid->devicePointer(),
-                //itsSubsamples->getCountingGrid_d (),
                 itsOctreeData->getDevice(),
                 itsSubsamples->getAverageingGrid_d (),
                 itsDenseToSparseLUT->devicePointer(),
-                itsSubsamples->getOutputDevice (),
+                itsPointLut->devicePointer(),
                 cloud,
                 gridding,
                 sparseVoxelIndex);
@@ -97,7 +97,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsSubsamples->getRandomStates_d (),
                 itsSubsamples->getRandomIndices_d (),
                 itsDenseToSparseLUT->devicePointer(),
-                //itsSubsamples->getCountingGrid_d (),
                 itsCountingGrid->devicePointer(),
                 threads);
 
@@ -106,14 +105,13 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelRandomPointSubsample"},
                 itsCloud->getOutputBuffer_d(),
                 subsampleSet,
-                //itsSubsamples->getCountingGrid_d (),
                 itsCountingGrid->devicePointer(),
                 itsSubsamples->getAverageingGrid_d (),
                 itsDenseToSparseLUT->devicePointer(),
                 cloud,
                 gridding,
                 itsSubsamples->getRandomIndices_d (),
-                itsSubsamples->getOutputDevice (),
+                itsPointLut->devicePointer(),
                 itsOctreeData->getDevice(),
                 sparseVoxelIndex);
     }

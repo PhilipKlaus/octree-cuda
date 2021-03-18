@@ -20,8 +20,10 @@ class IPointCloud
 public:
     IPointCloud (uint8_t* source, PointCloudMetadata metadata) : itsSourceCloud (source), itsMetadata (metadata)
     {
-        auto expectedPoints = static_cast<uint64_t> (itsMetadata.pointAmount * 2.2);
+        auto expectedPoints = static_cast<uint64_t> (itsMetadata.pointAmount * 2.1);
+        auto timing = Timing::TimeTracker::start ();
         itsOutput = createGpuOutputBuffer(expectedPoints, "outputBuffer");
+        Timing::TimeTracker::stop (timing, "Greate output buffer", Timing::Time::PROCESS);
     }
     virtual ~IPointCloud ()            = default;
     virtual uint8_t* getCloudHost ()   = 0;

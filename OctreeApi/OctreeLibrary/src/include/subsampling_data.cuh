@@ -13,20 +13,15 @@
 class SubsamplingData
 {
 public:
-    SubsamplingData (uint32_t estimatedPoints, uint32_t subsamplingGrid);
+    SubsamplingData (uint32_t subsamplingGrid);
 
     // ToDo: To be removed
     const std::unique_ptr<uint32_t[]>& getLutHost (uint32_t index);
     const std::unique_ptr<uint64_t[]>& getAvgHost (uint32_t index);
 
-    void copyToHost ();
-
     // ----------------
     void setActiveParent(uint32_t parentNode);
     int getLastParent();
-
-    OutputData* getOutputDevice ();
-    OutputData* getOutputHost ();
 
     uint64_t* getAverageingGrid_d ();
     curandState_t* getRandomStates_d ();
@@ -40,10 +35,6 @@ private:
     unordered_map<uint32_t, GpuAveraging> itsAvgDevice;
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
-
-    // Output Info
-    GpuOutputData itsOutput;
-    std::unique_ptr<OutputData[]> itsOutputHost;
 
     // Subsampling data structures
     GpuAveraging itsAveragingGrid;

@@ -34,12 +34,6 @@ struct Chunk
     bool isParent;             // Denotes if Chunk is a parent or a leaf node
 };
 
-struct OutputData
-{
-    uint32_t pointIdx;
-    uint64_t encoded;
-};
-
 #pragma pack(push, 1)
 struct OutputBuffer
 {
@@ -47,6 +41,8 @@ struct OutputBuffer
     uint16_t r, g, b;
 };
 #pragma pack(pop)
+
+using PointLut = uint32_t;
 
 template <typename gpuType>
 using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
@@ -56,7 +52,7 @@ using GpuArrayI32    = GpuArray<int>;
 using GpuOctree      = GpuArray<Chunk>;
 using GpuAveraging   = GpuArray<uint64_t>;
 using GpuRandomState = GpuArray<curandState_t>;
-using GpuOutputData  = GpuArray<OutputData>;
+using GpuPointLut  =    GpuArray<PointLut>;
 using GpuOutputBuffer  = GpuArray<OutputBuffer>;
 
 template <typename T, typename... Args>
@@ -69,12 +65,6 @@ template <typename... Args>
 std::unique_ptr<CudaArray<uint32_t>> createGpuU32 (Args&&... args)
 {
     return createGpu<uint32_t> (std::forward<Args> (args)...);
-}
-
-template <typename... Args>
-std::unique_ptr<CudaArray<uint32_t>> createGpuU64 (Args&&... args)
-{
-    return createGpu<uint64_t> (std::forward<Args> (args)...);
 }
 
 template <typename... Args>
@@ -114,9 +104,9 @@ std::unique_ptr<CudaArray<uint64_t>> createGpuAveraging (Args&&... args)
 }
 
 template <typename... Args>
-std::unique_ptr<CudaArray<OutputData>> createGpuOutputData (Args&&... args)
+std::unique_ptr<CudaArray<PointLut>> createGpuOutputData (Args&&... args)
 {
-    return createGpu<OutputData> (std::forward<Args> (args)...);
+    return createGpu<PointLut> (std::forward<Args> (args)...);
 }
 
 template <typename... Args>

@@ -87,6 +87,7 @@ private:
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
     GpuArrayU32 itsTmpCounting;
+    GpuPointLut itsPointLut;
 
     // Metadata
     OctreeMetadata itsMetadata;

@@ -90,7 +90,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
-        OutputData* out = this->itsSubsamples->getOutputHost () + this->itsOctree[nodeIndex].chunkDataIndex;
+        OutputData* out = this->itsSubsamples->getPointLut_h () + this->itsOctree[nodeIndex].chunkDataIndex;
         uint64_t outputStart = this->itsOctree[nodeIndex].chunkDataIndex;
         // Export all point to pointFile
         for (uint32_t u = 0; u < pointsInNode; ++u)

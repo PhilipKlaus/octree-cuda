@@ -20,16 +20,8 @@ const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t sparseI
     return itsAvgHost[sparseIndex];
 }
 
-void SubsamplingData::copyToHost ()
+SubsamplingData::SubsamplingData (uint32_t subsamplingGrid) : itsLastParent(-1)
 {
-    itsOutputHost       = itsOutput->toHost ();
-}
-
-SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsamplingGrid) : itsLastParent(-1)
-{
-    itsOutput = createGpuOutputData (estimatedPoints, "output");
-    itsOutput->memset (0);
-
     itsGridCellAmount   = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
     itsAveragingGrid    = createGpuAveraging (itsGridCellAmount, "averagingGrid");
     itsRandomStates     = createGpuRandom (1024, "randomStates");
@@ -44,16 +36,6 @@ SubsamplingData::SubsamplingData (uint32_t estimatedPoints, uint32_t subsampling
             std::time (nullptr),
             itsRandomStates->devicePointer (),
             1024);
-}
-
-OutputData* SubsamplingData::getOutputDevice ()
-{
-    return itsOutput->devicePointer ();
-}
-
-OutputData* SubsamplingData::getOutputHost ()
-{
-    return itsOutputHost.get ();
 }
 
 uint64_t* SubsamplingData::getAverageingGrid_d ()

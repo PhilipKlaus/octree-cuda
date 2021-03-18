@@ -117,7 +117,7 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
     Kernel::distributePoints (
             config,
             itsOctreeData->getDevice (),
-            itsSubsamples->getOutputDevice(),
+            itsPointLut->devicePointer(),
             itsCloud->getOutputBuffer_d(),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),

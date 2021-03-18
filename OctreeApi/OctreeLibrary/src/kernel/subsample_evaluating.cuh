@@ -22,6 +22,11 @@ __device__ uint64_t encodeColors (Vector3<colorType>* color)
            static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
 }
 
+__device__ uint64_t encodeColors (uint16_t r, uint16_t g, uint16_t b)
+{
+    return (static_cast<uint64_t> (r) << 46) | (static_cast<uint64_t> (g) << 28) |
+           static_cast<uint64_t> (b) << 10 | static_cast<uint64_t> (1);
+}
 /**
  * Places a 3-dimensional grid over 8 octree children nodes and maps the points inside to a target cell.
  * The kernel counts how many points fall into each cell of the counting grid.
@@ -40,17 +45,18 @@ __device__ uint64_t encodeColors (Vector3<colorType>* color)
  */
 template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
+        OutputBuffer *outputBuffer,
         SubsampleSet subsampleSet,
         uint32_t* countingGrid,
         Chunk *octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        OutputData* output,
+        PointLut * output,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
         uint32_t nodeIdx)
 {
-    int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     auto* config = (SubsampleConfig*)(&subsampleSet);
     bool isParent           = config[blockIdx.z].isParent;  // Is the child node a parent?
@@ -63,12 +69,12 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Get pointer to the output data entry
-    OutputData* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
+    PointLut * src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* targetCloudByte       = cloud.raw + (src->pointIdx) * cloud.dataStride;
-    auto* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
-    auto* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
+    uint8_t* srcCloudByte       = cloud.raw + (*src) * cloud.dataStride;
+    auto* point = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
+    OutputBuffer *srcBuffer = outputBuffer + octree[sparseIdx].chunkDataIndex + localPointIdx;
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -77,12 +83,13 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // Encode the point color and add it up
-    uint64_t encoded = isParent ? src->encoded : encodeColors (color);
+    uint64_t encoded = encodeColors(srcBuffer->r, srcBuffer->g, srcBuffer->b);//isParent ? src->encoded : encodeColors (color);
 
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
-    // If the thread handles the first point in a cell: increase the pointsPerSubsample and retrieve / store the sparse
-    // index for the appropriate dense cell
+    // If the thread handles the first point in a cell:
+    // - increase the point count in the parent cell
+    // - Add dense-to-sparse-lut entry
     if (old == 0)
     {
         denseToSparseLUT[denseVoxelIndex] = atomicAdd (&(octree[nodeIdx].pointCount), 1);

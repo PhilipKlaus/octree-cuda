@@ -53,8 +53,11 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsTmpCounting = createGpuU32 (1, "tmpCounting");
     itsTmpCounting->memset (0);
 
-    auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.2);
-    itsSubsamples       = std::make_shared<SubsamplingData> (expectedPoints, itsSubsampleMetadata.subsamplingGrid);
+    itsSubsamples       = std::make_shared<SubsamplingData> (itsSubsampleMetadata.subsamplingGrid);
+
+    auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.1);
+    itsPointLut = createGpuOutputData (expectedPoints, "pointLUT");
+    itsPointLut->memset (0);
 
     Timing::TimeTracker::stop (timing, "Preparing GPU data", Timing::Time::PROCESS);
 }
@@ -87,7 +90,6 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
-    //itsSubsamples->copyToHost ();
     itsOctreeData->copyToHost();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
@@ -116,7 +118,6 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
-    itsSubsamples->copyToHost ();
     itsOctreeData->copyToHost();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)

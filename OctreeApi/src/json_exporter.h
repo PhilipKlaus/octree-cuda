@@ -74,9 +74,6 @@ void export_json_data (
     statistics["timings"]["accumulatedMemCpyTime"]     = accumulatedMemCpyTime;
     statistics["timings"]["accumulatedMallocTime"]     = accumulatedMallocTime;
     statistics["timings"]["accumulatedProcessTimings"] = accumulatedProcessTimings;
-    statistics["timings"]["accumulatedOverall"] =
-            accumulatedKernelTime + accumulatedMemCpyTime + accumulatedMallocTime + accumulatedProcessTimings;
-
 
     MemoryTracker& watcher                    = MemoryTracker::getInstance ();
     statistics["memory"]["peak"]              = watcher.getMemoryPeak ();

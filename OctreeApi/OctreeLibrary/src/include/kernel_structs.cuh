@@ -30,9 +30,4 @@ struct Cloud
     Vector3<double> scaleFactor; ///< The bounding box minimum
 };
 
-struct OutputInfo
-{
-    uint32_t* pointCount;  ///< The amount of points in the output node
-    uint32_t* pointOffset; ///< The absolute offset (in points) of the node
-};
 } // namespace KernelStructs
