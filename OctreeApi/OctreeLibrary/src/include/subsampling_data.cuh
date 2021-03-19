@@ -20,12 +20,9 @@ public:
     const std::unique_ptr<uint64_t[]>& getAvgHost (uint32_t index);
 
     // ----------------
-    void setActiveParent(uint32_t parentNode);
-    int getLastParent();
+    void setActiveParent (uint32_t parentNode);
+    int getLastParent ();
 
-    uint64_t* getAverageingGrid_d ();
-    curandState_t* getRandomStates_d ();
-    uint32_t* getRandomIndices_d ();
     uint32_t getGridCellAmount ();
 
 private:
@@ -35,11 +32,6 @@ private:
     unordered_map<uint32_t, GpuAveraging> itsAvgDevice;
     unordered_map<uint32_t, std::unique_ptr<uint32_t[]>> itsLutHost;
     unordered_map<uint32_t, std::unique_ptr<uint64_t[]>> itsAvgHost;
-
-    // Subsampling data structures
-    GpuAveraging itsAveragingGrid;
-    GpuRandomState itsRandomStates;
-    GpuArrayU32 itsRandomIndices;
 
     // Current output info
     int itsLastParent;

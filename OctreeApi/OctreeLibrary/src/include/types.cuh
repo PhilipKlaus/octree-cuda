@@ -45,15 +45,15 @@ struct OutputBuffer
 using PointLut = uint32_t;
 
 template <typename gpuType>
-using GpuArray       = std::unique_ptr<CudaArray<gpuType>>;
-using GpuArrayU8     = GpuArray<uint8_t>;
-using GpuArrayU32    = GpuArray<uint32_t>;
-using GpuArrayI32    = GpuArray<int>;
-using GpuOctree      = GpuArray<Chunk>;
-using GpuAveraging   = GpuArray<uint64_t>;
-using GpuRandomState = GpuArray<curandState_t>;
-using GpuPointLut  =    GpuArray<PointLut>;
-using GpuOutputBuffer  = GpuArray<OutputBuffer>;
+using GpuArray        = std::unique_ptr<CudaArray<gpuType>>;
+using GpuArrayU8      = GpuArray<uint8_t>;
+using GpuArrayU32     = GpuArray<uint32_t>;
+using GpuArrayI32     = GpuArray<int>;
+using GpuOctree       = GpuArray<Chunk>;
+using GpuAveraging    = GpuArray<uint64_t>;
+using GpuRandomState  = GpuArray<curandState_t>;
+using GpuPointLut     = GpuArray<PointLut>;
+using GpuOutputBuffer = GpuArray<OutputBuffer>;
 
 template <typename T, typename... Args>
 std::unique_ptr<CudaArray<T>> createGpu (Args&&... args)

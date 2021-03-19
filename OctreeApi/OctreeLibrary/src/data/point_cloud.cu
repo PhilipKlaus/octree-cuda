@@ -6,7 +6,7 @@ PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : 
     auto timing    = Timing::TimeTracker::start ();
     itsDeviceCloud = createGpuU8 (itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointCloud");
     itsDeviceCloud->toGPU (itsSourceCloud);
-    Timing::TimeTracker::stop (timing, "Init cuda & prepare cloud", Timing::Time::PROCESS);
+    Timing::TimeTracker::stop (timing, "Copy point cloud to GPU", Timing::Time::PROCESS);
 }
 
 uint8_t* PointCloudHost::getCloudHost ()

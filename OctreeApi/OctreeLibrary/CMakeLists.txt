@@ -37,9 +37,7 @@ add_library(${PROJECT_NAME} STATIC
         src/include/octree_processor_impl.cuh
         src/octree_processor_impl/octree_subsampling.cu
         src/octree_processor_impl/benchmarking.cu
-        src/octree_processor_impl/debugging.cu
         src/octree_processor_impl/octree_processor_impl.cu
-        # src/octree_processor_impl/dummy.cpp
         src/octree_processor_impl/octree_chunking.cu
 
         # Octree export
@@ -79,10 +77,10 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 ###########
 # OPTIONS #
 ###########
-IF(ENABLE_KERNEL_TIMINGS)
+IF (ENABLE_KERNEL_TIMINGS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE KERNEL_TIMINGS)
     message(STATUS "Enable Cuda kernel timings")
-ENDIF(ENABLE_KERNEL_TIMINGS)
+ENDIF (ENABLE_KERNEL_TIMINGS)
 
 
 ####################

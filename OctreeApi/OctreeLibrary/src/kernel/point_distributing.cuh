@@ -29,8 +29,8 @@ namespace chunking {
 template <typename coordinateType, typename colorType>
 __global__ void kernelDistributePoints (
         Chunk* octree,
-        PointLut * output,
-        OutputBuffer *outputBuffer,
+        PointLut* output,
+        OutputBuffer* outputBuffer,
         const int* denseToSparseLUT,
         uint32_t* tmpIndexRegister,
         KernelStructs::Cloud cloud,
@@ -43,9 +43,9 @@ __global__ void kernelDistributePoints (
     }
 
     // Fetch point coordinates and color
-    uint8_t *srcPoint = cloud.raw + index * cloud.dataStride;
-    auto* point = reinterpret_cast<Vector3<coordinateType>*> (srcPoint);
-    auto* color = reinterpret_cast<Vector3<colorType>*> (srcPoint + 3 * sizeof(coordinateType));
+    uint8_t* srcPoint = cloud.raw + index * cloud.dataStride;
+    auto* point       = reinterpret_cast<Vector3<coordinateType>*> (srcPoint);
+    auto* color       = reinterpret_cast<Vector3<colorType>*> (srcPoint + 3 * sizeof (coordinateType));
 
     auto sparseVoxelIndex = denseToSparseLUT[mapPointToGrid<coordinateType> (point, gridding)];
 
@@ -64,13 +64,13 @@ __global__ void kernelDistributePoints (
     *(output + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk) = index;
 
     // Write coordinates and colors to output buffer
-    OutputBuffer * out = outputBuffer + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk;
-    out->x = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
-    out->y = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
-    out->z = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
-    out->r = color->x;
-    out->g = color->y;
-    out->b = color->z;
+    OutputBuffer* out = outputBuffer + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk;
+    out->x            = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
+    out->y            = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
+    out->z            = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
+    out->r            = color->x;
+    out->g            = color->y;
+    out->b            = color->z;
 }
 
 } // namespace chunking

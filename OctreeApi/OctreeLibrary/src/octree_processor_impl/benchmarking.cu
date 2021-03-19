@@ -81,7 +81,7 @@ void OctreeProcessor::OctreeProcessorImpl::updateOctreeStatistics ()
     uint32_t pointSum = 0;
     float sumVariance = 0.f;
 
-    auto octree = getOctreeSparse ();
+    auto octree = itsOctreeData->getHost ();
     evaluateOctreeProperties (
             octree,
             itsMetadata.leafNodeAmount,
@@ -144,7 +144,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePa
     {
         counts.push_back (0);
     }
-    histogramBinning (getOctreeSparse (), counts, itsMetadata.minPointsPerNode, binWidth, getRootIndex ());
+    histogramBinning (itsOctreeData->getHost (), counts, itsMetadata.minPointsPerNode, binWidth, getRootIndex ());
 
     const std::string itsHtmlPart1 = "<html>\n"
                                      "    <head>\n"

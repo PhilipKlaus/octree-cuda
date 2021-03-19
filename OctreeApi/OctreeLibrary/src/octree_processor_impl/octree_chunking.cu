@@ -38,12 +38,12 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
     {
         executeKernel (
                 chunking::kernelPropagatePointCounts,
-                itsOctreeData->getNodes (i + 1),
+                itsOctreeData->getNodeAmount (i + 1),
                 "kernelPropagatePointCounts",
                 itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
-                itsOctreeData->getNodes (i + 1),
+                itsOctreeData->getNodeAmount (i + 1),
                 itsOctreeData->getGridSize (i + 1),
                 itsOctreeData->getGridSize (i),
                 itsOctreeData->getNodeOffset (i + 1),
@@ -65,13 +65,13 @@ void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
 {
     executeKernel (
             chunking::kernelInitLeafNodes,
-            itsOctreeData->getNodes (0),
+            itsOctreeData->getNodeAmount (0),
             "kernelInitLeafNodes",
             itsOctreeData->getDevice (),
             itsCountingGrid->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
-            itsOctreeData->getNodes (0));
+            itsOctreeData->getNodeAmount (0));
 }
 
 
@@ -83,7 +83,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
     {
         executeKernel (
                 chunking::kernelMergeHierarchical,
-                itsOctreeData->getNodes (i + 1),
+                itsOctreeData->getNodeAmount (i + 1),
                 "kernelMergeHierarchical",
                 itsOctreeData->getDevice (),
                 itsCountingGrid->devicePointer (),
@@ -91,7 +91,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsSparseToDenseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
                 itsMetadata.mergingThreshold,
-                itsOctreeData->getNodes (i + 1),
+                itsOctreeData->getNodeAmount (i + 1),
                 itsOctreeData->getGridSize (i + 1),
                 itsOctreeData->getGridSize (i),
                 itsOctreeData->getNodeOffset (i + 1),
@@ -104,21 +104,24 @@ void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
     auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
-    auto& meta                       = itsCloud->getMetadata ();
-    Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount, "kernelDistributePoints"};
-    KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride,
-                                        {
-                                          1.0 / meta.scale.x,
-                                          1.0 / meta.scale.y,
-                                          1.0 / meta.scale.z,
-                                  }};
+    auto& meta                  = itsCloud->getMetadata ();
+    Kernel::KernelConfig config = {meta.cloudType, meta.pointAmount, "kernelDistributePoints"};
+    KernelStructs::Cloud cloud  = {
+            itsCloud->getCloudDevice (),
+            meta.pointAmount,
+            meta.pointDataStride,
+            {
+                    1.0 / meta.scale.x,
+                    1.0 / meta.scale.y,
+                    1.0 / meta.scale.z,
+            }};
     KernelStructs::Gridding gridding = {itsOctreeData->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
 
     Kernel::distributePoints (
             config,
             itsOctreeData->getDevice (),
-            itsPointLut->devicePointer(),
-            itsCloud->getOutputBuffer_d(),
+            itsPointLut->devicePointer (),
+            itsCloud->getOutputBuffer_d (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             cloud,

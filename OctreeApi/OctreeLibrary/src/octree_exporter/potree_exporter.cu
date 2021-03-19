@@ -62,7 +62,7 @@ void PotreeExporter<coordinateType, colorType>::createBinaryHierarchyFiles ()
     hierarchyFile.open (itsExportFolder + HIERARCHY_FILE_NAME, std::ios::binary);
 
     breathFirstExport (pointFile, hierarchyFile);
-    pointFile.write (reinterpret_cast<const char*> (this->itsOutputBuffer.get()), this->itsOutputBufferSize);
+    pointFile.write (reinterpret_cast<const char*> (this->itsOutputBuffer.get ()), this->itsOutputBufferSize);
 
     pointFile.close ();
     hierarchyFile.close ();
@@ -90,7 +90,7 @@ ExportResult PotreeExporter<coordinateType, colorType>::exportNode (uint32_t nod
         uint32_t bytesPerPoint = 3 * (sizeof (int32_t) + sizeof (uint16_t));
         buffer                 = std::make_unique<uint8_t[]> (pointsInNode * bytesPerPoint);
 
-        OutputData* out = this->itsSubsamples->getPointLut_h () + this->itsOctree[nodeIndex].chunkDataIndex;
+        OutputData* out      = this->itsSubsamples->getPointLut_h () + this->itsOctree[nodeIndex].chunkDataIndex;
         uint64_t outputStart = this->itsOctree[nodeIndex].chunkDataIndex;
         // Export all point to pointFile
         for (uint32_t u = 0; u < pointsInNode; ++u)
@@ -129,18 +129,18 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
     discoveredNodes[this->getRootIndex ()] = true;
     toVisit.push_back (this->getRootIndex ());
 
-    //ThreadPool pool (thread::hardware_concurrency ());
+    // ThreadPool pool (thread::hardware_concurrency ());
 
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
 
-        //itsFutureResults.push_back (pool.enqueue ([this, node] { return std::move (exportNode (node)); }));
-        uint8_t bitmask = getChildMask (node);
-        uint8_t type    = bitmask == 0 ? 1 : 0;
-        uint64_t byteOffset = this->getDataIndex(node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
-        uint64_t byteSize = this->getPointsInNode (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        // itsFutureResults.push_back (pool.enqueue ([this, node] { return std::move (exportNode (node)); }));
+        uint8_t bitmask     = getChildMask (node);
+        uint8_t type        = bitmask == 0 ? 1 : 0;
+        uint64_t byteOffset = this->getDataIndex (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        uint64_t byteSize   = this->getPointsInNode (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
         HierarchyFileEntry entry{type, bitmask, this->getPointsInNode (node), byteOffset, byteSize};
         hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
 
@@ -159,7 +159,7 @@ void PotreeExporter<coordinateType, colorType>::breathFirstExport (
         }
     }
 
-    //exportBuffers (pointFile, hierarchyFile);
+    // exportBuffers (pointFile, hierarchyFile);
 }
 
 template <typename coordinateType, typename colorType>

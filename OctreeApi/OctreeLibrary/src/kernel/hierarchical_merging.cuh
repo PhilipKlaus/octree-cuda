@@ -88,7 +88,8 @@ __global__ void kernelMergeHierarchical (
     // Assign children chunks and sum up all point in child nodes
     auto sum = 0;
 #pragma unroll
-    for(uint8_t i = 0; i < 8; ++i) {
+    for (uint8_t i = 0; i < 8; ++i)
+    {
         chunk->childrenChunks[i] = (countingGrid[chunk_indices[i]] > 0) ? denseToSparseLUT[chunk_indices[i]] : -1;
         if (chunk->childrenChunks[i] != -1)
         {

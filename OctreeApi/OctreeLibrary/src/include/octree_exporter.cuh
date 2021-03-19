@@ -31,8 +31,9 @@ public:
             SubsampleMetadata subsampleMetadata) :
             itsMetadata (metadata),
             itsCloudMetadata (cloudMetadata), itsSubsampleMetadata (subsampleMetadata),
-            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree), itsOutputBufferSize(pointCloud->getOutputBufferSize()),
-            itsAbsorbedNodes (0), itsPointsExported (0), itsSubsamples (subsamples), itsOutputBuffer(std::move(pointCloud->getOutputBuffer_h()))
+            itsCloud (pointCloud->getCloudHost ()), itsOctree (octree),
+            itsOutputBufferSize (pointCloud->getOutputBufferSize ()), itsAbsorbedNodes (0), itsPointsExported (0),
+            itsSubsamples (subsamples), itsOutputBuffer (std::move (pointCloud->getOutputBuffer_h ()))
     {}
 
     virtual void exportOctree (const std::string& path) = 0;

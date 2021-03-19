@@ -73,7 +73,8 @@ __global__ void kernelPropagatePointCounts (
     // Sum up point counts from all 8 children
     uint32_t sum = 0;
 #pragma unroll
-    for(uint8_t i = 0; i < 8; ++i) {
+    for (uint8_t i = 0; i < 8; ++i)
+    {
         sum += *(countingGrid + chunk_indices[i]);
     }
 

@@ -1,4 +1,3 @@
-#include "random_initialization.cuh"
 #include "subsampling_data.cuh"
 
 
@@ -20,36 +19,9 @@ const std::unique_ptr<uint64_t[]>& SubsamplingData::getAvgHost (uint32_t sparseI
     return itsAvgHost[sparseIndex];
 }
 
-SubsamplingData::SubsamplingData (uint32_t subsamplingGrid) : itsLastParent(-1)
+SubsamplingData::SubsamplingData (uint32_t subsamplingGrid) : itsLastParent (-1)
 {
-    itsGridCellAmount   = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
-    itsAveragingGrid    = createGpuAveraging (itsGridCellAmount, "averagingGrid");
-    itsRandomStates     = createGpuRandom (1024, "randomStates");
-    itsRandomIndices    = createGpuU32 (itsGridCellAmount, "randomIndices");
-
-    itsAveragingGrid->memset(0);
-
-    executeKernel (
-            subsampling::kernelInitRandoms,
-            1024u,
-            "kernelInitRandoms",
-            std::time (nullptr),
-            itsRandomStates->devicePointer (),
-            1024);
-}
-
-uint64_t* SubsamplingData::getAverageingGrid_d ()
-{
-    return itsAveragingGrid->devicePointer ();
-}
-
-curandState_t* SubsamplingData::getRandomStates_d ()
-{
-    return itsRandomStates->devicePointer ();
-}
-uint32_t* SubsamplingData::getRandomIndices_d ()
-{
-    return itsRandomIndices->devicePointer ();
+    itsGridCellAmount = static_cast<uint32_t> (pow (subsamplingGrid, 3.f));
 }
 
 uint32_t SubsamplingData::getGridCellAmount ()
@@ -59,7 +31,7 @@ uint32_t SubsamplingData::getGridCellAmount ()
 
 void SubsamplingData::setActiveParent (uint32_t parentNode)
 {
-    itsLastParent = static_cast<int>(parentNode);
+    itsLastParent = static_cast<int> (parentNode);
 }
 int SubsamplingData::getLastParent ()
 {

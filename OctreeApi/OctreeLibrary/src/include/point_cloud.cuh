@@ -21,9 +21,9 @@ public:
     IPointCloud (uint8_t* source, PointCloudMetadata metadata) : itsSourceCloud (source), itsMetadata (metadata)
     {
         auto expectedPoints = static_cast<uint64_t> (itsMetadata.pointAmount * 2.1);
-        auto timing = Timing::TimeTracker::start ();
-        itsOutput = createGpuOutputBuffer(expectedPoints, "outputBuffer");
-        Timing::TimeTracker::stop (timing, "Greate output buffer", Timing::Time::PROCESS);
+        auto timing         = Timing::TimeTracker::start ();
+        itsOutput           = createGpuOutputBuffer (expectedPoints, "outputBuffer");
+        Timing::TimeTracker::stop (timing, "Create output buffer", Timing::Time::PROCESS);
     }
     virtual ~IPointCloud ()            = default;
     virtual uint8_t* getCloudHost ()   = 0;
@@ -34,16 +34,19 @@ public:
         return itsMetadata;
     }
 
-    OutputBuffer * getOutputBuffer_d() {
-        return itsOutput->devicePointer();
+    OutputBuffer* getOutputBuffer_d ()
+    {
+        return itsOutput->devicePointer ();
     }
 
-    std::unique_ptr<OutputBuffer[]> getOutputBuffer_h() {
-        return itsOutput->toHost();
+    std::unique_ptr<OutputBuffer[]> getOutputBuffer_h ()
+    {
+        return itsOutput->toHost ();
     }
 
-    uint64_t getOutputBufferSize() {
-        return itsOutput->pointCount() * sizeof(OutputBuffer);
+    uint64_t getOutputBufferSize ()
+    {
+        return itsOutput->pointCount () * sizeof (OutputBuffer);
     }
 
 protected:

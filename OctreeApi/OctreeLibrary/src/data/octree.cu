@@ -23,7 +23,7 @@ uint8_t Octree::getDepth ()
 {
     return itsDepth;
 }
-uint32_t Octree::getNodes (uint8_t level)
+uint32_t Octree::getNodeAmount (uint8_t level)
 {
     return itsNodesPerLevel[level];
 }

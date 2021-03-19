@@ -13,14 +13,14 @@
 class Octree
 {
 public:
-    Octree (uint32_t chunkingGrid);
+    explicit Octree (uint32_t chunkingGrid);
     Octree (const Octree&) = delete;
 
     void createOctree (uint32_t nodeAmountSparse);
     void copyToHost ();
 
     uint8_t getDepth ();
-    uint32_t getNodes (uint8_t level);
+    uint32_t getNodeAmount (uint8_t level);
     uint32_t getGridSize (uint8_t level);
     uint32_t getNodeOffset (uint8_t level);
     uint32_t getOverallNodes ();
