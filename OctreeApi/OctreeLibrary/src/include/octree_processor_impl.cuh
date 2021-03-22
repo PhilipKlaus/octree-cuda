@@ -65,7 +65,7 @@ private:
 
 private:
     PointCloud itsCloud;
-    std::unique_ptr<Octree> itsOctree;
+    Octree itsOctree;
 
     SubsampleMetadata itsSubsampleMetadata;
 

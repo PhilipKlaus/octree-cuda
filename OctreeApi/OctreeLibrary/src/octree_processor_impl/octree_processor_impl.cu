@@ -21,7 +21,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     cudaFree (nullptr);
     Timing::TimeTracker::stop (timing, "Init CUDA", Timing::Time::PROCESS);
 
-    itsOctree               = std::make_unique<Octree> (chunkingGrid, mergingThreshold);
+    itsOctree               = std::make_unique<OctreeData> (chunkingGrid, mergingThreshold);
     OctreeMetadata metadata = itsOctree->getMetadata ();
     itsSubsampleMetadata    = subsamplingMetadata;
 

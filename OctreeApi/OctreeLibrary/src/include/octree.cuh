@@ -1,7 +1,7 @@
 /**
  * @file octree_data.cuh
  * @author Philip Klaus
- * @brief Contains an Octree class
+ * @brief Contains an OctreeData class
  */
 
 #pragma once
@@ -19,13 +19,13 @@ public:
 
 
 /**
- * The Octree class represents and manages an octree data structure and its metadata.
+ * The OctreeData class represents and manages an octree data structure and its metadata.
  */
-class Octree
+class OctreeData
 {
 public:
-    Octree (uint32_t chunkingGrid, uint32_t mergingThreshold);
-    Octree (const Octree&) = delete;
+    OctreeData (uint32_t chunkingGrid, uint32_t mergingThreshold);
+    OctreeData (const OctreeData&) = delete;
 
     void createHierarchy (uint32_t nodeAmountSparse);
 
@@ -61,3 +61,5 @@ private:
     NodeStatistics itsNodeStatistics;
     OctreeMetadata itsMetadata;
 };
+
+using Octree = std::unique_ptr<OctreeData>;

@@ -3,7 +3,7 @@
 
 TEST_CASE ("An Octree should")
 {
-    Octree octree(512, 10000);
+    OctreeData octree(512, 10000);
 
     SECTION("before creating the hierarchy") {
 
