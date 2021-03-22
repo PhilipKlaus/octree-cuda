@@ -46,7 +46,7 @@ public:
 
 private:
     void initialize ();
-    void ensureHierarchyCreated() const;
+    void ensureHierarchyCreated () const;
     void evaluateNodeProperties (NodeStatistics& statistics, uint32_t& pointSum, uint32_t nodeIndex);
     void calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const;
 

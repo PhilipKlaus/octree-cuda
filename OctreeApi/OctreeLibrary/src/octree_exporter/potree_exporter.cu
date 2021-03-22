@@ -32,8 +32,11 @@ constexpr uint8_t COLOR_SIZE         = COLOR_ELEMENT_SIZE * 3;
 PotreeExporter::PotreeExporter () : OctreeExporter ()
 {}
 
-void PotreeExporter::exportOctree (const std::string& path, const PointCloud& pointCloud,
-                                   const Octree& octree, const SubsampleMetadata& subsampleMetadata)
+void PotreeExporter::exportOctree (
+        const std::string& path,
+        const PointCloud& pointCloud,
+        const Octree& octree,
+        const SubsampleMetadata& subsampleMetadata)
 {
     this->itsPointsExported = 0;
     itsExportFolder         = path;
@@ -50,7 +53,7 @@ void PotreeExporter::createBinaryHierarchyFiles (const PointCloud& cloud, const 
     hierarchyFile.open (itsExportFolder + HIERARCHY_FILE_NAME, std::ios::binary);
 
     breathFirstExport (pointFile, hierarchyFile, octree);
-    pointFile.write (reinterpret_cast<const char*> (cloud->getOutputBuffer_h().get()), cloud->getOutputBufferSize());
+    pointFile.write (reinterpret_cast<const char*> (cloud->getOutputBuffer_h ().get ()), cloud->getOutputBufferSize ());
 
     pointFile.close ();
     hierarchyFile.close ();
@@ -61,18 +64,18 @@ void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream&
     std::unordered_map<uint32_t, bool> discoveredNodes;
     std::list<uint32_t> toVisit;
 
-    discoveredNodes[octree->getRootIndex()] = true;
-    toVisit.push_back (octree->getRootIndex());
+    discoveredNodes[octree->getRootIndex ()] = true;
+    toVisit.push_back (octree->getRootIndex ());
 
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
-        uint32_t pointsInNode = octree->getNode(node).pointCount;
+        uint32_t pointsInNode = octree->getNode (node).pointCount;
 
         uint8_t bitmask     = getChildMask (octree, node);
         uint8_t type        = bitmask == 0 ? 1 : 0;
-        uint64_t byteOffset = octree->getNode(node).chunkDataIndex * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        uint64_t byteOffset = octree->getNode (node).chunkDataIndex * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
         uint64_t byteSize   = pointsInNode * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
         HierarchyFileEntry entry{type, bitmask, pointsInNode, byteOffset, byteSize};
         hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
@@ -80,9 +83,10 @@ void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream&
         this->itsPointsExported += pointsInNode;
         ++itsExportedNodes;
 
-        for (int childNode : octree->getNode(node).childrenChunks)
+        for (int childNode : octree->getNode (node).childrenChunks)
         {
-            if (childNode != -1 && discoveredNodes.find (childNode) == discoveredNodes.end () && octree->getNode(childNode).isFinished)
+            if (childNode != -1 && discoveredNodes.find (childNode) == discoveredNodes.end () &&
+                octree->getNode (childNode).isFinished)
             {
                 discoveredNodes[childNode] = true;
                 toVisit.push_back (childNode);
@@ -97,8 +101,8 @@ inline uint8_t PotreeExporter::getChildMask (const Octree& octree, uint32_t node
     uint8_t bitmask = 0;
     for (auto i = 0; i < 8; i++)
     {
-        int childNodeIndex = octree->getNode(nodeIndex).childrenChunks[i];
-        if (childNodeIndex != -1 && octree->getNode(childNodeIndex).isFinished)
+        int childNodeIndex = octree->getNode (nodeIndex).childrenChunks[i];
+        if (childNodeIndex != -1 && octree->getNode (childNodeIndex).isFinished)
         {
             bitmask = bitmask | (1 << i);
         }
@@ -106,13 +110,13 @@ inline uint8_t PotreeExporter::getChildMask (const Octree& octree, uint32_t node
     return bitmask;
 }
 
-void PotreeExporter::createMetadataFile (const PointCloud& cloud, const SubsampleMetadata& subsampleMeta)
+void PotreeExporter::createMetadataFile (const PointCloud& cloud, const SubsampleMetadata& subsampleMeta) const
 {
     // Prepare metadata for export
-    auto &cloudMeta = cloud->getMetadata();
-    auto bbCubic = cloudMeta.bbCubic;
-    auto scale   = cloudMeta.scale;
-    auto spacing = (bbCubic.max.x - bbCubic.min.x) / subsampleMeta.subsamplingGrid;
+    auto& cloudMeta = cloud->getMetadata ();
+    auto bbCubic    = cloudMeta.bbCubic;
+    auto scale      = cloudMeta.scale;
+    auto spacing    = (bbCubic.max.x - bbCubic.min.x) / subsampleMeta.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;

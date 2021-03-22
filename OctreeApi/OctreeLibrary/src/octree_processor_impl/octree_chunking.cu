@@ -101,7 +101,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
 
 void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
 {
-    auto tmpIndexRegister = createGpuU32 (itsOctree->getMetadata ().nodeAmountSparse, "tmpIndexRegister");
+    auto tmpIndexRegister = createGpuU32 (itsOctree->getNodeStatistics().nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
     auto& meta                  = itsCloud->getMetadata ();

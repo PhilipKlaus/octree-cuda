@@ -7,8 +7,8 @@
 #pragma once
 
 #include "metadata.cuh"
-#include "point_cloud.cuh"
 #include "octree.cuh"
+#include "point_cloud.cuh"
 #include "types.cuh"
 
 
@@ -18,14 +18,15 @@
 class OctreeExporter
 {
 public:
-
-    OctreeExporter () : itsPointsExported(0)
+    OctreeExporter () : itsPointsExported (0)
     {}
 
-    virtual void exportOctree (const std::string& path, const PointCloud& pointCloud,
-                               const Octree& octree, const SubsampleMetadata& subsampleMetadata) = 0;
+    virtual void exportOctree (
+            const std::string& path,
+            const PointCloud& pointCloud,
+            const Octree& octree,
+            const SubsampleMetadata& subsampleMetadata) = 0;
 
 protected:
     uint32_t itsPointsExported;
-
 };

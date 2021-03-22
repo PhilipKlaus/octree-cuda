@@ -30,10 +30,10 @@ void export_json_data (
     statistics["resultNodes"]["leafNodeAmount"]   = nodeStatistics.leafNodeAmount;
     statistics["resultNodes"]["parentNodeAmount"] = nodeStatistics.parentNodeAmount;
 
-    statistics["overallNodes"]["sparseOctreeNodes"] = metadata.nodeAmountSparse;
-    statistics["overallNodes"]["denseOctreeNodes"]  = metadata.nodeAmountDense;
+    statistics["overallNodes"]["sparseOctreeNodes"] = nodeStatistics.nodeAmountSparse;
+    statistics["overallNodes"]["denseOctreeNodes"]  = nodeStatistics.nodeAmountDense;
     statistics["overallNodes"]["memorySaving"] =
-            (1 - (static_cast<float> (metadata.nodeAmountSparse) / metadata.nodeAmountDense)) * 100;
+            (1 - (static_cast<float> (nodeStatistics.nodeAmountSparse) / nodeStatistics.nodeAmountDense)) * 100;
 
     statistics["pointDistribution"]["meanPointsPerLeafNode"]  = nodeStatistics.meanPointsPerLeafNode;
     statistics["pointDistribution"]["stdevPointsPerLeafNode"] = nodeStatistics.stdevPointsPerLeafNode;

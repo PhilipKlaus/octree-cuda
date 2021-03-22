@@ -22,7 +22,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     Timing::TimeTracker::stop (timing, "Init CUDA", Timing::Time::PROCESS);
 
     itsOctree               = std::make_unique<OctreeData> (chunkingGrid, mergingThreshold);
-    OctreeMetadata metadata = itsOctree->getMetadata ();
+    NodeStatistics statistics = itsOctree->getNodeStatistics();
     itsSubsampleMetadata    = subsamplingMetadata;
 
     itsLastSubsampleNode = -1;
@@ -43,11 +43,11 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     timing = Timing::TimeTracker::start ();
 
     // Allocate the dense point count
-    itsCountingGrid = createGpuU32 (metadata.nodeAmountDense, "countingGrid");
+    itsCountingGrid = createGpuU32 (statistics.nodeAmountDense, "countingGrid");
     itsCountingGrid->memset (0);
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (metadata.nodeAmountDense, "denseToSparseLut");
+    itsDenseToSparseLUT = createGpuI32 (statistics.nodeAmountDense, "denseToSparseLut");
     itsDenseToSparseLUT->memset (-1);
 
     // Allocate the temporary sparseIndexCounter

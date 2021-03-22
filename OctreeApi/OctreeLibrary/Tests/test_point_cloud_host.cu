@@ -40,18 +40,19 @@ TEST_CASE ("A PointCloudHost should")
         CHECK (copied[14] == 255);
     }
 
-    SECTION ("create and copy the output buffer to host") {
-        REQUIRE(cloud.getOutputBuffer_d() != nullptr);
-        REQUIRE(cloud.getOutputBufferSize() == sizeof (OutputBuffer) * 2);
-        REQUIRE(cudaMemset (cloud.getOutputBuffer_d(), 1, sizeof (OutputBuffer) * 2) == cudaSuccess);
+    SECTION ("create and copy the output buffer to host")
+    {
+        REQUIRE (cloud.getOutputBuffer_d () != nullptr);
+        REQUIRE (cloud.getOutputBufferSize () == sizeof (OutputBuffer) * 2);
+        REQUIRE (cudaMemset (cloud.getOutputBuffer_d (), 1, sizeof (OutputBuffer) * 2) == cudaSuccess);
 
-        std::unique_ptr<OutputBuffer[]> out = cloud.getOutputBuffer_h();
-        REQUIRE(out != nullptr);
-        CHECK(out[0].x == static_cast<uint32_t>(0x1010101));
-        CHECK(out[0].y == static_cast<uint32_t>(0x1010101));
-        CHECK(out[0].z == static_cast<uint32_t>(0x1010101));
-        CHECK(out[0].r == static_cast<uint16_t>(0x101));
-        CHECK(out[0].g == static_cast<uint16_t>(0x101));
-        CHECK(out[0].b == static_cast<uint16_t>(0x101));
+        std::unique_ptr<OutputBuffer[]> out = cloud.getOutputBuffer_h ();
+        REQUIRE (out != nullptr);
+        CHECK (out[0].x == static_cast<uint32_t> (0x1010101));
+        CHECK (out[0].y == static_cast<uint32_t> (0x1010101));
+        CHECK (out[0].z == static_cast<uint32_t> (0x1010101));
+        CHECK (out[0].r == static_cast<uint16_t> (0x101));
+        CHECK (out[0].g == static_cast<uint16_t> (0x101));
+        CHECK (out[0].b == static_cast<uint16_t> (0x101));
     }
 }

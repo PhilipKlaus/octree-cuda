@@ -4,7 +4,8 @@
 
 OctreeData::OctreeData (uint32_t chunkingGrid, uint32_t mergingThreshold) : itsMetadata ({}), itsNodeStatistics ({})
 {
-    itsMetadata.nodeAmountDense  = 0;
+    itsNodeStatistics.nodeAmountDense  = 0;
+
     itsMetadata.mergingThreshold = mergingThreshold;
     itsMetadata.chunkingGrid     = chunkingGrid;
     itsMetadata.depth            = tools::getOctreeLevel (chunkingGrid);
@@ -16,9 +17,10 @@ void OctreeData::initialize ()
     for (uint32_t gridSize = itsMetadata.chunkingGrid; gridSize > 0; gridSize >>= 1)
     {
         itsGridSizePerLevel.push_back (gridSize);
-        itsNodeOffsetperLevel.push_back (itsMetadata.nodeAmountDense);
+        itsNodeOffsetperLevel.push_back (itsNodeStatistics.nodeAmountDense);
         itsNodesPerLevel.push_back (static_cast<uint32_t> (pow (gridSize, 3)));
-        itsMetadata.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
+
+        itsNodeStatistics.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 }
 
@@ -39,19 +41,19 @@ uint32_t OctreeData::getNodeOffset (uint8_t level) const
 
 void OctreeData::createHierarchy (uint32_t nodeAmountSparse)
 {
-    itsMetadata.nodeAmountSparse = nodeAmountSparse;
+    itsNodeStatistics.nodeAmountSparse = nodeAmountSparse;
     itsOctree                    = createGpuOctree (nodeAmountSparse, "octreeSparse");
 }
 
 void OctreeData::copyToHost ()
 {
-    ensureHierarchyCreated();
+    ensureHierarchyCreated ();
     itsOctreeHost = itsOctree->toHost ();
 }
 
 const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
 {
-    ensureHierarchyCreated();
+    ensureHierarchyCreated ();
     if (!itsOctreeHost)
     {
         copyToHost ();
@@ -61,13 +63,13 @@ const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
 
 Chunk* OctreeData::getDevice () const
 {
-    ensureHierarchyCreated();
+    ensureHierarchyCreated ();
     return itsOctree->devicePointer ();
 }
 
 const Chunk& OctreeData::getNode (uint32_t index)
 {
-    ensureHierarchyCreated();
+    ensureHierarchyCreated ();
     return getHost ()[index];
 }
 
@@ -83,7 +85,7 @@ const NodeStatistics& OctreeData::getNodeStatistics () const
 
 void OctreeData::updateNodeStatistics ()
 {
-    ensureHierarchyCreated();
+    ensureHierarchyCreated ();
 
     // Reset Octree statistics
     itsNodeStatistics.leafNodeAmount         = 0;
@@ -136,8 +138,8 @@ void OctreeData::evaluateNodeProperties (NodeStatistics& statistics, uint32_t& p
 
 uint32_t OctreeData::getRootIndex () const
 {
-    ensureHierarchyCreated();
-    return itsMetadata.nodeAmountSparse - 1;
+    ensureHierarchyCreated ();
+    return itsNodeStatistics.nodeAmountSparse - 1;
 }
 
 void OctreeData::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const
@@ -165,7 +167,8 @@ void OctreeData::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t 
 
 void OctreeData::ensureHierarchyCreated () const
 {
-    if(!itsOctree) {
-        throw HierarchyNotCreatedException();
+    if (!itsOctree)
+    {
+        throw HierarchyNotCreatedException ();
     }
 }
