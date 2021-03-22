@@ -36,6 +36,7 @@ public:
 
     void updateStatistics ();
     const OctreeMetadata& getOctreeMetadata ();
+    const NodeStatistics& getNodeStatistics ();
 
 private:
     class OctreeProcessorImpl;

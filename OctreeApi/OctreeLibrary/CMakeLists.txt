@@ -37,7 +37,7 @@ add_library(${PROJECT_NAME} STATIC
         src/octree_processor.cu
         src/include/octree_processor_impl.cuh
         src/octree_processor_impl/octree_subsampling.cu
-        src/octree_processor_impl/benchmarking.cu
+        src/octree_processor_impl/histogram.cu
         src/octree_processor_impl/octree_processor_impl.cu
         src/octree_processor_impl/octree_chunking.cu
 

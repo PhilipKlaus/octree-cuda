@@ -12,7 +12,10 @@
 
 
 void export_json_data (
-        const std::string filePath, const OctreeMetadata& metadata, const SubsampleMetadata& subsampleMetadata)
+        const std::string filePath,
+        const OctreeMetadata& metadata,
+        const SubsampleMetadata& subsampleMetadata,
+        const NodeStatistics& nodeStatistics)
 {
     nlohmann::ordered_json statistics;
     statistics["depth"] = metadata.depth;
@@ -23,20 +26,19 @@ void export_json_data (
     statistics["subsampling"]["grid"]     = subsampleMetadata.subsamplingGrid;
     statistics["subsampling"]["strategy"] = "RANDOM POINT";
 
-    statistics["resultNodes"]["octreeNodes"]      = metadata.leafNodeAmount + metadata.parentNodeAmount;
-    statistics["resultNodes"]["leafNodeAmount"]   = metadata.leafNodeAmount;
-    statistics["resultNodes"]["parentNodeAmount"] = metadata.parentNodeAmount;
-    statistics["resultNodes"]["absorbedNodes"]    = metadata.absorbedNodes;
+    statistics["resultNodes"]["octreeNodes"]      = nodeStatistics.leafNodeAmount + nodeStatistics.parentNodeAmount;
+    statistics["resultNodes"]["leafNodeAmount"]   = nodeStatistics.leafNodeAmount;
+    statistics["resultNodes"]["parentNodeAmount"] = nodeStatistics.parentNodeAmount;
 
     statistics["overallNodes"]["sparseOctreeNodes"] = metadata.nodeAmountSparse;
     statistics["overallNodes"]["denseOctreeNodes"]  = metadata.nodeAmountDense;
     statistics["overallNodes"]["memorySaving"] =
             (1 - (static_cast<float> (metadata.nodeAmountSparse) / metadata.nodeAmountDense)) * 100;
 
-    statistics["pointDistribution"]["meanPointsPerLeafNode"]  = metadata.meanPointsPerLeafNode;
-    statistics["pointDistribution"]["stdevPointsPerLeafNode"] = metadata.stdevPointsPerLeafNode;
-    statistics["pointDistribution"]["minPointsPerNode"]       = metadata.minPointsPerNode;
-    statistics["pointDistribution"]["maxPointsPerNode"]       = metadata.maxPointsPerNode;
+    statistics["pointDistribution"]["meanPointsPerLeafNode"]  = nodeStatistics.meanPointsPerLeafNode;
+    statistics["pointDistribution"]["stdevPointsPerLeafNode"] = nodeStatistics.stdevPointsPerLeafNode;
+    statistics["pointDistribution"]["minPointsPerNode"]       = nodeStatistics.minPointsPerNode;
+    statistics["pointDistribution"]["maxPointsPerNode"]       = nodeStatistics.maxPointsPerNode;
 
     auto& tracker = Timing::TimeTracker::getInstance ();
 

@@ -4,96 +4,9 @@
 
 #include "octree_processor_impl.cuh"
 
-
-void OctreeProcessor::OctreeProcessorImpl::calculatePointVarianceInLeafNoes (
-        const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& mean, uint32_t nodeIndex) const
-{
-    Chunk chunk = h_octreeSparse[nodeIndex];
-
-    // Leaf node
-    if (!chunk.isParent)
-    {
-        sumVariance += pow (static_cast<float> (chunk.pointCount) - mean, 2.f);
-    }
-
-    // Parent node
-    else
-    {
-        for (uint32_t i = 0; i < 8; ++i)
-        {
-            int childIndex = chunk.childrenChunks[i];
-            if (childIndex != -1)
-            {
-                calculatePointVarianceInLeafNoes (h_octreeSparse, sumVariance, mean, childIndex);
-            }
-        }
-    }
-}
-
-
-void OctreeProcessor::OctreeProcessorImpl::evaluateOctreeProperties (
-        const shared_ptr<Chunk[]>& h_octreeSparse,
-        uint32_t& leafNodes,
-        uint32_t& parentNodes,
-        uint32_t& pointSum,
-        uint32_t& min,
-        uint32_t& max,
-        uint32_t nodeIndex) const
-{
-    Chunk chunk = h_octreeSparse[nodeIndex];
-
-    // Leaf node
-    if (!chunk.isParent)
-    {
-        leafNodes += 1;
-        pointSum += chunk.pointCount;
-        min = chunk.pointCount < min ? chunk.pointCount : min;
-        max = chunk.pointCount > max ? chunk.pointCount : max;
-    }
-
-    // Parent node
-    else
-    {
-        parentNodes += 1;
-        for (uint32_t i = 0; i < 8; ++i)
-        {
-            int childIndex = chunk.childrenChunks[i];
-            if (childIndex != -1)
-            {
-                evaluateOctreeProperties (
-                        h_octreeSparse, leafNodes, parentNodes, pointSum, min, max, chunk.childrenChunks[i]);
-            }
-        }
-    }
-}
-
-
 void OctreeProcessor::OctreeProcessorImpl::updateOctreeStatistics ()
 {
-    // Reset Octree statistics
-    itsMetadata.leafNodeAmount         = 0;
-    itsMetadata.parentNodeAmount       = 0;
-    itsMetadata.meanPointsPerLeafNode  = 0.f;
-    itsMetadata.stdevPointsPerLeafNode = 0.f;
-    itsMetadata.minPointsPerNode       = std::numeric_limits<uint32_t>::max ();
-    itsMetadata.maxPointsPerNode       = std::numeric_limits<uint32_t>::min ();
-
-    uint32_t pointSum = 0;
-    float sumVariance = 0.f;
-
-    auto octree = itsOctreeData->getHost ();
-    evaluateOctreeProperties (
-            octree,
-            itsMetadata.leafNodeAmount,
-            itsMetadata.parentNodeAmount,
-            pointSum,
-            itsMetadata.minPointsPerNode,
-            itsMetadata.maxPointsPerNode,
-            getRootIndex ());
-    itsMetadata.meanPointsPerLeafNode = static_cast<float> (pointSum) / itsMetadata.leafNodeAmount;
-
-    calculatePointVarianceInLeafNoes (octree, sumVariance, itsMetadata.meanPointsPerLeafNode, getRootIndex ());
-    itsMetadata.stdevPointsPerLeafNode = sqrt (sumVariance / itsMetadata.leafNodeAmount);
+    itsOctree->updateNodeStatistics ();
 }
 
 
@@ -131,20 +44,21 @@ void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
 void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePath, uint32_t binWidth)
 {
     updateOctreeStatistics ();
+    auto& statistics = itsOctree->getNodeStatistics ();
 
     if (binWidth == 0)
     {
         binWidth = static_cast<uint32_t> (
-                ceil (3.5f * (itsMetadata.stdevPointsPerLeafNode / pow (itsMetadata.leafNodeAmount, 1.f / 3.f))));
+                ceil (3.5f * (statistics.stdevPointsPerLeafNode / pow (statistics.leafNodeAmount, 1.f / 3.f))));
     }
     auto binAmount =
-            static_cast<uint32_t> (ceil (itsMetadata.maxPointsPerNode - itsMetadata.minPointsPerNode) / binWidth);
+            static_cast<uint32_t> (ceil (statistics.maxPointsPerNode - statistics.minPointsPerNode) / binWidth);
     std::vector<uint32_t> counts;
     for (uint32_t i = 0; i < binAmount; ++i)
     {
         counts.push_back (0);
     }
-    histogramBinning (itsOctreeData->getHost (), counts, itsMetadata.minPointsPerNode, binWidth, getRootIndex ());
+    histogramBinning (itsOctree->getHost (), counts, statistics.minPointsPerNode, binWidth, itsOctree->getRootIndex ());
 
     const std::string itsHtmlPart1 = "<html>\n"
                                      "    <head>\n"
@@ -181,14 +95,14 @@ void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePa
     string labels = "labels:[";
     string data   = "data:[";
     string label  = "'Point Distribution: binWidth(" + to_string (binWidth) + "), mergingThreshold(" +
-                   to_string (itsMetadata.mergingThreshold) + "), points(" +
+                   to_string (itsOctree->getMetadata ().mergingThreshold) + "), points(" +
                    to_string (itsCloud->getMetadata ().pointAmount) + ")'";
 
     for (uint32_t i = 0; i < binAmount; ++i)
     {
         labels +=
-                ("'" + to_string (itsMetadata.minPointsPerNode + i * binWidth) + " - " +
-                 to_string (itsMetadata.minPointsPerNode + (i + 1) * binWidth) + "'");
+                ("'" + to_string (statistics.minPointsPerNode + i * binWidth) + " - " +
+                 to_string (statistics.minPointsPerNode + (i + 1) * binWidth) + "'");
         data += to_string (counts[i]);
         if (i < (binAmount - 1))
         {

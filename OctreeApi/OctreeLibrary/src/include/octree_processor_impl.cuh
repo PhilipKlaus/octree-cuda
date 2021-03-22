@@ -40,29 +40,17 @@ public:
     void exportPotree (const string& folderPath);
     ///@}
 
+    const NodeStatistics& getNodeStatistics ();
     const OctreeMetadata& getMetadata () const;
     void updateOctreeStatistics ();
 
 private:
-    uint32_t getRootIndex ();
     void mergeHierarchical ();
     void initLowestOctreeHierarchy ();
     void prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex);
     void calculateVoxelBB (PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level);
 
     void randomSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
-
-    void evaluateOctreeProperties (
-            const shared_ptr<Chunk[]>& h_octreeSparse,
-            uint32_t& leafNodes,
-            uint32_t& parentNodes,
-            uint32_t& pointSum,
-            uint32_t& min,
-            uint32_t& max,
-            uint32_t nodeIndex) const;
-
-    void calculatePointVarianceInLeafNoes (
-            const shared_ptr<Chunk[]>& h_octreeSparse, float& sumVariance, float& ean, uint32_t nodeIndex) const;
 
     void histogramBinning (
             const shared_ptr<Chunk[]>& h_octreeSparse,
@@ -76,10 +64,12 @@ private:
 
 
 private:
-    // Point cloud
     PointCloud itsCloud;
+    std::unique_ptr<Octree> itsOctree;
 
-    // Required data structures for calculation
+    SubsampleMetadata itsSubsampleMetadata;
+
+    // Required helper data structures for calculation
     GpuArrayU32 itsCountingGrid;
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayI32 itsSparseToDenseLUT;
@@ -89,11 +79,4 @@ private:
     GpuRandomState itsRandomStates;
     GpuArrayU32 itsRandomIndices;
     int itsLastSubsampleNode;
-
-    // Metadata
-    OctreeMetadata itsMetadata;
-    SubsampleMetadata itsSubsampleMetadata;
-
-    // Octree
-    std::unique_ptr<Octree> itsOctreeData;
 };

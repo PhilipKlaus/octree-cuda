@@ -21,16 +21,9 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     cudaFree (nullptr);
     Timing::TimeTracker::stop (timing, "Init CUDA", Timing::Time::PROCESS);
 
-    itsOctreeData = std::make_unique<Octree> (chunkingGrid);
-
-    // ToDo: Move itsMetadata to OctreeData
-    // Initialize metadata
-    itsMetadata                  = {};
-    itsMetadata.depth            = itsOctreeData->getDepth ();
-    itsMetadata.nodeAmountDense  = itsOctreeData->getOverallNodes ();
-    itsMetadata.chunkingGrid     = chunkingGrid;
-    itsMetadata.mergingThreshold = mergingThreshold;
-    itsSubsampleMetadata         = subsamplingMetadata;
+    itsOctree               = std::make_unique<Octree> (chunkingGrid, mergingThreshold);
+    OctreeMetadata metadata = itsOctree->getMetadata ();
+    itsSubsampleMetadata    = subsamplingMetadata;
 
     itsLastSubsampleNode = -1;
 
@@ -50,11 +43,11 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     timing = Timing::TimeTracker::start ();
 
     // Allocate the dense point count
-    itsCountingGrid = createGpuU32 (itsMetadata.nodeAmountDense, "countingGrid");
+    itsCountingGrid = createGpuU32 (metadata.nodeAmountDense, "countingGrid");
     itsCountingGrid->memset (0);
 
     // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "denseToSparseLut");
+    itsDenseToSparseLUT = createGpuI32 (metadata.nodeAmountDense, "denseToSparseLut");
     itsDenseToSparseLUT->memset (-1);
 
     // Allocate the temporary sparseIndexCounter
@@ -83,14 +76,9 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     Timing::TimeTracker::stop (timing, "Preparing GPU data", Timing::Time::PROCESS);
 }
 
-uint32_t OctreeProcessor::OctreeProcessorImpl::getRootIndex ()
-{
-    return itsMetadata.nodeAmountSparse - 1;
-}
-
 const OctreeMetadata& OctreeProcessor::OctreeProcessorImpl::getMetadata () const
 {
-    return itsMetadata;
+    return itsOctree->getMetadata ();
 }
 
 
@@ -100,8 +88,8 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
     Vector3<uint32_t> coords = {};
 
     // 1. Calculate coordinates of voxel within the actual level
-    auto indexInLevel = denseVoxelIndex - itsOctreeData->getNodeOffset (level);
-    tools::mapFromDenseIdxToDenseCoordinates (coords, indexInLevel, itsOctreeData->getGridSize (level));
+    auto indexInLevel = denseVoxelIndex - itsOctree->getNodeOffset (level);
+    tools::mapFromDenseIdxToDenseCoordinates (coords, indexInLevel, itsOctree->getGridSize (level));
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
@@ -109,7 +97,7 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
     double min      = cloudMeta.bbCubic.min.x;
     double max      = cloudMeta.bbCubic.max.x;
     double side     = max - min;
-    auto cubicWidth = side / itsOctreeData->getGridSize (level);
+    auto cubicWidth = side / itsOctree->getGridSize (level);
 
     metadata.bbCubic.min.x = cloudMeta.bbCubic.min.x + coords.x * cubicWidth;
     metadata.bbCubic.min.y = cloudMeta.bbCubic.min.y + coords.y * cubicWidth;
@@ -122,9 +110,9 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
-    itsOctreeData->copyToHost ();
+    itsOctree->copyToHost ();
     PotreeExporter potreeExporter (
-            itsCloud, itsOctreeData->getHost (), itsMetadata, itsCloud->getMetadata (), itsSubsampleMetadata);
+            itsCloud, itsOctree->getHost (), itsOctree->getMetadata (), itsCloud->getMetadata (), itsSubsampleMetadata);
     potreeExporter.exportOctree (folderPath);
 }
 
@@ -162,4 +150,9 @@ void OctreeProcessor::OctreeProcessorImpl::setActiveParent (uint32_t parentNode)
 int OctreeProcessor::OctreeProcessorImpl::getLastParent ()
 {
     return itsLastSubsampleNode;
+}
+
+const NodeStatistics& OctreeProcessor::OctreeProcessorImpl::getNodeStatistics ()
+{
+    return itsOctree->getNodeStatistics ();
 }

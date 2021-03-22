@@ -55,6 +55,11 @@ const OctreeMetadata& OctreeProcessor::getOctreeMetadata ()
     return itsProcessor->getMetadata ();
 }
 
+const NodeStatistics& OctreeProcessor::getNodeStatistics ()
+{
+    return itsProcessor->getNodeStatistics ();
+}
+
 OctreeProcessor::~OctreeProcessor ()
 {
     // Empty destructor - necessary becaus of PIMPL

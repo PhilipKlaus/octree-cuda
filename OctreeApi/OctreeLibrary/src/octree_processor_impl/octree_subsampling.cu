@@ -7,23 +7,14 @@
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
-    auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
 
     itsDenseToSparseLUT->memset (-1);
     itsCountingGrid->memset (0);
 
-    uint32_t pointSum = 0;
-    evaluateOctreeProperties (
-            h_octreeSparse,
-            itsMetadata.leafNodeAmount,
-            itsMetadata.parentNodeAmount,
-            pointSum,
-            itsMetadata.minPointsPerNode,
-            itsMetadata.maxPointsPerNode,
-            getRootIndex ());
+    itsOctree->updateNodeStatistics ();
 
-    randomSubsampling (h_sparseToDenseLUT, getRootIndex (), itsMetadata.depth);
+    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getMetadata ().depth);
     cudaDeviceSynchronize ();
 }
 
@@ -32,7 +23,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
 {
     auto& cloudMetadata = itsCloud->getMetadata ();
-    auto& node          = itsOctreeData->getNode (sparseVoxelIndex);
+    auto& node          = itsOctree->getNode (sparseVoxelIndex);
 
     // Depth first traversal
     for (int childIndex : node.childrenChunks)
@@ -70,7 +61,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         Kernel::calcNodeByteOffset (
                 {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
-                itsOctreeData->getDevice (),
+                itsOctree->getDevice (),
                 sparseVoxelIndex,
                 getLastParent (),
                 itsTmpCounting->devicePointer ());
@@ -79,11 +70,11 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         // Evaluate how many points fall in each cell
         Kernel::evaluateSubsamples (
-                {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
+                {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
                 itsCloud->getOutputBuffer_d (),
                 subsampleSet,
                 itsCountingGrid->devicePointer (),
-                itsOctreeData->getDevice (),
+                itsOctree->getDevice (),
                 itsAveragingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsPointLut->devicePointer (),
@@ -106,7 +97,9 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         // Distribute the subsampled points in parallel for all child nodes
         Kernel::randomPointSubsampling (
-                {metadata.cloudType, itsMetadata.maxPointsPerNode * 8, "kernelRandomPointSubsample"},
+                {metadata.cloudType,
+                 itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                 "kernelRandomPointSubsample"},
                 itsCloud->getOutputBuffer_d (),
                 subsampleSet,
                 itsCountingGrid->devicePointer (),
@@ -116,7 +109,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 gridding,
                 itsRandomIndices->devicePointer (),
                 itsPointLut->devicePointer (),
-                itsOctreeData->getDevice (),
+                itsOctree->getDevice (),
                 sparseVoxelIndex);
     }
 }
@@ -125,14 +118,14 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
 {
     auto* config = (SubsampleConfig*)(&subsampleSet);
-    auto& node   = itsOctreeData->getNode (parentIndex);
+    auto& node   = itsOctree->getNode (parentIndex);
     for (uint8_t i = 0; i < 8; ++i)
     {
         int childIndex      = node.childrenChunks[i];
         config[i].sparseIdx = childIndex;
         if (childIndex != -1)
         {
-            Chunk child               = itsOctreeData->getNode (childIndex);
+            Chunk child               = itsOctree->getNode (childIndex);
             config[i].isParent        = child.isParent;
             config[i].leafPointAmount = child.pointCount;
             config[i].leafDataIdx     = child.chunkDataIndex;
