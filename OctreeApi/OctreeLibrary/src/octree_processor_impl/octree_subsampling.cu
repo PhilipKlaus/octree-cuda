@@ -72,10 +72,10 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
                 itsOctreeData->getDevice (),
                 sparseVoxelIndex,
-                itsSubsamples->getLastParent (),
+                getLastParent (),
                 itsTmpCounting->devicePointer ());
 
-        itsSubsamples->setActiveParent (sparseVoxelIndex);
+        setActiveParent (sparseVoxelIndex);
 
         // Evaluate how many points fall in each cell
         Kernel::evaluateSubsamples (
@@ -92,7 +92,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 sparseVoxelIndex);
 
         // Prepare one random point index per cell
-        auto threads = itsSubsamples->getGridCellAmount ();
+        auto threads = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
 
         executeKernel (
                 subsampling::kernelGenerateRandoms,

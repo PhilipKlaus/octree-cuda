@@ -32,6 +32,8 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsMetadata.mergingThreshold = mergingThreshold;
     itsSubsampleMetadata         = subsamplingMetadata;
 
+    itsLastSubsampleNode = -1;
+
     if (cloudMetadata.memoryType == CLOUD_HOST)
     {
         itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudMetadata);
@@ -58,8 +60,6 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     // Allocate the temporary sparseIndexCounter
     itsTmpCounting = createGpuU32 (1, "tmpCounting");
     itsTmpCounting->memset (0);
-
-    itsSubsamples = std::make_shared<SubsamplingData> (itsSubsampleMetadata.subsamplingGrid);
 
     auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.1);
     itsPointLut         = createGpuOutputData (expectedPoints, "pointLUT");
@@ -123,41 +123,20 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
     itsOctreeData->copyToHost ();
-
-    if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
-    {
-        PotreeExporter<float, uint8_t> potreeExporter (
-                itsCloud,
-                itsOctreeData->getHost (),
-                itsSubsamples,
-                itsMetadata,
-                itsCloud->getMetadata (),
-                itsSubsampleMetadata);
-        potreeExporter.exportOctree (folderPath);
-    }
-    else
-    {
-        PotreeExporter<double, uint8_t> potreeExporter (
-                itsCloud,
-                itsOctreeData->getHost (),
-                itsSubsamples,
-                itsMetadata,
-                itsCloud->getMetadata (),
-                itsSubsampleMetadata);
-        potreeExporter.exportOctree (folderPath);
-    }
+    PotreeExporter potreeExporter (
+            itsCloud, itsOctreeData->getHost (), itsMetadata, itsCloud->getMetadata (), itsSubsampleMetadata);
+    potreeExporter.exportOctree (folderPath);
 }
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
 {
-    itsOctreeData->copyToHost ();
+    /*itsOctreeData->copyToHost ();
 
     if (itsCloud->getMetadata ().cloudType == CLOUD_FLOAT_UINT8_T)
     {
         PlyExporter<float, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
@@ -168,10 +147,19 @@ void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderP
         PotreeExporter<double, uint8_t> plyExporter (
                 itsCloud,
                 itsOctreeData->getHost (),
-                itsSubsamples,
                 itsMetadata,
                 itsCloud->getMetadata (),
                 itsSubsampleMetadata);
         plyExporter.exportOctree (folderPath);
-    }
+    } */
+}
+
+void OctreeProcessor::OctreeProcessorImpl::setActiveParent (uint32_t parentNode)
+{
+    itsLastSubsampleNode = static_cast<int> (parentNode);
+}
+
+int OctreeProcessor::OctreeProcessorImpl::getLastParent ()
+{
+    return itsLastSubsampleNode;
 }

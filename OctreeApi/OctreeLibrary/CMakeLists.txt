@@ -25,6 +25,7 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/hierarchical_merging.cuh
         src/kernel/octree_initialization.cuh
         src/kernel/point_count_propagation.cuh
+        src/kernel/point_count_propagation.cuh
         src/kernel/point_counting.cuh
         src/kernel/point_distributing.cuh
         src/kernel/random_subsampling.cuh
@@ -44,7 +45,6 @@ add_library(${PROJECT_NAME} STATIC
         src/include/octree_exporter.cuh
         src/include/ply_exporter.cuh
         src/include/potree_exporter.cuh
-        src/octree_exporter/thread_pool.h
         src/octree_exporter/ply_exporter.cu
         src/octree_exporter/potree_exporter.cu
 
@@ -52,10 +52,6 @@ add_library(${PROJECT_NAME} STATIC
         src/data/cuda_array.cuh
         src/include/octree.cuh
         src/data/octree.cu
-
-        # Subsampling data
-        src/include/subsampling_data.cuh
-        src/data/subsampling_data.cu
 
         # Point cloud
         src/include/point_cloud.cuh

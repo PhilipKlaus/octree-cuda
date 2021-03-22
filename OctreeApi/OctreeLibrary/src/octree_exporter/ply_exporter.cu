@@ -1,16 +1,15 @@
-#include "ply_exporter.cuh"
+/*#include "ply_exporter.cuh"
 
 
 template <typename coordinateType, typename colorType>
 PlyExporter<coordinateType, colorType>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata) :
         OctreeExporter<coordinateType, colorType> (
-                pointCloud, octree, subsamples, metadata, cloudMetadata, subsamplingMetadata)
+                pointCloud, octree, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -218,7 +217,6 @@ void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (
 template PlyExporter<float, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
@@ -231,9 +229,9 @@ template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path
 template PlyExporter<double, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);
+ */

@@ -8,7 +8,6 @@
 #include "octree.cuh"
 #include "octree_processor.cuh"
 #include "point_cloud.cuh"
-#include "subsampling_data.cuh"
 #include "types.cuh"
 
 
@@ -72,6 +71,10 @@ private:
             uint32_t binWidth,
             uint32_t nodeIndex) const;
 
+    void setActiveParent (uint32_t parentNode);
+    int getLastParent ();
+
+
 private:
     // Point cloud
     PointCloud itsCloud;
@@ -85,6 +88,7 @@ private:
     GpuAveraging itsAveragingGrid;
     GpuRandomState itsRandomStates;
     GpuArrayU32 itsRandomIndices;
+    int itsLastSubsampleNode;
 
     // Metadata
     OctreeMetadata itsMetadata;
@@ -92,5 +96,4 @@ private:
 
     // Octree
     std::unique_ptr<Octree> itsOctreeData;
-    std::shared_ptr<SubsamplingData> itsSubsamples;
 };
