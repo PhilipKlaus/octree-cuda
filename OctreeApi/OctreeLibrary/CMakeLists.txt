@@ -114,7 +114,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)
 # BUILD LIBRARY TESTS #
 #######################
 include(CTest)
-option(BUILD_UNIT_TESTS "build automated tests" OFF)
+option(BUILD_UNIT_TESTS "build automated tests" ON)
 if (BUILD_UNIT_TESTS)
     message(STATUS "OctreeCuda build includes automated tests...")
     add_subdirectory(Tests)

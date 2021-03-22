@@ -11,6 +11,13 @@
 #include <cstdint>
 #include <vector>
 
+class HierarchyNotCreatedException : public std::exception
+{
+public:
+    using std::exception::exception;
+};
+
+
 /**
  * The Octree class represents and manages an octree data structure and its metadata.
  */
@@ -39,6 +46,7 @@ public:
 
 private:
     void initialize ();
+    void ensureHierarchyCreated() const;
     void evaluateNodeProperties (NodeStatistics& statistics, uint32_t& pointSum, uint32_t nodeIndex);
     void calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const;
 

@@ -45,11 +45,13 @@ void Octree::createHierarchy (uint32_t nodeAmountSparse)
 
 void Octree::copyToHost ()
 {
+    ensureHierarchyCreated();
     itsOctreeHost = itsOctree->toHost ();
 }
 
 const std::shared_ptr<Chunk[]>& Octree::getHost ()
 {
+    ensureHierarchyCreated();
     if (!itsOctreeHost)
     {
         copyToHost ();
@@ -59,11 +61,13 @@ const std::shared_ptr<Chunk[]>& Octree::getHost ()
 
 Chunk* Octree::getDevice () const
 {
+    ensureHierarchyCreated();
     return itsOctree->devicePointer ();
 }
 
 const Chunk& Octree::getNode (uint32_t index)
 {
+    ensureHierarchyCreated();
     return getHost ()[index];
 }
 
@@ -79,6 +83,8 @@ const NodeStatistics& Octree::getNodeStatistics () const
 
 void Octree::updateNodeStatistics ()
 {
+    ensureHierarchyCreated();
+
     // Reset Octree statistics
     itsNodeStatistics.leafNodeAmount         = 0;
     itsNodeStatistics.parentNodeAmount       = 0;
@@ -130,6 +136,7 @@ void Octree::evaluateNodeProperties (NodeStatistics& statistics, uint32_t& point
 
 uint32_t Octree::getRootIndex () const
 {
+    ensureHierarchyCreated();
     return itsMetadata.nodeAmountSparse - 1;
 }
 
@@ -153,5 +160,12 @@ void Octree::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t node
                 calculatePointVarianceInLeafNoes (sumVariance, childIndex);
             }
         }
+    }
+}
+
+void Octree::ensureHierarchyCreated () const
+{
+    if(!itsOctree) {
+        throw HierarchyNotCreatedException();
     }
 }
