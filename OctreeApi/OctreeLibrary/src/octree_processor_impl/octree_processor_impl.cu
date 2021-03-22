@@ -111,9 +111,8 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPath)
 {
     itsOctree->copyToHost ();
-    PotreeExporter potreeExporter (
-            itsCloud, itsOctree->getHost (), itsOctree->getMetadata (), itsCloud->getMetadata (), itsSubsampleMetadata);
-    potreeExporter.exportOctree (folderPath);
+    PotreeExporter potreeExporter;
+    potreeExporter.exportOctree (folderPath, itsCloud, itsOctree, itsSubsampleMetadata);
 }
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)

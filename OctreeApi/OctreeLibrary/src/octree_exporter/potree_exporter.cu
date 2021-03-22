@@ -29,66 +29,60 @@ constexpr uint8_t COLOR_ELEMENT_SIZE = sizeof (uint16_t);
 constexpr uint8_t COLOR_SIZE         = COLOR_ELEMENT_SIZE * 3;
 
 
-PotreeExporter::PotreeExporter (
-        const PointCloud& pointCloud,
-        const std::shared_ptr<Chunk[]>& octree,
-        OctreeMetadata metadata,
-        PointCloudMetadata cloudMetadata,
-        SubsampleMetadata subsamplingMetadata) :
-        OctreeExporter (pointCloud, octree, metadata, cloudMetadata, subsamplingMetadata)
+PotreeExporter::PotreeExporter () : OctreeExporter ()
 {}
 
-void PotreeExporter::exportOctree (const std::string& path)
+void PotreeExporter::exportOctree (const std::string& path, const PointCloud& pointCloud,
+                                   const Octree& octree, const SubsampleMetadata& subsampleMetadata)
 {
     this->itsPointsExported = 0;
     itsExportFolder         = path;
     itsExportedNodes        = 0;
-    createBinaryHierarchyFiles ();
-    createMetadataFile ();
+    createBinaryHierarchyFiles (pointCloud, octree);
+    createMetadataFile (pointCloud, subsampleMetadata);
 }
 
-void PotreeExporter::createBinaryHierarchyFiles ()
+void PotreeExporter::createBinaryHierarchyFiles (const PointCloud& cloud, const Octree& octree)
 {
     std::ofstream pointFile;
     pointFile.open (itsExportFolder + POINT_FILE_NAME, std::ios::binary);
     std::ofstream hierarchyFile;
     hierarchyFile.open (itsExportFolder + HIERARCHY_FILE_NAME, std::ios::binary);
 
-    breathFirstExport (pointFile, hierarchyFile);
-    pointFile.write (reinterpret_cast<const char*> (this->itsOutputBuffer.get ()), this->itsOutputBufferSize);
+    breathFirstExport (pointFile, hierarchyFile, octree);
+    pointFile.write (reinterpret_cast<const char*> (cloud->getOutputBuffer_h().get()), cloud->getOutputBufferSize());
 
     pointFile.close ();
     hierarchyFile.close ();
 }
 
-void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile)
+void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream& hierarchyFile, const Octree& octree)
 {
     std::unordered_map<uint32_t, bool> discoveredNodes;
     std::list<uint32_t> toVisit;
 
-    discoveredNodes[this->getRootIndex ()] = true;
-    toVisit.push_back (this->getRootIndex ());
+    discoveredNodes[octree->getRootIndex()] = true;
+    toVisit.push_back (octree->getRootIndex());
 
     while (!toVisit.empty ())
     {
         auto node = toVisit.front ();
         toVisit.pop_front ();
+        uint32_t pointsInNode = octree->getNode(node).pointCount;
 
-        uint8_t bitmask     = getChildMask (node);
+        uint8_t bitmask     = getChildMask (octree, node);
         uint8_t type        = bitmask == 0 ? 1 : 0;
-        uint64_t byteOffset = this->getDataIndex (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
-        uint64_t byteSize   = this->getPointsInNode (node) * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
-        HierarchyFileEntry entry{type, bitmask, this->getPointsInNode (node), byteOffset, byteSize};
+        uint64_t byteOffset = octree->getNode(node).chunkDataIndex * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        uint64_t byteSize   = pointsInNode * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        HierarchyFileEntry entry{type, bitmask, pointsInNode, byteOffset, byteSize};
         hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
 
-        this->itsPointsExported += this->getPointsInNode (node);
+        this->itsPointsExported += pointsInNode;
         ++itsExportedNodes;
 
-        for (auto i = 0; i < 8; ++i)
+        for (int childNode : octree->getNode(node).childrenChunks)
         {
-            int childNode = this->getChildNodeIndex (node, i);
-            if (childNode != -1 && discoveredNodes.find (childNode) == discoveredNodes.end () &&
-                this->isFinishedNode (childNode))
+            if (childNode != -1 && discoveredNodes.find (childNode) == discoveredNodes.end () && octree->getNode(childNode).isFinished)
             {
                 discoveredNodes[childNode] = true;
                 toVisit.push_back (childNode);
@@ -98,13 +92,13 @@ void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream&
 }
 
 
-inline uint8_t PotreeExporter::getChildMask (uint32_t nodeIndex)
+inline uint8_t PotreeExporter::getChildMask (const Octree& octree, uint32_t nodeIndex)
 {
     uint8_t bitmask = 0;
     for (auto i = 0; i < 8; i++)
     {
-        int childNodeIndex = this->getChildNodeIndex (nodeIndex, i);
-        if (childNodeIndex != -1 && this->isFinishedNode (childNodeIndex))
+        int childNodeIndex = octree->getNode(nodeIndex).childrenChunks[i];
+        if (childNodeIndex != -1 && octree->getNode(childNodeIndex).isFinished)
         {
             bitmask = bitmask | (1 << i);
         }
@@ -112,12 +106,13 @@ inline uint8_t PotreeExporter::getChildMask (uint32_t nodeIndex)
     return bitmask;
 }
 
-void PotreeExporter::createMetadataFile ()
+void PotreeExporter::createMetadataFile (const PointCloud& cloud, const SubsampleMetadata& subsampleMeta)
 {
     // Prepare metadata for export
-    auto bbCubic = this->itsCloudMetadata.bbCubic;
-    auto scale   = this->itsCloudMetadata.scale;
-    auto spacing = (bbCubic.max.x - bbCubic.min.x) / this->itsSubsampleMetadata.subsamplingGrid;
+    auto &cloudMeta = cloud->getMetadata();
+    auto bbCubic = cloudMeta.bbCubic;
+    auto scale   = cloudMeta.scale;
+    auto spacing = (bbCubic.max.x - bbCubic.min.x) / subsampleMeta.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;
@@ -126,8 +121,8 @@ void PotreeExporter::createMetadataFile ()
     metadata["description"] = "AIT Austrian Institute of Technology";
     metadata["points"]      = this->itsPointsExported;
     metadata["projection"]  = "";
-    metadata["flags"][0]    = this->itsSubsampleMetadata.useReplacementScheme ? "REPLACING" : "ADDITIVE";
-    if (this->itsSubsampleMetadata.performAveraging)
+    metadata["flags"][0]    = subsampleMeta.useReplacementScheme ? "REPLACING" : "ADDITIVE";
+    if (subsampleMeta.performAveraging)
     {
         metadata["flags"][1] = "AVERAGING";
     }
@@ -159,7 +154,7 @@ void PotreeExporter::createMetadataFile ()
     metadata["attributes"][1]["elementSize"] = COLOR_ELEMENT_SIZE;
     metadata["attributes"][1]["type"]        = COLOR_TYPE;
     metadata["attributes"][1]["min"]         = {0, 0, 0};
-    metadata["attributes"][1]["max"]         = {65024, 65280, 65280};
+    metadata["attributes"][1]["max"]         = {65536, 65536, 65536};
 
     std::ofstream file (itsExportFolder + METADATA_FILE_NAME);
     file << std::setw (4) << metadata;
