@@ -15,8 +15,9 @@ namespace chunking {
 /**
  * Distributes 3D points from the point cloud to the leaf nodes of the octree.
  * The CUDA kernel iteratively tests whether the target node is marked
- * as finished. If it is finished the point index is stored in the nodes
- * point-LUT else the kernel tests the next higher parent node.
+ * as finished. If it is finished the point is distributed, otherwise the kernel tests the next higher parent node.
+ * During distribution, on the one side, the indices of the points are stored in a LUT.
+ * On the other side, the point data (coordinates, colors) are directly written to the binary output buffer.
  *
  * @tparam coordinateType
  * @param octree
@@ -36,7 +37,7 @@ __global__ void kernelDistributePoints (
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index >= cloud.points)
     {
         return;

@@ -34,13 +34,13 @@ __global__ void kernelPointCounting (
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index >= cloud.points)
     {
         return;
     }
 
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
+    auto* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
 
     auto denseIndex = mapPointToGrid<coordinateType> (point, gridding);
     auto previous   = atomicAdd ((countingGrid + denseIndex), 1);
@@ -56,13 +56,6 @@ __global__ void kernelPointCounting (
 
 namespace Kernel {
 
-/**
- * A wrapper for calling kernelPointCounting.
- * @tparam Arguments The Arguments for the CUDA kernel.
- * @param config The Configuration for the CUDA kernel launch
- * @param args The Arguments for the CUDA kernel.
- * @return The time for executing kernelPointCounting.
- */
 template <typename... Arguments>
 void pointCounting (const KernelConfig& config, Arguments&&... args)
 {

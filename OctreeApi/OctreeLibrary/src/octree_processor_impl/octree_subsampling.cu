@@ -12,7 +12,7 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
     itsDenseToSparseLUT->memset (-1);
     itsCountingGrid->memset (0);
     itsOctree->updateNodeStatistics ();
-    
+
     randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
     cudaDeviceSynchronize ();
 }

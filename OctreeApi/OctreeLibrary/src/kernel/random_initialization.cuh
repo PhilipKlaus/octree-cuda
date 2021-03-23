@@ -10,7 +10,7 @@ namespace subsampling {
  */
 __global__ void kernelInitRandoms (time_t seed, curandState_t* states, uint32_t cellAmount)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     if (index >= cellAmount)
     {

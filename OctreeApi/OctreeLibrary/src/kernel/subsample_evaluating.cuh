@@ -15,6 +15,12 @@
 
 namespace subsampling {
 
+/**
+ * Encodes a color vector in a single uint64.
+ * @tparam colorType The datatype of the point colors.
+ * @param color The color vector to be encoded.
+ * @return The encoded color information.
+ */
 template <typename colorType>
 __device__ uint64_t encodeColors (Vector3<colorType>* color)
 {
@@ -22,26 +28,43 @@ __device__ uint64_t encodeColors (Vector3<colorType>* color)
            static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
 }
 
+/**
+ * Encodes a color vector in a single uint64.
+ * @tparam colorType The datatype of the point colors.
+ * @param color The color vector to be encoded.
+ * @return The encoded color information.
+ */
+ /**
+  * Encodes three color components (r,g,b) in a single uint64.
+  * @param r The red color component.
+  * @param g The green color component.
+  * @param b The blue color component.
+  * @return The encoded color information.
+  */
 __device__ uint64_t encodeColors (uint16_t r, uint16_t g, uint16_t b)
 {
     return (static_cast<uint64_t> (r) << 46) | (static_cast<uint64_t> (g) << 28) | static_cast<uint64_t> (b) << 10 |
            static_cast<uint64_t> (1);
 }
+
+
 /**
- * Places a 3-dimensional grid over 8 octree children nodes and maps the points inside to a target cell.
+ * Places a 3-dimensional grid over 8 octree children nodes and maps their points to a target cell.
  * The kernel counts how many points fall into each cell of the counting grid.
- * Furthermore all color information from all points in a cell are summed up (needed for color averaging)
+ * Furthermore all color information from all points in a cell are summed up (needed for color averaging).
+ * The amount of occupied cells is stored as pointCount in the parent node (octree).
  *
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
- * @param subsampleSet Contains meta information necessary for accessing child node data.
- * @param countingGrid The actual counting grid, holding the amount of points per cell.
- * @param averagingGrid Hold the summarized color information per cell.
+ * @param outputBuffer The binary output buffer.
+ * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
+ * @param octree The octree data structure.
+ * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
  * @param denseToSparseLUT Maps dense to sparse indices.
- * @param pointsPerSubsample Counts how many cells in the counting grid are actually filled.
- * @param linearIdx The linear index in pointsPerSubsample.
- * @param cloud Holds the point cloud data.
- * @param gridding Holds data necessary to map a 3D point to a cell.
+ * @param lut Stores the point indices of all points within a node.
+ * @param cloud The point cloud data.
+ * @param gridding Contains gridding related data.
+ * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
@@ -50,7 +73,7 @@ __global__ void kernelEvaluateSubsamples (
         Node* octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        PointLut* output,
+        PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
         uint32_t nodeIdx)
@@ -66,7 +89,7 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Get pointer to the output data entry
-    PointLut* src = output + child->dataIdx + localPointIdx;
+    PointLut* src = lut + child->dataIdx + localPointIdx;
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* srcCloudByte   = cloud.raw + (*src) * cloud.dataStride;
@@ -80,8 +103,7 @@ __global__ void kernelEvaluateSubsamples (
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // Encode the point color and add it up
-    uint64_t encoded =
-            encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b); // isParent ? src->encoded : encodeColors (color);
+    uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 

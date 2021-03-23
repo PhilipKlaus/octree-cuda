@@ -15,22 +15,22 @@ namespace chunking {
 /**
  * Merges octree nodes hierarchically if their point sum is lower than a threshold.
  * The CUDA kernel evaluates the point sum of all 8 child nodes. When the sum is
- * lower than the threshold it 'merges' all 8 child nodes otherwise it marks
+ * lower than the threshold it 'merges' all 8 child nodes, otherwise it marks
  * the parent node and the 8 child nodes as finished.
  *
  * @param octree The octree data structure
- * @param countingGrid Holds the amount of points per cell (dense).
+ * @param countingGrid The amount of points per node.
  * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
  * @param sparseToDenseLUT Holds the sparse-to-dense node mapping.
  * @param lutOffset Holds the point-LUT offset.
  * @param threshold The merging threshold.
- * @param cellAmount Cell (node) amount of the current hierarchy.
+ * @param nodeAmount Cell (node) amount of the current hierarchy.
  * @param gridSize Grid size of the current hierarchy. (e.g. 128)
  * @param lowerGridSize Grid size of one hierarchy level below. (e.g. 256)
- * @param cellOffset The accumulated amount of dense cells for the current hierarchy level.
- * e.g. level=128 -> cellOffset = 512*512*512 + 256*256*256
- * @param cellOffsetLower The accumulated amount of dense cells of one hierarchy level below.
- * e.g. level=128 -> cellOffsetLower = 512*512*512
+ * @param nodeOffset The accumulated amount of dense nodes for the current hierarchy level.
+ * e.g. level=128 -> nodeOffset = 512*512*512 + 256*256*256
+ * @param nodeOffsetLower The accumulated amount of dense nodes of one hierarchy level below.
+ * e.g. level=128 -> nodeOffsetLower = 512*512*512
  */
 __global__ void kernelMergeHierarchical (
         Node* octree,
@@ -39,17 +39,17 @@ __global__ void kernelMergeHierarchical (
         int* sparseToDenseLUT,
         uint32_t* lutOffset,
         uint32_t threshold,
-        uint32_t cellAmount,
+        uint32_t nodeAmount,
         uint32_t gridSize,
         uint32_t lowerGridSize,
-        uint32_t cellOffset,
-        uint32_t cellOffsetLower)
+        uint32_t nodeOffset,
+        uint32_t nodeOffsetLower)
 {
     unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    uint32_t denseVoxelIndex = cellOffset + index; // May be invalid
+    uint32_t denseVoxelIndex = nodeOffset + index; // May be invalid
 
-    if (index >= cellAmount || denseToSparseLUT[denseVoxelIndex] == -1)
+    if (index >= nodeAmount || denseToSparseLUT[denseVoxelIndex] == -1)
     {
         return;
     }
@@ -65,7 +65,7 @@ __global__ void kernelMergeHierarchical (
 
     // If the chunk exists, calculate the dense indices of the 8 underlying cells
     uint32_t childNodes[8];
-    childNodes[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
+    childNodes[0] = nodeOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
                     (coords.x * 2);                // int: 0 -> Child 0
     childNodes[4] = childNodes[0] + 1;             // int: 4 -> child 4
     childNodes[2] = childNodes[0] + lowerGridSize; // int: 2 -> child 2

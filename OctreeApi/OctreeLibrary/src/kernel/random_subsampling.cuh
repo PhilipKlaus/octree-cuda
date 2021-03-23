@@ -16,9 +16,9 @@
 namespace subsampling {
 
 /**
- * Generates one random number, depending on the point amount in a cell.
+ * Generates one random number, depending on the point amount in a node.
  * Important! This kernel does not generate a random point index, instead it generates
- * a random number between [0 <-> points-in-a-cell]. The actual assignment from this
+ * a random number between [0 <-> points-in-a-node]. The actual assignment from this
  * generated random number to a 3D point is performed in kernelRandomPointSubsample.
  *
  * @param states The initialized random states.
@@ -50,21 +50,22 @@ __global__ void kernelGenerateRandoms (
 }
 
 /**
- * Evaluates on random point per cell and assign its averaging and point-lut data to the parent node.
- * Furthermore this kernel resets all temporary needed data structures.
+ * Picks a random point from a child node and stores the point index in a point LUT.
+ * Further, the point data (coordinates, colors) are written to the binary output buffer.
+ * After processing the kernel, resets all temporary needed data structures.
  *
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
- * @param parentDataLUT The point-LUT of the parent node.
- * @param parentAveraging The averaging data of the parent node.
- * @param countingGrid Holds the amount of points per cell.
- * @param averagingGrid Holds the averaging data from all 8 child nodes.
+ * @param outputBuffer The binary output buffer.
+ * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
+ * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
  * @param denseToSparseLUT Maps dense to sparse indices.
- * @param filledCellCounter Hlds the amount of filled cells (!=0) wihtin the counting grid.
- * @param cloud Holds the point cloud data.
- * @param gridding Holds data necessary to map a 3D point to a cell.
- * @param randomIndices Holds the previously generated random numbers for each subsampling cell.
- * @param replacementScheme Determines if the replacement scheme or the averaging scheme should be applied.
+ * @param cloud The point cloud data.
+ * @param gridding Contains gridding related data.
+ * @param randomIndices The generated random indices for each subsampled node.
+ * @param lut Stores the point indices of all points within a node.
+ * @param octree The octree data structure.
+ * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
 __global__ void kernelRandomPointSubsample (
@@ -75,7 +76,7 @@ __global__ void kernelRandomPointSubsample (
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
         uint32_t* randomIndices,
-        PointLut* output,
+        PointLut* lut,
         Node* octree,
         uint32_t nodeIdx)
 {
@@ -90,7 +91,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Get pointer to the output data entry
-    PointLut* src = output + child->dataIdx + localPointIdx;
+    PointLut* src = lut + child->dataIdx + localPointIdx;
 
     // Get the point within the point cloud
     uint8_t* srcPoint = cloud.raw + (*src) * cloud.dataStride;
@@ -110,7 +111,7 @@ __global__ void kernelRandomPointSubsample (
     }
 
     // Move subsampled averaging and point-LUT data to parent node
-    PointLut* dst = output + octree[nodeIdx].dataIdx + sparseIndex;
+    PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
     *dst          = *src;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
@@ -120,7 +121,6 @@ __global__ void kernelRandomPointSubsample (
             ((encoded >> 46) & 0xFFFF) / amount,
             ((encoded >> 28) & 0xFFFF) / amount,
             ((encoded >> 10) & 0xFFFF) / amount};
-    // dst->encoded = (decoded [0] << 46) | (decoded [1] << 28) | (decoded [2] << 10) | 1;
 
     // Write coordinates and colors to output buffer
     OutputBuffer* out = outputBuffer + octree[nodeIdx].dataIdx + sparseIndex;
@@ -136,8 +136,18 @@ __global__ void kernelRandomPointSubsample (
     averagingGrid[denseVoxelIndex]    = 0;
 }
 
+/**
+ * Calculates the data position (index) inside the output buffer for a given node.
+ *
+ * @tparam coordinateType The datatype of the point coordinates
+ * @tparam colorType The datatype of the point colors
+ * @param octree The octree data structure
+ * @param node The node for which the data position should be calculated
+ * @param lastNode The previous subsampled node
+ * @param leafOffset The data position of the first subsampled parent node (after all leaf nodes)
+ */
 template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (Node* octree, uint32_t nodeIndex, int lastNode, const uint32_t* leafOffset)
+__global__ void kernelCalcNodeByteOffset (Node* octree, uint32_t node, int lastNode, const uint32_t* leafOffset)
 {
     unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index > 0)
@@ -145,8 +155,7 @@ __global__ void kernelCalcNodeByteOffset (Node* octree, uint32_t nodeIndex, int 
         return;
     }
 
-    octree[nodeIndex].dataIdx =
-            (lastNode == -1) ? leafOffset[0] : octree[lastNode].dataIdx + octree[lastNode].pointCount;
+    octree[node].dataIdx = (lastNode == -1) ? leafOffset[0] : octree[lastNode].dataIdx + octree[lastNode].pointCount;
 }
 
 } // namespace subsampling

@@ -15,11 +15,11 @@ namespace chunking {
 /**
  * Initializes the leaf nodes of the octree and adds sparse-to-dense mappings.
  *
- * @param octreeSparse The octree datastructure.
- * @param countingGrid Holds the amount of points per cell (dense).
+ * @param octreeSparse The octree data structure.
+ * @param countingGrid Holds the amount of points per node.
  * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
  * @param sparseToDenseLUT Holds the sparse-to-dense node mapping.
- * @param nodeAmount The maximum amount of nodees (cells).
+ * @param nodeAmount The maximum amount of nodes.
  */
 __global__ void kernelInitLeafNodes (
         Node* octreeSparse,
