@@ -11,9 +11,9 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 
     itsDenseToSparseLUT->memset (-1);
     itsCountingGrid->memset (0);
-
+    auto timing = Timing::TimeTracker::start ();
     itsOctree->updateNodeStatistics ();
-
+    Timing::TimeTracker::stop (timing, "Update octree statistics (CPU)", Timing::Time::PROCESS);
     randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getMetadata ().depth);
     cudaDeviceSynchronize ();
 }

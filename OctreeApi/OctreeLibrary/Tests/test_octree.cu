@@ -4,20 +4,20 @@
 void fillDummyOctree(Chunk (&chunks)[9]) {
 
     /*
-     *                   900
+     *                   50
      *       /   /   /  /   \  \  \   \
      *      100 350 0 800 1300 0 700 250
      */
 
     chunks[8].childrenChunks[0] = 0;
     chunks[8].childrenChunks[1] = 1;
-    chunks[8].childrenChunks[2] = 2;
+    chunks[8].childrenChunks[2] = -1;
     chunks[8].childrenChunks[3] = 3;
     chunks[8].childrenChunks[4] = 4;
-    chunks[8].childrenChunks[5] = 5;
+    chunks[8].childrenChunks[5] = -1;
     chunks[8].childrenChunks[6] = 6;
     chunks[8].childrenChunks[7] = 7;
-    chunks[8].pointCount = 900;
+    chunks[8].pointCount = 50;
     chunks[8].isFinished = true;
     chunks[8].isParent = true;
 
@@ -52,7 +52,6 @@ TEST_CASE ("An Octree should")
             CHECK (meta.chunkingGrid == 512);
             CHECK (meta.depth == 9);
         }
-
 
         SECTION ("return correct Node Statistics (not updated)")
         {
@@ -156,6 +155,30 @@ TEST_CASE ("An Octree should")
             CHECK (meta.meanPointsPerLeafNode == 0);
         }
 
+        SECTION ("return correct Node Statistics (updated)")
+        {
+            Chunk chunks[9];
+            fillDummyOctree(chunks);
+
+            REQUIRE (
+                    cudaMemcpy (
+                            octree.getDevice (),
+                            reinterpret_cast<uint8_t*> (chunks),
+                            sizeof (Chunk) * 9,
+                            cudaMemcpyHostToDevice) == cudaSuccess);
+
+            octree.updateNodeStatistics();
+            auto& meta = octree.getNodeStatistics ();
+            CHECK (meta.nodeAmountSparse == 9);
+            CHECK (meta.nodeAmountDense == 153391689);
+            CHECK (meta.parentNodeAmount == 1);
+            CHECK (meta.minPointsPerNode == 100);
+            CHECK (meta.maxPointsPerNode == 1300);
+            CHECK (meta.leafNodeAmount == 6);
+            CHECK (meta.parentNodeAmount == 1);
+            CHECK (meta.meanPointsPerLeafNode == Approx(583.3).epsilon(0.001));
+        }
+
         SECTION ("return correct root index")
         {
             CHECK (octree.getRootIndex () == 8);
@@ -177,14 +200,14 @@ TEST_CASE ("An Octree should")
             auto host = octree.getHost ();
             CHECK (host[octree.getRootIndex ()].childrenChunks[0] == 0);
             CHECK (host[octree.getRootIndex ()].childrenChunks[1] == 1);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[2] == 2);
+            CHECK (host[octree.getRootIndex ()].childrenChunks[2] == -1);
             CHECK (host[octree.getRootIndex ()].childrenChunks[3] == 3);
             CHECK (host[octree.getRootIndex ()].childrenChunks[4] == 4);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[5] == 5);
+            CHECK (host[octree.getRootIndex ()].childrenChunks[5] == -1);
             CHECK (host[octree.getRootIndex ()].childrenChunks[6] == 6);
             CHECK (host[octree.getRootIndex ()].childrenChunks[7] == 7);
             CHECK (host[octree.getRootIndex ()].isParent == true);
-            CHECK (host[octree.getRootIndex ()].pointCount == 900);
+            CHECK (host[octree.getRootIndex ()].pointCount == 50);
             CHECK (octree.getNode (0).pointCount == 100);
             CHECK (octree.getNode (1).pointCount == 350);
             CHECK (octree.getNode (2).pointCount == 0);
@@ -193,7 +216,6 @@ TEST_CASE ("An Octree should")
             CHECK (octree.getNode (5).pointCount == 0);
             CHECK (octree.getNode (6).pointCount == 700);
             CHECK (octree.getNode (7).pointCount == 250);
-
         }
     }
 }

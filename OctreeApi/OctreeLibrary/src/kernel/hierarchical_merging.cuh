@@ -45,7 +45,7 @@ __global__ void kernelMergeHierarchical (
         uint32_t cellOffset,
         uint32_t cellOffsetLower)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     uint32_t denseVoxelIndex = cellOffset + index; // May be invalid
 
