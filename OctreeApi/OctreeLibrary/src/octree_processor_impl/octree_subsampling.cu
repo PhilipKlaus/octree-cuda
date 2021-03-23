@@ -37,10 +37,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     // Now we can assure that all direct children have subsamples
     if (node.isParent)
     {
-        // Prepare and update the SubsampleConfig on the GPU
-        SubsampleSet subsampleSet{};
-        prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
-
         // Parent bounding box calculation
         PointCloudMetadata metadata = cloudMetadata;
         auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
@@ -72,7 +68,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         Kernel::evaluateSubsamples (
                 {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
                 itsCloud->getOutputBuffer_d (),
-                subsampleSet,
                 itsCountingGrid->devicePointer (),
                 itsOctree->getDevice (),
                 itsAveragingGrid->devicePointer (),
@@ -101,7 +96,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                  itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                  "kernelRandomPointSubsample"},
                 itsCloud->getOutputBuffer_d (),
-                subsampleSet,
                 itsCountingGrid->devicePointer (),
                 itsAveragingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
@@ -111,28 +105,5 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsPointLut->devicePointer (),
                 itsOctree->getDevice (),
                 sparseVoxelIndex);
-    }
-}
-
-
-void OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
-{
-    auto* config = (SubsampleConfig*)(&subsampleSet);
-    auto& node   = itsOctree->getNode (parentIndex);
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        int childIndex      = node.childrenChunks[i];
-        config[i].sparseIdx = childIndex;
-        if (childIndex != -1)
-        {
-            Chunk child               = itsOctree->getNode (childIndex);
-            config[i].isParent        = child.isParent;
-            config[i].leafPointAmount = child.pointCount;
-            config[i].leafDataIdx     = child.chunkDataIndex;
-        }
-        else
-        {
-            config[i].isParent = false;
-        }
     }
 }

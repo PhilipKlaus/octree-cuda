@@ -4,25 +4,6 @@
 #include <curand_kernel.h>
 #include <memory>
 
-struct SubsampleConfig
-{
-    int sparseIdx;
-    bool isParent;
-    uint32_t leafPointAmount; // Only valid if isParent == false
-    uint64_t leafDataIdx;     // Only valid if isParent == false
-};
-
-struct __align__ (16) SubsampleSet
-{
-    SubsampleConfig child_0;
-    SubsampleConfig child_1;
-    SubsampleConfig child_2;
-    SubsampleConfig child_3;
-    SubsampleConfig child_4;
-    SubsampleConfig child_5;
-    SubsampleConfig child_6;
-    SubsampleConfig child_7;
-};
 
 struct Chunk
 {
@@ -85,11 +66,6 @@ std::unique_ptr<CudaArray<Chunk>> createGpuOctree (Args&&... args)
     return createGpu<Chunk> (std::forward<Args> (args)...);
 }
 
-template <typename... Args>
-std::unique_ptr<CudaArray<SubsampleConfig>> createGpuSubsample (Args&&... args)
-{
-    return createGpu<SubsampleConfig> (std::forward<Args> (args)...);
-}
 
 template <typename... Args>
 std::unique_ptr<CudaArray<curandState_t>> createGpuRandom (Args&&... args)

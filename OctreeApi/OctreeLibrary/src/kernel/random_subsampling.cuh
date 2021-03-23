@@ -69,7 +69,6 @@ __global__ void kernelGenerateRandoms (
 template <typename coordinateType, typename colorType>
 __global__ void kernelRandomPointSubsample (
         OutputBuffer* outputBuffer,
-        SubsampleSet test,
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
@@ -82,18 +81,16 @@ __global__ void kernelRandomPointSubsample (
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    auto* config  = (SubsampleConfig*)(&test);
-    bool isParent = config[blockIdx.z].isParent;
-    int sparseIdx = config[blockIdx.z].sparseIdx;
+    int childIdx = octree[nodeIdx].childrenChunks[blockIdx.z];
+    auto *child = octree + childIdx;
 
-    if (sparseIdx == -1 || (isParent && localPointIdx >= octree[sparseIdx].pointCount) ||
-        (!isParent && localPointIdx >= config[blockIdx.z].leafPointAmount))
+    if (childIdx == -1 || localPointIdx >= child->pointCount)
     {
         return;
     }
 
     // Get pointer to the output data entry
-    PointLut* src = output + octree[sparseIdx].chunkDataIndex + localPointIdx;
+    PointLut* src = output + child->chunkDataIndex + localPointIdx;
 
     // Get the point within the point cloud
     uint8_t* srcPoint = cloud.raw + (*src) * cloud.dataStride;
