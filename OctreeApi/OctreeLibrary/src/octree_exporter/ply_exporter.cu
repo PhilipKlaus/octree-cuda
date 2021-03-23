@@ -1,17 +1,15 @@
-#include "ply_exporter.cuh"
+/*#include "ply_exporter.cuh"
 
 
 template <typename coordinateType, typename colorType>
 PlyExporter<coordinateType, colorType>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata) :
         OctreeExporter<coordinateType, colorType> (
-                pointCloud, octree, leafeLut, subsamples, metadata, cloudMetadata, subsamplingMetadata)
+                pointCloud, octree, metadata, cloudMetadata, subsamplingMetadata)
 {}
 
 template <typename coordinateType, typename colorType>
@@ -31,9 +29,9 @@ void PlyExporter<coordinateType, colorType>::exportNode (
     // ToDo: read from config + change in kernel;
     bool isAveraging = true;
 
-    uint32_t pointsInNode =
-            isParent ? this->itsSubsamples->getLutSize (nodeIndex) : this->itsOctree[nodeIndex].pointCount;
-    const std::unique_ptr<uint32_t[]>& lut = isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
+    uint32_t pointsInNode                  = this->getPointsInNode (nodeIndex);
+    const std::unique_ptr<uint32_t[]>& lut = this->itsSubsamples->getLutHost (
+            nodeIndex); // isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
     uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
 
@@ -219,8 +217,6 @@ void PlyExporter<coordinateType, colorType>::writeColorNonAveraged (
 template PlyExporter<float, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
@@ -233,10 +229,9 @@ template void PlyExporter<float, uint8_t>::exportOctree (const std::string& path
 template PlyExporter<double, uint8_t>::PlyExporter (
         const PointCloud& pointCloud,
         const std::shared_ptr<Chunk[]>& octree,
-        const GpuArrayU32& leafeLut,
-        const std::shared_ptr<SubsamplingData>& subsamples,
         OctreeMetadata metadata,
         PointCloudMetadata cloudMetadata,
         SubsampleMetadata subsamplingMetadata);
 
 template void PlyExporter<double, uint8_t>::exportOctree (const std::string& path);
+ */

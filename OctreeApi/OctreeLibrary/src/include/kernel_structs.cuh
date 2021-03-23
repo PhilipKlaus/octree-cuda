@@ -6,12 +6,14 @@
 
 #pragma once
 
+#include "metadata.cuh"
 #include <cstdint>
+
 namespace KernelStructs {
 
 
 /**
- * A struct which stores data necessary for gridding (mapping 3D points to a 3D grid)
+ * A struct for storing gridding related data (mapping 3D points to a 3D grid)
  */
 struct Gridding
 {
@@ -20,10 +22,15 @@ struct Gridding
     Vector3<double> bbMin; ///< The bounding box minimum
 };
 
+/**
+ * A struct for storing cloud related data
+ */
 struct Cloud
 {
-    uint8_t* raw;        ///< The raw point cloud data
-    uint32_t points;     ///< The amount of points wihtin the point cloud
-    uint32_t dataStride; ///< The point cloud data stride
+    uint8_t* raw;                ///< The raw point cloud data
+    uint32_t points;             ///< The amount of points wihtin the point cloud
+    uint32_t dataStride;         ///< The point cloud data stride
+    Vector3<double> scaleFactor; ///< The bounding box minimum
 };
+
 } // namespace KernelStructs

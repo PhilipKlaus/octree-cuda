@@ -33,7 +33,7 @@ public:
         std::string data;
         std::string labels;
 
-        for (auto const& event : itsEvents)
+        for (auto const& event : itsMemAccumulated)
         {
             data += std::to_string (std::get<1> (event));
             labels += ("\"" + std::get<0> (event) + "\"");
@@ -65,7 +65,10 @@ public:
         double reservedGB = (memoryFootprint / GB);
         itsCumulatedMemoryReservation += reservedGB;
         itsMemoryConsumption += reservedGB;
-        recordEvent (name);
+
+        itsMemAccumulated.emplace_back (name, itsMemoryConsumption);
+        itsMemPerBuffer.emplace_back (name, reservedGB);
+
         if (itsMemoryConsumption > itsMemoryPeak)
         {
             itsMemoryPeak = itsMemoryConsumption;
@@ -76,7 +79,7 @@ public:
     {
         ++itsMemoryFreeEvents;
         itsMemoryConsumption -= (memoryFootprint / GB);
-        recordEvent ("Deleted " + name);
+        itsMemAccumulated.emplace_back ("Deleted " + name, itsMemoryConsumption);
     }
 
     double getMemoryPeak ()
@@ -101,7 +104,7 @@ public:
 
     const std::vector<std::tuple<std::string, double>>& getMemoryEvents ()
     {
-        return itsEvents;
+        return itsMemPerBuffer;
     }
 
 private:
@@ -115,11 +118,6 @@ private:
         itsMemoryReportFileName       = "memory_report.html";
     }
 
-    void recordEvent (const std::string& name)
-    {
-        itsEvents.emplace_back (name, itsMemoryConsumption);
-    }
-
 public:
     MemoryTracker (MemoryTracker const&) = delete;
     void operator= (MemoryTracker const&) = delete;
@@ -131,7 +129,9 @@ private:
     double itsCumulatedMemoryReservation;
     uint32_t itsMemoryReserveEvents;
     uint32_t itsMemoryFreeEvents;
-    std::vector<std::tuple<std::string, double>> itsEvents;
+
+    std::vector<std::tuple<std::string, double>> itsMemAccumulated;
+    std::vector<std::tuple<std::string, double>> itsMemPerBuffer;
 
     const std::string itsHtmlPart1 = "<html>\n"
                                      "    <head>\n"

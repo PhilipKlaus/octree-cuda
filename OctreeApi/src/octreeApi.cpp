@@ -43,6 +43,12 @@ void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud)
     s->setPointCloudHost (pointCloud);
 }
 
+void ocpi_init_octree (void* session)
+{
+    auto s = Session::ToSession (session);
+    s->initOctree ();
+}
+
 void ocpi_generate_octree (void* session)
 {
     auto s = Session::ToSession (session);

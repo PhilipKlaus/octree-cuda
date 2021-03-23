@@ -17,61 +17,44 @@
 
 void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
 {
-    // Allocate the dense point count
-    itsDensePointCountPerVoxel = createGpuU32 (itsMetadata.nodeAmountDense, "DensePointCountPerVoxel");
-    itsDensePointCountPerVoxel->memset (0);
-
-    // Allocate the conversion LUT from dense to sparse
-    itsDenseToSparseLUT = createGpuI32 (itsMetadata.nodeAmountDense, "DenseToSparseLUT");
-    itsDenseToSparseLUT->memset (-1);
-
-    // Allocate the temporary sparseIndexCounter
-    itsTmpCounting = createGpuU32 (1, "nodeAmountSparse");
-    itsTmpCounting->memset (0);
-
     auto& meta                       = itsCloud->getMetadata ();
-    Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount};
+    Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount, "kernelPointCounting"};
     KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride};
-    KernelStructs::Gridding gridding = {itsOctreeData->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
+    KernelStructs::Gridding gridding = {itsOctree->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
 
-    float time = Kernel::pointCounting (
+    Kernel::pointCounting (
             config,
-            itsDensePointCountPerVoxel->devicePointer (),
+            itsCountingGrid->devicePointer (),
             itsTmpCounting->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             cloud,
             gridding);
-
-    TimeTracker::getInstance ().trackKernelTime (time, "kernelPointCounting");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
 {
-    float timeAccumulated = 0;
-
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for (uint32_t i = 0; i < itsMetadata.depth; ++i)
+    for (uint32_t i = 0; i < itsOctree->getNodeStatistics ().depth; ++i)
     {
-        timeAccumulated += executeKernel (
+        executeKernel (
                 chunking::kernelPropagatePointCounts,
-                itsOctreeData->getNodes (i + 1),
-                itsDensePointCountPerVoxel->devicePointer (),
+                itsOctree->getNodeAmount (i + 1),
+                "kernelPropagatePointCounts",
+                itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
-                itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getGridSize (i + 1),
-                itsOctreeData->getGridSize (i),
-                itsOctreeData->getNodeOffset (i + 1),
-                itsOctreeData->getNodeOffset (i));
+                itsOctree->getNodeAmount (i + 1),
+                itsOctree->getGridSize (i + 1),
+                itsOctree->getGridSize (i),
+                itsOctree->getNodeOffset (i + 1),
+                itsOctree->getNodeOffset (i));
     }
 
-    TimeTracker::getInstance ().trackKernelTime (timeAccumulated, "kernelPropagatePointCounts");
-
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
-    itsMetadata.nodeAmountSparse = itsTmpCounting->toHost ()[0];
-    itsOctreeData->createOctree (itsMetadata.nodeAmountSparse);
+    uint32_t sparseNodes = itsTmpCounting->toHost ()[0];
+    itsOctree->createHierarchy (sparseNodes);
     // Allocate the conversion LUT from sparse to dense
-    itsSparseToDenseLUT = createGpuI32 (itsMetadata.nodeAmountSparse, "sparseToDenseLUT");
+    itsSparseToDenseLUT = createGpuI32 (sparseNodes, "sparseToDenseLUT");
     itsSparseToDenseLUT->memset (-1);
 
     initLowestOctreeHierarchy ();
@@ -80,16 +63,15 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
 
 void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
 {
-    float time = executeKernel (
+    executeKernel (
             chunking::kernelInitLeafNodes,
-            itsOctreeData->getNodes (0),
-            itsOctreeData->getDevice (),
-            itsDensePointCountPerVoxel->devicePointer (),
+            itsOctree->getNodeAmount (0),
+            "kernelInitLeafNodes",
+            itsOctree->getDevice (),
+            itsCountingGrid->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
             itsSparseToDenseLUT->devicePointer (),
-            itsOctreeData->getNodes (0));
-
-    TimeTracker::getInstance ().trackKernelTime (time, "kernelInitLeafNodes");
+            itsOctree->getNodeAmount (0));
 }
 
 
@@ -97,45 +79,51 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
 {
     itsTmpCounting->memset (0);
 
-    float timeAccumulated = 0.f;
-    for (uint32_t i = 0; i < itsMetadata.depth; ++i)
+    for (uint32_t i = 0; i < itsOctree->getNodeStatistics ().depth; ++i)
     {
-        timeAccumulated += executeKernel (
+        executeKernel (
                 chunking::kernelMergeHierarchical,
-                itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getDevice (),
-                itsDensePointCountPerVoxel->devicePointer (),
+                itsOctree->getNodeAmount (i + 1),
+                "kernelMergeHierarchical",
+                itsOctree->getDevice (),
+                itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
-                itsMetadata.mergingThreshold,
-                itsOctreeData->getNodes (i + 1),
-                itsOctreeData->getGridSize (i + 1),
-                itsOctreeData->getGridSize (i),
-                itsOctreeData->getNodeOffset (i + 1),
-                itsOctreeData->getNodeOffset (i));
+                itsProcessingInfo.mergingThreshold,
+                itsOctree->getNodeAmount (i + 1),
+                itsOctree->getGridSize (i + 1),
+                itsOctree->getGridSize (i),
+                itsOctree->getNodeOffset (i + 1),
+                itsOctree->getNodeOffset (i));
     }
-    TimeTracker::getInstance ().trackKernelTime (timeAccumulated, "kernelMergeHierarchical");
 }
 
 void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
 {
-    auto tmpIndexRegister = createGpuU32 (itsMetadata.nodeAmountSparse, "tmpIndexRegister");
+    auto tmpIndexRegister = createGpuU32 (itsOctree->getNodeStatistics ().nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
-    auto& meta                       = itsCloud->getMetadata ();
-    Kernel::KernelConfig config      = {meta.cloudType, meta.pointAmount};
-    KernelStructs::Cloud cloud       = {itsCloud->getCloudDevice (), meta.pointAmount, meta.pointDataStride};
-    KernelStructs::Gridding gridding = {itsOctreeData->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
+    auto& meta                  = itsCloud->getMetadata ();
+    Kernel::KernelConfig config = {meta.cloudType, meta.pointAmount, "kernelDistributePoints"};
+    KernelStructs::Cloud cloud  = {
+            itsCloud->getCloudDevice (),
+            meta.pointAmount,
+            meta.pointDataStride,
+            {
+                    1.0 / meta.scale.x,
+                    1.0 / meta.scale.y,
+                    1.0 / meta.scale.z,
+            }};
+    KernelStructs::Gridding gridding = {itsOctree->getGridSize (0), meta.cubicSize (), meta.bbCubic.min};
 
-    float time = Kernel::distributePoints (
+    Kernel::distributePoints (
             config,
-            itsOctreeData->getDevice (),
-            itsLeafLut->devicePointer (),
+            itsOctree->getDevice (),
+            itsPointLut->devicePointer (),
+            itsCloud->getOutputBuffer_d (),
             itsDenseToSparseLUT->devicePointer (),
             tmpIndexRegister->devicePointer (),
             cloud,
             gridding);
-
-    TimeTracker::getInstance ().trackKernelTime (time, "kernelDistributePoints");
 }

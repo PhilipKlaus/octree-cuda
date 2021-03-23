@@ -2,13 +2,18 @@ project(OctreeTest)
 
 # Create the Test executable
 add_executable(OctreeTest
-        main.cpp
-        test_tools.cpp
-        test_initial_point_counting_sparse.cpp
-        test_merging_sparse.cpp
-        test_point_distribution_sparse.cpp
-        test_subsampling_sparse.cpp
-        test_point_cloud_host.cpp test_point_cloud_device.cpp)
+        main.cu
+        test_point_cloud_host.cu
+        test_point_cloud_device.cu
+        test_octree.cu
+        # test_tools.cpp
+        # test_initial_point_counting_sparse.cpp
+        # test_merging_sparse.cpp
+        # test_point_distribution_sparse.cpp
+        # test_subsampling_sparse.cpp
+        )
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
 
 ####################
 # ADD CUDA SUPPORT #
@@ -20,11 +25,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${CUDA_INCLUDE_DIRS})
 target_include_directories(${PROJECT_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # link to cuda
-target_link_libraries(${PROJECT_NAME}
-        PUBLIC ${CUDA_nppicc_LIBRARY}
-        PUBLIC ${CUDA_nppig_LIBRARY}
-        )
-
 set_target_properties(${PROJECT_NAME} PROPERTIES
         CUDA_SEPARABLE_COMPILATION ON
         POSITION_INDEPENDENT_CODE ON
@@ -49,4 +49,4 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 
 add_test(NAME ${PROJECT_NAME} COMMAND $<TARGET_FILE:${PROJECT_NAME}>)
 
-
+target_link_libraries(${PROJECT_NAME} PRIVATE project_warnings)

@@ -34,13 +34,13 @@ __global__ void kernelPointCounting (
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
     if (index >= cloud.points)
     {
         return;
     }
 
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
+    auto* point = reinterpret_cast<Vector3<coordinateType>*> (cloud.raw + index * cloud.dataStride);
 
     auto denseIndex = mapPointToGrid<coordinateType> (point, gridding);
     auto previous   = atomicAdd ((countingGrid + denseIndex), 1);
@@ -56,25 +56,24 @@ __global__ void kernelPointCounting (
 
 namespace Kernel {
 
-/**
- * A wrapper for calling kernelPointCounting.
- * @tparam Arguments The Arguments for the CUDA kernel.
- * @param config The Configuration for the CUDA kernel launch
- * @param args The Arguments for the CUDA kernel.
- * @return The time for executing kernelPointCounting.
- */
 template <typename... Arguments>
-float pointCounting (const KernelConfig& config, Arguments&&... args)
+void pointCounting (const KernelConfig& config, Arguments&&... args)
 {
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        return executeKernel (
-                chunking::kernelPointCounting<float>, config.threadAmount, std::forward<Arguments> (args)...);
+        executeKernel (
+                chunking::kernelPointCounting<float>,
+                config.threadAmount,
+                config.name,
+                std::forward<Arguments> (args)...);
     }
     else
     {
-        return executeKernel (
-                chunking::kernelPointCounting<double>, config.threadAmount, std::forward<Arguments> (args)...);
+        executeKernel (
+                chunking::kernelPointCounting<double>,
+                config.threadAmount,
+                config.name,
+                std::forward<Arguments> (args)...);
     }
 }
 } // namespace Kernel

@@ -5,16 +5,33 @@
  */
 
 #pragma once
+#include "timing.cuh"
+#include <map>
+#include <set>
 #include <spdlog/spdlog.h>
 #include <sstream>
 #include <string>
 #include <tuple>
 #include <vector>
 
+namespace Timing {
+
+struct TimingProps
+{
+    float duration;
+    uint32_t invocations;
+};
+
+enum Time
+{
+    PROCESS,
+    MEM_CPY,
+    MEM_ALLOC
+};
 
 /**
- * A tracker for montoring runtime measurements.
- * The tracker differs between CPU, GPU and Memory-related time measurements and
+ * A tracker for montoring gpu related runtimes.
+ * The tracker differs between Cuda kernel and Cuda memory related time measurements and
  * is implemented as a singleton.
  */
 class TimeTracker
@@ -30,67 +47,114 @@ public:
         return instance;
     }
 
-    void trackCpuTime (float ms, const std::string& measurement)
+    void trackKernelTime (KernelTimer timer, const std::string& measurement)
     {
-        cpuTimings.emplace_back (ms, measurement);
-        std::stringstream stream;
-        stream << "[cpu task] " << measurement << " took: " << ms << " [ms]";
-        spdlog::info (stream.str ());
+        kernelTimers.emplace_back (timer, measurement);
+        if (kernelOrder.find (measurement) == kernelOrder.end ())
+        {
+            kernelOrder[measurement] = static_cast<int> (kernelTimings.size ());
+            kernelTimings.emplace_back (measurement, TimingProps{0.f, 0});
+        }
     }
 
-    void trackKernelTime (float ms, const std::string& measurement)
-    {
-        kernelTimings.emplace_back (ms, measurement);
-        std::stringstream stream;
-        stream << "[kernel] " << measurement << " took: " << ms << " [ms]";
-        spdlog::info (stream.str ());
-    }
-
-    void trackMemCpyTime (float ms, const std::string& measurement, bool hostToDevice, bool silent=true)
+    void trackMemCpyTime (double ms, const std::string& measurement, bool log)
     {
         memCopyTimings.emplace_back (ms, measurement);
-        if(!silent) {
-            std::stringstream stream;
-            stream << (hostToDevice ? "[host -> device] " : "[device -> host] ") << measurement << " took: " << ms
-                   << " [ms]";
-            spdlog::info (stream.str ());
+        if (log)
+        {
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[memcpy]", measurement, ms);
         }
     }
 
-    void trackMemAllocTime (float ms, const std::string& measurement, bool silent=true)
+    void trackMemAllocTime (double ms, const std::string& measurement, bool log)
     {
         memAllocTimings.emplace_back (ms, measurement);
-        if(!silent)
+        if (log)
         {
-            std::stringstream stream;
-            stream << "[cudaMalloc] for '" << measurement << "' took: " << ms << " [ms]";
-            spdlog::info (stream.str ());
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[cudamalloc]", measurement, ms);
         }
     }
 
-    const std::vector<std::tuple<float, std::string>>& getCpuTimings () const
+    void trackProcessTime (double ms, const std::string& measurement, bool log)
     {
-        return cpuTimings;
+        processTimings.emplace_back (ms, measurement);
+        if (log)
+        {
+            spdlog::info ("{:<15} {:<30} took: {} [ms]", "[process]", measurement, ms);
+        }
     }
 
-    const std::vector<std::tuple<float, std::string>>& getKernelTimings () const
+    const std::vector<std::tuple<std::string, TimingProps>>& getKernelTimings ()
     {
+        if (kernelTimers.size () > 0)
+        {
+            spdlog::info ("----- KERNEL TIMINGS -----");
+            for (auto& timer : kernelTimers)
+            {
+                float ms  = std::get<0> (timer).getMilliseconds ();
+                int order = kernelOrder[std::get<1> (timer)];
+                std::get<1> (kernelTimings[order]).duration += ms;
+                std::get<1> (kernelTimings[order]).invocations += 1;
+            }
+            for (auto& timing : kernelTimings)
+            {
+                float dur    = std::get<1> (timing).duration;
+                uint32_t inv = std::get<1> (timing).invocations;
+                spdlog::info ("[kernel] {:<30} invocations: {} took: {} [ms]", std::get<0> (timing), inv, dur);
+            }
+        }
         return kernelTimings;
     }
 
-    const std::vector<std::tuple<float, std::string>>& getMemCpyTimings () const
+    const std::vector<std::tuple<double, std::string>>& getMemCpyTimings () const
     {
         return memCopyTimings;
     }
 
-    const std::vector<std::tuple<float, std::string>>& getMemAllocTimings () const
+    const std::vector<std::tuple<double, std::string>>& getMemAllocTimings () const
     {
         return memAllocTimings;
     }
 
+    const std::vector<std::tuple<double, std::string>>& getProcessTimings () const
+    {
+        return processTimings;
+    }
+
+    static time_point<steady_clock> start ()
+    {
+        return std::chrono::high_resolution_clock::now ();
+    }
+
+    static double stop (
+            const time_point<steady_clock>& start, const std::string& measurement, Time kind, bool log = true)
+    {
+        auto finish                           = std::chrono::high_resolution_clock::now ();
+        std::chrono::duration<double> elapsed = finish - start;
+        double ms                             = elapsed.count () * 1000;
+        switch (kind)
+        {
+        case Time::PROCESS:
+            getInstance ().trackProcessTime (ms, measurement, log);
+            break;
+        case Time::MEM_ALLOC:
+            getInstance ().trackMemAllocTime (ms, measurement, log);
+            break;
+        default:
+            getInstance ().trackMemCpyTime (ms, measurement, log);
+            break;
+        }
+        return ms;
+    }
+
 private:
-    std::vector<std::tuple<float, std::string>> cpuTimings;
-    std::vector<std::tuple<float, std::string>> kernelTimings;
-    std::vector<std::tuple<float, std::string>> memCopyTimings;
-    std::vector<std::tuple<float, std::string>> memAllocTimings;
+    std::vector<std::tuple<double, std::string>> memCopyTimings;
+    std::vector<std::tuple<double, std::string>> memAllocTimings;
+    std::vector<std::tuple<double, std::string>> processTimings;
+
+    // Kernel timings
+    std::vector<std::tuple<KernelTimer, std::string>> kernelTimers;
+    std::vector<std::tuple<std::string, TimingProps>> kernelTimings;
+    std::map<std::string, int> kernelOrder;
 };
+} // namespace Timing

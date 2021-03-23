@@ -1,4 +1,4 @@
-#include "octree_exporter.cuh"
+/*#include "octree_exporter.cuh"
 
 
 template <typename coordinateType, typename colorType>
@@ -8,8 +8,6 @@ public:
     PlyExporter (
             const PointCloud& pointCloud,
             const std::shared_ptr<Chunk[]>& octree,
-            const GpuArrayU32& leafeLut,
-            const std::shared_ptr<SubsamplingData>& subsamples,
             OctreeMetadata metadata,
             PointCloudMetadata cloudMetadata,
             SubsampleMetadata subsamplingMetadata);
@@ -26,3 +24,4 @@ private:
     void writeColorNonAveraged (
             const std::unique_ptr<uint8_t[]>& buffer, uint64_t bufferOffset, uint64_t pointByteIndex);
 };
+*/

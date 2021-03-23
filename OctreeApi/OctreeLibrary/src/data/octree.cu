@@ -2,64 +2,166 @@
 #include "time_tracker.cuh"
 #include "tools.cuh"
 
-Octree::Octree (uint32_t chunkingGrid) : itsDepth (0), itsChunkingGrid (chunkingGrid), itsNodeAmountDense (0)
+OctreeData::OctreeData (uint32_t chunkingGrid) : itsNodeStatistics ({})
 {
-    initialize ();
+    itsNodeStatistics.nodeAmountDense = 0;
+    itsNodeStatistics.depth           = tools::getOctreeLevel (chunkingGrid);
+
+    initialize (chunkingGrid);
 }
 
-void Octree::initialize ()
+void OctreeData::initialize (uint32_t chunkingGrid)
 {
-    itsDepth = tools::getOctreeLevel (itsChunkingGrid);
-
-    for (uint32_t gridSize = itsChunkingGrid; gridSize > 0; gridSize >>= 1)
+    for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
     {
         itsGridSizePerLevel.push_back (gridSize);
-        itsNodeOffsetperLevel.push_back (itsNodeAmountDense);
+        itsNodeOffsetperLevel.push_back (itsNodeStatistics.nodeAmountDense);
         itsNodesPerLevel.push_back (static_cast<uint32_t> (pow (gridSize, 3)));
-        itsNodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
+
+        itsNodeStatistics.nodeAmountDense += static_cast<uint32_t> (pow (gridSize, 3));
     }
 }
-uint8_t Octree::getDepth ()
-{
-    return itsDepth;
-}
-uint32_t Octree::getNodes (uint8_t level)
+
+uint32_t OctreeData::getNodeAmount (uint8_t level) const
 {
     return itsNodesPerLevel[level];
 }
-uint32_t Octree::getGridSize (uint8_t level)
+
+uint32_t OctreeData::getGridSize (uint8_t level) const
 {
     return itsGridSizePerLevel[level];
 }
-uint32_t Octree::getNodeOffset (uint8_t level)
+
+uint32_t OctreeData::getNodeOffset (uint8_t level) const
 {
     return itsNodeOffsetperLevel[level];
 }
-uint32_t Octree::getOverallNodes ()
+
+void OctreeData::createHierarchy (uint32_t nodeAmountSparse)
 {
-    return itsNodeAmountDense;
+    itsNodeStatistics.nodeAmountSparse = nodeAmountSparse;
+    itsOctree                          = createGpuOctree (nodeAmountSparse, "octreeSparse");
 }
-void Octree::createOctree (uint32_t nodeAmountSparse)
+
+void OctreeData::copyToHost ()
 {
-    itsOctree = createGpuOctree (nodeAmountSparse, "octreeSparse");
-}
-void Octree::copyToHost ()
-{
+    ensureHierarchyCreated ();
     itsOctreeHost = itsOctree->toHost ();
 }
-const std::shared_ptr<Chunk[]>& Octree::getHost ()
+
+const std::shared_ptr<Node[]>& OctreeData::getHost ()
 {
+    ensureHierarchyCreated ();
     if (!itsOctreeHost)
     {
         copyToHost ();
     }
     return itsOctreeHost;
 }
-Chunk* Octree::getDevice ()
+
+Node* OctreeData::getDevice () const
 {
+    ensureHierarchyCreated ();
     return itsOctree->devicePointer ();
 }
-const Chunk& Octree::getNode (uint32_t index)
+
+const Node& OctreeData::getNode (uint32_t index)
 {
+    ensureHierarchyCreated ();
     return getHost ()[index];
+}
+
+const OctreeInfo& OctreeData::getNodeStatistics () const
+{
+    return itsNodeStatistics;
+}
+
+void OctreeData::updateNodeStatistics ()
+{
+    ensureHierarchyCreated ();
+
+    // Reset Octree statistics
+    itsNodeStatistics.leafNodeAmount         = 0;
+    itsNodeStatistics.parentNodeAmount       = 0;
+    itsNodeStatistics.meanPointsPerLeafNode  = 0.f;
+    itsNodeStatistics.stdevPointsPerLeafNode = 0.f;
+    itsNodeStatistics.minPointsPerNode       = std::numeric_limits<uint32_t>::max ();
+    itsNodeStatistics.maxPointsPerNode       = std::numeric_limits<uint32_t>::min ();
+
+    uint32_t pointSum = 0;
+    float sumVariance = 0.f;
+
+    getHost ();
+    evaluateNodeProperties (itsNodeStatistics, pointSum, getRootIndex ());
+
+    itsNodeStatistics.meanPointsPerLeafNode = static_cast<float> (pointSum) / itsNodeStatistics.leafNodeAmount;
+
+    calculatePointVarianceInLeafNoes (sumVariance, getRootIndex ());
+    itsNodeStatistics.stdevPointsPerLeafNode = sqrt (sumVariance / itsNodeStatistics.leafNodeAmount);
+}
+
+void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex)
+{
+    Node node = itsOctreeHost[nodeIndex];
+
+    // Leaf node
+    if (!node.isParent)
+    {
+        statistics.leafNodeAmount += 1;
+        pointSum += node.pointCount;
+        statistics.minPointsPerNode =
+                node.pointCount < statistics.minPointsPerNode ? node.pointCount : statistics.minPointsPerNode;
+        statistics.maxPointsPerNode =
+                node.pointCount > statistics.maxPointsPerNode ? node.pointCount : statistics.maxPointsPerNode;
+    }
+
+    // Parent node
+    else
+    {
+        statistics.parentNodeAmount += 1;
+        for (int childNode : node.childNodes)
+        {
+            if (childNode != -1)
+            {
+                evaluateNodeProperties (statistics, pointSum, childNode);
+            }
+        }
+    }
+}
+
+uint32_t OctreeData::getRootIndex () const
+{
+    ensureHierarchyCreated ();
+    return itsNodeStatistics.nodeAmountSparse - 1;
+}
+
+void OctreeData::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const
+{
+    Node node = itsOctreeHost[nodeIndex];
+
+    // Leaf node
+    if (!node.isParent)
+    {
+        sumVariance += pow (static_cast<float> (node.pointCount) - itsNodeStatistics.meanPointsPerLeafNode, 2.f);
+    }
+
+    // Parent node
+    else
+    {
+        for (int childIndex : node.childNodes)
+        {
+            if (childIndex != -1)
+            {
+                calculatePointVarianceInLeafNoes (sumVariance, childIndex);
+            }
+        }
+    }
+}
+
+void OctreeData::ensureHierarchyCreated () const
+{
+    if (!itsOctree)
+    {
+        throw HierarchyNotCreatedException ();
+    }
 }

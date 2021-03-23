@@ -14,37 +14,36 @@
 namespace chunking {
 
 /**
- * This CUDA kernel is executed for each potential parent node (cell).
- * The kernel evaluates the point counts of all its children nodes (cells).
- * If the sum is higher than zero, the sparse index of the parent node (cell)
- * is added to the dense-to-sparse LUT for further processing.
- * After the propagation the actual sparse Node amount is known and the octree
- * datastructure can be allocated.
+ * This CUDA kernel propagates point counts from the lowest octree level upwards.
+ * Thus the kernel is called for each parent node in each octree level.
+ * The kernel sums up the point amounts in all 8 child nodes. If the sum is greater than zero, a new dense-to-sparse
+ * entry is created and the filledNodeCounter is increased.
+ * The goal is to evaluate the amount of sparse nodes within the octree which is used to allocate the octree.
  *
- * @param countingGrid Holds the amount of points per node (cell).
+ * @param countingGrid Holds the amount of points per node.
  * @param denseToSparseLUT Holds the dense-to-sparse node mapping.
- * @param filledNodeCounter Holds the amount of filled (non-empty) cells (sparse).
- * @param cellAmount Cell (node) amount of the current hierarchy.
+ * @param filledNodeCounter Holds the amount of fille nodes (sparse).
+ * @param nodeAmount Node amount of the current hierarchy.
  * @param gridSize Grid size of the current hierarchy. (e.g. 128)
  * @param LowerGridSize Grid size of one hierarchy level below. (e.g. 256)
- * @param cellOffset The accumulated amount of dense cells for the current hierarchy level.
- * e.g. level=128 -> cellOffset = 512*512*512 + 256*256*256
- * @param cellOffsetLower The accumulated amount of dense cells of one hierarchy level below.
- * e.g. level=128 -> cellOffsetLower = 512*512*512
+ * @param nodeOffset The accumulated amount of dense nodes for the current hierarchy level.
+ * e.g. level=128 -> nodeOffset = 512*512*512 + 256*256*256
+ * @param nodeOffsetLower The accumulated amount of dense nodes of one hierarchy level below.
+ * e.g. level=128 -> nodeOffsetLower = 512*512*512
  */
 __global__ void kernelPropagatePointCounts (
         uint32_t* countingGrid,
         int* denseToSparseLUT,
         uint32_t* filledNodeCounter,
-        uint32_t cellAmount,
+        uint32_t nodeAmount,
         uint32_t gridSize,
-        uint32_t LowerGridSize,
-        uint32_t cellOffset,
-        uint32_t cellOffsetLower)
+        uint32_t lowerGridSize,
+        uint32_t nodeOffset,
+        uint32_t nodeOffsetLower)
 {
-    int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (index >= cellAmount)
+    if (index >= nodeAmount)
     {
         return;
     }
@@ -53,45 +52,30 @@ __global__ void kernelPropagatePointCounts (
     Vector3<uint32_t> coords{};
     tools::mapFromDenseIdxToDenseCoordinates (coords, index, gridSize);
 
-    auto oldXY = LowerGridSize * LowerGridSize;
+    auto oldXY = lowerGridSize * lowerGridSize;
 
     // The new dense index for the actual chunk
-    uint32_t denseIndex = cellOffset + index;
+    uint32_t denseIndex = nodeOffset + index;
 
     // Calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_0_0_0_index = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * LowerGridSize * 2) +
-                                 (coords.x * 2);                    // int: 0 -> Child 0
-    uint32_t chunk_1_0_0_index = chunk_0_0_0_index + 1;             // int: 4 -> child 4
-    uint32_t chunk_0_0_1_index = chunk_0_0_0_index + LowerGridSize; // int: 1 -> child 1
-    uint32_t chunk_1_0_1_index = chunk_0_0_1_index + 1;             // int: 5 -> child 5
-    uint32_t chunk_0_1_0_index = chunk_0_0_0_index + oldXY;         // int: 2 -> child 2
-    uint32_t chunk_1_1_0_index = chunk_0_1_0_index + 1;             // int: 6 -> child 6
-    uint32_t chunk_0_1_1_index = chunk_0_1_0_index + LowerGridSize; // int: 3 -> child 3
-    uint32_t chunk_1_1_1_index = chunk_0_1_1_index + 1;             // int: 7 -> child 7
+    uint32_t childNodes[8];
+    childNodes[0] = nodeOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
+                    (coords.x * 2);                // int: 0 -> Child 0
+    childNodes[4] = childNodes[0] + 1;             // int: 4 -> child 4
+    childNodes[2] = childNodes[0] + lowerGridSize; // int: 2 -> child 2
+    childNodes[6] = childNodes[2] + 1;             // int: 6 -> child 6
+    childNodes[1] = childNodes[0] + oldXY;         // int: 1 -> child 1
+    childNodes[5] = childNodes[1] + 1;             // int: 5 -> child 5
+    childNodes[3] = childNodes[1] + lowerGridSize; // int: 3 -> child 3
+    childNodes[7] = childNodes[3] + 1;             // int: 7 -> child 7
 
-    // Create pointers to the 8 underlying cells
-    uint32_t* chunk_0_0_0 = countingGrid + chunk_0_0_0_index;
-    uint32_t* chunk_0_0_1 = countingGrid + chunk_0_0_1_index;
-    uint32_t* chunk_0_1_0 = countingGrid + chunk_0_1_0_index;
-    uint32_t* chunk_0_1_1 = countingGrid + chunk_0_1_1_index;
-    uint32_t* chunk_1_0_0 = countingGrid + chunk_1_0_0_index;
-    uint32_t* chunk_1_0_1 = countingGrid + chunk_1_0_1_index;
-    uint32_t* chunk_1_1_0 = countingGrid + chunk_1_1_0_index;
-    uint32_t* chunk_1_1_1 = countingGrid + chunk_1_1_1_index;
-
-    // Buffer the point counts within each cell
-    uint32_t chunk_0_0_0_count = *chunk_0_0_0;
-    uint32_t chunk_0_0_1_count = *chunk_0_0_1;
-    uint32_t chunk_0_1_0_count = *chunk_0_1_0;
-    uint32_t chunk_0_1_1_count = *chunk_0_1_1;
-    uint32_t chunk_1_0_0_count = *chunk_1_0_0;
-    uint32_t chunk_1_0_1_count = *chunk_1_0_1;
-    uint32_t chunk_1_1_0_count = *chunk_1_1_0;
-    uint32_t chunk_1_1_1_count = *chunk_1_1_1;
-
-    // Summarize all children counts
-    auto sum = chunk_0_0_0_count + chunk_0_0_1_count + chunk_0_1_0_count + chunk_0_1_1_count + chunk_1_0_0_count +
-               chunk_1_0_1_count + chunk_1_1_0_count + chunk_1_1_1_count;
+    // Sum up point counts from all 8 children
+    uint32_t sum = 0;
+#pragma unroll
+    for (uint8_t i = 0; i < 8; ++i)
+    {
+        sum += *(countingGrid + childNodes[i]);
+    }
 
     if (sum > 0)
     {

@@ -1,15 +1,9 @@
 #include "octree_processor.cuh"
 #include "octree_processor_impl.cuh"
 
-OctreeProcessor::OctreeProcessor (
-        uint8_t* pointCloud,
-        uint32_t chunkingGrid,
-        uint32_t mergingThreshold,
-        PointCloudMetadata cloudMetadata,
-        SubsampleMetadata subsamplingMetadata)
+OctreeProcessor::OctreeProcessor (uint8_t* pointCloud, PointCloudInfo cloudInfo, ProcessingInfo processingInfo)
 {
-    itsProcessor = std::make_unique<OctreeProcessor::OctreeProcessorImpl> (
-            pointCloud, chunkingGrid, mergingThreshold, cloudMetadata, subsamplingMetadata);
+    itsProcessor = std::make_unique<OctreeProcessor::OctreeProcessorImpl> (pointCloud, cloudInfo, processingInfo);
 }
 
 void OctreeProcessor::initialPointCounting ()
@@ -42,7 +36,7 @@ void OctreeProcessor::exportPotree (const std::string& folderPath)
 
 void OctreeProcessor::updateStatistics ()
 {
-    itsProcessor->updateOctreeStatistics ();
+    itsProcessor->updateOctreeInfo ();
 }
 
 void OctreeProcessor::exportHistogram (const std::string& filePath, uint32_t binWidth)
@@ -50,9 +44,9 @@ void OctreeProcessor::exportHistogram (const std::string& filePath, uint32_t bin
     itsProcessor->exportHistogram (filePath, binWidth);
 }
 
-const OctreeMetadata& OctreeProcessor::getOctreeMetadata ()
+const OctreeInfo& OctreeProcessor::getNodeStatistics ()
 {
-    return itsProcessor->getMetadata ();
+    return itsProcessor->getOctreeInfo ();
 }
 
 OctreeProcessor::~OctreeProcessor ()

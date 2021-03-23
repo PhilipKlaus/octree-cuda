@@ -1,46 +1,63 @@
 /**
  * @file octree_data.cuh
  * @author Philip Klaus
- * @brief Contains OctreeData, a class for wrapping octree related functionality and data
+ * @brief Contains an OctreeData class
  */
 
 #pragma once
 
+#include "metadata.cuh"
 #include "types.cuh"
 #include <cstdint>
 #include <vector>
 
-class Octree
+class HierarchyNotCreatedException : public std::exception
 {
 public:
-    Octree (uint32_t chunkingGrid);
-    Octree (const Octree&) = delete;
+    using std::exception::exception;
+};
 
-    void createOctree (uint32_t nodeAmountSparse);
+
+/**
+ * The OctreeData class represents and manages an octree data structure and its metadata.
+ */
+class OctreeData
+{
+public:
+    OctreeData (uint32_t chunkingGrid);
+    OctreeData (const OctreeData&) = delete;
+
+    void createHierarchy (uint32_t nodeAmountSparse);
+
+    uint32_t getRootIndex () const;
+    uint32_t getNodeAmount (uint8_t level) const;
+    uint32_t getGridSize (uint8_t level) const;
+    uint32_t getNodeOffset (uint8_t level) const;
+    const Node& getNode (uint32_t index);
+
     void copyToHost ();
+    const std::shared_ptr<Node[]>& getHost ();
+    Node* getDevice () const;
 
-    uint8_t getDepth ();
-    uint32_t getNodes (uint8_t level);
-    uint32_t getGridSize (uint8_t level);
-    uint32_t getNodeOffset (uint8_t level);
-    uint32_t getOverallNodes ();
+    const OctreeInfo& getNodeStatistics () const;
 
-    const std::shared_ptr<Chunk[]>& getHost ();
-    Chunk* getDevice ();
-
-    const Chunk& getNode (uint32_t index);
+    void updateNodeStatistics ();
 
 private:
-    void initialize ();
+    void initialize (uint32_t chunkingGrid);
+    void ensureHierarchyCreated () const;
+    void evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex);
+    void calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const;
 
 private:
-    uint32_t itsDepth;
-    uint32_t itsChunkingGrid;
-    uint32_t itsNodeAmountDense;
     std::vector<uint32_t> itsNodesPerLevel;      // Holds the node amount per level (dense / bottom-up)
     std::vector<uint32_t> itsGridSizePerLevel;   // Holds the grid side length per level (bottom-up)
     std::vector<uint32_t> itsNodeOffsetperLevel; // Holds node offset per level (dense / bottom-up)
 
     GpuOctree itsOctree;
-    std::shared_ptr<Chunk[]> itsOctreeHost;
+    std::shared_ptr<Node[]> itsOctreeHost;
+
+    OctreeInfo itsNodeStatistics;
 };
+
+using Octree = std::unique_ptr<OctreeData>;

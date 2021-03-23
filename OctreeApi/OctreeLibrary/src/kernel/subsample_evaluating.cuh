@@ -11,53 +11,90 @@
 #include "metadata.cuh"
 #include "tools.cuh"
 #include "types.cuh"
+#include <inttypes.h>
 
 namespace subsampling {
 
+/**
+ * Encodes a color vector in a single uint64.
+ * @tparam colorType The datatype of the point colors.
+ * @param color The color vector to be encoded.
+ * @return The encoded color information.
+ */
+template <typename colorType>
+__device__ uint64_t encodeColors (Vector3<colorType>* color)
+{
+    return (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
+           static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
+}
 
 /**
- * Places a 3-dimensional grid over 8 octree children nodes and maps the points inside to a target cell.
+ * Encodes a color vector in a single uint64.
+ * @tparam colorType The datatype of the point colors.
+ * @param color The color vector to be encoded.
+ * @return The encoded color information.
+ */
+ /**
+  * Encodes three color components (r,g,b) in a single uint64.
+  * @param r The red color component.
+  * @param g The green color component.
+  * @param b The blue color component.
+  * @return The encoded color information.
+  */
+__device__ uint64_t encodeColors (uint16_t r, uint16_t g, uint16_t b)
+{
+    return (static_cast<uint64_t> (r) << 46) | (static_cast<uint64_t> (g) << 28) | static_cast<uint64_t> (b) << 10 |
+           static_cast<uint64_t> (1);
+}
+
+
+/**
+ * Places a 3-dimensional grid over 8 octree children nodes and maps their points to a target cell.
  * The kernel counts how many points fall into each cell of the counting grid.
- * Furthermore all color information from all points in a cell are summed up (needed for color averaging)
+ * Furthermore all color information from all points in a cell are summed up (needed for color averaging).
+ * The amount of occupied cells is stored as pointCount in the parent node (octree).
  *
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
- * @param subsampleSet Contains meta information necessary for accessing child node data.
- * @param countingGrid The actual counting grid, holding the amount of points per cell.
- * @param averagingGrid Hold the summarized color information per cell.
+ * @param outputBuffer The binary output buffer.
+ * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
+ * @param octree The octree data structure.
+ * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
  * @param denseToSparseLUT Maps dense to sparse indices.
- * @param filledCellCounter Counts how many cells in the counting grid are actually filled.
- * @param cloud Holds the point cloud data.
- * @param gridding Holds data necessary to map a 3D point to a cell.
+ * @param lut Stores the point indices of all points within a node.
+ * @param cloud The point cloud data.
+ * @param gridding Contains gridding related data.
+ * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
-        SubsampleSet subsampleSet,
+        OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
+        Node* octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
-        uint32_t* filledCellCounter,
+        PointLut* lut,
         KernelStructs::Cloud cloud,
-        KernelStructs::Gridding gridding)
+        KernelStructs::Gridding gridding,
+        uint32_t nodeIdx)
 {
-    int index               = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    SubsampleConfig* config = (SubsampleConfig*)(&subsampleSet);
-    int gridIndex           = blockIdx.z;
+    unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    if (index >= config[gridIndex].pointAmount)
+    int childIdx = octree[nodeIdx].childNodes[blockIdx.z];
+    auto* child  = octree + childIdx;
+
+    if (childIdx == -1 || localPointIdx >= child->pointCount)
     {
         return;
     }
 
-    // Access child node data
-    uint32_t* childDataLUT     = config[gridIndex].lutAdress;
-    uint32_t childDataLUTStart = config[gridIndex].lutStartIndex;
-    uint64_t* childAveraging   = config[gridIndex].averagingAdress;
+    // Get pointer to the output data entry
+    PointLut* src = lut + child->dataIdx + localPointIdx;
 
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* targetCloudByte       = cloud.raw + childDataLUT[childDataLUTStart + index] * cloud.dataStride;
-    Vector3<coordinateType>* point = reinterpret_cast<Vector3<coordinateType>*> (targetCloudByte);
-    Vector3<colorType>* color = reinterpret_cast<Vector3<colorType>*> (targetCloudByte + sizeof (coordinateType) * 3);
+    uint8_t* srcCloudByte   = cloud.raw + (*src) * cloud.dataStride;
+    auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
+    OutputBuffer* srcBuffer = outputBuffer + child->dataIdx + localPointIdx;
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
@@ -65,21 +102,17 @@ __global__ void kernelEvaluateSubsamples (
     // Increase the point counter for the cell
     uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
-    // Accumulate color information
-    bool hasAveragingData   = (childAveraging != nullptr);
-    uint64_t* averagingData = childAveraging + index;
+    // Encode the point color and add it up
+    uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
-    uint64_t encoded = hasAveragingData
-                               ? *averagingData
-                               : (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
-                                         static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
     atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
-    // If the thread handles the first point in a cell: increase the filledCellCounter and retrieve / store the sparse
-    // index for the appropriate dense cell
+    // If the thread handles the first point in a cell:
+    // - increase the point count in the parent cell
+    // - Add dense-to-sparse-lut entry
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (filledCellCounter, 1);
+        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&(octree[nodeIdx].pointCount), 1);
     }
 }
 } // namespace subsampling
@@ -88,7 +121,7 @@ __global__ void kernelEvaluateSubsamples (
 namespace Kernel {
 
 template <typename... Arguments>
-float evaluateSubsamples (KernelConfig config, Arguments&&... args)
+void evaluateSubsamples (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -100,27 +133,23 @@ float evaluateSubsamples (KernelConfig config, Arguments&&... args)
     block = dim3 (128, 1, 1);
     grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
 
-#ifdef CUDA_TIMINGS
-    tools::KernelTimer timer;
+#ifdef KERNEL_TIMINGS
+    Timing::KernelTimer timer;
     timer.start ();
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
-        subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-    else {
-        subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-    timer.stop ();
-    gpuErrchk (cudaGetLastError ());
-    return timer.getMilliseconds ();
-#else
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T) {
-        subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-    else {
-        subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-    return 0;
 #endif
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::kernelEvaluateSubsamples<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::kernelEvaluateSubsamples<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+#ifdef KERNEL_TIMINGS
+    timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
+    gpuErrchk (cudaGetLastError ());
 }
 
 } // namespace Kernel

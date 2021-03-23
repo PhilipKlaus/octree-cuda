@@ -7,175 +7,102 @@
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
-    itsSubsamples           = std::make_shared<SubsamplingData> ();
-    auto h_octreeSparse     = itsOctreeData->getHost ();
     auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
-    auto nodesBaseLevel     = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
 
-    // Prepare data strucutres for the subsampling
-    auto pointCountGrid  = createGpuU32 (nodesBaseLevel, "pointCountGrid");
-    auto averagingGrid   = createGpuAveraging (nodesBaseLevel, "averagingGrid");
-    auto denseToSpareLUT = createGpuI32 (nodesBaseLevel, "denseToSpareLUT");
-    auto voxelCount      = createGpuU32 (1, "voxelCount");
+    itsDenseToSparseLUT->memset (-1);
+    itsCountingGrid->memset (0);
+    itsOctree->updateNodeStatistics ();
 
-    pointCountGrid->memset (0);
-    denseToSpareLUT->memset (-1);
-    voxelCount->memset (0);
-
-    SubsamplingTimings timings = {};
-
-    auto randomStates = createGpuRandom (1024, "randomStates");
-
-    // ToDo: Time measurement
-    executeKernel (subsampling::kernelInitRandoms, 1024, std::time (0), randomStates->devicePointer (), 1024);
-    auto randomIndices = createGpuU32 (nodesBaseLevel, "randomIndices");
-
-    timings = randomSubsampling (
-            h_sparseToDenseLUT,
-            getRootIndex (),
-            itsMetadata.depth,
-            pointCountGrid,
-            averagingGrid,
-            denseToSpareLUT,
-            voxelCount,
-            randomStates,
-            randomIndices);
-
-    auto& tracker = TimeTracker::getInstance ();
-    tracker.trackKernelTime (timings.subsampleEvaluation, "kernelEvaluateSubsamples");
-    tracker.trackKernelTime (timings.generateRandoms, "kernelGenerateRandoms");
-    tracker.trackKernelTime (timings.subsampling, "kernelRandomPointSubsample");
-
-    itsSubsamples->copyToHost ();
+    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    cudaDeviceSynchronize ();
 }
 
 
-SubsamplingTimings OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
-        const unique_ptr<int[]>& h_sparseToDenseLUT,
-        uint32_t sparseVoxelIndex,
-        uint32_t level,
-        GpuArrayU32& subsampleCountingGrid,
-        GpuAveraging& averagingGrid,
-        GpuArrayI32& subsampleDenseToSparseLUT,
-        GpuArrayU32& subsampleSparseVoxelCount,
-        GpuRandomState& randomStates,
-        GpuArrayU32& randomIndices)
+void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
+        const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
 {
-    SubsamplingTimings timings = {};
-
     auto& cloudMetadata = itsCloud->getMetadata ();
-    auto& node          = itsOctreeData->getNode (sparseVoxelIndex);
+    auto& node          = itsOctree->getNode (sparseVoxelIndex);
 
     // Depth first traversal
-    for (int childIndex : node.childrenChunks)
+    for (int childIndex : node.childNodes)
     {
         if (childIndex != -1)
         {
-            SubsamplingTimings childTiming = randomSubsampling (
-                    h_sparseToDenseLUT,
-                    childIndex,
-                    level - 1,
-                    subsampleCountingGrid,
-                    averagingGrid,
-                    subsampleDenseToSparseLUT,
-                    subsampleSparseVoxelCount,
-                    randomStates,
-                    randomIndices);
-
-            timings.subsampleEvaluation += childTiming.subsampleEvaluation;
-            timings.generateRandoms += childTiming.generateRandoms;
-            timings.subsampling += childTiming.subsampling;
+            randomSubsampling (h_sparseToDenseLUT, childIndex, level - 1);
         }
     }
 
     // Now we can assure that all direct children have subsamples
     if (node.isParent)
     {
-        // Prepare and update the SubsampleConfig on the GPU
-        SubsampleSet subsampleSet{};
-        uint32_t maxPoints = prepareSubsampleConfig (subsampleSet, sparseVoxelIndex);
-
         // Parent bounding box calculation
-        PointCloudMetadata metadata = cloudMetadata;
-        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
+        PointCloudInfo metadata = cloudMetadata;
+        auto denseVoxelIndex    = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
-        Kernel::KernelConfig kernelConfig = {metadata.cloudType, maxPoints};
-        KernelStructs::Cloud cloud        = {itsCloud->getCloudDevice (), 0, metadata.pointDataStride};
-        KernelStructs::Gridding gridding  = {
-                itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
+        // ToDo: Find more sprecise amount of threads
+        KernelStructs::Cloud cloud = {
+                itsCloud->getCloudDevice (),
+                0,
+                metadata.pointDataStride,
+                {
+                        1.0 / metadata.scale.x,
+                        1.0 / metadata.scale.y,
+                        1.0 / metadata.scale.z,
+                }};
+        KernelStructs::Gridding gridding = {
+                itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
+
+        Kernel::calcNodeByteOffset (
+                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
+                itsOctree->getDevice (),
+                sparseVoxelIndex,
+                getLastParent (),
+                itsTmpCounting->devicePointer ());
+
+        setActiveParent (sparseVoxelIndex);
 
         // Evaluate how many points fall in each cell
-        timings.subsampleEvaluation += Kernel::evaluateSubsamples (
-                kernelConfig,
-                subsampleSet,
-                subsampleCountingGrid->devicePointer (),
-                averagingGrid->devicePointer (),
-                subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
-                cloud,
-                gridding);
-
-        // Prepare one random point index per cell
-        uint32_t threads = subsampleDenseToSparseLUT->pointCount ();
-        timings.generateRandoms += executeKernel (
-                subsampling::kernelGenerateRandoms,
-                threads,
-                randomStates->devicePointer (),
-                randomIndices->devicePointer (),
-                subsampleDenseToSparseLUT->devicePointer (),
-                subsampleCountingGrid->devicePointer (),
-                threads);
-
-        // Create point-LUT and averaging data
-        auto amountUsedVoxels = subsampleSparseVoxelCount->toHost ()[0];
-        itsSubsamples->createLUT (amountUsedVoxels, sparseVoxelIndex);
-        itsSubsamples->createAvg (amountUsedVoxels, sparseVoxelIndex);
-
-        // Distribute the subsampled points in parallel for all child nodes
-        timings.subsampling += Kernel::randomPointSubsampling (
-                kernelConfig,
-                subsampleSet,
-                itsSubsamples->getLutDevice (sparseVoxelIndex),
-                itsSubsamples->getAvgDevice (sparseVoxelIndex),
-                subsampleCountingGrid->devicePointer (),
-                averagingGrid->devicePointer (),
-                subsampleDenseToSparseLUT->devicePointer (),
-                subsampleSparseVoxelCount->devicePointer (),
+        Kernel::evaluateSubsamples (
+                {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
+                itsCloud->getOutputBuffer_d (),
+                itsCountingGrid->devicePointer (),
+                itsOctree->getDevice (),
+                itsAveragingGrid->devicePointer (),
+                itsDenseToSparseLUT->devicePointer (),
+                itsPointLut->devicePointer (),
                 cloud,
                 gridding,
-                randomIndices->devicePointer (),
-                itsSubsampleMetadata.useReplacementScheme);
+                sparseVoxelIndex);
+
+        // Prepare one random point index per cell
+        auto threads = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
+
+        executeKernel (
+                subsampling::kernelGenerateRandoms,
+                threads,
+                "kernelGenerateRandoms",
+                itsRandomStates->devicePointer (),
+                itsRandomIndices->devicePointer (),
+                itsDenseToSparseLUT->devicePointer (),
+                itsCountingGrid->devicePointer (),
+                threads);
+
+        // Distribute the subsampled points in parallel for all child nodes
+        Kernel::randomPointSubsampling (
+                {metadata.cloudType,
+                 itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                 "kernelRandomPointSubsample"},
+                itsCloud->getOutputBuffer_d (),
+                itsCountingGrid->devicePointer (),
+                itsAveragingGrid->devicePointer (),
+                itsDenseToSparseLUT->devicePointer (),
+                cloud,
+                gridding,
+                itsRandomIndices->devicePointer (),
+                itsPointLut->devicePointer (),
+                itsOctree->getDevice (),
+                sparseVoxelIndex);
     }
-
-    return timings;
-}
-
-
-uint32_t OctreeProcessor::OctreeProcessorImpl::prepareSubsampleConfig (SubsampleSet& subsampleSet, uint32_t parentIndex)
-{
-    uint32_t maxPoints = 0;
-    auto* config       = (SubsampleConfig*)(&subsampleSet);
-    auto& node         = itsOctreeData->getNode (parentIndex);
-    for (uint8_t i = 0; i < 8; ++i)
-    {
-        int childIndex = node.childrenChunks[i];
-        if (childIndex != -1)
-        {
-            Chunk child               = itsOctreeData->getNode (childIndex);
-            config[i].pointAmount     = child.isParent ? itsSubsamples->getLutSize (childIndex) : child.pointCount;
-            maxPoints                 = max (maxPoints, config[i].pointAmount);
-            config[i].averagingAdress = child.isParent ? itsSubsamples->getAvgDevice (childIndex) : nullptr;
-            config[i].lutStartIndex   = child.isParent ? 0 : child.chunkDataIndex;
-            config[i].lutAdress =
-                    child.isParent ? itsSubsamples->getLutDevice (childIndex) : itsLeafLut->devicePointer ();
-        }
-        else
-        {
-            config[i].pointAmount     = 0;
-            config[i].averagingAdress = nullptr;
-            config[i].lutAdress       = nullptr;
-        }
-    }
-    return maxPoints;
 }
