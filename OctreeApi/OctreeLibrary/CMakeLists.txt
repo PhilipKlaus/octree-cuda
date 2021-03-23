@@ -1,5 +1,5 @@
 ##########################################################################
-# OctreeApi                                                              #
+# OctreeLibrary                                                          #
 # A Library for generating octree structures for point clouds on the GPU #
 ##########################################################################
 

@@ -3,7 +3,7 @@
 
 TEST_CASE ("A PointCloudHost should")
 {
-    PointCloudMetadata meta{};
+    PointCloudInfo meta{};
     meta.pointAmount     = 1;
     meta.pointDataStride = 15;
     meta.bbCubic.min     = {-1, -1, -1};

@@ -36,7 +36,7 @@ void PotreeExporter::exportOctree (
         const std::string& path,
         const PointCloud& pointCloud,
         const Octree& octree,
-        const SubsampleMetadata& subsampleMetadata)
+        const ProcessingInfo& subsampleMetadata)
 {
     this->itsPointsExported = 0;
     itsExportFolder         = path;
@@ -110,7 +110,7 @@ inline uint8_t PotreeExporter::getChildMask (const Octree& octree, uint32_t node
     return bitmask;
 }
 
-void PotreeExporter::createMetadataFile (const PointCloud& cloud, const SubsampleMetadata& subsampleMeta) const
+void PotreeExporter::createMetadataFile (const PointCloud& cloud, const ProcessingInfo& subsampleMeta) const
 {
     // Prepare metadata for export
     auto& cloudMeta = cloud->getMetadata ();

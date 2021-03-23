@@ -11,10 +11,9 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 
     itsDenseToSparseLUT->memset (-1);
     itsCountingGrid->memset (0);
-    auto timing = Timing::TimeTracker::start ();
     itsOctree->updateNodeStatistics ();
-    Timing::TimeTracker::stop (timing, "Update octree statistics (CPU)", Timing::Time::PROCESS);
-    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getMetadata ().depth);
+    
+    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
     cudaDeviceSynchronize ();
 }
 
@@ -38,8 +37,8 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     if (node.isParent)
     {
         // Parent bounding box calculation
-        PointCloudMetadata metadata = cloudMetadata;
-        auto denseVoxelIndex        = h_sparseToDenseLUT[sparseVoxelIndex];
+        PointCloudInfo metadata = cloudMetadata;
+        auto denseVoxelIndex    = h_sparseToDenseLUT[sparseVoxelIndex];
         calculateVoxelBB (metadata, denseVoxelIndex, level);
 
         // ToDo: Find more sprecise amount of threads
@@ -53,7 +52,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                         1.0 / metadata.scale.z,
                 }};
         KernelStructs::Gridding gridding = {
-                itsSubsampleMetadata.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
+                itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
         Kernel::calcNodeByteOffset (
                 {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
@@ -78,7 +77,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 sparseVoxelIndex);
 
         // Prepare one random point index per cell
-        auto threads = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
+        auto threads = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
         executeKernel (
                 subsampling::kernelGenerateRandoms,

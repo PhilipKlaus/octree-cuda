@@ -2,19 +2,17 @@
 #include "time_tracker.cuh"
 #include "tools.cuh"
 
-OctreeData::OctreeData (uint32_t chunkingGrid, uint32_t mergingThreshold) : itsMetadata ({}), itsNodeStatistics ({})
+OctreeData::OctreeData (uint32_t chunkingGrid) : itsNodeStatistics ({})
 {
-    itsNodeStatistics.nodeAmountDense  = 0;
+    itsNodeStatistics.nodeAmountDense = 0;
+    itsNodeStatistics.depth           = tools::getOctreeLevel (chunkingGrid);
 
-    itsMetadata.mergingThreshold = mergingThreshold;
-    itsMetadata.chunkingGrid     = chunkingGrid;
-    itsMetadata.depth            = tools::getOctreeLevel (chunkingGrid);
-    initialize ();
+    initialize (chunkingGrid);
 }
 
-void OctreeData::initialize ()
+void OctreeData::initialize (uint32_t chunkingGrid)
 {
-    for (uint32_t gridSize = itsMetadata.chunkingGrid; gridSize > 0; gridSize >>= 1)
+    for (uint32_t gridSize = chunkingGrid; gridSize > 0; gridSize >>= 1)
     {
         itsGridSizePerLevel.push_back (gridSize);
         itsNodeOffsetperLevel.push_back (itsNodeStatistics.nodeAmountDense);
@@ -42,7 +40,7 @@ uint32_t OctreeData::getNodeOffset (uint8_t level) const
 void OctreeData::createHierarchy (uint32_t nodeAmountSparse)
 {
     itsNodeStatistics.nodeAmountSparse = nodeAmountSparse;
-    itsOctree                    = createGpuOctree (nodeAmountSparse, "octreeSparse");
+    itsOctree                          = createGpuOctree (nodeAmountSparse, "octreeSparse");
 }
 
 void OctreeData::copyToHost ()
@@ -73,12 +71,7 @@ const Node& OctreeData::getNode (uint32_t index)
     return getHost ()[index];
 }
 
-const OctreeMetadata& OctreeData::getMetadata () const
-{
-    return itsMetadata;
-}
-
-const NodeStatistics& OctreeData::getNodeStatistics () const
+const OctreeInfo& OctreeData::getNodeStatistics () const
 {
     return itsNodeStatistics;
 }
@@ -107,7 +100,7 @@ void OctreeData::updateNodeStatistics ()
     itsNodeStatistics.stdevPointsPerLeafNode = sqrt (sumVariance / itsNodeStatistics.leafNodeAmount);
 }
 
-void OctreeData::evaluateNodeProperties (NodeStatistics& statistics, uint32_t& pointSum, uint32_t nodeIndex)
+void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex)
 {
     Node node = itsOctreeHost[nodeIndex];
 

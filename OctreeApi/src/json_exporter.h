@@ -12,18 +12,15 @@
 
 
 void export_json_data (
-        const std::string filePath,
-        const OctreeMetadata& metadata,
-        const SubsampleMetadata& subsampleMetadata,
-        const NodeStatistics& nodeStatistics)
+        const std::string& filePath, const ProcessingInfo& subsampleInfo, const OctreeInfo& nodeStatistics)
 {
     nlohmann::ordered_json statistics;
-    statistics["depth"] = metadata.depth;
+    statistics["depth"] = nodeStatistics.depth;
 
-    statistics["chunking"]["grid"]             = metadata.chunkingGrid;
-    statistics["chunking"]["mergingThreshold"] = metadata.mergingThreshold;
+    statistics["chunking"]["grid"]             = subsampleInfo.chunkingGrid;
+    statistics["chunking"]["mergingThreshold"] = subsampleInfo.mergingThreshold;
 
-    statistics["subsampling"]["grid"]     = subsampleMetadata.subsamplingGrid;
+    statistics["subsampling"]["grid"]     = subsampleInfo.subsamplingGrid;
     statistics["subsampling"]["strategy"] = "RANDOM POINT";
 
     statistics["resultNodes"]["octreeNodes"]      = nodeStatistics.leafNodeAmount + nodeStatistics.parentNodeAmount;

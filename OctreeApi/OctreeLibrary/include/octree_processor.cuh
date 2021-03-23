@@ -14,12 +14,7 @@
 class OctreeProcessor
 {
 public:
-    OctreeProcessor (
-            uint8_t* pointCloud,
-            uint32_t chunkingGrid,
-            uint32_t mergingThreshold,
-            PointCloudMetadata cloudMetadata,
-            SubsampleMetadata subsamplingMetadata);
+    OctreeProcessor (uint8_t* pointCloud, PointCloudInfo cloudInfo, ProcessingInfo processingInfo);
 
     ~OctreeProcessor ();
     OctreeProcessor (const OctreeProcessor&) = delete;
@@ -35,8 +30,7 @@ public:
     void exportHistogram (const std::string& filePath, uint32_t binWidth);
 
     void updateStatistics ();
-    const OctreeMetadata& getOctreeMetadata ();
-    const NodeStatistics& getNodeStatistics ();
+    const OctreeInfo& getNodeStatistics ();
 
 private:
     class OctreeProcessorImpl;

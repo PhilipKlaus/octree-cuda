@@ -1,8 +1,8 @@
 #include "catch2/catch.hpp"
 #include "octree.cuh"
 
-void fillDummyOctree(Node (&chunks)[9]) {
-
+void fillDummyOctree (Node (&chunks)[9])
+{
     /*
      *                   50
      *       /   /   /  /   \  \  \   \
@@ -17,23 +17,25 @@ void fillDummyOctree(Node (&chunks)[9]) {
     chunks[8].childNodes[5] = -1;
     chunks[8].childNodes[6] = 6;
     chunks[8].childNodes[7] = 7;
-    chunks[8].pointCount = 50;
-    chunks[8].isFinished = true;
-    chunks[8].isParent = true;
+    chunks[8].pointCount    = 50;
+    chunks[8].isFinished    = true;
+    chunks[8].isParent      = true;
 
-    chunks[0].pointCount        = 100;
-    chunks[1].pointCount        = 350;
-    chunks[2].pointCount        = 0;
-    chunks[3].pointCount        = 800;
-    chunks[4].pointCount        = 1300;
-    chunks[5].pointCount        = 0;
-    chunks[6].pointCount        = 700;
-    chunks[7].pointCount        = 250;
+    chunks[0].pointCount = 100;
+    chunks[1].pointCount = 350;
+    chunks[2].pointCount = 0;
+    chunks[3].pointCount = 800;
+    chunks[4].pointCount = 1300;
+    chunks[5].pointCount = 0;
+    chunks[6].pointCount = 700;
+    chunks[7].pointCount = 250;
 
-    for(auto i = 0; i < 8; ++i) {
-        chunks[i].isParent          = false;
-        chunks[i].isFinished          = true;
-        for(int & childrenChunk : chunks[i].childNodes) {
+    for (auto i = 0; i < 8; ++i)
+    {
+        chunks[i].isParent   = false;
+        chunks[i].isFinished = true;
+        for (int& childrenChunk : chunks[i].childNodes)
+        {
             childrenChunk = -1;
         }
     }
@@ -50,12 +52,12 @@ TEST_CASE ("An Octree should")
             auto& meta = octree.getMetadata ();
             CHECK (meta.mergingThreshold == 10000);
             CHECK (meta.chunkingGrid == 512);
-            CHECK (meta.depth == 9);
         }
 
         SECTION ("return correct Node Statistics (not updated)")
         {
             auto& meta = octree.getNodeStatistics ();
+            CHECK (meta.depth == 9);
             CHECK (meta.nodeAmountSparse == 0);
             CHECK (meta.nodeAmountDense == 153391689);
             CHECK (meta.parentNodeAmount == 0);
@@ -158,7 +160,7 @@ TEST_CASE ("An Octree should")
         SECTION ("return correct Node Statistics (updated)")
         {
             Node chunks[9];
-            fillDummyOctree(chunks);
+            fillDummyOctree (chunks);
 
             REQUIRE (
                     cudaMemcpy (
@@ -167,7 +169,7 @@ TEST_CASE ("An Octree should")
                             sizeof (Node) * 9,
                             cudaMemcpyHostToDevice) == cudaSuccess);
 
-            octree.updateNodeStatistics();
+            octree.updateNodeStatistics ();
             auto& meta = octree.getNodeStatistics ();
             CHECK (meta.nodeAmountSparse == 9);
             CHECK (meta.nodeAmountDense == 153391689);
@@ -176,7 +178,7 @@ TEST_CASE ("An Octree should")
             CHECK (meta.maxPointsPerNode == 1300);
             CHECK (meta.leafNodeAmount == 6);
             CHECK (meta.parentNodeAmount == 1);
-            CHECK (meta.meanPointsPerLeafNode == Approx(583.3).epsilon(0.001));
+            CHECK (meta.meanPointsPerLeafNode == Approx (583.3).epsilon (0.001));
         }
 
         SECTION ("return correct root index")
@@ -188,7 +190,7 @@ TEST_CASE ("An Octree should")
         {
             // Copy a dummy octree to gpu
             Node chunks[9];
-            fillDummyOctree(chunks);
+            fillDummyOctree (chunks);
 
             REQUIRE (
                     cudaMemcpy (

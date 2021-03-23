@@ -34,7 +34,7 @@ void OctreeProcessor::OctreeProcessorImpl::initialPointCounting ()
 void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
 {
     // Perform a hierarchicaly merging of the grid cells which results in an octree structure
-    for (uint32_t i = 0; i < itsOctree->getMetadata ().depth; ++i)
+    for (uint32_t i = 0; i < itsOctree->getNodeStatistics ().depth; ++i)
     {
         executeKernel (
                 chunking::kernelPropagatePointCounts,
@@ -79,7 +79,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
 {
     itsTmpCounting->memset (0);
 
-    for (uint32_t i = 0; i < itsOctree->getMetadata ().depth; ++i)
+    for (uint32_t i = 0; i < itsOctree->getNodeStatistics ().depth; ++i)
     {
         executeKernel (
                 chunking::kernelMergeHierarchical,
@@ -90,7 +90,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsDenseToSparseLUT->devicePointer (),
                 itsSparseToDenseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
-                itsOctree->getMetadata ().mergingThreshold,
+                itsProcessingInfo.mergingThreshold,
                 itsOctree->getNodeAmount (i + 1),
                 itsOctree->getGridSize (i + 1),
                 itsOctree->getGridSize (i),
@@ -101,7 +101,7 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
 
 void OctreeProcessor::OctreeProcessorImpl::distributePoints ()
 {
-    auto tmpIndexRegister = createGpuU32 (itsOctree->getNodeStatistics().nodeAmountSparse, "tmpIndexRegister");
+    auto tmpIndexRegister = createGpuU32 (itsOctree->getNodeStatistics ().nodeAmountSparse, "tmpIndexRegister");
     tmpIndexRegister->memset (0);
 
     auto& meta                  = itsCloud->getMetadata ();

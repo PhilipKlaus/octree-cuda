@@ -4,37 +4,32 @@
 
 #include "octree_processor_impl.cuh"
 
-void OctreeProcessor::OctreeProcessorImpl::updateOctreeStatistics ()
+void OctreeProcessor::OctreeProcessorImpl::updateOctreeInfo ()
 {
     itsOctree->updateNodeStatistics ();
 }
 
 
 void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
-        const shared_ptr<Node[]>& h_octreeSparse,
-        std::vector<uint32_t>& counts,
-        uint32_t min,
-        uint32_t binWidth,
-        uint32_t nodeIndex) const
+        std::vector<uint32_t>& counts, uint32_t min, uint32_t binWidth, uint32_t nodeIndex) const
 {
-    Node chunk = h_octreeSparse[nodeIndex];
+    auto node = itsOctree->getNode (nodeIndex);
 
     // Leaf node
-    if (!chunk.isParent)
+    if (!node.isParent)
     {
-        uint32_t bin = (chunk.pointCount - min) / binWidth;
+        uint32_t bin = (node.pointCount - min) / binWidth;
         ++counts[bin];
     }
 
     // Parent node
     else
     {
-        for (uint32_t i = 0; i < 8; ++i)
+        for (int childNode : node.childNodes)
         {
-            int childIndex = chunk.childNodes[i];
-            if (childIndex != -1)
+            if (childNode != -1)
             {
-                histogramBinning (h_octreeSparse, counts, min, binWidth, chunk.childNodes[i]);
+                histogramBinning (counts, min, binWidth, childNode);
             }
         }
     }
@@ -43,7 +38,8 @@ void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
 
 void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePath, uint32_t binWidth)
 {
-    updateOctreeStatistics ();
+    itsOctree->copyToHost ();
+    itsOctree->updateNodeStatistics ();
     auto& statistics = itsOctree->getNodeStatistics ();
 
     if (binWidth == 0)
@@ -58,7 +54,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePa
     {
         counts.push_back (0);
     }
-    histogramBinning (itsOctree->getHost (), counts, statistics.minPointsPerNode, binWidth, itsOctree->getRootIndex ());
+    histogramBinning (counts, statistics.minPointsPerNode, binWidth, itsOctree->getRootIndex ());
 
     const std::string itsHtmlPart1 = "<html>\n"
                                      "    <head>\n"
@@ -95,7 +91,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportHistogram (const string& filePa
     string labels = "labels:[";
     string data   = "data:[";
     string label  = "'Point Distribution: binWidth(" + to_string (binWidth) + "), mergingThreshold(" +
-                   to_string (itsOctree->getMetadata ().mergingThreshold) + "), points(" +
+                   to_string (itsProcessingInfo.mergingThreshold) + "), points(" +
                    to_string (itsCloud->getMetadata ().pointAmount) + ")'";
 
     for (uint32_t i = 0; i < binAmount; ++i)

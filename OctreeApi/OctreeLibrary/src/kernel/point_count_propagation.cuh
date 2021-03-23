@@ -61,14 +61,14 @@ __global__ void kernelPropagatePointCounts (
     // Calculate the dense indices of the 8 underlying cells
     uint32_t childNodes[8];
     childNodes[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
-                       (coords.x * 2);              // int: 0 -> Child 0
-    childNodes[4] = childNodes[0] + 1;              // int: 4 -> child 4
-    childNodes[2] = childNodes[0] + lowerGridSize;  // int: 2 -> child 2
-    childNodes[6] = childNodes[2] + 1;              // int: 6 -> child 6
-    childNodes[1] = childNodes[0] + oldXY;          // int: 1 -> child 1
-    childNodes[5] = childNodes[1] + 1;              // int: 5 -> child 5
-    childNodes[3] = childNodes[1] + lowerGridSize;  // int: 3 -> child 3
-    childNodes[7] = childNodes[3] + 1;              // int: 7 -> child 7
+                    (coords.x * 2);                // int: 0 -> Child 0
+    childNodes[4] = childNodes[0] + 1;             // int: 4 -> child 4
+    childNodes[2] = childNodes[0] + lowerGridSize; // int: 2 -> child 2
+    childNodes[6] = childNodes[2] + 1;             // int: 6 -> child 6
+    childNodes[1] = childNodes[0] + oldXY;         // int: 1 -> child 1
+    childNodes[5] = childNodes[1] + 1;             // int: 5 -> child 5
+    childNodes[3] = childNodes[1] + lowerGridSize; // int: 3 -> child 3
+    childNodes[7] = childNodes[3] + 1;             // int: 7 -> child 7
 
     // Sum up point counts from all 8 children
     uint32_t sum = 0;

@@ -25,7 +25,7 @@ public:
             const std::string& path,
             const PointCloud& pointCloud,
             const Octree& octree,
-            const SubsampleMetadata& subsampleMetadata) = 0;
+            const ProcessingInfo& subsampleMetadata) = 0;
 
 protected:
     uint32_t itsPointsExported;

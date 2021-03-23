@@ -18,7 +18,7 @@
 class IPointCloud
 {
 public:
-    IPointCloud (uint8_t* source, PointCloudMetadata metadata) : itsSourceCloud (source), itsMetadata (metadata)
+    IPointCloud (uint8_t* source, PointCloudInfo metadata) : itsSourceCloud (source), itsMetadata (metadata)
     {
         auto expectedPoints = static_cast<uint64_t> (itsMetadata.pointAmount * 2.1);
         auto timing         = Timing::TimeTracker::start ();
@@ -29,7 +29,7 @@ public:
     virtual uint8_t* getCloudHost ()   = 0;
     virtual uint8_t* getCloudDevice () = 0;
 
-    const PointCloudMetadata& getMetadata ()
+    const PointCloudInfo& getMetadata ()
     {
         return itsMetadata;
     }
@@ -52,7 +52,7 @@ public:
 protected:
     uint8_t* itsSourceCloud;
     GpuOutputBuffer itsOutput;
-    PointCloudMetadata itsMetadata;
+    PointCloudInfo itsMetadata;
 };
 
 /**
@@ -61,7 +61,7 @@ protected:
 class PointCloudHost : public IPointCloud
 {
 public:
-    PointCloudHost (uint8_t* source, PointCloudMetadata metadata);
+    PointCloudHost (uint8_t* source, PointCloudInfo metadata);
     uint8_t* getCloudHost () override;
     uint8_t* getCloudDevice () override;
 
@@ -75,7 +75,7 @@ private:
 class PointCloudDevice : public IPointCloud
 {
 public:
-    PointCloudDevice (uint8_t* source, PointCloudMetadata metadata);
+    PointCloudDevice (uint8_t* source, PointCloudInfo metadata);
     uint8_t* getCloudHost () override;
     uint8_t* getCloudDevice () override;
 

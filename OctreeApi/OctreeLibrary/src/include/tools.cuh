@@ -17,7 +17,7 @@ uint32_t getNodeAmount (uint32_t octreeLevel);
 uint32_t getNodeOffset (uint32_t octreeLevel, uint32_t octreeDepth);
 
 template <typename coordinateType>
-unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata);
+unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (uint32_t sideLength, PointCloudInfo& metadata);
 void printKernelDimensions (dim3 block, dim3 grid);
 void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount);
 
@@ -28,7 +28,7 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
 // See OctreeConverter : chunker_countsort_laszip.cpp :131
 template <typename coordinateType>
 __device__ uint32_t
-        calculateGridIndex (const Vector3<coordinateType>* point, PointCloudMetadata const& metadata, uint32_t gridSize)
+        calculateGridIndex (const Vector3<coordinateType>* point, PointCloudInfo const& metadata, uint32_t gridSize)
 {
     double sizeX = metadata.bbCubic.max.x - metadata.bbCubic.min.x;
     double sizeY = metadata.bbCubic.max.y - metadata.bbCubic.min.y;

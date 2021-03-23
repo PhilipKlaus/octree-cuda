@@ -10,30 +10,26 @@
 #include "tools.cuh"
 
 OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
-        uint8_t* pointCloud,
-        uint32_t chunkingGrid,
-        uint32_t mergingThreshold,
-        PointCloudMetadata cloudMetadata,
-        SubsampleMetadata subsamplingMetadata)
+        uint8_t* pointCloud, PointCloudInfo cloudInfo, ProcessingInfo processingInfo)
 {
     // Init the CUDA system
     auto timing = Timing::TimeTracker::start ();
     cudaFree (nullptr);
     Timing::TimeTracker::stop (timing, "Init CUDA", Timing::Time::PROCESS);
 
-    itsOctree               = std::make_unique<OctreeData> (chunkingGrid, mergingThreshold);
-    NodeStatistics statistics = itsOctree->getNodeStatistics();
-    itsSubsampleMetadata    = subsamplingMetadata;
+    itsProcessingInfo     = processingInfo;
+    itsOctree             = std::make_unique<OctreeData> (processingInfo.chunkingGrid);
+    OctreeInfo statistics = itsOctree->getNodeStatistics ();
 
     itsLastSubsampleNode = -1;
 
-    if (cloudMetadata.memoryType == CLOUD_HOST)
+    if (cloudInfo.memoryType == CLOUD_HOST)
     {
-        itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudMetadata);
+        itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudInfo);
     }
     else
     {
-        itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudMetadata);
+        itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudInfo);
     }
 
     //-----------------------------
@@ -58,7 +54,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsPointLut         = createGpuOutputData (expectedPoints, "pointLUT");
     itsPointLut->memset (0);
 
-    auto gridCellAmount = static_cast<uint32_t> (pow (itsSubsampleMetadata.subsamplingGrid, 3.f));
+    auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
     itsAveragingGrid    = createGpuAveraging (gridCellAmount, "averagingGrid");
     itsAveragingGrid->memset (0);
 
@@ -76,14 +72,8 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     Timing::TimeTracker::stop (timing, "Preparing GPU data", Timing::Time::PROCESS);
 }
 
-const OctreeMetadata& OctreeProcessor::OctreeProcessorImpl::getMetadata () const
-{
-    return itsOctree->getMetadata ();
-}
-
-
 void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
-        PointCloudMetadata& metadata, uint32_t denseVoxelIndex, uint32_t level)
+        PointCloudInfo& metadata, uint32_t denseVoxelIndex, uint32_t level)
 {
     Vector3<uint32_t> coords = {};
 
@@ -112,7 +102,7 @@ void OctreeProcessor::OctreeProcessorImpl::exportPotree (const string& folderPat
 {
     itsOctree->copyToHost ();
     PotreeExporter potreeExporter;
-    potreeExporter.exportOctree (folderPath, itsCloud, itsOctree, itsSubsampleMetadata);
+    potreeExporter.exportOctree (folderPath, itsCloud, itsOctree, itsProcessingInfo);
 }
 
 void OctreeProcessor::OctreeProcessorImpl::exportPlyNodes (const string& folderPath)
@@ -151,7 +141,7 @@ int OctreeProcessor::OctreeProcessorImpl::getLastParent ()
     return itsLastSubsampleNode;
 }
 
-const NodeStatistics& OctreeProcessor::OctreeProcessorImpl::getNodeStatistics ()
+const OctreeInfo& OctreeProcessor::OctreeProcessorImpl::getOctreeInfo ()
 {
     return itsOctree->getNodeStatistics ();
 }

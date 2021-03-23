@@ -48,8 +48,8 @@ Session::~Session ()
 
 void Session::setPointCloudHost (uint8_t* pointCloud)
 {
-    itsPointCloud               = pointCloud;
-    itsCloudMetadata.memoryType = CLOUD_HOST;
+    itsPointCloud           = pointCloud;
+    itsCloudInfo.memoryType = CLOUD_HOST;
     spdlog::debug ("set point cloud data from host");
 }
 
@@ -79,8 +79,7 @@ void Session::exportMemoryReport (const std::string& filename)
 void Session::exportJsonReport (const std::string& filename)
 {
     itsProcessor->updateStatistics ();
-    export_json_data (
-            filename, itsProcessor->getOctreeMetadata (), itsSubsamplingMetadata, itsProcessor->getNodeStatistics ());
+    export_json_data (filename, itsProcessingInfo, itsProcessor->getNodeStatistics ());
     spdlog::debug ("Export JSON report to: {}", filename);
 }
 
@@ -92,49 +91,48 @@ void Session::exportDistributionHistogram (const std::string& filename, uint32_t
 
 void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold)
 {
-    itsChunkingGrid     = chunkingGrid;
-    itsMergingThreshold = mergingThreshold;
+    itsProcessingInfo.chunkingGrid     = chunkingGrid;
+    itsProcessingInfo.mergingThreshold = mergingThreshold;
 }
 
 void Session::configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
 {
-    itsSubsamplingMetadata.performAveraging     = averaging;
-    itsSubsamplingMetadata.useReplacementScheme = replacementScheme;
-    itsSubsamplingMetadata.subsamplingGrid      = subsamplingGrid;
+    itsProcessingInfo.performAveraging     = averaging;
+    itsProcessingInfo.useReplacementScheme = replacementScheme;
+    itsProcessingInfo.subsamplingGrid      = subsamplingGrid;
 }
 void Session::setCloudType (uint8_t cloudType)
 {
-    itsCloudMetadata.cloudType = static_cast<CloudType> (cloudType);
+    itsCloudInfo.cloudType = static_cast<CloudType> (cloudType);
 }
 
 void Session::setCloudBoundingBox (double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
-    itsCloudMetadata.bbCubic = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
+    itsCloudInfo.bbCubic = {{minX, minY, minZ}, {maxX, maxY, maxZ}};
 }
 
 
 void Session::setCloudPointAmount (uint32_t pointAmount)
 {
-    itsCloudMetadata.pointAmount = pointAmount;
+    itsCloudInfo.pointAmount = pointAmount;
 }
 
 void Session::setCloudDataStride (uint32_t dataStride)
 {
-    itsCloudMetadata.pointDataStride = dataStride;
+    itsCloudInfo.pointDataStride = dataStride;
 }
 
 void Session::setCloudScale (double x, double y, double z)
 {
-    itsCloudMetadata.scale = {x, y, z};
+    itsCloudInfo.scale = {x, y, z};
 }
 
 void Session::setCloudOffset (double x, double y, double z)
 {
-    itsCloudMetadata.cloudOffset = {x, y, z};
+    itsCloudInfo.cloudOffset = {x, y, z};
 }
 
 void Session::initOctree ()
 {
-    itsProcessor = std::make_unique<OctreeProcessor> (
-            itsPointCloud, itsChunkingGrid, itsMergingThreshold, itsCloudMetadata, itsSubsamplingMetadata);
+    itsProcessor = std::make_unique<OctreeProcessor> (itsPointCloud, itsCloudInfo, itsProcessingInfo);
 }

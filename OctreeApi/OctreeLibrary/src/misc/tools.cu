@@ -129,7 +129,7 @@ void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount)
 }
 
 template <typename coordinateType>
-GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudMetadata& metadata)
+GpuArrayU8 generate_point_cloud_cuboid (uint32_t sideLength, PointCloudInfo& metadata)
 {
     coordinateType boundingBoxMax = static_cast<coordinateType> (sideLength) - static_cast<coordinateType> (0.5);
     metadata.pointAmount          = static_cast<uint32_t> (pow (sideLength, 3.0));
@@ -176,6 +176,6 @@ __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
     coordinates.x = (denseVoxelIdx - (coordinates.z * xy)) % gridSizeLength;
 }
 
-template GpuArrayU8 generate_point_cloud_cuboid<float> (uint32_t sideLength, PointCloudMetadata& metadata);
+template GpuArrayU8 generate_point_cloud_cuboid<float> (uint32_t sideLength, PointCloudInfo& metadata);
 
 } // namespace tools

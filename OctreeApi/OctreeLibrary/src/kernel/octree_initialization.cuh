@@ -44,11 +44,12 @@ __global__ void kernelInitLeafNodes (
 
     sparseToDenseLUT[sparseVoxelIndex] = index;
 
-    Node* node             = octreeSparse + sparseVoxelIndex;
-    node->pointCount        = countingGrid[index];
+    Node* node       = octreeSparse + sparseVoxelIndex;
+    node->pointCount = countingGrid[index];
 
 #pragma unroll
-    for(auto i = 0; i < 8; ++i) {
+    for (auto i = 0; i < 8; ++i)
+    {
         node->childNodes[i] = -1;
     }
 }

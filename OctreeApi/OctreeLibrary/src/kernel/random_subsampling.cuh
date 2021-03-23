@@ -82,7 +82,7 @@ __global__ void kernelRandomPointSubsample (
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
     int childIdx = octree[nodeIdx].childNodes[blockIdx.z];
-    auto *child = octree + childIdx;
+    auto* child  = octree + childIdx;
 
     if (childIdx == -1 || localPointIdx >= child->pointCount)
     {

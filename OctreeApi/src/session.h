@@ -47,11 +47,8 @@ private:
     uint8_t* itsPointCloud;
     std::unique_ptr<OctreeProcessor> itsProcessor;
 
-    uint32_t itsChunkingGrid     = 128;
-    uint32_t itsMergingThreshold = 0;
-
-    PointCloudMetadata itsCloudMetadata      = {};
-    SubsampleMetadata itsSubsamplingMetadata = {};
+    PointCloudInfo itsCloudInfo      = {};
+    ProcessingInfo itsProcessingInfo = {};
 };
 
 #endif // OCTREE_API_SESSION_H

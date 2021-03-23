@@ -24,7 +24,7 @@ public:
 class OctreeData
 {
 public:
-    OctreeData (uint32_t chunkingGrid, uint32_t mergingThreshold);
+    OctreeData (uint32_t chunkingGrid);
     OctreeData (const OctreeData&) = delete;
 
     void createHierarchy (uint32_t nodeAmountSparse);
@@ -39,15 +39,14 @@ public:
     const std::shared_ptr<Node[]>& getHost ();
     Node* getDevice () const;
 
-    const OctreeMetadata& getMetadata () const;
-    const NodeStatistics& getNodeStatistics () const;
+    const OctreeInfo& getNodeStatistics () const;
 
     void updateNodeStatistics ();
 
 private:
-    void initialize ();
+    void initialize (uint32_t chunkingGrid);
     void ensureHierarchyCreated () const;
-    void evaluateNodeProperties (NodeStatistics& statistics, uint32_t& pointSum, uint32_t nodeIndex);
+    void evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex);
     void calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const;
 
 private:
@@ -58,8 +57,7 @@ private:
     GpuOctree itsOctree;
     std::shared_ptr<Node[]> itsOctreeHost;
 
-    NodeStatistics itsNodeStatistics;
-    OctreeMetadata itsMetadata;
+    OctreeInfo itsNodeStatistics;
 };
 
 using Octree = std::unique_ptr<OctreeData>;

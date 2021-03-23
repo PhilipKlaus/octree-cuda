@@ -1,7 +1,7 @@
 #include "point_cloud.cuh"
 #include "time_tracker.cuh"
 
-PointCloudHost::PointCloudHost (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
+PointCloudHost::PointCloudHost (uint8_t* source, PointCloudInfo metadata) : IPointCloud (source, metadata)
 {
     auto timing    = Timing::TimeTracker::start ();
     itsDeviceCloud = createGpuU8 (itsMetadata.pointAmount * itsMetadata.pointDataStride, "pointCloud");
@@ -19,7 +19,7 @@ uint8_t* PointCloudHost::getCloudDevice ()
     return itsDeviceCloud->devicePointer ();
 }
 
-PointCloudDevice::PointCloudDevice (uint8_t* source, PointCloudMetadata metadata) : IPointCloud (source, metadata)
+PointCloudDevice::PointCloudDevice (uint8_t* source, PointCloudInfo metadata) : IPointCloud (source, metadata)
 {}
 
 uint8_t* PointCloudDevice::getCloudHost ()
