@@ -26,7 +26,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
     auto& node          = itsOctree->getNode (sparseVoxelIndex);
 
     // Depth first traversal
-    for (int childIndex : node.childrenChunks)
+    for (int childIndex : node.childNodes)
     {
         if (childIndex != -1)
         {

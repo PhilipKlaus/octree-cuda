@@ -33,11 +33,11 @@ public:
     uint32_t getNodeAmount (uint8_t level) const;
     uint32_t getGridSize (uint8_t level) const;
     uint32_t getNodeOffset (uint8_t level) const;
-    const Chunk& getNode (uint32_t index);
+    const Node& getNode (uint32_t index);
 
     void copyToHost ();
-    const std::shared_ptr<Chunk[]>& getHost ();
-    Chunk* getDevice () const;
+    const std::shared_ptr<Node[]>& getHost ();
+    Node* getDevice () const;
 
     const OctreeMetadata& getMetadata () const;
     const NodeStatistics& getNodeStatistics () const;
@@ -56,7 +56,7 @@ private:
     std::vector<uint32_t> itsNodeOffsetperLevel; // Holds node offset per level (dense / bottom-up)
 
     GpuOctree itsOctree;
-    std::shared_ptr<Chunk[]> itsOctreeHost;
+    std::shared_ptr<Node[]> itsOctreeHost;
 
     NodeStatistics itsNodeStatistics;
     OctreeMetadata itsMetadata;

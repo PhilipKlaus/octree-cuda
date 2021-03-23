@@ -47,7 +47,7 @@ template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamples (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
-        Chunk* octree,
+        Node* octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
         PointLut* output,
@@ -57,7 +57,7 @@ __global__ void kernelEvaluateSubsamples (
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    int childIdx = octree[nodeIdx].childrenChunks[blockIdx.z];
+    int childIdx = octree[nodeIdx].childNodes[blockIdx.z];
     auto *child = octree + childIdx;
 
     if (childIdx == -1 || localPointIdx >= child->pointCount)
@@ -66,12 +66,12 @@ __global__ void kernelEvaluateSubsamples (
     }
 
     // Get pointer to the output data entry
-    PointLut* src = output + child->chunkDataIndex + localPointIdx;
+    PointLut* src = output + child->dataIdx + localPointIdx;
 
     // Get the coordinates & colors from the point within the point cloud
     uint8_t* srcCloudByte   = cloud.raw + (*src) * cloud.dataStride;
     auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
-    OutputBuffer* srcBuffer = outputBuffer + child->chunkDataIndex + localPointIdx;
+    OutputBuffer* srcBuffer = outputBuffer + child->dataIdx + localPointIdx;
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);

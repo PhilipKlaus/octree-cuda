@@ -51,7 +51,7 @@ void OctreeData::copyToHost ()
     itsOctreeHost = itsOctree->toHost ();
 }
 
-const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
+const std::shared_ptr<Node[]>& OctreeData::getHost ()
 {
     ensureHierarchyCreated ();
     if (!itsOctreeHost)
@@ -61,13 +61,13 @@ const std::shared_ptr<Chunk[]>& OctreeData::getHost ()
     return itsOctreeHost;
 }
 
-Chunk* OctreeData::getDevice () const
+Node* OctreeData::getDevice () const
 {
     ensureHierarchyCreated ();
     return itsOctree->devicePointer ();
 }
 
-const Chunk& OctreeData::getNode (uint32_t index)
+const Node& OctreeData::getNode (uint32_t index)
 {
     ensureHierarchyCreated ();
     return getHost ()[index];
@@ -109,28 +109,28 @@ void OctreeData::updateNodeStatistics ()
 
 void OctreeData::evaluateNodeProperties (NodeStatistics& statistics, uint32_t& pointSum, uint32_t nodeIndex)
 {
-    Chunk chunk = itsOctreeHost[nodeIndex];
+    Node node = itsOctreeHost[nodeIndex];
 
     // Leaf node
-    if (!chunk.isParent)
+    if (!node.isParent)
     {
         statistics.leafNodeAmount += 1;
-        pointSum += chunk.pointCount;
+        pointSum += node.pointCount;
         statistics.minPointsPerNode =
-                chunk.pointCount < statistics.minPointsPerNode ? chunk.pointCount : statistics.minPointsPerNode;
+                node.pointCount < statistics.minPointsPerNode ? node.pointCount : statistics.minPointsPerNode;
         statistics.maxPointsPerNode =
-                chunk.pointCount > statistics.maxPointsPerNode ? chunk.pointCount : statistics.maxPointsPerNode;
+                node.pointCount > statistics.maxPointsPerNode ? node.pointCount : statistics.maxPointsPerNode;
     }
 
     // Parent node
     else
     {
         statistics.parentNodeAmount += 1;
-        for (int childrenChunk : chunk.childrenChunks)
+        for (int childNode : node.childNodes)
         {
-            if (childrenChunk != -1)
+            if (childNode != -1)
             {
-                evaluateNodeProperties (statistics, pointSum, childrenChunk);
+                evaluateNodeProperties (statistics, pointSum, childNode);
             }
         }
     }
@@ -144,18 +144,18 @@ uint32_t OctreeData::getRootIndex () const
 
 void OctreeData::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const
 {
-    Chunk chunk = itsOctreeHost[nodeIndex];
+    Node node = itsOctreeHost[nodeIndex];
 
     // Leaf node
-    if (!chunk.isParent)
+    if (!node.isParent)
     {
-        sumVariance += pow (static_cast<float> (chunk.pointCount) - itsNodeStatistics.meanPointsPerLeafNode, 2.f);
+        sumVariance += pow (static_cast<float> (node.pointCount) - itsNodeStatistics.meanPointsPerLeafNode, 2.f);
     }
 
     // Parent node
     else
     {
-        for (int childIndex : chunk.childrenChunks)
+        for (int childIndex : node.childNodes)
         {
             if (childIndex != -1)
             {

@@ -33,7 +33,7 @@ namespace chunking {
  * e.g. level=128 -> cellOffsetLower = 512*512*512
  */
 __global__ void kernelMergeHierarchical (
-        Chunk* octree,
+        Node* octree,
         const uint32_t* countingGrid,
         const int* denseToSparseLUT,
         int* sparseToDenseLUT,
@@ -64,42 +64,42 @@ __global__ void kernelMergeHierarchical (
     int sparseVoxelIndex = denseToSparseLUT[denseVoxelIndex];
 
     // If the chunk exists, calculate the dense indices of the 8 underlying cells
-    uint32_t chunk_indices[8];
-    chunk_indices[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
-                       (coords.x * 2);                   // int: 0 -> Child 0
-    chunk_indices[4] = chunk_indices[0] + 1;             // int: 4 -> child 4
-    chunk_indices[2] = chunk_indices[0] + lowerGridSize; // int: 2 -> child 2
-    chunk_indices[6] = chunk_indices[2] + 1;             // int: 6 -> child 6
-    chunk_indices[1] = chunk_indices[0] + oldXY;         // int: 1 -> child 1
-    chunk_indices[5] = chunk_indices[1] + 1;             // int: 5 -> child 5
-    chunk_indices[3] = chunk_indices[1] + lowerGridSize; // int: 3 -> child 3
-    chunk_indices[7] = chunk_indices[3] + 1;             // int: 7 -> child 7
+    uint32_t childNodes[8];
+    childNodes[0] = cellOffsetLower + (coords.z * oldXY * 2) + (coords.y * lowerGridSize * 2) +
+                       (coords.x * 2);              // int: 0 -> Child 0
+    childNodes[4] = childNodes[0] + 1;              // int: 4 -> child 4
+    childNodes[2] = childNodes[0] + lowerGridSize;  // int: 2 -> child 2
+    childNodes[6] = childNodes[2] + 1;              // int: 6 -> child 6
+    childNodes[1] = childNodes[0] + oldXY;          // int: 1 -> child 1
+    childNodes[5] = childNodes[1] + 1;              // int: 5 -> child 5
+    childNodes[3] = childNodes[1] + lowerGridSize;  // int: 3 -> child 3
+    childNodes[7] = childNodes[3] + 1;              // int: 7 -> child 7
 
     // Update the current node
-    Chunk* chunk        = octree + sparseVoxelIndex;
+    Node* node        = octree + sparseVoxelIndex;
     uint32_t pointCount = countingGrid[denseVoxelIndex];
     bool isFinished     = (pointCount >= threshold);
 
     // Update the current node
-    chunk->pointCount = isFinished ? 0 : pointCount;
-    chunk->isParent   = isFinished;
-    chunk->isFinished = isFinished;
+    node->pointCount = isFinished ? 0 : pointCount;
+    node->isParent   = isFinished;
+    node->isFinished = isFinished;
 
     // Assign children chunks and sum up all point in child nodes
     auto sum = 0;
 #pragma unroll
     for (uint8_t i = 0; i < 8; ++i)
     {
-        chunk->childrenChunks[i] = (countingGrid[chunk_indices[i]] > 0) ? denseToSparseLUT[chunk_indices[i]] : -1;
-        if (chunk->childrenChunks[i] != -1)
+        node->childNodes[i] = (countingGrid[childNodes[i]] > 0) ? denseToSparseLUT[childNodes[i]] : -1;
+        if (node->childNodes[i] != -1)
         {
             // Update isFinished in each child
-            (octree + chunk->childrenChunks[i])->isFinished = isFinished;
+            (octree + node->childNodes[i])->isFinished = isFinished;
 
             // Assign current sparse chunk index to child as parentChunkIndex
-            (octree + chunk->childrenChunks[i])->parentChunkIndex = sparseVoxelIndex;
+            (octree + node->childNodes[i])->parentNode = sparseVoxelIndex;
 
-            sum += (octree + chunk->childrenChunks[i])->pointCount;
+            sum += (octree + node->childNodes[i])->pointCount;
         }
     }
 
@@ -110,13 +110,13 @@ __global__ void kernelMergeHierarchical (
         // Determine the start index inside the dataLUT for all children chunks
         uint32_t dataLUTIndex = atomicAdd (lutOffset, sum);
 #pragma unroll
-        for (uint8_t i = 0; i < 8; ++i)
+        for (int childNode : node->childNodes)
         {
-            if (chunk->childrenChunks[i] != -1)
+            if (childNode != -1)
             {
                 // 6.2. Update the exact index for the child within the dataLUT
-                (octree + chunk->childrenChunks[i])->chunkDataIndex = dataLUTIndex;
-                dataLUTIndex += (octree + chunk->childrenChunks[i])->pointCount;
+                (octree + childNode)->dataIdx = dataLUTIndex;
+                dataLUTIndex += (octree + childNode)->pointCount;
             }
         }
     }

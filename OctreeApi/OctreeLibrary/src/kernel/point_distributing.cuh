@@ -28,7 +28,7 @@ namespace chunking {
  */
 template <typename coordinateType, typename colorType>
 __global__ void kernelDistributePoints (
-        Chunk* octree,
+        Node* octree,
         PointLut* output,
         OutputBuffer* outputBuffer,
         const int* denseToSparseLUT,
@@ -54,17 +54,17 @@ __global__ void kernelDistributePoints (
     // Search for finished octree node to store point data
     while (!isFinished)
     {
-        sparseVoxelIndex = octree[sparseVoxelIndex].parentChunkIndex;
+        sparseVoxelIndex = octree[sparseVoxelIndex].parentNode;
         isFinished       = octree[sparseVoxelIndex].isFinished;
     }
 
     uint32_t dataIndexWithinChunk = atomicAdd (tmpIndexRegister + sparseVoxelIndex, 1);
 
     // Store point index
-    *(output + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk) = index;
+    *(output + octree[sparseVoxelIndex].dataIdx + dataIndexWithinChunk) = index;
 
     // Write coordinates and colors to output buffer
-    OutputBuffer* out = outputBuffer + octree[sparseVoxelIndex].chunkDataIndex + dataIndexWithinChunk;
+    OutputBuffer* out = outputBuffer + octree[sparseVoxelIndex].dataIdx + dataIndexWithinChunk;
     out->x            = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
     out->y            = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
     out->z            = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));

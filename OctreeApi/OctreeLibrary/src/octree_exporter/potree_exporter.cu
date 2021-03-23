@@ -75,7 +75,7 @@ void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream&
 
         uint8_t bitmask     = getChildMask (octree, node);
         uint8_t type        = bitmask == 0 ? 1 : 0;
-        uint64_t byteOffset = octree->getNode (node).chunkDataIndex * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
+        uint64_t byteOffset = octree->getNode (node).dataIdx * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
         uint64_t byteSize   = pointsInNode * (3 * (sizeof (uint32_t) + sizeof (uint16_t)));
         HierarchyFileEntry entry{type, bitmask, pointsInNode, byteOffset, byteSize};
         hierarchyFile.write (reinterpret_cast<const char*> (&entry), sizeof (HierarchyFileEntry));
@@ -83,7 +83,7 @@ void PotreeExporter::breathFirstExport (std::ofstream& pointFile, std::ofstream&
         this->itsPointsExported += pointsInNode;
         ++itsExportedNodes;
 
-        for (int childNode : octree->getNode (node).childrenChunks)
+        for (int childNode : octree->getNode (node).childNodes)
         {
             if (childNode != -1 && discoveredNodes.find (childNode) == discoveredNodes.end () &&
                 octree->getNode (childNode).isFinished)
@@ -101,7 +101,7 @@ inline uint8_t PotreeExporter::getChildMask (const Octree& octree, uint32_t node
     uint8_t bitmask = 0;
     for (auto i = 0; i < 8; i++)
     {
-        int childNodeIndex = octree->getNode (nodeIndex).childrenChunks[i];
+        int childNodeIndex = octree->getNode (nodeIndex).childNodes[i];
         if (childNodeIndex != -1 && octree->getNode (childNodeIndex).isFinished)
         {
             bitmask = bitmask | (1 << i);

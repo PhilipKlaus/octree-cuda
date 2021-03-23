@@ -52,7 +52,7 @@ private:
     void randomSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
 
     void histogramBinning (
-            const shared_ptr<Chunk[]>& h_octreeSparse,
+            const shared_ptr<Node[]>& h_octreeSparse,
             std::vector<uint32_t>& counts,
             uint32_t min,
             uint32_t binWidth,

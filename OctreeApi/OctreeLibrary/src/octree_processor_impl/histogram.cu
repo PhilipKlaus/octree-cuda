@@ -11,13 +11,13 @@ void OctreeProcessor::OctreeProcessorImpl::updateOctreeStatistics ()
 
 
 void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
-        const shared_ptr<Chunk[]>& h_octreeSparse,
+        const shared_ptr<Node[]>& h_octreeSparse,
         std::vector<uint32_t>& counts,
         uint32_t min,
         uint32_t binWidth,
         uint32_t nodeIndex) const
 {
-    Chunk chunk = h_octreeSparse[nodeIndex];
+    Node chunk = h_octreeSparse[nodeIndex];
 
     // Leaf node
     if (!chunk.isParent)
@@ -31,10 +31,10 @@ void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
     {
         for (uint32_t i = 0; i < 8; ++i)
         {
-            int childIndex = chunk.childrenChunks[i];
+            int childIndex = chunk.childNodes[i];
             if (childIndex != -1)
             {
-                histogramBinning (h_octreeSparse, counts, min, binWidth, chunk.childrenChunks[i]);
+                histogramBinning (h_octreeSparse, counts, min, binWidth, chunk.childNodes[i]);
             }
         }
     }

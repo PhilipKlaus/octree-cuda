@@ -1,7 +1,7 @@
 #include "catch2/catch.hpp"
 #include "octree.cuh"
 
-void fillDummyOctree(Chunk (&chunks)[9]) {
+void fillDummyOctree(Node (&chunks)[9]) {
 
     /*
      *                   50
@@ -9,14 +9,14 @@ void fillDummyOctree(Chunk (&chunks)[9]) {
      *      100 350 0 800 1300 0 700 250
      */
 
-    chunks[8].childrenChunks[0] = 0;
-    chunks[8].childrenChunks[1] = 1;
-    chunks[8].childrenChunks[2] = -1;
-    chunks[8].childrenChunks[3] = 3;
-    chunks[8].childrenChunks[4] = 4;
-    chunks[8].childrenChunks[5] = -1;
-    chunks[8].childrenChunks[6] = 6;
-    chunks[8].childrenChunks[7] = 7;
+    chunks[8].childNodes[0] = 0;
+    chunks[8].childNodes[1] = 1;
+    chunks[8].childNodes[2] = -1;
+    chunks[8].childNodes[3] = 3;
+    chunks[8].childNodes[4] = 4;
+    chunks[8].childNodes[5] = -1;
+    chunks[8].childNodes[6] = 6;
+    chunks[8].childNodes[7] = 7;
     chunks[8].pointCount = 50;
     chunks[8].isFinished = true;
     chunks[8].isParent = true;
@@ -33,7 +33,7 @@ void fillDummyOctree(Chunk (&chunks)[9]) {
     for(auto i = 0; i < 8; ++i) {
         chunks[i].isParent          = false;
         chunks[i].isFinished          = true;
-        for(int & childrenChunk : chunks[i].childrenChunks) {
+        for(int & childrenChunk : chunks[i].childNodes) {
             childrenChunk = -1;
         }
     }
@@ -157,14 +157,14 @@ TEST_CASE ("An Octree should")
 
         SECTION ("return correct Node Statistics (updated)")
         {
-            Chunk chunks[9];
+            Node chunks[9];
             fillDummyOctree(chunks);
 
             REQUIRE (
                     cudaMemcpy (
                             octree.getDevice (),
                             reinterpret_cast<uint8_t*> (chunks),
-                            sizeof (Chunk) * 9,
+                            sizeof (Node) * 9,
                             cudaMemcpyHostToDevice) == cudaSuccess);
 
             octree.updateNodeStatistics();
@@ -187,25 +187,25 @@ TEST_CASE ("An Octree should")
         SECTION ("copy the octree to host")
         {
             // Copy a dummy octree to gpu
-            Chunk chunks[9];
+            Node chunks[9];
             fillDummyOctree(chunks);
 
             REQUIRE (
                     cudaMemcpy (
                             octree.getDevice (),
                             reinterpret_cast<uint8_t*> (chunks),
-                            sizeof (Chunk) * 9,
+                            sizeof (Node) * 9,
                             cudaMemcpyHostToDevice) == cudaSuccess);
 
             auto host = octree.getHost ();
-            CHECK (host[octree.getRootIndex ()].childrenChunks[0] == 0);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[1] == 1);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[2] == -1);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[3] == 3);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[4] == 4);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[5] == -1);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[6] == 6);
-            CHECK (host[octree.getRootIndex ()].childrenChunks[7] == 7);
+            CHECK (host[octree.getRootIndex ()].childNodes[0] == 0);
+            CHECK (host[octree.getRootIndex ()].childNodes[1] == 1);
+            CHECK (host[octree.getRootIndex ()].childNodes[2] == -1);
+            CHECK (host[octree.getRootIndex ()].childNodes[3] == 3);
+            CHECK (host[octree.getRootIndex ()].childNodes[4] == 4);
+            CHECK (host[octree.getRootIndex ()].childNodes[5] == -1);
+            CHECK (host[octree.getRootIndex ()].childNodes[6] == 6);
+            CHECK (host[octree.getRootIndex ()].childNodes[7] == 7);
             CHECK (host[octree.getRootIndex ()].isParent == true);
             CHECK (host[octree.getRootIndex ()].pointCount == 50);
             CHECK (octree.getNode (0).pointCount == 100);

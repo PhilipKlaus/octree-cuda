@@ -5,14 +5,14 @@
 #include <memory>
 
 
-struct Chunk
+struct Node
 {
-    uint32_t pointCount;       // How many points does this chunk have
-    uint32_t parentChunkIndex; // Determines the INDEX of the parent CHUNK in the GRID - Only needed during Merging
-    bool isFinished;           // Is this chunk finished (= not mergeable anymore)
-    uint64_t chunkDataIndex;   // Determines the INDEX in the chunk data array -> for storing point data
-    int childrenChunks[8];     // The INDICES of the children chunks in the GRID
-    bool isParent;             // Denotes if Chunk is a parent or a leaf node
+    uint32_t pointCount;    // Number of points in the node
+    uint32_t parentNode;    // The parent node - Only needed during Merging
+    bool isFinished;        // Determines if the node is finished (= not mergeable anymore)
+    uint64_t dataIdx;       // Determines the position in the data output
+    int childNodes[8];      // The 8 child nodes
+    bool isParent;          // Determines if the node is a parent or a leaf
 };
 
 #pragma pack(push, 1)
@@ -30,7 +30,7 @@ using GpuArray        = std::unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8      = GpuArray<uint8_t>;
 using GpuArrayU32     = GpuArray<uint32_t>;
 using GpuArrayI32     = GpuArray<int>;
-using GpuOctree       = GpuArray<Chunk>;
+using GpuOctree       = GpuArray<Node>;
 using GpuAveraging    = GpuArray<uint64_t>;
 using GpuRandomState  = GpuArray<curandState_t>;
 using GpuPointLut     = GpuArray<PointLut>;
@@ -61,9 +61,9 @@ std::unique_ptr<CudaArray<uint8_t>> createGpuU8 (Args&&... args)
 }
 
 template <typename... Args>
-std::unique_ptr<CudaArray<Chunk>> createGpuOctree (Args&&... args)
+std::unique_ptr<CudaArray<Node>> createGpuOctree (Args&&... args)
 {
-    return createGpu<Chunk> (std::forward<Args> (args)...);
+    return createGpu<Node> (std::forward<Args> (args)...);
 }
 
 
