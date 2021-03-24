@@ -12,7 +12,7 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 ### Prerequirements
 
 | Name              | Minimum Version   | Link                                      |
-| ------------------|:-----------------:|: -----------------------------------------|
+| ------------------|-------------------| ------------------------------------------|
 | CMAKE             | 3.10              | [https://cmake.org/](https://cmake.org/)  |
 | CUDA              | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) |
 | heidentor.bin     | -                 | [heidentor.bin](http://www41.world4you.com/potree/examples/morrowbay/heidentor.bin)                                      |
@@ -78,7 +78,7 @@ The resulting data can be directly rendered using [PotreeDesktop](https://github
 
 # External Tools/Libraries
 | Library           | Description               | Link                                      |
-| ------------------|:-------------------------:|: -----------------------------------------|
+| ------------------|---------------------------|-------------------------------------------|
 | Catch2            | Unit Testing framework    | [https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)  |
 | Cxxopts           | Command line parsing      | [https://github.com/jarro2783/cxxopts](https://github.com/jarro2783/cxxopts) |
 | Nlohmann          | JSON library              | [https://github.com/nlohmann/json](https://github.com/nlohmann/json) |
