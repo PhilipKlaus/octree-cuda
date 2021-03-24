@@ -1,11 +1,13 @@
 #include "boundingbox.h"
 #include "octreeApi.h"
 #include "spdlog/spdlog.h"
-#include <fstream>
+#include "argparser.h"
 
+#include <fstream>
+#include <filesystem>
 
 using namespace std;
-
+namespace fs = std::filesystem;
 
 std::unique_ptr<uint8_t[]> readPly (const std::string& plyFile)
 {
@@ -19,7 +21,7 @@ std::unique_ptr<uint8_t[]> readPly (const std::string& plyFile)
     return bytes;
 }
 
-int main ()
+int main (int argc, char** argv)
 {
 #ifndef NDEBUG
     spdlog::set_level (spdlog::level::debug);
@@ -29,119 +31,70 @@ int main ()
     ocpi_set_logging_level (1);
 #endif
 
+    Input input = {};
+
+    try {
+        parseArguments(argc, argv, input);
+    }
+    catch (cxxopts::OptionParseException& exc) {
+        spdlog::error("{}", exc.what());
+        exit(1);
+    }
+
+    printInputConfig(input);
+
+    // Create output dir if not existing
+    if(!fs::exists(input.outputPath)) {
+        fs::create_directories(input.outputPath);
+    }
+
     void* session;
     ocpi_create_session (&session, 0);
 
-    bool isAveraging          = true;
-    bool useReplacementScheme = true;
-    uint32_t chunkingGrid     = 512;
-    uint32_t subsamplingGrid  = 128;
-    uint32_t mergingThreshold = 10000;
-
-    // Setup cloud properties
-    /*
-    uint32_t pointAmount     = 25010001;
-    uint32_t pointDataStride = 15;
-    float scaleX             = 0.001f;
-    float scaleY             = 0.001f;
-    float scaleZ             = 0.001f;
-    uint8_t cloudType           = 0;
-    std::string plyFile      = "plane_headerless.ply";
-    */
-
-    /*
-    uint32_t pointAmount     = 1344573;
-    uint32_t pointDataStride = 27;
-    float scaleX             = 0.01f;
-    float scaleY             = 0.01f;
-    float scaleZ             = 0.01f;
-    uint8_t cloudType           = 1;
-    std::string plyFile      = "testsmall_headerless.ply";
-   */
-
-    /*
-    uint32_t pointAmount     = 5138448;
-    uint32_t pointDataStride = 43;
-    float scaleX             = 0.001f;
-    float scaleY             = 0.001f;
-    float scaleZ             = 0.001f;
-    uint8_t cloudType           = 0;
-    std::string plyFile      = "coin_2320x9x2x4000_headerless.ply";
-    */
-
-    /*
-    uint32_t pointAmount     = 25836417;
-    uint32_t pointDataStride = 15;
-    float scaleX             = 0.001f;
-    float scaleY             = 0.001f;
-    float scaleZ             = 0.001f;
-    uint8_t cloudType           = 0;
-    std::string plyFile      = "heidentor_color_raw.ply";
-    */
-
-    /*
-    uint32_t pointAmount     = 47111095;
-    uint32_t pointDataStride = 27;
-    float scaleX             = 0.001f;
-    float scaleY             = 0.001f;
-    float scaleZ             = 0.001f;
-    uint8_t cloudType           = 1;
-    std::string plyFile      = "lifeboat_headerless.ply";
-    */
-
-    uint32_t pointAmount     = 119701547;
-    uint32_t pointDataStride = 27;
-    float scaleX             = 0.01f;
-    float scaleY             = 0.01f;
-    float scaleZ             = 0.01f;
-    uint8_t cloudType           = 1;
-    std::string plyFile      = "morrobay_fused_headerless.ply";
-
+    spdlog::info ("--------------------------------");
     auto start = std::chrono::high_resolution_clock::now ();
 
     // Read in ply
-    auto ply = readPly (plyFile);
+    auto ply = readPly (input.inputFile);
 
     // Calculate BB
-
     std::vector<double> realBB;
     std::vector<double> cubicBB;
 
-    if (cloudType == 0)
+    if (input.cloudType == 0)
     {
-        realBB  = calculateRealBB<float> (ply, pointAmount, pointDataStride);
-        cubicBB = calculateCubicBB (realBB);
+        realBB  = calculateRealBB<float> (ply, input.pointAmount, input.pointDataStride);
     }
     else
     {
-        realBB  = calculateRealBB<double> (ply, pointAmount, pointDataStride);
-        cubicBB = calculateCubicBB (realBB);
+        realBB  = calculateRealBB<double> (ply, input.pointAmount, input.pointDataStride);
     }
-
+    cubicBB = calculateCubicBB (realBB);
 
     auto finish                           = std::chrono::high_resolution_clock::now ();
     std::chrono::duration<double> elapsed = finish - start;
     spdlog::info ("Reading cloud and calc bounding box took: {} [s]", elapsed.count ());
+    spdlog::info ("--------------------------------");
 
     // Configurate and create octree
-    ocpi_set_cloud_type (session, cloudType);
-    ocpi_set_cloud_point_amount (session, pointAmount);
-    ocpi_set_cloud_data_stride (session, pointDataStride);
-    ocpi_set_cloud_scale (session, scaleX, scaleY, scaleZ);
+    ocpi_set_cloud_type (session, input.cloudType);
+    ocpi_set_cloud_point_amount (session, input.pointAmount);
+    ocpi_set_cloud_data_stride (session, input.pointDataStride);
+    ocpi_set_cloud_scale (session, input.scale, input.scale, input.scale);
     ocpi_set_cloud_offset (session, cubicBB[0], cubicBB[1], cubicBB[2]);
     ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 
     ocpi_set_point_cloud_host (session, ply.get ());
-    ocpi_configure_chunking (session, chunkingGrid, mergingThreshold);
-    ocpi_configure_subsampling (session, subsamplingGrid, isAveraging, useReplacementScheme);
+    ocpi_configure_chunking (session, input.chunkingGrid, input.mergingThreshold);
+    ocpi_configure_subsampling (session, input.subsamplingGrid, input.isAveraging, input.useReplacementScheme);
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);
-    ocpi_export_potree (session, R"(./export)");
+    ocpi_export_potree (session, input.outputPath.c_str());
 
-    // ocpi_export_distribution_histogram (session, R"(./export/histogram.html)", 0);
-    ocpi_export_json_report (session, R"(./export/statistics.json)");
-    ocpi_export_memory_report (session, R"(./export/memory_report.html)");
+    ocpi_export_distribution_histogram (session, (input.outputPath + "/point_distribution.html").c_str(), 0);
+    ocpi_export_json_report (session, (input.outputPath + "/statistics.json").c_str());
+    ocpi_export_memory_report (session, (input.outputPath + "/memory_report.html").c_str());
 
     ocpi_destroy_session (session);
 }

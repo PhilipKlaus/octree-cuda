@@ -1,32 +1,85 @@
-# octree-cuda
+# About
 
-The repository contains a project for generating a [Potree](https://github.com/potree/potree/) compatible LOD data structure on the GPU.
-The entire algorihmics are implemented using CUDA.
+PotreeConverterGPU generates [Potree](https://github.com/potree/potree/) compatible LOD data structures entirely on 
+the GPU using CUDA. 
 
-## Project structure
--  [External/](External/) contains external librarys such as [catch2](https://github.com/catchorg/Catch2) and [spdlog](https://github.com/gabime/spdlog)
--  [OctreeApi/OctreeLibrary/](OctreeApi/OctreeLibrary) contains the actual LOD generation logic and CUDA kernels. It is compiled to a static library.
--  [OctreeApi/](OctreeApi/) Exposes the functionality from the OctreeLibrary using an C-API. The API is compiled to a shared library.
--  [src/](src/) contains the PotreeConverterGPU project. This project builds an executable and links to the OctreeApi.
+The project is part of a master's thesis with the title *In-core level-of-detail generation for point clouds
+on GPUs using CUDA* and is conducted by the [Technical Universe of Vienna](https://www.cg.tuwien.ac.at/research/projects/Scanopy/) 
+in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.ac.at/en/).
 
-## OctreeApi
+# Getting started
 
-The OctreeApi calls the OctreeLibrary and uses a session-based state saving model. 
-Using this kind of architecture multiple sessions can be instantiated and work in parallel.
-Furthermore, the API gathers information and metadata from the OctreeLibrary and exports them using the [json_exporter](OctreeApi/src/json_exporter.h)
+### Prerequirements
 
-## OctreeLibrary
+| Name              | Minimum Version   | Link                                      |
+| ------------------|:-----------------:|: -----------------------------------------|
+| CMAKE             | 3.10              | [https://cmake.org/](https://cmake.org/)  |
+| CUDA              | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) |
+| heidentor.bin     | -                 | [heidentor.bin](http://www41.world4you.com/potree/examples/morrowbay/heidentor.bin)                                      |
+| c++ 17 compiler   | -                 | -                                          |
 
--  [OctreeApi/OctreeLibrary/include/](OctreeApi/OctreeLibrary/include/) Contains public include files. These files are used by the OctreeApi. 
-The file [octree_processor.cuh](https://github.com/PhilipKlaus/octree-cuda/blob/master/OctreeApi/OctreeLibrary/include/octree_processor.cuh) exposes the main LOD functionality. It uses a PIMPL pattern to hide its implementation details which can be found in [octree_processor_impl.cuh](https://github.com/PhilipKlaus/octree-cuda/blob/master/OctreeApi/OctreeLibrary/src/include/octree_processor_impl.cuh) (declarations) and in the folder [OctreeApi/OctreeLibrary/src/octree_processor_impl/](OctreeApi/OctreeLibrary/src/octree_processor_impl) (implementation).
+### Release version
+Be aware that the master branch is constantly updated.
+Therefore you should checkout or download release versions.
 
-- The CUDA kernels can be found in [OctreeApi/OctreeLibrary/src/kernel](OctreeApi/OctreeLibrary/src/kernel)
-
-## Building
-
+### Building from source
 ```
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
 cmake --build . --config Release
 ```
+**Note**: you can configure the project with ``-DENABLE_KERNEL_TIMINGS=ON`` to enable CUDA kernel timings (introduces a
+performance drawack).
+
+### Running PotreeConverterGPU
+Put heidentor.bin in the same folder as the PotreeConverterGPU executable and run the program with the following
+command:
+
+```
+PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128
+```
+
+#### Program Arguments
+```
+Usage:
+  PotreeConverterGPU [OPTION...]
+
+  -f, --file arg             File name point cloud
+  -p, --points arg           Point amount of the cloud
+  -t, --type arg             The datatype of the cloud coordinates: "float" /
+                             "double"
+  -d, --data arg             Data infos for stride and scale: [float, float]
+  -g, --grids arg            Grid sizes for chunking and subsampling: [int,
+                             int]
+  -m, --merge_threshold arg  The merging threshold (default: 10000)
+  -h, --help                 Print usage
+```
+
+### Output
+PotreeConverterGPU generates the following output files:
+
+| Filename                  | Description                                                                           | 
+| --------------------------|---------------------------------------------------------------------------------------|
+| hierarchy.bin             | Contains information about octree nodes in binary form (required by Potree)           | 
+| memory_report.html        | A diagram which shows the total GPU memory consumption per cudamalloc and cudafree    |
+| metadata.json             | Octree metadata and data description (required by Potree)                             |
+| octree.bin                | The binary lod cloud data (required by Potree)                                        |
+| point_distribution.html   | A diagram which shows the point distribution in the leaf nodes                        |
+| statistics.json           | Octree related statistics and information        
+
+The resulting data can be directly rendered using [PotreeDesktop](https://github.com/potree/PotreeDesktop). 
+
+# Project structure
+-  [External/](External/) contains external tools and libraries
+-  [OctreeApi/](OctreeApi/) Exposes the functionality from the OctreeLibrary using an C-API. The API is compiled to a shared library.
+-  [OctreeApi/OctreeLibrary/](OctreeApi/OctreeLibrary) contains the actual LOD generation logic and CUDA kernels. It is compiled to a static library.
+-  [src/](src/) contains the PotreeConverterGPU project. This project builds an executable and links to the OctreeApi.
+
+# External Tools/Libraries
+| Library           | Description               | Link                                      |
+| ------------------|:-------------------------:|: -----------------------------------------|
+| Catch2            | Unit Testing framework    | [https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)  |
+| Cxxopts           | Command line parsing      | [https://github.com/jarro2783/cxxopts](https://github.com/jarro2783/cxxopts) |
+| Nlohmann          | JSON library              | [https://github.com/nlohmann/json](https://github.com/nlohmann/json) |
+| Spdlog            | Logging library           | [https://github.com/gabime/spdlog](https://github.com/gabime/spdlog) |

@@ -86,9 +86,9 @@ public:
 
     const std::vector<std::tuple<std::string, TimingProps>>& getKernelTimings ()
     {
-        if (kernelTimers.size () > 0)
+        if (!kernelTimers.empty())
         {
-            spdlog::info ("----- KERNEL TIMINGS -----");
+            spdlog::info ("--------------------------------");
             for (auto& timer : kernelTimers)
             {
                 float ms  = std::get<0> (timer).getMilliseconds ();

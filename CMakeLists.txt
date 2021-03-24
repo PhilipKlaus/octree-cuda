@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.10 FATAL_ERROR)
 project(PotreeConverterGPU LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 ######################
 # WARNINGS INTERFACE #
@@ -23,7 +23,8 @@ endif ()
 # Specify the PotreeConverterGPU executable
 set(SOURCES
         src/main.cpp
-        src/boundingbox.h)
+        src/boundingbox.h
+        src/argparser.h)
 
 add_executable(${PROJECT_NAME} ${SOURCES})
 set_property(TARGET ${PROJECT_NAME} PROPERTY CUDA_ARCHITECTURES OFF)
