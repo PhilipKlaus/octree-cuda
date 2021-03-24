@@ -47,11 +47,9 @@ Usage:
 
   -f, --file arg             File name point cloud
   -p, --points arg           Point amount of the cloud
-  -t, --type arg             The datatype of the cloud coordinates: "float" /
-                             "double"
+  -t, --type arg             The datatype of the cloud coordinates: "float" / "double"
   -d, --data arg             Data infos for stride and scale: [float, float]
-  -g, --grids arg            Grid sizes for chunking and subsampling: [int,
-                             int]
+  -g, --grids arg            Grid sizes for chunking and subsampling: [int, int]
   -m, --merge_threshold arg  The merging threshold (default: 10000)
   -h, --help                 Print usage
 ```
