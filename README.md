@@ -39,7 +39,7 @@ This releases also contain necessary input files (morrowbay.bin, heidentor.bin, 
 | CUDA                            | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)  |
 | morrobay.bin (119701547 points) |                   | [morrobay.bin](http://www.dreamcoder.at/potree/examples/morrobay/morrobay.bin)              |
 | heidentor.bin (25836417 points) | -                 | [heidentor.bin](http://www.dreamcoder.at/potree/examples/heidentor/heidentor.bin)           |
-| coin.bin (5138448 points)       | -                 | <a target="_blank" href="http://www.dreamcoder.at/potree/examples/coin/coin.bin">Download FILE</a>|
+| coin.bin (5138448 points)       | -                 | <a href="http://www.dreamcoder.at/potree/examples/coin/coin.bin" target="_blank">coin.bin</a>|
 | c++ 17 compiler                 | -                 | -                                                                                           |
 
 ### Building instructions
