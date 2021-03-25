@@ -11,12 +11,14 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 
 ### Prerequirements
 
-| Name              | Minimum Version   | Link                                      |
-| ------------------|-------------------| ------------------------------------------|
-| CMAKE             | 3.10              | [https://cmake.org/](https://cmake.org/)  |
-| CUDA              | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads) |
-| heidentor.bin     | -                 | [heidentor.bin](http://www41.world4you.com/potree/examples/morrowbay/heidentor.bin)                                      |
-| c++ 17 compiler   | -                 | -                                          |
+| Name                            | Minimum Version   | Link                                                                                        |
+| --------------------------------|-------------------| --------------------------------------------------------------------------------------------|
+| CMAKE                           | 3.10              | [https://cmake.org/](https://cmake.org/)                                                    |
+| CUDA                            | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)  |
+| morrobay.bin (119701547 points) |                   | [morrobay.bin](http://www41.world4you.com/potree/examples/morrobay/morrobay.bin)            |
+| heidentor.bin (25836417 points) | -                 | [heidentor.bin](http://www41.world4you.com/potree/examples/morrowbay/heidentor.bin)         |
+| coin.bin (5138448 points)       | -                 | [coin.bin](http://www41.world4you.com/potree/examples/morrobay/coin.bin)                    |
+| c++ 17 compiler                 | -                 | -                                                                                           |
 
 ### Release version
 Be aware that the master branch is constantly updated.
@@ -33,12 +35,18 @@ cmake --build . --config Release
 performance drawack).
 
 ### Running PotreeConverterGPU
-Put heidentor.bin in the same folder as the PotreeConverterGPU executable and run the program with the following
-command:
+Put the binary file(s) in the same folder as the PotreeConverterGPU executable and run the program with the following
+commands:
 
-```
-PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128
-```
+* morrowbay.bin 
+
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128``
+* heidentor.bin 
+
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128``
+* coin.bin 
+
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
 
 #### Program Arguments
 ```
@@ -76,8 +84,8 @@ The resulting data can be directly rendered using [PotreeDesktop](https://github
 
 # External Tools/Libraries
 | Library           | Description               | Link                                      |
-| ------------------|---------------------------|-------------------------------------------|
-| Catch2            | Unit Testing framework    | [https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)  |
-| Cxxopts           | Command line parsing      | [https://github.com/jarro2783/cxxopts](https://github.com/jarro2783/cxxopts) |
-| Nlohmann          | JSON library              | [https://github.com/nlohmann/json](https://github.com/nlohmann/json) |
-| Spdlog            | Logging library           | [https://github.com/gabime/spdlog](https://github.com/gabime/spdlog) |
+| ------------------|---------------------------|-------------------------------------------------------------------------------|
+| Catch2            | Unit Testing framework    | [https://github.com/catchorg/Catch2](https://github.com/catchorg/Catch2)      |
+| Cxxopts           | Command line parsing      | [https://github.com/jarro2783/cxxopts](https://github.com/jarro2783/cxxopts)  |
+| Nlohmann          | JSON library              | [https://github.com/nlohmann/json](https://github.com/nlohmann/json)          |
+| Spdlog            | Logging library           | [https://github.com/gabime/spdlog](https://github.com/gabime/spdlog)          |
