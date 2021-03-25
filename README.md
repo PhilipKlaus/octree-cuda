@@ -15,9 +15,9 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 | --------------------------------|-------------------| --------------------------------------------------------------------------------------------|
 | CMAKE                           | 3.10              | [https://cmake.org/](https://cmake.org/)                                                    |
 | CUDA                            | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)  |
-| morrobay.bin (119701547 points) |                   | [morrobay.bin](http://www41.world4you.com/potree/examples/morrobay/morrobay.bin)            |
-| heidentor.bin (25836417 points) | -                 | [heidentor.bin](http://www41.world4you.com/potree/examples/morrowbay/heidentor.bin)         |
-| coin.bin (5138448 points)       | -                 | [coin.bin](http://www41.world4you.com/potree/examples/morrobay/coin.bin)                    |
+| morrobay.bin (119701547 points) |                   | [morrobay.bin](http://www.dreamcoder.at/potree/examples/morrobay/morrobay.bin)            |
+| heidentor.bin (25836417 points) | -                 | [heidentor.bin](http://www.dreamcoder.at/potree/examples/morrowbay/heidentor.bin)         |
+| coin.bin (5138448 points)       | -                 | [coin.bin](http://www.dreamcoder.at/potree/examples/morrobay/coin.bin)                    |
 | c++ 17 compiler                 | -                 | -                                                                                           |
 
 ### Release version
