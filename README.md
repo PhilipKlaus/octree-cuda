@@ -1,4 +1,4 @@
-[![PhilipKlaus](https://circleci.com/gh/PhilipKlaus/octree-cuda.svg?style=svg)](https://app.circleci.com/pipelines/github/PhilipKlaus/octree-cuda)
+[![PhilipKlaus](https://circleci.com/gh/PhilipKlaus/octree-cuda.svg?style=svg&circle-token=80c3b9a5002f85c01d952c8f06abc9cfaaed5106)](https://app.circleci.com/pipelines/github/PhilipKlaus/octree-cuda)
 
 # About
 
