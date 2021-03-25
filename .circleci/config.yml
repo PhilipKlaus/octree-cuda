@@ -5,4 +5,10 @@ jobs:
       - image: tsgkadot/docker-doxygen
     steps:
       - checkout # check out the code in the project directory
-      - run: doxygen doxy_lib_config
+      - run:
+          name: Create OctreeLibrary Documentation
+          command: doxygen doxy_lib_config
+      - store_artifacts:
+          path: /html/
+          destination: octree-library-doc
+     
