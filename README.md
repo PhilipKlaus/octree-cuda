@@ -1,13 +1,33 @@
 # About
 
-PotreeConverterGPU generates [Potree](https://github.com/potree/potree/) compatible LOD data structures entirely on 
+PotreeConverterGPU generates [Potree](https://github.com/potree/potree/) compatible LOD data structures from point clouds entirely on 
 the GPU using CUDA. 
 
 The project is part of a master's thesis with the title *In-core level-of-detail generation for point clouds
 on GPUs using CUDA* and is conducted by the [Technical Universe of Vienna](https://www.cg.tuwien.ac.at/research/projects/Scanopy/) 
 in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.ac.at/en/).
 
+# Project Status
+This project is a research project!
+
+| Feature                   | Status    | Comment                                                   |
+|---------------------------|-----------|-----------------------------------------------------------|
+| LOD Generation on CUDA    | &#9989;   | Done                                                      |
+| Exporting Potree data     | &#9989;   | Done                                                      |
+| Unit Tests                | &#9745;   | In Progress...                                            |
+| Source code documentation | &#9745;   | In Progress...                                            |
+| Ply Import                | &#10060;  | Only prepared binary files can be imported and processed  |
+| LAZ Import                | &#10060;  | Only prepared binary files can be imported and processed  |
+
+
+# Release version
+Be aware that the master branch is constantly updated. 
+Therefore you should checkout or download release versions.
+This releases also contain necessary input files (morrowbay.bin, heidentor.bin, coin.bin) .
+
 # Getting started
+
+## Building from source
 
 ### Prerequirements
 
@@ -20,12 +40,7 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 | coin.bin (5138448 points)       | -                 | [coin.bin](http://www.dreamcoder.at/potree/examples/coin/coin.bin)                          |
 | c++ 17 compiler                 | -                 | -                                                                                           |
 
-### Release version
-Be aware that the master branch is constantly updated. 
-Therefore you should checkout or download release versions.
-The releases also contain necessary input files (morrowbay.bin, heidentor.bin, coin.bin) .
-
-### Building from source
+### Building instructions
 ```
 mkdir build
 cd build
@@ -35,7 +50,7 @@ cmake --build . --config Release
 **Note**: you can configure the project with ``-DENABLE_KERNEL_TIMINGS=ON`` to enable CUDA kernel timings (introduces a
 performance drawack).
 
-### Running PotreeConverterGPU
+## Running PotreeConverterGPU
 Put the binary file(s) in the same folder as the PotreeConverterGPU executable and run the program with the following
 commands:
 
@@ -49,7 +64,7 @@ commands:
 
 ``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
 
-#### Program Arguments
+### Program Arguments
 ```
 Usage:
   PotreeConverterGPU [OPTION...]
