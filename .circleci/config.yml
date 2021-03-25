@@ -10,5 +10,4 @@ jobs:
           command: doxygen doxy_lib_config
       - store_artifacts:
           path: /html
-          destination: octree-library-doc
-     
+
