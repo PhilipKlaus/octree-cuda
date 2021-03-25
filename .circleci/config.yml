@@ -1,0 +1,14 @@
+version: 2.1
+jobs:
+  build:
+    docker: 
+      - image: tsgkadot/docker-doxygen
+    steps:
+      - checkout # check out the code in the project directory
+      - run:
+          name: Create OctreeLibrary Documentation
+          command: doxygen doxy_lib_config
+      - store_artifacts:
+          path: html
+          destination: octree-library-doc
+

@@ -1,3 +1,5 @@
+[![PhilipKlaus](https://circleci.com/gh/PhilipKlaus/octree-cuda.svg?style=svg&circle-token=80c3b9a5002f85c01d952c8f06abc9cfaaed5106)](https://app.circleci.com/pipelines/github/PhilipKlaus/octree-cuda)
+
 # About
 
 PotreeConverterGPU generates [Potree](https://github.com/potree/potree/) compatible LOD data structures from point clouds entirely on 
