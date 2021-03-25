@@ -9,6 +9,6 @@ jobs:
           name: Create OctreeLibrary Documentation
           command: doxygen doxy_lib_config
       - store_artifacts:
-          path: /html/
+          path: /html
           destination: octree-library-doc
      
