@@ -75,6 +75,7 @@ __global__ void kernelRandomPointSubsample (
         int* denseToSparseLUT,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
+        BoundingBox cubic,
         uint32_t* randomIndices,
         PointLut* lut,
         Node* octree,
@@ -124,9 +125,9 @@ __global__ void kernelRandomPointSubsample (
 
     // Write coordinates and colors to output buffer
     OutputBuffer* out = outputBuffer + octree[nodeIdx].dataIdx + sparseIndex;
-    out->x            = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
-    out->y            = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
-    out->z            = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
+    out->x            = static_cast<int32_t> (floor ((point->x - cubic.min.x) * cloud.scaleFactor.x));
+    out->y            = static_cast<int32_t> (floor ((point->y - cubic.min.y) * cloud.scaleFactor.y));
+    out->z            = static_cast<int32_t> (floor ((point->z - cubic.min.z) * cloud.scaleFactor.z));
     out->r            = static_cast<uint16_t> (decoded[0]);
     out->g            = static_cast<uint16_t> (decoded[1]);
     out->b            = static_cast<uint16_t> (decoded[2]);

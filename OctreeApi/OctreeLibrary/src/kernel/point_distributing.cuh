@@ -66,9 +66,9 @@ __global__ void kernelDistributePoints (
 
     // Write coordinates and colors to output buffer
     OutputBuffer* out = outputBuffer + octree[sparseVoxelIndex].dataIdx + dataIndexWithinChunk;
-    out->x            = static_cast<int32_t> (floor (point->x * cloud.scaleFactor.x));
-    out->y            = static_cast<int32_t> (floor (point->y * cloud.scaleFactor.y));
-    out->z            = static_cast<int32_t> (floor (point->z * cloud.scaleFactor.z));
+    out->x            = static_cast<int32_t> (floor ((point->x - gridding.bbMin.x) * cloud.scaleFactor.x));
+    out->y            = static_cast<int32_t> (floor ((point->y - gridding.bbMin.y) * cloud.scaleFactor.y));
+    out->z            = static_cast<int32_t> (floor ((point->z - gridding.bbMin.z) * cloud.scaleFactor.z));
     out->r            = color->x;
     out->g            = color->y;
     out->b            = color->z;

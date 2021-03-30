@@ -114,9 +114,9 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
 {
     // Prepare metadata for export
     auto& cloudMeta = cloud->getMetadata ();
-    auto bbCubic    = cloudMeta.bbCubic;
     auto scale      = cloudMeta.scale;
-    auto spacing    = (bbCubic.max.x - bbCubic.min.x) / subsampleMeta.subsamplingGrid;
+    auto sideLength = cloudMeta.cubicSize();
+    auto spacing    = (sideLength) / subsampleMeta.subsamplingGrid;
 
     // Common metadata
     nlohmann::ordered_json metadata;
@@ -136,8 +136,8 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     metadata["offset"]                      = {0, 0, 0}; // We are not shifting the cloud
     metadata["scale"]                       = {scale.x, scale.y, scale.z};
     metadata["spacing"]                     = spacing;
-    metadata["boundingBox"]["min"]          = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
-    metadata["boundingBox"]["max"]          = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
+    metadata["boundingBox"]["min"]          = {0, 0, 0};
+    metadata["boundingBox"]["max"]          = {sideLength, sideLength, sideLength};
     metadata["encoding"]                    = POTREE_DATA_ENCODING;
 
     // POSITION attribute
@@ -147,8 +147,8 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     metadata["attributes"][0]["numElements"] = POSITION_ELEMENTS;
     metadata["attributes"][0]["elementSize"] = POSITION_ELEMENT_SIZE;
     metadata["attributes"][0]["type"]        = POSITION_TYPE;
-    metadata["attributes"][0]["min"]         = {bbCubic.min.x, bbCubic.min.y, bbCubic.min.z};
-    metadata["attributes"][0]["max"]         = {bbCubic.max.x, bbCubic.max.y, bbCubic.max.z};
+    metadata["attributes"][0]["min"]         = {0, 0, 0};
+    metadata["attributes"][0]["max"]         = {sideLength, sideLength, sideLength};
 
     // COLOR attribute
     metadata["attributes"][1]["name"]        = COLOR_NAME;
