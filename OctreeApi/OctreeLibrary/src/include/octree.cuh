@@ -46,7 +46,7 @@ public:
 private:
     void initialize (uint32_t chunkingGrid);
     void ensureHierarchyCreated () const;
-    void evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex);
+    void evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex, uint8_t level);
     void calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t nodeIndex) const;
 
 private:

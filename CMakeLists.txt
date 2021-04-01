@@ -35,6 +35,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE ${PROJECT_SOURCE_DIR}/Externa
 # OPTIONS #
 ###########
 OPTION(ENABLE_KERNEL_TIMINGS "Turn Cuda kernel timings on or off" OFF) # Disable by default
+OPTION(ENABLE_KERNEL_ERROR_CHK "Turn Cuda kernel error checks on or off" OFF) # Disable by default
 
 
 ######################

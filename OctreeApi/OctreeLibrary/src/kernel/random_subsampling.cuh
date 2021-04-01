@@ -192,6 +192,9 @@ void randomPointSubsampling (const KernelConfig& config, Arguments&&... args)
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
 #endif
+#ifdef ERROR_CHECKS
+    cudaDeviceSynchronize ();
+#endif
     gpuErrchk (cudaGetLastError ());
 }
 
@@ -216,6 +219,9 @@ void calcNodeByteOffset (const KernelConfig& config, Arguments&&... args)
 #ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
+#ifdef ERROR_CHECKS
+    cudaDeviceSynchronize ();
 #endif
     gpuErrchk (cudaGetLastError ());
 }

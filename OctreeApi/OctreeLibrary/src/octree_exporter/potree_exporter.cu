@@ -115,7 +115,7 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     // Prepare metadata for export
     auto& cloudMeta = cloud->getMetadata ();
     auto scale      = cloudMeta.scale;
-    auto sideLength = cloudMeta.cubicSize();
+    auto sideLength = cloudMeta.cubicSize ();
     auto spacing    = (sideLength) / subsampleMeta.subsamplingGrid;
 
     // Common metadata

@@ -41,28 +41,34 @@ This releases also contain necessary input files (morrowbay.bin, heidentor.bin, 
 | c++ 17 compiler                 | -                 | -                                                                                           |
 
 ### Building instructions
+
 ```
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release ../
 cmake --build . --config Release
 ```
-**Note**: you can configure the project with ``-DENABLE_KERNEL_TIMINGS=ON`` to enable CUDA kernel timings (introduces a
-performance drawack).
+
+**Note**:
+
+* ``-DENABLE_KERNEL_TIMINGS=ON`` enables CUDA kernel timings (performance drawback)
+* ``-DENABLE_KERNEL_ERROR_CHK=ON`` performs full error check after each CUDA kernel (performance drawback)
 
 ## Running PotreeConverterGPU
+
 Put the binary file(s) in the same folder as the PotreeConverterGPU executable and run the program with the following
 commands:
 
-* morrowbay.bin 
+* morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128``
-* heidentor.bin 
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -m 10000``
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128``
-* coin.bin 
+* heidentor.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -m 10000``
+* coin.bin
+
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -m 10000``
 
 ### Program Arguments
 ```
