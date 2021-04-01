@@ -33,7 +33,7 @@ public:
 
     void initOctree ();
     void generateOctree ();
-    void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold);
+    void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
     void configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
 
     void exportPotree (const std::string& directory);

@@ -61,27 +61,29 @@ commands:
 
 * morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -m 10000``
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128``
 
 * heidentor.bin
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -m 10000``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128``
 * coin.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -m 10000``
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
 
 ### Program Arguments
 ```
 Usage:
   PotreeConverterGPU [OPTION...]
 
-  -f, --file arg             File name point cloud
-  -p, --points arg           Point amount of the cloud
-  -t, --type arg             The datatype of the cloud coordinates: "float" / "double"
-  -d, --data arg             Data infos for stride and scale: [float, float]
-  -g, --grids arg            Grid sizes for chunking and subsampling: [int, int]
-  -m, --merge_threshold arg  The merging threshold (default: 10000)
-  -h, --help                 Print usage
+  -f, --file arg              File name point cloud
+  -o, --output arg            Output path for the Potree data
+  -p, --points arg            Point amount of the cloud
+  -t, --type arg              The datatype of the cloud coordinates: "float" / "double"
+  -d, --data arg              Data infos for stride and scale: [float, float]
+  -g, --grids arg             Grid sizes for chunking and subsampling: [int, int]
+  -m, --merge_threshold arg   The merging threshold (default: 10000)
+  -e, --estimated_output arg  The estimated output point amount factor (default: 2.2)
+  -h, --help                  Print usage
 ```
 
 ### Output

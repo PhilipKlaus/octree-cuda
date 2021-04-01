@@ -43,17 +43,10 @@ void fillDummyOctree (Node (&chunks)[9])
 
 TEST_CASE ("An Octree should")
 {
-    OctreeData octree (512, 10000);
+    OctreeData octree (512);
 
     SECTION ("before creating the hierarchy")
     {
-        SECTION ("return correct OctreeMetadata")
-        {
-            auto& meta = octree.getMetadata ();
-            CHECK (meta.mergingThreshold == 10000);
-            CHECK (meta.chunkingGrid == 512);
-        }
-
         SECTION ("return correct Node Statistics (not updated)")
         {
             auto& meta = octree.getNodeStatistics ();
@@ -66,6 +59,7 @@ TEST_CASE ("An Octree should")
             CHECK (meta.leafNodeAmount == 0);
             CHECK (meta.parentNodeAmount == 0);
             CHECK (meta.meanPointsPerLeafNode == 0);
+            CHECK (meta.maxLeafDepth == 0);
         }
 
         SECTION ("throw a HierarchyNotCreatedException when calling getRootIndex")
@@ -155,6 +149,7 @@ TEST_CASE ("An Octree should")
             CHECK (meta.leafNodeAmount == 0);
             CHECK (meta.parentNodeAmount == 0);
             CHECK (meta.meanPointsPerLeafNode == 0);
+            CHECK (meta.maxLeafDepth == 0);
         }
 
         SECTION ("return correct Node Statistics (updated)")
@@ -179,6 +174,7 @@ TEST_CASE ("An Octree should")
             CHECK (meta.leafNodeAmount == 6);
             CHECK (meta.parentNodeAmount == 1);
             CHECK (meta.meanPointsPerLeafNode == Approx (583.3).epsilon (0.001));
+            CHECK (meta.maxLeafDepth == 1);
         }
 
         SECTION ("return correct root index")
