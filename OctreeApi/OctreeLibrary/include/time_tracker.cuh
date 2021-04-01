@@ -86,7 +86,7 @@ public:
 
     const std::vector<std::tuple<std::string, TimingProps>>& getKernelTimings ()
     {
-        if (!kernelTimers.empty())
+        if (!kernelTimers.empty ())
         {
             spdlog::info ("--------------------------------");
             for (auto& timer : kernelTimers)

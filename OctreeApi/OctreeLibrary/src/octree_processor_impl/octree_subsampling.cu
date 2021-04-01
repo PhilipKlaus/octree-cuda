@@ -100,6 +100,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsDenseToSparseLUT->devicePointer (),
                 cloud,
                 gridding,
+                cloudMetadata.bbCubic,
                 itsRandomIndices->devicePointer (),
                 itsPointLut->devicePointer (),
                 itsOctree->getDevice (),

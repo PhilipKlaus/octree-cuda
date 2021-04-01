@@ -34,13 +34,13 @@ __device__ uint64_t encodeColors (Vector3<colorType>* color)
  * @param color The color vector to be encoded.
  * @return The encoded color information.
  */
- /**
-  * Encodes three color components (r,g,b) in a single uint64.
-  * @param r The red color component.
-  * @param g The green color component.
-  * @param b The blue color component.
-  * @return The encoded color information.
-  */
+/**
+ * Encodes three color components (r,g,b) in a single uint64.
+ * @param r The red color component.
+ * @param g The green color component.
+ * @param b The blue color component.
+ * @return The encoded color information.
+ */
 __device__ uint64_t encodeColors (uint16_t r, uint16_t g, uint16_t b)
 {
     return (static_cast<uint64_t> (r) << 46) | (static_cast<uint64_t> (g) << 28) | static_cast<uint64_t> (b) << 10 |
@@ -148,6 +148,9 @@ void evaluateSubsamples (const KernelConfig& config, Arguments&&... args)
 #ifdef KERNEL_TIMINGS
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
+#ifdef ERROR_CHECKS
+    cudaDeviceSynchronize ();
 #endif
     gpuErrchk (cudaGetLastError ());
 }

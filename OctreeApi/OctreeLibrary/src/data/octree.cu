@@ -81,6 +81,7 @@ void OctreeData::updateNodeStatistics ()
     ensureHierarchyCreated ();
 
     // Reset Octree statistics
+    itsNodeStatistics.maxLeafDepth           = 0;
     itsNodeStatistics.leafNodeAmount         = 0;
     itsNodeStatistics.parentNodeAmount       = 0;
     itsNodeStatistics.meanPointsPerLeafNode  = 0.f;
@@ -92,7 +93,7 @@ void OctreeData::updateNodeStatistics ()
     float sumVariance = 0.f;
 
     getHost ();
-    evaluateNodeProperties (itsNodeStatistics, pointSum, getRootIndex ());
+    evaluateNodeProperties (itsNodeStatistics, pointSum, getRootIndex (), 0);
 
     itsNodeStatistics.meanPointsPerLeafNode = static_cast<float> (pointSum) / itsNodeStatistics.leafNodeAmount;
 
@@ -100,13 +101,14 @@ void OctreeData::updateNodeStatistics ()
     itsNodeStatistics.stdevPointsPerLeafNode = sqrt (sumVariance / itsNodeStatistics.leafNodeAmount);
 }
 
-void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex)
+void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& pointSum, uint32_t nodeIndex, uint8_t level)
 {
     Node node = itsOctreeHost[nodeIndex];
 
     // Leaf node
     if (!node.isParent)
     {
+        statistics.maxLeafDepth = max (statistics.maxLeafDepth, level);
         statistics.leafNodeAmount += 1;
         pointSum += node.pointCount;
         statistics.minPointsPerNode =
@@ -123,7 +125,7 @@ void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& point
         {
             if (childNode != -1)
             {
-                evaluateNodeProperties (statistics, pointSum, childNode);
+                evaluateNodeProperties (statistics, pointSum, childNode, level + 1);
             }
         }
     }

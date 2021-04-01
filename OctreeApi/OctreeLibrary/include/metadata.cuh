@@ -87,6 +87,7 @@ struct ProcessingInfo
 struct OctreeInfo
 {
     uint32_t depth;               ///< The depth of the octree (amount of levels)
+    uint8_t maxLeafDepth;         ///< Maximum depth of a leaf node
     uint32_t leafNodeAmount;      ///< The amount of leaf nodes
     uint32_t parentNodeAmount;    ///< The amount of parent nodes
     float meanPointsPerLeafNode;  ///< Mean point amount per leaf node

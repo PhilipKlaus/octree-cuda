@@ -26,6 +26,7 @@ void export_json_data (
     statistics["resultNodes"]["octreeNodes"]      = nodeStatistics.leafNodeAmount + nodeStatistics.parentNodeAmount;
     statistics["resultNodes"]["leafNodeAmount"]   = nodeStatistics.leafNodeAmount;
     statistics["resultNodes"]["parentNodeAmount"] = nodeStatistics.parentNodeAmount;
+    statistics["resultNodes"]["maxLeafDepth"]     = nodeStatistics.maxLeafDepth;
 
     statistics["overallNodes"]["sparseOctreeNodes"] = nodeStatistics.nodeAmountSparse;
     statistics["overallNodes"]["denseOctreeNodes"]  = nodeStatistics.nodeAmountDense;

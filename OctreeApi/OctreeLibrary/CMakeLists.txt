@@ -77,7 +77,10 @@ IF (ENABLE_KERNEL_TIMINGS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE KERNEL_TIMINGS)
     message(STATUS "Enable Cuda kernel timings")
 ENDIF (ENABLE_KERNEL_TIMINGS)
-
+IF (ENABLE_KERNEL_ERROR_CHK)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE ERROR_CHECKS)
+    message(STATUS "Enable Cuda kernel error checks")
+ENDIF (ENABLE_KERNEL_ERROR_CHK)
 
 ####################
 # ADD CUDA SUPPORT #

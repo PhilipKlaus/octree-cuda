@@ -21,6 +21,9 @@ void executeKernel (FunctType kernel, uint32_t threads, const std::string& name,
     timer.stop ();
     Timing::TimeTracker::getInstance ().trackKernelTime (timer, name);
 #endif
+#ifdef ERROR_CHECKS
+    cudaDeviceSynchronize ();
+#endif
     gpuErrchk (cudaGetLastError ());
 }
 
