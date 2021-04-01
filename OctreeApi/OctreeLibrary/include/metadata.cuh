@@ -79,6 +79,8 @@ struct ProcessingInfo
     uint32_t mergingThreshold; ///< The threshold for the cell merging during the chunking phase
     bool performAveraging;     ///< Determines if averaging should be performed
     bool useReplacementScheme; ///< Determines if the replacement scheme should be applied
+    float outputFactor;        ///< The estimated factor for the output point amount
+    ///<                            ///< (output points = input points * factor)
 };
 
 /**

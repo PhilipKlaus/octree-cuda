@@ -61,10 +61,10 @@ void ocpi_export_potree (void* session, const char* filename)
     s->exportPotree (filename);
 }
 
-void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold)
+void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor)
 {
     auto s = Session::ToSession (session);
-    s->configureChunking (chunkingGrid, mergingThreshold);
+    s->configureChunking (chunkingGrid, mergingThreshold, outputFactor);
 }
 
 void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme)

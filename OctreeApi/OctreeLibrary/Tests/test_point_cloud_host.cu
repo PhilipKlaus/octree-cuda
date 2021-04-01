@@ -20,7 +20,7 @@ TEST_CASE ("A PointCloudHost should")
     data[13]                                  = 254;
     data[14]                                  = 255;
 
-    PointCloudHost cloud (data.get (), meta);
+    PointCloudHost cloud (data.get (), meta, 2.2f);
 
     SECTION ("return the original host cloud data")
     {

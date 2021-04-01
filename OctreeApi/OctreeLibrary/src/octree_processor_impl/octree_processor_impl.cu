@@ -25,11 +25,11 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     if (cloudInfo.memoryType == CLOUD_HOST)
     {
-        itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudInfo);
+        itsCloud = std::make_unique<PointCloudHost> (pointCloud, cloudInfo, processingInfo.outputFactor);
     }
     else
     {
-        itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudInfo);
+        itsCloud = std::make_unique<PointCloudDevice> (pointCloud, cloudInfo, processingInfo.outputFactor);
     }
 
     //-----------------------------
@@ -50,7 +50,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsTmpCounting = createGpuU32 (1, "tmpCounting");
     itsTmpCounting->memset (0);
 
-    auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * 2.1);
+    auto expectedPoints = static_cast<uint32_t> (itsCloud->getMetadata ().pointAmount * processingInfo.outputFactor);
     itsPointLut         = createGpuOutputData (expectedPoints, "pointLUT");
     itsPointLut->memset (0);
 

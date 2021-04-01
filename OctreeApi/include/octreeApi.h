@@ -51,7 +51,8 @@ EXPORTED void ocpi_set_cloud_bb (
 
 EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 
-EXPORTED void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold);
+EXPORTED void ocpi_configure_chunking (
+        void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
 EXPORTED void ocpi_configure_subsampling (
         void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
 

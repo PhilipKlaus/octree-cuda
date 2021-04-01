@@ -1,10 +1,10 @@
+#include "argparser.h"
 #include "boundingbox.h"
 #include "octreeApi.h"
 #include "spdlog/spdlog.h"
-#include "argparser.h"
 
-#include <fstream>
 #include <filesystem>
+#include <fstream>
 
 using namespace std;
 namespace fs = std::filesystem;
@@ -33,19 +33,22 @@ int main (int argc, char** argv)
 
     Input input = {};
 
-    try {
-        parseArguments(argc, argv, input);
+    try
+    {
+        parseArguments (argc, argv, input);
     }
-    catch (cxxopts::OptionParseException& exc) {
-        spdlog::error("{}", exc.what());
-        exit(1);
+    catch (cxxopts::OptionParseException& exc)
+    {
+        spdlog::error ("{}", exc.what ());
+        exit (1);
     }
 
-    printInputConfig(input);
+    printInputConfig (input);
 
     // Create output dir if not existing
-    if(!fs::exists(input.outputPath)) {
-        fs::create_directories(input.outputPath);
+    if (!fs::exists (input.outputPath))
+    {
+        fs::create_directories (input.outputPath);
     }
 
     void* session;
@@ -63,11 +66,11 @@ int main (int argc, char** argv)
 
     if (input.cloudType == 0)
     {
-        realBB  = calculateRealBB<float> (ply, input.pointAmount, input.pointDataStride);
+        realBB = calculateRealBB<float> (ply, input.pointAmount, input.pointDataStride);
     }
     else
     {
-        realBB  = calculateRealBB<double> (ply, input.pointAmount, input.pointDataStride);
+        realBB = calculateRealBB<double> (ply, input.pointAmount, input.pointDataStride);
     }
     cubicBB = calculateCubicBB (realBB);
 
@@ -85,16 +88,16 @@ int main (int argc, char** argv)
     ocpi_set_cloud_bb (session, cubicBB[0], cubicBB[1], cubicBB[2], cubicBB[3], cubicBB[4], cubicBB[5]);
 
     ocpi_set_point_cloud_host (session, ply.get ());
-    ocpi_configure_chunking (session, input.chunkingGrid, input.mergingThreshold);
+    ocpi_configure_chunking (session, input.chunkingGrid, input.mergingThreshold, input.outputFactor);
     ocpi_configure_subsampling (session, input.subsamplingGrid, input.isAveraging, input.useReplacementScheme);
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);
-    ocpi_export_potree (session, input.outputPath.c_str());
+    ocpi_export_potree (session, input.outputPath.c_str ());
 
-    ocpi_export_distribution_histogram (session, (input.outputPath + "/point_distribution.html").c_str(), 0);
-    ocpi_export_json_report (session, (input.outputPath + "/statistics.json").c_str());
-    ocpi_export_memory_report (session, (input.outputPath + "/memory_report.html").c_str());
+    ocpi_export_distribution_histogram (session, (input.outputPath + "/point_distribution.html").c_str (), 0);
+    ocpi_export_json_report (session, (input.outputPath + "/statistics.json").c_str ());
+    ocpi_export_memory_report (session, (input.outputPath + "/memory_report.html").c_str ());
 
     ocpi_destroy_session (session);
 }

@@ -89,10 +89,11 @@ void Session::exportDistributionHistogram (const std::string& filename, uint32_t
     spdlog::debug ("Export point dist. report to: {}", filename);
 }
 
-void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold)
+void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor)
 {
     itsProcessingInfo.chunkingGrid     = chunkingGrid;
     itsProcessingInfo.mergingThreshold = mergingThreshold;
+    itsProcessingInfo.outputFactor     = outputFactor;
 }
 
 void Session::configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme)

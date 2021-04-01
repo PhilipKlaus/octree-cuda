@@ -23,7 +23,7 @@ TEST_CASE ("A PointCloudDevice should")
     uint8_t* device = nullptr;
     gpuErrchk (cudaMalloc ((void**)&device, 15 * 1));
     gpuErrchk (cudaMemcpy (device, data.get (), 15 * 1, cudaMemcpyHostToDevice));
-    PointCloudDevice cloud (device, meta);
+    PointCloudDevice cloud (device, meta, 2.2f);
 
     SECTION ("return the original device cloud data")
     {
