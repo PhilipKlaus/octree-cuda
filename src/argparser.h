@@ -12,6 +12,7 @@ struct Input
     float scale;
     bool isAveraging;
     bool useReplacementScheme;
+    bool performRandomSubsampling;
     uint32_t chunkingGrid;
     uint32_t subsamplingGrid;
     uint32_t mergingThreshold;
@@ -24,6 +25,9 @@ cxxopts::Options createOptions ()
     cxxopts::Options options ("PotreeConverterGPU", "Generates Potree compatible LOD structures on the GPU");
     options.add_options () ("f,file", "File name point cloud", cxxopts::value<std::string> ()) (
             "a,averaging", "Apply color averaging", cxxopts::value<bool> ()->default_value ("false")) (
+            "r,random",
+            "Perform Random-Subsampling, otherwise First-Point-Subsampling is applied",
+            cxxopts::value<bool> ()->default_value ("false")) (
             "o,output", "Output path for the Potree data", cxxopts::value<std::string> ()) (
             "p,points", "Point amount of the cloud", cxxopts::value<uint32_t> ()) (
             "t,type", R"(The datatype of the cloud coordinates: "float" / "double")", cxxopts::value<std::string> ()) (
@@ -108,7 +112,8 @@ void printInputConfig (const Input& input)
     spdlog::info ("subsamplingGrid: {}", input.subsamplingGrid);
     spdlog::info ("mergingThreshold: {}", input.mergingThreshold);
     spdlog::info ("outputFactor: {}", input.outputFactor);
-    spdlog::info ("perform Averaging: {}", input.isAveraging );
+    spdlog::info ("perform Averaging: {}", input.isAveraging);
+    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "random" : "first-point");
 }
 
 void parseInput (Input& input, const cxxopts::ParseResult& result)
@@ -116,19 +121,18 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     auto dataInfo = result["data"].as<std::vector<float>> ();
     auto grids    = result["grids"].as<std::vector<uint32_t>> ();
 
-    input.inputFile       = result["file"].as<std::string> ();
-    input.outputPath      = result["output"].as<std::string> ();
-    input.pointAmount     = result["points"].as<uint32_t> ();
-    input.pointDataStride = static_cast<uint32_t> (dataInfo[0]);
-    input.scale           = dataInfo[1];
-    input.isAveraging     = result["averaging"].as<bool> ();
-    spdlog::info ("perform Averaging: {}", result["averaging"].as<bool> ());
-    // bool useReplacementScheme = true;
-    input.chunkingGrid     = grids[0];
-    input.subsamplingGrid  = grids[1];
-    input.mergingThreshold = result["merge_threshold"].as<uint32_t> ();
-    input.outputFactor     = result["estimated_output"].as<float> ();
-    input.cloudType        = result["type"].as<std::string> () == "float" ? 0 : 1;
+    input.inputFile                = result["file"].as<std::string> ();
+    input.outputPath               = result["output"].as<std::string> ();
+    input.pointAmount              = result["points"].as<uint32_t> ();
+    input.pointDataStride          = static_cast<uint32_t> (dataInfo[0]);
+    input.scale                    = dataInfo[1];
+    input.isAveraging              = result["averaging"].as<bool> ();
+    input.performRandomSubsampling = result["random"].as<bool> ();
+    input.chunkingGrid             = grids[0];
+    input.subsamplingGrid          = grids[1];
+    input.mergingThreshold         = result["merge_threshold"].as<uint32_t> ();
+    input.outputFactor             = result["estimated_output"].as<float> ();
+    input.cloudType                = result["type"].as<std::string> () == "float" ? 0 : 1;
 }
 
 void parseArguments (int argc, char** argv, Input& input)

@@ -42,6 +42,7 @@ private:
     void initLowestOctreeHierarchy ();
     void calculateVoxelBB (PointCloudInfo& metadata, uint32_t denseVoxelIndex, uint32_t level);
     void randomSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
+    void firstPointSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
 
     void histogramBinning (std::vector<uint32_t>& counts, uint32_t min, uint32_t binWidth, uint32_t nodeIndex) const;
 

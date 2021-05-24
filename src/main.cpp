@@ -89,7 +89,7 @@ int main (int argc, char** argv)
 
     ocpi_set_point_cloud_host (session, ply.get ());
     ocpi_configure_chunking (session, input.chunkingGrid, input.mergingThreshold, input.outputFactor);
-    ocpi_configure_subsampling (session, input.subsamplingGrid, input.isAveraging, input.useReplacementScheme);
+    ocpi_configure_subsampling (session, input.subsamplingGrid, input.isAveraging, input.useReplacementScheme, input.performRandomSubsampling);
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);

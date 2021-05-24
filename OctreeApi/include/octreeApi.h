@@ -54,7 +54,7 @@ EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 EXPORTED void ocpi_configure_chunking (
         void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
 EXPORTED void ocpi_configure_subsampling (
-        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
+        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling);
 
 EXPORTED void ocpi_export_memory_report (void* session, const char* filename);
 EXPORTED void ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);
