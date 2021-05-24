@@ -138,7 +138,7 @@ __global__ void kernelRandomPointSubsample (
 }
 
 /**
- * Picks a random point from a child node and stores the point index in a point LUT.
+ * Pick the last point within a specific subsampling grid cell and stores the point index in a point LUT.
  * Further, the point data (coordinates, colors) are written to the binary output buffer.
  * After processing the kernel, resets all temporary needed data structures.
  *
