@@ -19,26 +19,11 @@ struct Input
     float outputFactor;
 };
 
-void createDefaultInput (Input& input)
-{
-    input.inputFile            = "";
-    input.outputPath           = R"(./export)";
-    input.pointAmount          = 0;
-    input.pointDataStride      = 0;
-    input.scale                = 1;
-    input.isAveraging          = true;
-    input.useReplacementScheme = true;
-    input.chunkingGrid         = 512;
-    input.subsamplingGrid      = 128;
-    input.mergingThreshold     = 10000;
-    input.cloudType            = 0;
-    input.outputFactor         = 0.f;
-}
-
 cxxopts::Options createOptions ()
 {
     cxxopts::Options options ("PotreeConverterGPU", "Generates Potree compatible LOD structures on the GPU");
     options.add_options () ("f,file", "File name point cloud", cxxopts::value<std::string> ()) (
+            "a,averaging", "Apply color averaging", cxxopts::value<bool> ()->default_value ("false")) (
             "o,output", "Output path for the Potree data", cxxopts::value<std::string> ()) (
             "p,points", "Point amount of the cloud", cxxopts::value<uint32_t> ()) (
             "t,type", R"(The datatype of the cloud coordinates: "float" / "double")", cxxopts::value<std::string> ()) (
@@ -123,6 +108,7 @@ void printInputConfig (const Input& input)
     spdlog::info ("subsamplingGrid: {}", input.subsamplingGrid);
     spdlog::info ("mergingThreshold: {}", input.mergingThreshold);
     spdlog::info ("outputFactor: {}", input.outputFactor);
+    spdlog::info ("perform Averaging: {}", input.isAveraging );
 }
 
 void parseInput (Input& input, const cxxopts::ParseResult& result)
@@ -135,7 +121,8 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     input.pointAmount     = result["points"].as<uint32_t> ();
     input.pointDataStride = static_cast<uint32_t> (dataInfo[0]);
     input.scale           = dataInfo[1];
-    // bool isAveraging          = true;
+    input.isAveraging     = result["averaging"].as<bool> ();
+    spdlog::info ("perform Averaging: {}", result["averaging"].as<bool> ());
     // bool useReplacementScheme = true;
     input.chunkingGrid     = grids[0];
     input.subsamplingGrid  = grids[1];

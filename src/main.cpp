@@ -42,7 +42,7 @@ int main (int argc, char** argv)
         spdlog::error ("{}", exc.what ());
         exit (1);
     }
-
+        
     printInputConfig (input);
 
     // Create output dir if not existing

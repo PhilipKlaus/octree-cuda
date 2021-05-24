@@ -61,14 +61,14 @@ commands:
 
 * morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128``
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -a``
 
 * heidentor.bin
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -a``
 * coin.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -a``
 
 ### Program Arguments
 ```

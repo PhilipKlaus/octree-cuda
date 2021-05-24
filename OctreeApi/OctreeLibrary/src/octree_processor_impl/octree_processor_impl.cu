@@ -145,3 +145,16 @@ const OctreeInfo& OctreeProcessor::OctreeProcessorImpl::getOctreeInfo ()
 {
     return itsOctree->getNodeStatistics ();
 }
+
+
+void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
+{
+    auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
+
+    itsDenseToSparseLUT->memset (-1);
+    itsCountingGrid->memset (0);
+    itsOctree->updateNodeStatistics ();
+
+    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    cudaDeviceSynchronize ();
+}

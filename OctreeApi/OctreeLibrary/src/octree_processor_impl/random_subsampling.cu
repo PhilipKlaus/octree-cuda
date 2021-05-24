@@ -5,19 +5,6 @@
 #include "time_tracker.cuh"
 
 
-void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
-{
-    auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
-
-    itsDenseToSparseLUT->memset (-1);
-    itsCountingGrid->memset (0);
-    itsOctree->updateNodeStatistics ();
-
-    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
-    cudaDeviceSynchronize ();
-}
-
-
 void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
 {
