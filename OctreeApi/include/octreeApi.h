@@ -34,33 +34,35 @@
     #define EXPORTED EXPORTED_PRE
 #endif
 
+#define SUCCESS (0)
+#define UNEXPECTED_ERROR (-1)
 
 // ToDo: Add integer return value
 // ToDo: Add exception handling to all function implementations
-EXPORTED void ocpi_create_session (void** session, int device);
-EXPORTED void ocpi_destroy_session (void* session);
-EXPORTED void ocpi_set_logging_level (int level);
+EXPORTED int ocpi_create_session (void** session, int device);
+EXPORTED int ocpi_destroy_session (void* session);
+EXPORTED int ocpi_set_logging_level (int level);
 
-EXPORTED void ocpi_set_cloud_type (void* session, uint8_t cloudType);
-EXPORTED void ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount);
-EXPORTED void ocpi_set_cloud_data_stride (void* session, uint32_t dataStride);
-EXPORTED void ocpi_set_cloud_scale (void* session, double x, double y, double z);
-EXPORTED void ocpi_set_cloud_offset (void* session, double x, double y, double z);
-EXPORTED void ocpi_set_cloud_bb (
+EXPORTED int ocpi_set_cloud_type (void* session, uint8_t cloudType);
+EXPORTED int ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount);
+EXPORTED int ocpi_set_cloud_data_stride (void* session, uint32_t dataStride);
+EXPORTED int ocpi_set_cloud_scale (void* session, double x, double y, double z);
+EXPORTED int ocpi_set_cloud_offset (void* session, double x, double y, double z);
+EXPORTED int ocpi_set_cloud_bb (
         void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ);
 
-EXPORTED void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
+EXPORTED int ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 
-EXPORTED void ocpi_configure_chunking (
+EXPORTED int ocpi_configure_chunking (
         void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
-EXPORTED void ocpi_configure_subsampling (
-        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
+EXPORTED int ocpi_configure_subsampling (
+        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling);
 
-EXPORTED void ocpi_export_memory_report (void* session, const char* filename);
-EXPORTED void ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);
-EXPORTED void ocpi_export_json_report (void* session, const char* filename);
-EXPORTED void ocpi_export_potree (void* session, const char* directory);
-EXPORTED void ocpi_init_octree (void* session);
-EXPORTED void ocpi_generate_octree (void* session);
+EXPORTED int ocpi_export_memory_report (void* session, const char* filename);
+EXPORTED int ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);
+EXPORTED int ocpi_export_json_report (void* session, const char* filename);
+EXPORTED int ocpi_export_potree (void* session, const char* directory);
+EXPORTED int ocpi_init_octree (void* session);
+EXPORTED int ocpi_generate_octree (void* session);
 
 #endif

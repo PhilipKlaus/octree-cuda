@@ -6,123 +6,171 @@
 #include "session.h"
 #include "spdlog/spdlog.h"
 
-
-void ocpi_set_logging_level (int level)
+template <typename Function, typename... Args>
+int Execute (Function function, Args... args)
 {
-    switch (level)
+    try
     {
-    case 1:
-        spdlog::set_level (spdlog::level::info);
-        break;
-    case 2:
-        spdlog::set_level (spdlog::level::warn);
-        break;
-    case 3:
-        spdlog::set_level (spdlog::level::err);
-        break;
-    default:
-        spdlog::set_level (spdlog::level::debug);
-        break;
+        function (args...);
+        return SUCCESS;
+    }
+    catch (...)
+    {
+        return UNEXPECTED_ERROR;
     }
 }
 
-void ocpi_create_session (void** session, int device)
+int ocpi_set_logging_level (int level)
 {
-    *session = new Session (device);
+    return Execute ([&] () {
+        switch (level)
+        {
+        case 1:
+            spdlog::set_level (spdlog::level::info);
+            break;
+        case 2:
+            spdlog::set_level (spdlog::level::warn);
+            break;
+        case 3:
+            spdlog::set_level (spdlog::level::err);
+            break;
+        default:
+            spdlog::set_level (spdlog::level::debug);
+            break;
+        }
+    });
 }
 
-void ocpi_destroy_session (void* session)
+int ocpi_create_session (void** session, int device)
 {
-    auto s = Session::ToSession (session);
-    delete s;
+    return Execute ([&] () { *session = new Session (device); });
 }
 
-void ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud)
+int ocpi_destroy_session (void* session)
 {
-    auto s = Session::ToSession (session);
-    s->setPointCloudHost (pointCloud);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        delete s;
+    });
 }
 
-void ocpi_init_octree (void* session)
+int ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud)
 {
-    auto s = Session::ToSession (session);
-    s->initOctree ();
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setPointCloudHost (pointCloud);
+    });
 }
 
-void ocpi_generate_octree (void* session)
+int ocpi_init_octree (void* session)
 {
-    auto s = Session::ToSession (session);
-    s->generateOctree ();
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->initOctree ();
+    });
 }
 
-void ocpi_export_potree (void* session, const char* filename)
+int ocpi_generate_octree (void* session)
 {
-    auto s = Session::ToSession (session);
-    s->exportPotree (filename);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->generateOctree ();
+    });
 }
 
-void ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor)
+int ocpi_export_potree (void* session, const char* filename)
 {
-    auto s = Session::ToSession (session);
-    s->configureChunking (chunkingGrid, mergingThreshold, outputFactor);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->exportPotree (filename);
+    });
 }
 
-void ocpi_configure_subsampling (void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme)
+int ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor)
 {
-    auto s = Session::ToSession (session);
-    s->configureSubsampling (subsamplingGrid, averaging, replacementScheme);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->configureChunking (chunkingGrid, mergingThreshold, outputFactor);
+    });
 }
 
-void ocpi_export_memory_report (void* session, const char* filename)
+int ocpi_configure_subsampling (
+        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling)
 {
-    auto s = Session::ToSession (session);
-    s->exportMemoryReport (filename);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->configureSubsampling (subsamplingGrid, averaging, replacementScheme, useRandomSubsampling);
+    });
 }
 
-void ocpi_export_json_report (void* session, const char* filename)
+int ocpi_export_memory_report (void* session, const char* filename)
 {
-    auto s = Session::ToSession (session);
-    s->exportJsonReport (filename);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->exportMemoryReport (filename);
+    });
 }
 
-void ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth)
+int ocpi_export_json_report (void* session, const char* filename)
 {
-    auto s = Session::ToSession (session);
-    s->exportDistributionHistogram (filename, binWidth);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->exportJsonReport (filename);
+    });
 }
 
-void ocpi_set_cloud_type (void* session, uint8_t cloudType)
+int ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudType (cloudType);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->exportDistributionHistogram (filename, binWidth);
+    });
 }
 
-void ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount)
+int ocpi_set_cloud_type (void* session, uint8_t cloudType)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudPointAmount (pointAmount);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudType (cloudType);
+    });
 }
 
-void ocpi_set_cloud_data_stride (void* session, uint32_t dataStride)
+int ocpi_set_cloud_point_amount (void* session, uint32_t pointAmount)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudDataStride (dataStride);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudPointAmount (pointAmount);
+    });
 }
 
-void ocpi_set_cloud_scale (void* session, double x, double y, double z)
+int ocpi_set_cloud_data_stride (void* session, uint32_t dataStride)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudScale (x, y, z);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudDataStride (dataStride);
+    });
 }
 
-void ocpi_set_cloud_offset (void* session, double x, double y, double z)
+int ocpi_set_cloud_scale (void* session, double x, double y, double z)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudOffset (x, y, z);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudScale (x, y, z);
+    });
 }
 
-void ocpi_set_cloud_bb (void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+int ocpi_set_cloud_offset (void* session, double x, double y, double z)
 {
-    auto s = Session::ToSession (session);
-    s->setCloudBoundingBox (minX, minY, minZ, maxX, maxY, maxZ);
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudOffset (x, y, z);
+    });
+}
+
+int ocpi_set_cloud_bb (void* session, double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+{
+    return Execute ([&] () {
+        auto s = Session::ToSession (session);
+        s->setCloudBoundingBox (minX, minY, minZ, maxX, maxY, maxZ);
+    });
 }
