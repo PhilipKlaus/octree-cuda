@@ -16,6 +16,8 @@ This project is a research project!
 |---------------------------|-----------|-----------------------------------------------------------|
 | LOD Generation on GPU     | &#9989;   | Done                                                      |
 | Exporting Potree data     | &#9989;   | Done                                                      |
+| Random point subsampling  | &#9989;   | Done                                                      |
+| First point subsampling   | &#9989;   | Done                                                      |
 | Unit Tests                | &#9745;   | In Progress...                                            |
 | Source code documentation | &#9745;   | In Progress...                                            |
 | Ply Import                | &#10060;  | Only prepared binary files can be imported and processed  |
