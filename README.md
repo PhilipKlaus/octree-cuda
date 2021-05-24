@@ -61,14 +61,14 @@ commands:
 
 * morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128``
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -a -r``
 
 * heidentor.bin
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -a -r``
 * coin.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128``
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -a -r``
 
 ### Program Arguments
 ```
@@ -76,6 +76,8 @@ Usage:
   PotreeConverterGPU [OPTION...]
 
   -f, --file arg              File name point cloud
+  -a, --averaging             Apply color averaging
+  -r, --random                Perform Random-Subsampling, otherwise First-Point-Subsampling is applied
   -o, --output arg            Output path for the Potree data
   -p, --points arg            Point amount of the cloud
   -t, --type arg              The datatype of the cloud coordinates: "float" / "double"

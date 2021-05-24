@@ -34,7 +34,8 @@ public:
     void initOctree ();
     void generateOctree ();
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
-    void configureSubsampling (uint32_t subsamplingGrid, bool averaging, bool replacementScheme);
+    void configureSubsampling (
+            uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling);
 
     void exportPotree (const std::string& directory);
     void exportJsonReport (const std::string& filename);

@@ -58,16 +58,19 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsAveragingGrid    = createGpuAveraging (gridCellAmount, "averagingGrid");
     itsAveragingGrid->memset (0);
 
-    itsRandomIndices = createGpuU32 (gridCellAmount, "randomIndices");
+    if (itsProcessingInfo.useRandomSubsampling)
+    {
+        itsRandomIndices = createGpuU32 (gridCellAmount, "randomIndices");
 
-    itsRandomStates = createGpuRandom (1024, "randomStates");
-    executeKernel (
-            subsampling::kernelInitRandoms,
-            1024u,
-            "kernelInitRandoms",
-            std::time (nullptr),
-            itsRandomStates->devicePointer (),
-            1024);
+        itsRandomStates = createGpuRandom (1024, "randomStates");
+        executeKernel (
+                subsampling::kernelInitRandoms,
+                1024u,
+                "kernelInitRandoms",
+                std::time (nullptr),
+                itsRandomStates->devicePointer (),
+                1024);
+    }
 
     Timing::TimeTracker::stop (timing, "Preparing GPU data", Timing::Time::PROCESS);
 }
@@ -144,4 +147,17 @@ int OctreeProcessor::OctreeProcessorImpl::getLastParent ()
 const OctreeInfo& OctreeProcessor::OctreeProcessorImpl::getOctreeInfo ()
 {
     return itsOctree->getNodeStatistics ();
+}
+
+
+void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
+{
+    auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
+
+    itsDenseToSparseLUT->memset (-1);
+    itsCountingGrid->memset (0);
+    itsOctree->updateNodeStatistics ();
+
+    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    cudaDeviceSynchronize ();
 }
