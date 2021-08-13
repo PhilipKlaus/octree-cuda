@@ -191,7 +191,10 @@ __global__ void kernelSumUpColors (
                    // Encode the point color and add it up
                    uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
-                   atomicAdd (&(averagingGrid[voxelIndex]), encoded);
+                   if(averagingGrid[voxelIndex] != 0){
+                       atomicAdd (&(averagingGrid[voxelIndex]), encoded);
+                   }
+                   
                }
            }
        }
