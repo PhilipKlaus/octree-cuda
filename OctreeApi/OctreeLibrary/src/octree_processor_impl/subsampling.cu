@@ -50,20 +50,23 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         setActiveParent (sparseVoxelIndex);
 
-        // Evaluate how many points fall in each cell
-        Kernel::evaluateSubsamples (
-                {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
-                itsCloud->getOutputBuffer_d (),
-                itsCountingGrid->devicePointer (),
-                itsOctree->getDevice (),
-                itsAveragingGrid->devicePointer (),
-                itsDenseToSparseLUT->devicePointer (),
-                itsPointLut->devicePointer (),
-                cloud,
-                gridding,
-                sparseVoxelIndex);
+        if (itsProcessingInfo.useAveraging)
+        {
+            Kernel::evaluateSubsamplesAveraged (
+                    {metadata.cloudType,
+                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                     "kernelEvaluateSubsamplesAveraged"},
+                    itsCloud->getOutputBuffer_d (),
+                    itsCountingGrid->devicePointer (),
+                    itsOctree->getDevice (),
+                    itsAveragingGrid->devicePointer (),
+                    itsDenseToSparseLUT->devicePointer (),
+                    itsPointLut->devicePointer (),
+                    cloud,
+                    gridding,
+                    sparseVoxelIndex);
 
-        Kernel::sumUpColors (
+            /*Kernel::sumUpColors (
            {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
            itsCloud->getOutputBuffer_d (),
            itsCountingGrid->devicePointer (),
@@ -73,7 +76,23 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
            itsPointLut->devicePointer (),
            cloud,
            gridding,
-           sparseVoxelIndex);
+           sparseVoxelIndex); */
+        }
+
+        else
+        {
+            Kernel::evaluateSubsamplesNotAveraged (
+                    {metadata.cloudType,
+                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                     "kernelEvaluateSubsamplesAveraged"},
+                    itsCountingGrid->devicePointer (),
+                    itsOctree->getDevice (),
+                    itsDenseToSparseLUT->devicePointer (),
+                    itsPointLut->devicePointer (),
+                    cloud,
+                    gridding,
+                    sparseVoxelIndex);
+        }
 
         if (itsProcessingInfo.useRandomSubsampling)
         {
@@ -90,40 +109,80 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     itsCountingGrid->devicePointer (),
                     threads);
 
-            // Distribute the subsampled points in parallel for all child nodes
-            Kernel::randomPointSubsampling (
-                    {metadata.cloudType,
-                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelRandomPointSubsample"},
-                    itsCloud->getOutputBuffer_d (),
-                    itsCountingGrid->devicePointer (),
-                    itsAveragingGrid->devicePointer (),
-                    itsDenseToSparseLUT->devicePointer (),
-                    cloud,
-                    gridding,
-                    cloudMetadata.bbCubic,
-                    itsRandomIndices->devicePointer (),
-                    itsPointLut->devicePointer (),
-                    itsOctree->getDevice (),
-                    sparseVoxelIndex);
+            if (itsProcessingInfo.useAveraging)
+            {
+                Kernel::randomPointSubsamplingAveraged (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsAveragingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsRandomIndices->devicePointer (),
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
+
+            else
+            {
+                Kernel::randomPointSubsamplingNotAveraged (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsRandomIndices->devicePointer (),
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
         }
         else
         {
-            // Distribute the subsampled points in parallel for all child nodes
-            Kernel::firstPointSubsampling (
-                    {metadata.cloudType,
-                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelRandomPointSubsample"},
-                    itsCloud->getOutputBuffer_d (),
-                    itsCountingGrid->devicePointer (),
-                    itsAveragingGrid->devicePointer (),
-                    itsDenseToSparseLUT->devicePointer (),
-                    cloud,
-                    gridding,
-                    cloudMetadata.bbCubic,
-                    itsPointLut->devicePointer (),
-                    itsOctree->getDevice (),
-                    sparseVoxelIndex);
+            if (itsProcessingInfo.useAveraging)
+            {
+                // Distribute the subsampled points in parallel for all child nodes
+                Kernel::firstPointSubsampling (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsAveragingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
+            else
+            {
+                // Distribute the subsampled points in parallel for all child nodes
+                Kernel::firstPointSubsamplingNotAveraged (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
         }
     }
 }
