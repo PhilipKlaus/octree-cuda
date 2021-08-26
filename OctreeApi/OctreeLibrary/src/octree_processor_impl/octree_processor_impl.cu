@@ -55,8 +55,12 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     itsPointLut->memset (0);
 
     auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
-    itsAveragingGrid    = createGpuAveraging (gridCellAmount, "averagingGrid");
-    itsAveragingGrid->memset (0);
+
+    if (itsProcessingInfo.useAveraging)
+    {
+        itsAveragingGrid = createGpuAveraging (gridCellAmount, "averagingGrid");
+        itsAveragingGrid->memset (0);
+    }
 
     if (itsProcessingInfo.useRandomSubsampling)
     {
