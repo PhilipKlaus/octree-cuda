@@ -34,7 +34,7 @@
     #define EXPORTED EXPORTED_PRE
 #endif
 
-#define SUCCESS (0)
+#define SUCCESS          (0)
 #define UNEXPECTED_ERROR (-1)
 
 // ToDo: Add integer return value
@@ -56,7 +56,12 @@ EXPORTED int ocpi_set_point_cloud_host (void* session, uint8_t* pointCloud);
 EXPORTED int ocpi_configure_chunking (
         void* session, uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
 EXPORTED int ocpi_configure_subsampling (
-        void* session, uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling);
+        void* session,
+        uint32_t subsamplingGrid,
+        bool averaging,
+        bool averagingNeighbours,
+        bool replacementScheme,
+        bool useRandomSubsampling);
 
 EXPORTED int ocpi_export_memory_report (void* session, const char* filename);
 EXPORTED int ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);

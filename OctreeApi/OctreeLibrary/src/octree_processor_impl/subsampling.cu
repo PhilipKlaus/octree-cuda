@@ -66,17 +66,22 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     gridding,
                     sparseVoxelIndex);
 
-            /*Kernel::sumUpColors (
-           {metadata.cloudType, itsOctree->getNodeStatistics ().maxPointsPerNode * 8, "kernelEvaluateSubsamples"},
-           itsCloud->getOutputBuffer_d (),
-           itsCountingGrid->devicePointer (),
-           itsOctree->getDevice (),
-           itsAveragingGrid->devicePointer (),
-           itsDenseToSparseLUT->devicePointer (),
-           itsPointLut->devicePointer (),
-           cloud,
-           gridding,
-           sparseVoxelIndex); */
+            if (itsProcessingInfo.useAveragingNeighbours)
+            {
+                Kernel::sumUpColors (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelEvaluateSubsamples"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsOctree->getDevice (),
+                        itsAveragingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        itsPointLut->devicePointer (),
+                        cloud,
+                        gridding,
+                        sparseVoxelIndex);
+            }
         }
 
         else

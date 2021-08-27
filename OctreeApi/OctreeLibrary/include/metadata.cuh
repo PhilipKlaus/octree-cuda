@@ -74,13 +74,14 @@ struct PointCloudInfo
  */
 struct ProcessingInfo
 {
-    uint32_t subsamplingGrid;  ///< The size of the subsampling grid (e.g. 128 -> 128 x 128 128)
-    uint32_t chunkingGrid;     ///< The size of the chunking grid (e.g. 128 -> 128 x 128 128)
-    uint32_t mergingThreshold; ///< The threshold for the cell merging during the chunking phase
-    bool useAveraging;         ///< Determines if averaging should be performed
-    bool useReplacementScheme; ///< Determines if the replacement scheme should be applied
-    bool useRandomSubsampling; ///< Determines if random subsampling should be performed
-    float outputFactor;        ///< The estimated factor for the output point amount
+    uint32_t subsamplingGrid;    ///< The size of the subsampling grid (e.g. 128 -> 128 x 128 128)
+    uint32_t chunkingGrid;       ///< The size of the chunking grid (e.g. 128 -> 128 x 128 128)
+    uint32_t mergingThreshold;   ///< The threshold for the cell merging during the chunking phase
+    bool useAveraging;           ///< Determines if averaging should be performed
+    bool useAveragingNeighbours; ///< Determines if averaging should be performed in adjacent cells too
+    bool useReplacementScheme;   ///< Determines if the replacement scheme should be applied
+    bool useRandomSubsampling;   ///< Determines if random subsampling should be performed
+    float outputFactor;          ///< The estimated factor for the output point amount
     ///<                            ///< (output points = input points * factor)
 };
 

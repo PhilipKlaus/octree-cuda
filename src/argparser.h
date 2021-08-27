@@ -11,6 +11,7 @@ struct Input
     uint32_t pointDataStride;
     float scale;
     bool isAveraging;
+    bool isAveragingNeighbours;
     bool useReplacementScheme;
     bool performRandomSubsampling;
     uint32_t chunkingGrid;
@@ -25,6 +26,9 @@ cxxopts::Options createOptions ()
     cxxopts::Options options ("PotreeConverterGPU", "Generates Potree compatible LOD structures on the GPU");
     options.add_options () ("f,file", "File name point cloud", cxxopts::value<std::string> ()) (
             "a,averaging", "Apply color averaging", cxxopts::value<bool> ()->default_value ("false")) (
+            "n,averaging-n",
+            "Apply color averaging in adjacent cells",
+            cxxopts::value<bool> ()->default_value ("false")) (
             "r,random",
             "Perform Random-Subsampling, otherwise First-Point-Subsampling is applied",
             cxxopts::value<bool> ()->default_value ("false")) (
@@ -88,6 +92,12 @@ void checkForValidParameters (const cxxopts::ParseResult& result)
         exit (-1);
     }
 
+    if (result["averaging-n"].as<bool> () && !result["averaging"].as<bool> ())
+    {
+        spdlog::error (R"(Averaging must be activate to enable averagin in adjacent cells)");
+        exit (-1);
+    }
+
     std::vector<uint32_t> grids;
     if (result.count ("grids"))
     {
@@ -113,6 +123,7 @@ void printInputConfig (const Input& input)
     spdlog::info ("mergingThreshold: {}", input.mergingThreshold);
     spdlog::info ("outputFactor: {}", input.outputFactor);
     spdlog::info ("perform Averaging: {}", input.isAveraging);
+    spdlog::info ("perform Averaging in neighbouring cells: {}", input.isAveragingNeighbours);
     spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "random" : "first-point");
 }
 
@@ -127,6 +138,7 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     input.pointDataStride          = static_cast<uint32_t> (dataInfo[0]);
     input.scale                    = dataInfo[1];
     input.isAveraging              = result["averaging"].as<bool> ();
+    input.isAveragingNeighbours    = result["averaging-n"].as<bool> ();
     input.performRandomSubsampling = result["random"].as<bool> ();
     input.chunkingGrid             = grids[0];
     input.subsamplingGrid          = grids[1];
