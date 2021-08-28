@@ -3,7 +3,7 @@
 #include "random_subsampling.cuh"
 #include "subsample_evaluating.cuh"
 #include "time_tracker.cuh"
-
+#include "kernel_executor.cuh"
 
 void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
@@ -86,17 +86,20 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         else
         {
-            Kernel::evaluateSubsamplesNotAveraged (
-                    {metadata.cloudType,
-                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelEvaluateSubsamplesAveraged"},
-                    itsCountingGrid->devicePointer (),
-                    itsOctree->getDevice (),
-                    itsDenseToSparseLUT->devicePointer (),
-                    itsPointLut->devicePointer (),
-                    cloud,
-                    gridding,
-                    sparseVoxelIndex);
+            if (itsProcessingInfo.useRandomSubsampling)
+            {
+                Kernel::evaluateSubsamplesNotAveraged (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelEvaluateSubsamplesAveraged"},
+                        itsCountingGrid->devicePointer (),
+                        itsOctree->getDevice (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        itsPointLut->devicePointer (),
+                        cloud,
+                        gridding,
+                        sparseVoxelIndex);
+            }
         }
 
         if (itsProcessingInfo.useRandomSubsampling)
@@ -187,6 +190,16 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                         itsPointLut->devicePointer (),
                         itsOctree->getDevice (),
                         sparseVoxelIndex);
+
+                auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
+
+                executeKernel (
+                        tools::kernelMemset1D<uint32_t>,
+                        gridCellAmount,
+                        "kernelMemset1D",
+                        itsCountingGrid->devicePointer (),
+                        0,
+                        gridCellAmount);
             }
         }
     }

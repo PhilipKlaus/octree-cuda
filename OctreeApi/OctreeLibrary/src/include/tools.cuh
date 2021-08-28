@@ -44,4 +44,19 @@ __device__ uint32_t
 
     return static_cast<uint32_t> (ix + iy * gridSize + iz * gridSize * gridSize);
 }
+
+
+template <typename DataType>
+__global__ void kernelMemset1D (DataType* data, DataType value, uint32_t threadAmount)
+{
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    if (index >= threadAmount)
+    {
+        return;
+    }
+
+    data[index] = value;
+}
+
 }; // namespace tools

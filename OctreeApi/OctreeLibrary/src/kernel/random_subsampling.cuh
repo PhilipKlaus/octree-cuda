@@ -351,16 +351,18 @@ __global__ void kernelFirstPointSubsampleNotAveraged (
 
     // Calculate the dense and sparse cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
-    int sparseIndex      = denseToSparseLUT[denseVoxelIndex];
 
     // Decrease the point counter per cell
-    auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
+    auto oldIndex = atomicAdd ((countingGrid + denseVoxelIndex), 1);
 
     // If the actual thread does not handle the randomly chosen point, exit now.
-    if (sparseIndex == -1 || oldIndex != 1)
+    if (oldIndex != 0)
     {
         return;
     }
+
+    int sparseIndex = atomicAdd (&(octree[nodeIdx].pointCount), 1);
+
 
     // Move subsampled averaging and point-LUT data to parent node
     PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
@@ -374,10 +376,8 @@ __global__ void kernelFirstPointSubsampleNotAveraged (
     out->r            = static_cast<uint16_t> (color->x);
     out->g            = static_cast<uint16_t> (color->y);
     out->b            = static_cast<uint16_t> (color->z);
-
-    // Reset all temporary data structures
-    denseToSparseLUT[denseVoxelIndex] = -1;
 }
+
 
 /**
  * Calculates the data position (index) inside the output buffer for a given node.
@@ -401,7 +401,9 @@ __global__ void kernelCalcNodeByteOffset (Node* octree, uint32_t node, int lastN
     octree[node].dataIdx = (lastNode == -1) ? leafOffset[0] : octree[lastNode].dataIdx + octree[lastNode].pointCount;
 }
 
+
 } // namespace subsampling
+
 
 namespace Kernel {
 
