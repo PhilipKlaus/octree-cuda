@@ -63,14 +63,14 @@ commands:
 
 * morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -a -r -n``
 
 * heidentor.bin
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -a -r -n``
 * coin.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -a -r -n``
 
 ### Program Arguments
 ```
@@ -79,6 +79,7 @@ Usage:
 
   -f, --file arg              File name point cloud
   -a, --averaging             Apply color averaging
+  -n, --averaging-n           Apply color averaging in adjacent cells
   -r, --random                Perform Random-Subsampling, otherwise First-Point-Subsampling is applied
   -o, --output arg            Output path for the Potree data
   -p, --points arg            Point amount of the cloud
