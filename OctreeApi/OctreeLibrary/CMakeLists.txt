@@ -32,6 +32,7 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/subsample_evaluating.cuh
         src/kernel/kernel_helpers.cuh
         src/kernel/random_initialization.cuh
+        src/kernel/fp_subsampling.cuh
 
         # OctreeProcessor
         src/octree_processor.cu

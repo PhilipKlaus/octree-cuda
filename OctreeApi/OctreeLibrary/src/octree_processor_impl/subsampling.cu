@@ -3,6 +3,7 @@
 #include "random_subsampling.cuh"
 #include "subsample_evaluating.cuh"
 #include "time_tracker.cuh"
+#include "fp_subsampling.cuh"
 
 void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)

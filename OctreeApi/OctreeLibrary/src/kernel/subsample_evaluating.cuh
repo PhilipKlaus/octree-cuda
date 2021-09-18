@@ -15,37 +15,6 @@
 
 namespace subsampling {
 
-/**
- * Encodes a color vector in a single uint64.
- * @tparam colorType The datatype of the point colors.
- * @param color The color vector to be encoded.
- * @return The encoded color information.
- */
-template <typename colorType>
-__device__ uint64_t encodeColors (Vector3<colorType>* color)
-{
-    return (static_cast<uint64_t> (color->x) << 46) | (static_cast<uint64_t> (color->y) << 28) |
-           static_cast<uint64_t> (color->z) << 10 | static_cast<uint64_t> (1);
-}
-
-/**
- * Encodes a color vector in a single uint64.
- * @tparam colorType The datatype of the point colors.
- * @param color The color vector to be encoded.
- * @return The encoded color information.
- */
-/**
- * Encodes three color components (r,g,b) in a single uint64.
- * @param r The red color component.
- * @param g The green color component.
- * @param b The blue color component.
- * @return The encoded color information.
- */
-__device__ uint64_t encodeColors (uint16_t r, uint16_t g, uint16_t b)
-{
-    return (static_cast<uint64_t> (r) << 46) | (static_cast<uint64_t> (g) << 28) | static_cast<uint64_t> (b) << 10 |
-           static_cast<uint64_t> (1);
-}
 
 
 /**
