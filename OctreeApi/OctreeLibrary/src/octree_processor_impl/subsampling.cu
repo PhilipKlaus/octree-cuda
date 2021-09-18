@@ -71,7 +71,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 Kernel::sumUpColors (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                         "kernelEvaluateSubsamples"},
+                         "kernelInterCellAveraging"},
                         itsCloud->getOutputBuffer_d (),
                         itsCountingGrid->devicePointer (),
                         itsOctree->getDevice (),

@@ -204,9 +204,6 @@ __global__ void kernelSumUpColors (
     auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
     OutputBuffer* srcBuffer = outputBuffer + child->dataIdx + localPointIdx;
 
-    // Calculate cell index
-    // auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
-
 
     { // apply averages to neighbourhing cells as well
         double t  = gridding.bbSize / gridding.gridSize;
@@ -219,6 +216,12 @@ __global__ void kernelSumUpColors (
         uint64_t iy = static_cast<int64_t> (fmin (uY, t));
         uint64_t iz = static_cast<int64_t> (fmin (uZ, t));
 
+        
+        // Encode the point color and add it up
+        uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
+
+        bool underflow   = false;
+        bool overflow    = false;
         for (int64_t ox = -1; ox <= 1; ox++)
         {
             for (int64_t oy = -1; oy <= 1; oy++)
@@ -229,26 +232,13 @@ __global__ void kernelSumUpColors (
                     int32_t ny = iy + oy;
                     int32_t nz = iz + oz;
 
-                    if (nx < 0 || ny < 0 || nz < 0)
-                    {
-                        continue;
-                    }
-
-                    if (nx >= gridding.gridSize || ny >= gridding.gridSize || nz >= gridding.gridSize)
-                    {
-                        continue;
-                    }
+                    underflow = nx < 0 || ny < 0 || nz < 0;
+                    overflow  = nx >= gridding.gridSize || ny >= gridding.gridSize || nz >= gridding.gridSize;
 
                     uint32_t voxelIndex = static_cast<uint32_t> (
                             nx + ny * gridding.gridSize + nz * gridding.gridSize * gridding.gridSize);
 
-                    // Increase the point counter for the cell
-                    // uint32_t old = atomicAdd ((countingGrid + voxelIndex), 1);
-
-                    // Encode the point color and add it up
-                    uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
-
-                    if (averagingGrid[voxelIndex] != 0)
+                    if (!underflow && !overflow && averagingGrid[voxelIndex] != 0)
                     {
                         atomicAdd (&(averagingGrid[voxelIndex]), encoded);
                     }

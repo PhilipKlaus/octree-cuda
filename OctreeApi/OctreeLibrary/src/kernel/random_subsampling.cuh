@@ -36,17 +36,16 @@ __global__ void kernelGenerateRandoms (
 {
     unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
-    bool cellIsEmpty = countingGrid[index] == 0;
+    uint32_t pointsInCell = countingGrid[index];
 
-    if (index >= cellAmount || cellIsEmpty)
+    if (index >= cellAmount || pointsInCell == 0)
     {
         return;
     }
 
     uint32_t sparseIndex = denseToSparseLUT[index];
 
-    randomIndices[sparseIndex] =
-            static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * countingGrid[index]));
+    randomIndices[sparseIndex] = static_cast<uint32_t> (ceil (curand_uniform (&states[threadIdx.x]) * pointsInCell));
 }
 
 /**
@@ -106,7 +105,7 @@ __global__ void kernelRandomPointSubsample (
     auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
 
     // If the actual thread does not handle the randomly chosen point, exit now.
-    if (sparseIndex == -1 || oldIndex != randomIndices[sparseIndex])
+    if (oldIndex != randomIndices[sparseIndex])
     {
         return;
     }
