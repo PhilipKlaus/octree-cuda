@@ -103,11 +103,11 @@ void Session::configureSubsampling (
         bool replacementScheme,
         bool useRandomSubsampling)
 {
-    itsProcessingInfo.useAveraging           = averaging;
-    itsProcessingInfo.useAveragingNeighbours = averagingNeighbours;
-    itsProcessingInfo.useReplacementScheme   = replacementScheme;
-    itsProcessingInfo.subsamplingGrid        = subsamplingGrid;
-    itsProcessingInfo.useRandomSubsampling   = useRandomSubsampling;
+    itsProcessingInfo.useIntraCellAvg      = averaging;
+    itsProcessingInfo.useInterCellAvg      = averagingNeighbours;
+    itsProcessingInfo.useReplacementScheme = replacementScheme;
+    itsProcessingInfo.subsamplingGrid      = subsamplingGrid;
+    itsProcessingInfo.useRandomSubsampling = useRandomSubsampling;
 }
 void Session::setCloudType (uint8_t cloudType)
 {

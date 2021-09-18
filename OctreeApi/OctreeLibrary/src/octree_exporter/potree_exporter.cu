@@ -126,7 +126,7 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     metadata["points"]      = this->itsPointsExported;
     metadata["projection"]  = "";
     metadata["flags"][0]    = subsampleMeta.useReplacementScheme ? "REPLACING" : "ADDITIVE";
-    if (subsampleMeta.useAveraging)
+    if (subsampleMeta.useIntraCellAvg)
     {
         metadata["flags"][1] = "AVERAGING";
     }

@@ -56,7 +56,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
-    if (itsProcessingInfo.useAveraging)
+    if (itsProcessingInfo.useIntraCellAvg)
     {
         itsAveragingGrid = createGpuAveraging (gridCellAmount, "averagingGrid");
         itsAveragingGrid->memset (0);
@@ -162,6 +162,14 @@ void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
     itsCountingGrid->memset (0);
     itsOctree->updateNodeStatistics ();
 
-    randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    if (itsProcessingInfo.useRandomSubsampling)
+    {
+        randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    }
+    else
+    {
+        firstPointSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+    }
+
     cudaDeviceSynchronize ();
 }
