@@ -214,28 +214,6 @@ __global__ void kernelRandomPointSubsampleNotAveraged (
     denseToSparseLUT[denseVoxelIndex] = -1;
 }
 
-/**
- * Calculates the data position (index) inside the output buffer for a given node.
- *
- * @tparam coordinateType The datatype of the point coordinates
- * @tparam colorType The datatype of the point colors
- * @param octree The octree data structure
- * @param node The node for which the data position should be calculated
- * @param lastNode The previous subsampled node
- * @param leafOffset The data position of the first subsampled parent node (after all leaf nodes)
- */
-template <typename coordinateType, typename colorType>
-__global__ void kernelCalcNodeByteOffset (Node* octree, uint32_t node, int lastNode, const uint32_t* leafOffset)
-{
-    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
-    if (index > 0)
-    {
-        return;
-    }
-
-    octree[node].dataIdx = (lastNode == -1) ? leafOffset[0] : octree[lastNode].dataIdx + octree[lastNode].pointCount;
-}
-
 
 } // namespace subsampling
 
@@ -303,34 +281,6 @@ void randomPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&.
     {
         subsampling::kernelRandomPointSubsampleNotAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-#ifdef KERNEL_TIMINGS
-    timer.stop ();
-    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
-#endif
-#ifdef ERROR_CHECKS
-    cudaDeviceSynchronize ();
-#endif
-    gpuErrchk (cudaGetLastError ());
-}
-
-template <typename... Arguments>
-void calcNodeByteOffset (const KernelConfig& config, Arguments&&... args)
-{
-    auto block = dim3 (1, 1, 1);
-    auto grid  = dim3 (1, 1, 1);
-
-#ifdef KERNEL_TIMINGS
-    Timing::KernelTimer timer;
-    timer.start ();
-#endif
-    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
-    {
-        subsampling::kernelCalcNodeByteOffset<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
-    }
-    else
-    {
-        subsampling::kernelCalcNodeByteOffset<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
     timer.stop ();

@@ -1,8 +1,13 @@
 #pragma once
 
 #include "kernel_executor.cuh"
+#include "kernel_helpers.cuh"
+
 
 namespace subsampling {
+
+namespace fp {
+
 
 /**
  * Pick the last point within a specific subsampling grid cell and stores the point index in a point LUT.
@@ -56,18 +61,11 @@ __global__ void kernelFirstPointSubsample (
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
     int sparseIndex      = denseToSparseLUT[denseVoxelIndex];
 
-    // Decrease the point counter per cell
-    auto oldIndex = atomicSub ((countingGrid + denseVoxelIndex), 1);
-
-    // If the actual thread does not handle the randomly chosen point, exit now.
-    if (sparseIndex == -1 || oldIndex != 1)
+    PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
+    if (*dst != *src)
     {
         return;
     }
-
-    // Move subsampled averaging and point-LUT data to parent node
-    PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
-    *dst          = *src;
 
     uint64_t encoded = averagingGrid[denseVoxelIndex];
     auto amount      = static_cast<uint16_t> (encoded & 0x3FF);
@@ -89,6 +87,7 @@ __global__ void kernelFirstPointSubsample (
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
     averagingGrid[denseVoxelIndex]    = 0;
+    countingGrid[denseVoxelIndex]     = 0;
 }
 
 /**
@@ -142,7 +141,8 @@ __global__ void kernelFirstPointSubsampleNotAveraged (
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
     // Decrease the point counter per cell
-    auto oldIndex = atomicAdd ((countingGrid + denseVoxelIndex), 1);
+    // auto oldIndex = atomicAdd ((countingGrid + denseVoxelIndex), 1);
+    auto oldIndex = atomicExch ((countingGrid + denseVoxelIndex), 1);
 
     // If the actual thread does not handle the randomly chosen point, exit now.
     if (oldIndex != 0)
@@ -166,11 +166,15 @@ __global__ void kernelFirstPointSubsampleNotAveraged (
     out->g            = static_cast<uint16_t> (color->y);
     out->b            = static_cast<uint16_t> (color->z);
 }
+} // namespace fp
 } // namespace subsampling
 
 //------------------------------------------------------------------------------------------------------------------
 
 namespace Kernel {
+
+namespace fp {
+
 
 template <typename... Arguments>
 void firstPointSubsampling (const KernelConfig& config, Arguments&&... args)
@@ -191,11 +195,12 @@ void firstPointSubsampling (const KernelConfig& config, Arguments&&... args)
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelFirstPointSubsample<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::fp::kernelFirstPointSubsample<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelFirstPointSubsample<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::fp::kernelFirstPointSubsample<double, uint8_t>
+                <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
     timer.stop ();
@@ -226,12 +231,12 @@ void firstPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&..
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelFirstPointSubsampleNotAveraged<float, uint8_t>
+        subsampling::fp::kernelFirstPointSubsampleNotAveraged<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelFirstPointSubsampleNotAveraged<double, uint8_t>
+        subsampling::fp::kernelFirstPointSubsampleNotAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -243,4 +248,5 @@ void firstPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&..
 #endif
     gpuErrchk (cudaGetLastError ());
 }
+} // namespace fp
 } // namespace Kernel
