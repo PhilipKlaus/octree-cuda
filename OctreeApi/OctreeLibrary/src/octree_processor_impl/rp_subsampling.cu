@@ -51,6 +51,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         setActiveParent (sparseVoxelIndex);
 
+        // Intra-cell color averaging: evaluate subsamples and accumulate colors
         if (itsProcessingInfo.useIntraCellAvg)
         {
             Kernel::rp::evaluateSubsamplesAveraged (
@@ -66,25 +67,39 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     cloud,
                     gridding,
                     sparseVoxelIndex);
-
-            if (itsProcessingInfo.useInterCellAvg)
-            {
-                Kernel::rp::sumUpColors (
-                        {metadata.cloudType,
-                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                         "kernelInterCellAveraging"},
-                        itsCloud->getOutputBuffer_d (),
-                        itsCountingGrid->devicePointer (),
-                        itsOctree->getDevice (),
-                        itsAveragingGrid->devicePointer (),
-                        itsDenseToSparseLUT->devicePointer (),
-                        itsPointLut->devicePointer (),
-                        cloud,
-                        gridding,
-                        sparseVoxelIndex);
-            }
         }
+        // Inter-cell color averaging: evaluate subsamples and accumulate colors
+        else if (itsProcessingInfo.useInterCellAvg)
+        {
+            Kernel::rp::evaluateSubsamplesAveraged (
+                    {metadata.cloudType,
+                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                     "kernelEvaluateSubsamplesIntra"},
+                    itsCloud->getOutputBuffer_d (),
+                    itsCountingGrid->devicePointer (),
+                    itsOctree->getDevice (),
+                    itsAveragingGrid->devicePointer (),
+                    itsDenseToSparseLUT->devicePointer (),
+                    itsPointLut->devicePointer (),
+                    cloud,
+                    gridding,
+                    sparseVoxelIndex);
 
+            Kernel::rp::sumUpColors (
+                    {metadata.cloudType,
+                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                     "kernelInterCellAveraging"},
+                    itsCloud->getOutputBuffer_d (),
+                    itsCountingGrid->devicePointer (),
+                    itsOctree->getDevice (),
+                    itsAveragingGrid->devicePointer (),
+                    itsDenseToSparseLUT->devicePointer (),
+                    itsPointLut->devicePointer (),
+                    cloud,
+                    gridding,
+                    sparseVoxelIndex);
+        }
+        // No averaging is activated -> just evaluate the subsample points
         else
         {
             Kernel::rp::evaluateSubsamplesNotAveraged (
@@ -100,7 +115,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     sparseVoxelIndex);
         }
 
-        // Prepare one random point index per cell
+        // Generate one random point index per cell
         auto threads = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
         executeKernel (
@@ -113,7 +128,8 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                 itsCountingGrid->devicePointer (),
                 threads);
 
-        if (itsProcessingInfo.useIntraCellAvg)
+        // Finally subsample the color averaged points
+        if (itsProcessingInfo.useIntraCellAvg || itsProcessingInfo.useInterCellAvg)
         {
             Kernel::rp::subsampleAveraged (
                     {metadata.cloudType,
@@ -132,6 +148,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     sparseVoxelIndex);
         }
 
+        // Finally subsample the points without any color averaging
         else
         {
             Kernel::rp::subsampleNotAveraged (
