@@ -79,6 +79,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
         }
         else
         {
+            // Intra-cell averaging
             if (itsProcessingInfo.useIntraCellAvg)
             {
                 Kernel::fp::evaluateSubsamplesIntra (
@@ -86,7 +87,6 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                          "kernelEvaluateSubsamplesIntra"},
                         itsCloud->getOutputBuffer_d (),
-                        itsCountingGrid->devicePointer (),
                         itsOctree->getDevice (),
                         itsAveragingGrid->devicePointer (),
                         itsDenseToSparseLUT->devicePointer (),
@@ -95,16 +95,15 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                         gridding,
                         sparseVoxelIndex);
             }
+            // Inter-cell averaging
             else
             {
-                Kernel::fp::evaluateSubsamplesIntra (
+                Kernel::fp::evaluateSubsamplesInter (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                          "kernelEvaluateSubsamplesIntra"},
-                        itsCloud->getOutputBuffer_d (),
                         itsCountingGrid->devicePointer (),
                         itsOctree->getDevice (),
-                        itsAveragingGrid->devicePointer (),
                         itsDenseToSparseLUT->devicePointer (),
                         itsPointLut->devicePointer (),
                         cloud,

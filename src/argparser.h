@@ -121,7 +121,7 @@ void printInputConfig (const Input& input)
     spdlog::info ("mergingThreshold: {}", input.mergingThreshold);
     spdlog::info ("outputFactor: {}", input.outputFactor);
     spdlog::info ("perform intra-cell averaging: {}", input.isIntraCellAveraging);
-    spdlog::info ("perform inter-cell averaging in neighbouring cells: {}", input.isInterCellAveraging);
+    spdlog::info ("perform inter-cell averaging: {}", input.isInterCellAveraging);
     spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "random" : "first-point");
 }
 
