@@ -92,8 +92,8 @@ int main (int argc, char** argv)
     ocpi_configure_subsampling (
             session,
             input.subsamplingGrid,
-            input.isAveraging,
-            input.isAveragingNeighbours,
+            input.isIntraCellAveraging,
+            input.isInterCellAveraging,
             input.useReplacementScheme,
             input.performRandomSubsampling);
 

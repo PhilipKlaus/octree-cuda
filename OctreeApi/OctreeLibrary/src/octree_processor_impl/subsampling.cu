@@ -56,7 +56,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
             Kernel::evaluateSubsamplesAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelEvaluateSubsamplesAveraged"},
+                     "kernelEvaluateSubsamplesIntra"},
                     itsCloud->getOutputBuffer_d (),
                     itsCountingGrid->devicePointer (),
                     itsOctree->getDevice (),
@@ -90,7 +90,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
             Kernel::evaluateSubsamplesNotAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelEvaluateSubsamplesAveraged"},
+                     "kernelEvaluateSubsamplesIntra"},
                     itsCountingGrid->devicePointer (),
                     itsOctree->getDevice (),
                     itsDenseToSparseLUT->devicePointer (),

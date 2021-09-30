@@ -22,7 +22,7 @@ namespace fp {
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelEvaluateSubsamplesAveraged (
+__global__ void kernelEvaluateSubsamplesIntra (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         Node* octree,
@@ -160,7 +160,7 @@ namespace Kernel {
 namespace fp {
 
 template <typename... Arguments>
-void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args)
+void evaluateSubsamplesIntra (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -178,12 +178,12 @@ void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::fp::kernelEvaluateSubsamplesAveraged<float, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesIntra<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::fp::kernelEvaluateSubsamplesAveraged<double, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesIntra<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
