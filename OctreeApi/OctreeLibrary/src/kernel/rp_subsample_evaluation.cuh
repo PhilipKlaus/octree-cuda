@@ -14,8 +14,7 @@
 #include <inttypes.h>
 
 namespace subsampling {
-
-
+namespace rp {
 
 /**
  * Places a 3-dimensional grid over 8 octree children nodes and maps their points to a target cell.
@@ -185,12 +184,12 @@ __global__ void kernelSumUpColors (
         uint64_t iy = static_cast<int64_t> (fmin (uY, t));
         uint64_t iz = static_cast<int64_t> (fmin (uZ, t));
 
-        
+
         // Encode the point color and add it up
         uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
-        bool underflow   = false;
-        bool overflow    = false;
+        bool underflow = false;
+        bool overflow  = false;
         for (int64_t ox = -1; ox <= 1; ox++)
         {
             for (int64_t oy = -1; oy <= 1; oy++)
@@ -216,11 +215,12 @@ __global__ void kernelSumUpColors (
         }
     }
 }
-
+} // namespace rp
 } // namespace subsampling
 
 
 namespace Kernel {
+namespace rp {
 
 template <typename... Arguments>
 void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args)
@@ -241,12 +241,12 @@ void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelEvaluateSubsamplesAveraged<float, uint8_t>
+        subsampling::rp::kernelEvaluateSubsamplesAveraged<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelEvaluateSubsamplesAveraged<double, uint8_t>
+        subsampling::rp::kernelEvaluateSubsamplesAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -278,12 +278,12 @@ void evaluateSubsamplesNotAveraged (const KernelConfig& config, Arguments&&... a
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelEvaluateSubsamplesNotAveraged<float, uint8_t>
+        subsampling::rp::kernelEvaluateSubsamplesNotAveraged<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelEvaluateSubsamplesNotAveraged<double, uint8_t>
+        subsampling::rp::kernelEvaluateSubsamplesNotAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -313,8 +313,14 @@ void sumUpColors (const KernelConfig& config, Arguments&&... args)
     Timing::KernelTimer timer;
     timer.start ();
 #endif
-
-    subsampling::kernelSumUpColors<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::rp::kernelSumUpColors<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::rp::kernelSumUpColors<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
 
 
 #ifdef KERNEL_TIMINGS
@@ -327,4 +333,5 @@ void sumUpColors (const KernelConfig& config, Arguments&&... args)
     gpuErrchk (cudaGetLastError ());
 }
 
+} // namespace rp
 } // namespace Kernel

@@ -1,5 +1,5 @@
+#include "fp_subsample_evaluation.cuh"
 #include "fp_subsampling.cuh"
-#include "fp_subsampling_evaluation.cuh"
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
 #include "kernel_structs.cuh"
@@ -53,7 +53,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
         // No color averagin is performed -> directly subsample points
         if (!itsProcessingInfo.useIntraCellAvg && !itsProcessingInfo.useInterCellAvg)
         {
-            Kernel::fp::firstPointSubsamplingNotAveraged (
+            Kernel::fp::subsampleNotAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelRandomPointSubsample"},
@@ -127,7 +127,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
             }
 
             // Finally subsample the points
-            Kernel::fp::firstPointSubsampling (
+            Kernel::fp::subsampleAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelRandomPointSubsample"},

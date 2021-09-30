@@ -1,8 +1,8 @@
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
 #include "octree_processor_impl.cuh"
-#include "random_subsampling.cuh"
-#include "subsample_evaluating.cuh"
+#include "rp_subsample_evaluation.cuh"
+#include "rp_subsampling.cuh"
 #include "time_tracker.cuh"
 
 
@@ -53,7 +53,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         if (itsProcessingInfo.useIntraCellAvg)
         {
-            Kernel::evaluateSubsamplesAveraged (
+            Kernel::rp::evaluateSubsamplesAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelEvaluateSubsamplesIntra"},
@@ -69,7 +69,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
             if (itsProcessingInfo.useInterCellAvg)
             {
-                Kernel::sumUpColors (
+                Kernel::rp::sumUpColors (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                          "kernelInterCellAveraging"},
@@ -87,7 +87,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         else
         {
-            Kernel::evaluateSubsamplesNotAveraged (
+            Kernel::rp::evaluateSubsamplesNotAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelEvaluateSubsamplesIntra"},
@@ -104,7 +104,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         auto threads = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
         executeKernel (
-                subsampling::kernelGenerateRandoms,
+                subsampling::rp::kernelGenerateRandoms,
                 threads,
                 "kernelGenerateRandoms",
                 itsRandomStates->devicePointer (),
@@ -115,7 +115,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         if (itsProcessingInfo.useIntraCellAvg)
         {
-            Kernel::randomPointSubsamplingAveraged (
+            Kernel::rp::subsampleAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelRandomPointSubsample"},
@@ -134,7 +134,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
         else
         {
-            Kernel::randomPointSubsamplingNotAveraged (
+            Kernel::rp::subsampleNotAveraged (
                     {metadata.cloudType,
                      itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                      "kernelRandomPointSubsample"},
