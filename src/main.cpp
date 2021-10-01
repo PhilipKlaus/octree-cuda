@@ -92,14 +92,14 @@ int main (int argc, char** argv)
     ocpi_configure_subsampling (
             session,
             input.subsamplingGrid,
-            input.isAveraging,
-            input.isAveragingNeighbours,
+            input.isIntraCellAveraging,
+            input.isInterCellAveraging,
             input.useReplacementScheme,
             input.performRandomSubsampling);
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);
-    ocpi_export_potree (session, input.outputPath.c_str ());
+    //ocpi_export_potree (session, input.outputPath.c_str ());
 
     ocpi_export_distribution_histogram (session, (input.outputPath + "/point_distribution.html").c_str (), 0);
     ocpi_export_json_report (session, (input.outputPath + "/statistics.json").c_str ());

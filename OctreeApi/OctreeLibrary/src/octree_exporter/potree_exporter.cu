@@ -128,7 +128,11 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     metadata["flags"][0]    = subsampleMeta.useReplacementScheme ? "REPLACING" : "ADDITIVE";
     if (subsampleMeta.useIntraCellAvg)
     {
-        metadata["flags"][1] = "AVERAGING";
+        metadata["flags"][1] = "INTRA-CELL-AVERAGING";
+    }
+    if (subsampleMeta.useInterCellAvg)
+    {
+        metadata["flags"][1] = "INTER-CELL-AVERAGING";
     }
     metadata["hierarchy"]["firstChunkSize"] = itsExportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;

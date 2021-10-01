@@ -56,7 +56,7 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
-    if (itsProcessingInfo.useIntraCellAvg)
+    if (itsProcessingInfo.useIntraCellAvg || itsProcessingInfo.useInterCellAvg)
     {
         itsAveragingGrid = createGpuAveraging (gridCellAmount, "averagingGrid");
         itsAveragingGrid->memset (0);

@@ -14,6 +14,7 @@
 #include "types.cuh"
 
 namespace subsampling {
+namespace rp {
 
 /**
  * Generates one random number, depending on the point amount in a node.
@@ -67,7 +68,7 @@ __global__ void kernelGenerateRandoms (
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelRandomPointSubsample (
+__global__ void kernelSubsampleAveraged (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
@@ -154,7 +155,7 @@ __global__ void kernelRandomPointSubsample (
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelRandomPointSubsampleNotAveraged (
+__global__ void kernelSubsampleNotAveraged (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         int* denseToSparseLUT,
@@ -214,14 +215,15 @@ __global__ void kernelRandomPointSubsampleNotAveraged (
     denseToSparseLUT[denseVoxelIndex] = -1;
 }
 
-
+} // namespace rp
 } // namespace subsampling
 
 
 namespace Kernel {
+namespace rp {
 
 template <typename... Arguments>
-void randomPointSubsamplingAveraged (const KernelConfig& config, Arguments&&... args)
+void subsampleAveraged (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -239,11 +241,11 @@ void randomPointSubsamplingAveraged (const KernelConfig& config, Arguments&&... 
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelRandomPointSubsample<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::rp::kernelSubsampleAveraged<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelRandomPointSubsample<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::rp::kernelSubsampleAveraged<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
     timer.stop ();
@@ -256,7 +258,7 @@ void randomPointSubsamplingAveraged (const KernelConfig& config, Arguments&&... 
 }
 
 template <typename... Arguments>
-void randomPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&... args)
+void subsampleNotAveraged (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -274,12 +276,12 @@ void randomPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&.
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelRandomPointSubsampleNotAveraged<float, uint8_t>
+        subsampling::rp::kernelSubsampleNotAveraged<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelRandomPointSubsampleNotAveraged<double, uint8_t>
+        subsampling::rp::kernelSubsampleNotAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -292,4 +294,5 @@ void randomPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&.
     gpuErrchk (cudaGetLastError ());
 }
 
+} // namespace rp
 } // namespace Kernel

@@ -28,7 +28,7 @@ namespace fp {
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelFirstPointSubsample (
+__global__ void kernelSubsampleAveraged (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         uint64_t* averagingGrid,
@@ -108,7 +108,7 @@ __global__ void kernelFirstPointSubsample (
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelFirstPointSubsampleNotAveraged (
+__global__ void kernelSubsampleNotAveraged (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         int* denseToSparseLUT,
@@ -177,7 +177,7 @@ namespace fp {
 
 
 template <typename... Arguments>
-void firstPointSubsampling (const KernelConfig& config, Arguments&&... args)
+void subsampleAveraged (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -195,12 +195,11 @@ void firstPointSubsampling (const KernelConfig& config, Arguments&&... args)
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::fp::kernelFirstPointSubsample<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::fp::kernelSubsampleAveraged<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::fp::kernelFirstPointSubsample<double, uint8_t>
-                <<<grid, block>>> (std::forward<Arguments> (args)...);
+        subsampling::fp::kernelSubsampleAveraged<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
     timer.stop ();
@@ -213,7 +212,7 @@ void firstPointSubsampling (const KernelConfig& config, Arguments&&... args)
 }
 
 template <typename... Arguments>
-void firstPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&... args)
+void subsampleNotAveraged (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -231,12 +230,12 @@ void firstPointSubsamplingNotAveraged (const KernelConfig& config, Arguments&&..
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::fp::kernelFirstPointSubsampleNotAveraged<float, uint8_t>
+        subsampling::fp::kernelSubsampleNotAveraged<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::fp::kernelFirstPointSubsampleNotAveraged<double, uint8_t>
+        subsampling::fp::kernelSubsampleNotAveraged<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
