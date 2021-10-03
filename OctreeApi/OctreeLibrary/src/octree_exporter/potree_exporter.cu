@@ -122,18 +122,21 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
     nlohmann::ordered_json metadata;
     metadata["version"]     = POTREE_DATA_VERSION;
     metadata["name"]        = "GpuPotreeConverter";
-    metadata["description"] = "AIT Austrian Institute of Technology";
+    metadata["description"] = "Generated with GpuPotreeConverter";
     metadata["points"]      = this->itsPointsExported;
     metadata["projection"]  = "";
     metadata["flags"][0]    = subsampleMeta.useReplacementScheme ? "REPLACING" : "ADDITIVE";
+    metadata["flags"][1] =
+            subsampleMeta.useRandomSubsampling ? "EXPLICIT-RANDOM-SUBSAMPLING" : "IMPLICIT-RANDOM-SUBSAMPLING";
     if (subsampleMeta.useIntraCellAvg)
     {
-        metadata["flags"][1] = "INTRA-CELL-AVERAGING";
+        metadata["flags"][2] = "INTRA-CELL-AVERAGING";
     }
     if (subsampleMeta.useInterCellAvg)
     {
-        metadata["flags"][1] = "INTER-CELL-AVERAGING";
+        metadata["flags"][2] = "INTER-CELL-AVERAGING";
     }
+
     metadata["hierarchy"]["firstChunkSize"] = itsExportedNodes * HIERARCHY_NODE_BYTES;
     metadata["hierarchy"]["stepSize"]       = HIERARCHY_STEP_SIZE;
     metadata["hierarchy"]["depth"]          = HIERARCHY_DEPTH;

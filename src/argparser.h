@@ -143,6 +143,7 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     input.mergingThreshold         = result["merge_threshold"].as<uint32_t> ();
     input.outputFactor             = result["estimated_output"].as<float> ();
     input.cloudType                = result["type"].as<std::string> () == "float" ? 0 : 1;
+    input.useReplacementScheme     = true;
 }
 
 void parseArguments (int argc, char** argv, Input& input)
