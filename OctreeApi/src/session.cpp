@@ -98,13 +98,13 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
 
 void Session::configureSubsampling (
         uint32_t subsamplingGrid,
-        bool averaging,
-        bool averagingNeighbours,
+        bool intraCellAveraging,
+        bool interCellAveraging,
         bool replacementScheme,
         bool useRandomSubsampling)
 {
-    itsProcessingInfo.useIntraCellAvg      = averaging;
-    itsProcessingInfo.useInterCellAvg      = averagingNeighbours;
+    itsProcessingInfo.useIntraCellAvg      = intraCellAveraging;
+    itsProcessingInfo.useInterCellAvg      = interCellAveraging;
     itsProcessingInfo.useReplacementScheme = replacementScheme;
     itsProcessingInfo.subsamplingGrid      = subsamplingGrid;
     itsProcessingInfo.useRandomSubsampling = useRandomSubsampling;

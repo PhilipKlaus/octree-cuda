@@ -1,32 +1,16 @@
-/**
- * @file subsample_evaluation.cuh
- * @author Philip Klaus
- * @brief Contains code for evaluating subsample points and for summarizing color information inside subsampling cells
- */
 #pragma once
-
-#include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
-#include "kernel_structs.cuh"
-#include "metadata.cuh"
-#include "tools.cuh"
-#include "types.cuh"
-#include <inttypes.h>
 
 namespace subsampling {
-
-
-
+namespace fp {
 /**
  * Places a 3-dimensional grid over 8 octree children nodes and maps their points to a target cell.
- * The kernel counts how many points fall into each cell of the counting grid.
- * Furthermore all color information from all points in a cell are summed up (needed for color averaging).
- * The amount of occupied cells is stored as pointCount in the parent node (octree).
+ * The kernel encodes the color values of each point and accumulates them within the subsampling cell
+ * (Intra-cell color averaging)
  *
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
  * @param outputBuffer The binary output buffer.
- * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
  * @param octree The octree data structure.
  * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
  * @param denseToSparseLUT Maps dense to sparse indices.
@@ -36,9 +20,8 @@ namespace subsampling {
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelEvaluateSubsamplesAveraged (
+__global__ void kernelEvaluateSubsamplesIntra (
         OutputBuffer* outputBuffer,
-        uint32_t* countingGrid,
         Node* octree,
         uint64_t* averagingGrid,
         int* denseToSparseLUT,
@@ -68,31 +51,34 @@ __global__ void kernelEvaluateSubsamplesAveraged (
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    // Increase the point counter for the cell
-    uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
-
     // Encode the point color and add it up
     uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
-    atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
+    // Intra-cell: Accumulate the encoded color value
+    auto old = atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
     // If the thread handles the first point in a cell:
     // - increase the point count in the parent cell
     // - Add dense-to-sparse-lut entry
+    // - Store subsampled (first) point to parent node
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&(octree[nodeIdx].pointCount), 1);
+        int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
+        denseToSparseLUT[denseVoxelIndex] = sparseIndex;
+
+        // Store the subsampled point in the parent node
+        PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
+        *dst          = *src;
     }
 }
 
 /**
  * Places a 3-dimensional grid over 8 octree children nodes and maps their points to a target cell.
- * The kernel counts how many points fall into each cell of the counting grid.
- * The amount of occupied cells is stored as pointCount in the parent node (octree).
- *
+ * The kernel evaluates the first point that falls into a cell. This point is selected for subsampling
+ * and stored in the parent node.
+
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
- * @param outputBuffer The binary output buffer.
  * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
  * @param octree The octree data structure.
  * @param denseToSparseLUT Maps dense to sparse indices.
@@ -102,7 +88,7 @@ __global__ void kernelEvaluateSubsamplesAveraged (
  * @param nodeIdx The actual parent (target) node.
  */
 template <typename coordinateType, typename colorType>
-__global__ void kernelEvaluateSubsamplesNotAveraged (
+__global__ void kernelEvaluateSubsamplesInter (
         uint32_t* countingGrid,
         Node* octree,
         int* denseToSparseLUT,
@@ -131,20 +117,44 @@ __global__ void kernelEvaluateSubsamplesNotAveraged (
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    // Increase the point counter for the cell
-    uint32_t old = atomicAdd ((countingGrid + denseVoxelIndex), 1);
+    // Mark cell as occupied: Set the appropriate countingGrid cell to 1 if not already
+    uint32_t old = atomicExch ((countingGrid + denseVoxelIndex), 1);
 
     // If the thread handles the first point in a cell:
     // - increase the point count in the parent cell
     // - Add dense-to-sparse-lut entry
+    // - Store subsampled (first) point to parent node
     if (old == 0)
     {
-        denseToSparseLUT[denseVoxelIndex] = atomicAdd (&(octree[nodeIdx].pointCount), 1);
+        int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
+        denseToSparseLUT[denseVoxelIndex] = sparseIndex;
+
+        // Store the subsampled point in the parent node
+        PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
+        *dst          = *src;
     }
 }
 
+
+/**
+ * Places a 3-dimensional grid over 8 octree children nodes and perform inter-cell averaging.
+ * For this puropose, the color values of a single point are accumulated to the neighbouring
+ * averagingGrid cells.
+
+ * @tparam coordinateType The datatype of the 3D coordinates.
+ * @tparam colorType The datatype of the point colors.
+ * @param outputBuffer The binary output buffer.
+ * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
+ * @param octree The octree data structure.
+ * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
+ * @param denseToSparseLUT Maps dense to sparse indices.
+ * @param lut Stores the point indices of all points within a node.
+ * @param cloud The point cloud data.
+ * @param gridding Contains gridding related data.
+ * @param nodeIdx The actual parent (target) node.
+ */
 template <typename coordinateType, typename colorType>
-__global__ void kernelSumUpColors (
+__global__ void kernelInterCellAvg (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         Node* octree,
@@ -185,12 +195,12 @@ __global__ void kernelSumUpColors (
         uint64_t iy = static_cast<int64_t> (fmin (uY, t));
         uint64_t iz = static_cast<int64_t> (fmin (uZ, t));
 
-        
+
         // Encode the point color and add it up
         uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
-        bool underflow   = false;
-        bool overflow    = false;
+        bool underflow = false;
+        bool overflow  = false;
         for (int64_t ox = -1; ox <= 1; ox++)
         {
             for (int64_t oy = -1; oy <= 1; oy++)
@@ -207,7 +217,7 @@ __global__ void kernelSumUpColors (
                     uint32_t voxelIndex = static_cast<uint32_t> (
                             nx + ny * gridding.gridSize + nz * gridding.gridSize * gridding.gridSize);
 
-                    if (!underflow && !overflow && averagingGrid[voxelIndex] != 0)
+                    if (!underflow && !overflow && countingGrid[voxelIndex] != 0)
                     {
                         atomicAdd (&(averagingGrid[voxelIndex]), encoded);
                     }
@@ -217,13 +227,16 @@ __global__ void kernelSumUpColors (
     }
 }
 
+} // namespace fp
 } // namespace subsampling
 
+//------------------------------------------------------------------------------------------
 
 namespace Kernel {
+namespace fp {
 
 template <typename... Arguments>
-void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args)
+void evaluateSubsamplesIntra (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -241,12 +254,12 @@ void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelEvaluateSubsamplesAveraged<float, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesIntra<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelEvaluateSubsamplesAveraged<double, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesIntra<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -260,7 +273,7 @@ void evaluateSubsamplesAveraged (const KernelConfig& config, Arguments&&... args
 }
 
 template <typename... Arguments>
-void evaluateSubsamplesNotAveraged (const KernelConfig& config, Arguments&&... args)
+void evaluateSubsamplesInter (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -278,12 +291,12 @@ void evaluateSubsamplesNotAveraged (const KernelConfig& config, Arguments&&... a
 #endif
     if (config.cloudType == CLOUD_FLOAT_UINT8_T)
     {
-        subsampling::kernelEvaluateSubsamplesNotAveraged<float, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesInter<float, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
     else
     {
-        subsampling::kernelEvaluateSubsamplesNotAveraged<double, uint8_t>
+        subsampling::fp::kernelEvaluateSubsamplesInter<double, uint8_t>
                 <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 #ifdef KERNEL_TIMINGS
@@ -297,7 +310,7 @@ void evaluateSubsamplesNotAveraged (const KernelConfig& config, Arguments&&... a
 }
 
 template <typename... Arguments>
-void sumUpColors (const KernelConfig& config, Arguments&&... args)
+void interCellAvg (const KernelConfig& config, Arguments&&... args)
 {
     // Calculate kernel dimensions
     dim3 grid, block;
@@ -313,8 +326,14 @@ void sumUpColors (const KernelConfig& config, Arguments&&... args)
     Timing::KernelTimer timer;
     timer.start ();
 #endif
-
-    subsampling::kernelSumUpColors<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::fp::kernelInterCellAvg<float, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::fp::kernelInterCellAvg<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
 
 
 #ifdef KERNEL_TIMINGS
@@ -327,4 +346,5 @@ void sumUpColors (const KernelConfig& config, Arguments&&... args)
     gpuErrchk (cudaGetLastError ());
 }
 
+} // namespace fp
 } // namespace Kernel

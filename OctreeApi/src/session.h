@@ -36,8 +36,8 @@ public:
     void configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshold, float outputFactor);
     void configureSubsampling (
             uint32_t subsamplingGrid,
-            bool averaging,
-            bool averagingNeighbours,
+            bool intraCellAveraging,
+            bool interCellAveraging,
             bool replacementScheme,
             bool useRandomSubsampling);
 

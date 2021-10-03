@@ -97,15 +97,15 @@ int ocpi_configure_chunking (void* session, uint32_t chunkingGrid, uint32_t merg
 int ocpi_configure_subsampling (
         void* session,
         uint32_t subsamplingGrid,
-        bool averaging,
-        bool averagingNeighbours,
+        bool intraCellAveraging,
+        bool interCellAveraging,
         bool replacementScheme,
         bool useRandomSubsampling)
 {
     return Execute ([&] () {
         auto s = Session::ToSession (session);
         s->configureSubsampling (
-                subsamplingGrid, averaging, averagingNeighbours, replacementScheme, useRandomSubsampling);
+                subsamplingGrid, intraCellAveraging, interCellAveraging, replacementScheme, useRandomSubsampling);
     });
 }
 

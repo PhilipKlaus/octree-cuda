@@ -58,8 +58,8 @@ EXPORTED int ocpi_configure_chunking (
 EXPORTED int ocpi_configure_subsampling (
         void* session,
         uint32_t subsamplingGrid,
-        bool averaging,
-        bool averagingNeighbours,
+        bool intraCellAveraging,
+        bool interCellAveraging,
         bool replacementScheme,
         bool useRandomSubsampling);
 
