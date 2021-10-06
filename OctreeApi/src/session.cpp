@@ -36,6 +36,12 @@ void Session::setDevice () const
     gpuErrchk (cudaSetDevice (itsDevice));
     cudaDeviceProp props{};
     gpuErrchk (cudaGetDeviceProperties (&props, itsDevice));
+    unsigned int flags;
+    gpuErrchk (cudaGetDeviceFlags (&flags));
+    flags |= cudaDeviceScheduleBlockingSync;
+    gpuErrchk (cudaSetDeviceFlags (flags));
+    gpuErrchk (cudaGetDeviceFlags (&flags));
+    spdlog::info ("Set cudaDeviceScheduleBlockingSync: {}", (flags & cudaDeviceScheduleBlockingSync) > 0 ? "true" : "false");
     spdlog::info ("Using GPU device: {}", props.name);
 }
 

@@ -122,7 +122,7 @@ void printInputConfig (const Input& input)
     spdlog::info ("outputFactor: {}", input.outputFactor);
     spdlog::info ("perform intra-cell averaging: {}", input.isIntraCellAveraging);
     spdlog::info ("perform inter-cell averaging: {}", input.isInterCellAveraging);
-    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "random" : "first-point");
+    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "explicit random subsampling" : "implicit random subsampling");
 }
 
 void parseInput (Input& input, const cxxopts::ParseResult& result)
