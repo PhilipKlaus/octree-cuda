@@ -12,7 +12,7 @@ struct Node
     bool isFinished;     // Determines if the node is finished (= not mergeable anymore)
     uint64_t dataIdx;    // Determines the position in the data output
     int childNodes[8];   // The 8 child nodes
-    bool isParent;       // Determines if the node is a parent or a leaf
+    bool isInternal;     // Determines if the node is internal (parent) or a leaf
 };
 
 #pragma pack(push, 1)

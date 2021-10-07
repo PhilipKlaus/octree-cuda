@@ -32,10 +32,10 @@ void export_json_data (
         statistics["subsampling"]["averaging"] = "INTRA-CELL AVERAGING";
     }
 
-    statistics["resultNodes"]["octreeNodes"]      = nodeStatistics.leafNodeAmount + nodeStatistics.parentNodeAmount;
-    statistics["resultNodes"]["leafNodeAmount"]   = nodeStatistics.leafNodeAmount;
-    statistics["resultNodes"]["parentNodeAmount"] = nodeStatistics.parentNodeAmount;
-    statistics["resultNodes"]["maxLeafDepth"]     = nodeStatistics.maxLeafDepth;
+    statistics["resultNodes"]["octreeNodes"]        = nodeStatistics.leafNodeAmount + nodeStatistics.internalNodeAmount;
+    statistics["resultNodes"]["leafNodeAmount"]     = nodeStatistics.leafNodeAmount;
+    statistics["resultNodes"]["internalNodeAmount"] = nodeStatistics.internalNodeAmount;
+    statistics["resultNodes"]["maxLeafDepth"]       = nodeStatistics.maxLeafDepth;
 
     statistics["overallNodes"]["sparseOctreeNodes"] = nodeStatistics.nodeAmountSparse;
     statistics["overallNodes"]["denseOctreeNodes"]  = nodeStatistics.nodeAmountDense;

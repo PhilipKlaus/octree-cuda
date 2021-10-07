@@ -14,7 +14,7 @@ void testSubsampleTree (
 {
     Chunk chunk = octree[index];
 
-    if (chunk.isParent)
+    if (chunk.isInternal)
     {
         switch (level)
         {
@@ -60,7 +60,7 @@ TEST_CASE ("Test node subsampling", "[subsampling]")
     octree->distributePoints ();
     octree->performSubsampling ();
 
-    // Ensure that for each relevant parent node exists a evaluateSubsamples data Lut
+    // Ensure that for each relevant internal node exists a evaluateSubsamples data Lut
     REQUIRE (octree->getSubsampleLUT ().size () == pow (4, 3) + pow (2, 3) + pow (1, 3));
 
     auto octreeData        = octree->getOctreeSparse ();

@@ -19,7 +19,7 @@ void fillDummyOctree (Node (&chunks)[9])
     chunks[8].childNodes[7] = 7;
     chunks[8].pointCount    = 50;
     chunks[8].isFinished    = true;
-    chunks[8].isParent      = true;
+    chunks[8].isInternal    = true;
 
     chunks[0].pointCount = 100;
     chunks[1].pointCount = 350;
@@ -32,7 +32,7 @@ void fillDummyOctree (Node (&chunks)[9])
 
     for (auto i = 0; i < 8; ++i)
     {
-        chunks[i].isParent   = false;
+        chunks[i].isInternal = false;
         chunks[i].isFinished = true;
         for (int& childrenChunk : chunks[i].childNodes)
         {
@@ -53,11 +53,11 @@ TEST_CASE ("An Octree should")
             CHECK (meta.depth == 9);
             CHECK (meta.nodeAmountSparse == 0);
             CHECK (meta.nodeAmountDense == 153391689);
-            CHECK (meta.parentNodeAmount == 0);
+            CHECK (meta.internalNodeAmount == 0);
             CHECK (meta.minPointsPerNode == 0);
             CHECK (meta.maxPointsPerNode == 0);
             CHECK (meta.leafNodeAmount == 0);
-            CHECK (meta.parentNodeAmount == 0);
+            CHECK (meta.internalNodeAmount == 0);
             CHECK (meta.meanPointsPerLeafNode == 0);
             CHECK (meta.maxLeafDepth == 0);
         }
@@ -143,11 +143,11 @@ TEST_CASE ("An Octree should")
             auto& meta = octree.getNodeStatistics ();
             CHECK (meta.nodeAmountSparse == 9);
             CHECK (meta.nodeAmountDense == 153391689);
-            CHECK (meta.parentNodeAmount == 0);
+            CHECK (meta.internalNodeAmount == 0);
             CHECK (meta.minPointsPerNode == 0);
             CHECK (meta.maxPointsPerNode == 0);
             CHECK (meta.leafNodeAmount == 0);
-            CHECK (meta.parentNodeAmount == 0);
+            CHECK (meta.internalNodeAmount == 0);
             CHECK (meta.meanPointsPerLeafNode == 0);
             CHECK (meta.maxLeafDepth == 0);
         }
@@ -168,11 +168,11 @@ TEST_CASE ("An Octree should")
             auto& meta = octree.getNodeStatistics ();
             CHECK (meta.nodeAmountSparse == 9);
             CHECK (meta.nodeAmountDense == 153391689);
-            CHECK (meta.parentNodeAmount == 1);
+            CHECK (meta.internalNodeAmount == 1);
             CHECK (meta.minPointsPerNode == 100);
             CHECK (meta.maxPointsPerNode == 1300);
             CHECK (meta.leafNodeAmount == 6);
-            CHECK (meta.parentNodeAmount == 1);
+            CHECK (meta.internalNodeAmount == 1);
             CHECK (meta.meanPointsPerLeafNode == Approx (583.3).epsilon (0.001));
             CHECK (meta.maxLeafDepth == 1);
         }
@@ -204,7 +204,7 @@ TEST_CASE ("An Octree should")
             CHECK (host[octree.getRootIndex ()].childNodes[5] == -1);
             CHECK (host[octree.getRootIndex ()].childNodes[6] == 6);
             CHECK (host[octree.getRootIndex ()].childNodes[7] == 7);
-            CHECK (host[octree.getRootIndex ()].isParent == true);
+            CHECK (host[octree.getRootIndex ()].isInternal == true);
             CHECK (host[octree.getRootIndex ()].pointCount == 50);
             CHECK (octree.getNode (0).pointCount == 100);
             CHECK (octree.getNode (1).pointCount == 350);

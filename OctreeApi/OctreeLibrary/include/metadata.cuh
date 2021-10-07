@@ -74,14 +74,14 @@ struct PointCloudInfo
  */
 struct ProcessingInfo
 {
-    uint32_t subsamplingGrid;    ///< The size of the subsampling grid (e.g. 128 -> 128 x 128 128)
-    uint32_t chunkingGrid;       ///< The size of the chunking grid (e.g. 128 -> 128 x 128 128)
-    uint32_t mergingThreshold;   ///< The threshold for the cell merging during the chunking phase
-    bool useIntraCellAvg;        ///< Determines if intra-cell averaging should be performed
-    bool useInterCellAvg;        ///< Determines if inter-cell averaging should be performed in adjacent cells too
-    bool useReplacementScheme;   ///< Determines if the replacement scheme should be applied
-    bool useRandomSubsampling;   ///< Determines if random subsampling should be performed
-    float outputFactor;          ///< The estimated factor for the output point amount
+    uint32_t subsamplingGrid;  ///< The size of the subsampling grid (e.g. 128 -> 128 x 128 128)
+    uint32_t chunkingGrid;     ///< The size of the chunking grid (e.g. 128 -> 128 x 128 128)
+    uint32_t mergingThreshold; ///< The threshold for the cell merging during the chunking phase
+    bool useIntraCellAvg;      ///< Determines if intra-cell averaging should be performed
+    bool useInterCellAvg;      ///< Determines if inter-cell averaging should be performed in adjacent cells too
+    bool useReplacementScheme; ///< Determines if the replacement scheme should be applied
+    bool useRandomSubsampling; ///< Determines if random subsampling should be performed
+    float outputFactor;        ///< The estimated factor for the output point amount
     ///<                            ///< (output points = input points * factor)
 };
 
@@ -93,7 +93,7 @@ struct OctreeInfo
     uint32_t depth;               ///< The depth of the octree (amount of levels)
     uint8_t maxLeafDepth;         ///< Maximum depth of a leaf node
     uint32_t leafNodeAmount;      ///< The amount of leaf nodes
-    uint32_t parentNodeAmount;    ///< The amount of parent nodes
+    uint32_t internalNodeAmount;  ///< The amount of internal(parent) nodes
     float meanPointsPerLeafNode;  ///< Mean point amount per leaf node
     float stdevPointsPerLeafNode; ///< Standard deviation of the point amount per leaf node
     uint32_t minPointsPerNode;    ///< Minimum number of points per leaf node

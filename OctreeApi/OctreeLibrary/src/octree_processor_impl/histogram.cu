@@ -16,7 +16,7 @@ void OctreeProcessor::OctreeProcessorImpl::histogramBinning (
     auto node = itsOctree->getNode (nodeIndex);
 
     // Leaf node
-    if (!node.isParent)
+    if (!node.isInternal)
     {
         uint32_t bin = (node.pointCount - min) / binWidth;
         ++counts[bin];

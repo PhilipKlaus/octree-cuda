@@ -23,7 +23,7 @@ template <typename coordinateType, typename colorType>
 void PlyExporter<coordinateType, colorType>::exportNode (
         uint32_t nodeIndex, const string& octreeLevel, const std::string& path)
 {
-    bool isParent   = this->itsOctree[nodeIndex].isParent;
+    bool isInternal   = this->itsOctree[nodeIndex].isInternal;
     bool isFinished = this->itsOctree[nodeIndex].isFinished;
 
     // ToDo: read from config + change in kernel;
@@ -31,7 +31,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
 
     uint32_t pointsInNode                  = this->getPointsInNode (nodeIndex);
     const std::unique_ptr<uint32_t[]>& lut = this->itsSubsamples->getLutHost (
-            nodeIndex); // isParent ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
+            nodeIndex); // isInternal ? this->itsSubsamples->getLutHost (nodeIndex) : this->itsLeafLut;
 
     uint32_t dataStride = this->itsCloudMetadata.pointDataStride;
 
@@ -44,7 +44,7 @@ void PlyExporter<coordinateType, colorType>::exportNode (
         for (uint32_t u = 0; u < pointsInNode; ++u)
         {
             //  Export parent node
-            if (this->itsOctree[nodeIndex].isParent)
+            if (this->itsOctree[nodeIndex].isInternal)
             {
                 if (lut[u] != INVALID_INDEX)
                 {

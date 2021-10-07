@@ -21,7 +21,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
     }
 
     // Now we can assure that all direct children have subsamples
-    if (node.isParent)
+    if (node.isInternal)
     {
         // Parent bounding box calculation
         PointCloudInfo metadata = cloudMetadata;
