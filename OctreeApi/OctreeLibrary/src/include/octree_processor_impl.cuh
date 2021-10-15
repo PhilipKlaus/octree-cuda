@@ -41,13 +41,13 @@ private:
     void mergeHierarchical ();
     void initLowestOctreeHierarchy ();
     void calculateVoxelBB (PointCloudInfo& metadata, uint32_t denseVoxelIndex, uint32_t level);
-    void randomSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
-    void firstPointSubsampling (const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level);
+    void randomSubsampling (uint32_t sparseVoxelIndex, uint32_t level, Vector3<double> nodeBBMin);
+    void firstPointSubsampling (uint32_t sparseVoxelIndex, uint32_t level, Vector3<double> nodeBBMin);
 
     void histogramBinning (std::vector<uint32_t>& counts, uint32_t min, uint32_t binWidth, uint32_t nodeIndex) const;
 
     void setActiveParent (uint32_t parentNode);
-    int getLastParent ();
+    int getLastParent () const;
 
 
 private:
@@ -59,7 +59,6 @@ private:
     // GPU helper data
     GpuArrayU32 itsCountingGrid;
     GpuArrayI32 itsDenseToSparseLUT;
-    GpuArrayI32 itsSparseToDenseLUT;
     GpuArrayU32 itsTmpCounting;
     GpuPointLut itsPointLut;
     GpuAveraging itsAveragingGrid;

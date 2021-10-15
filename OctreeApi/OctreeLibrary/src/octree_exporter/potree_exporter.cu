@@ -130,11 +130,11 @@ void PotreeExporter::createMetadataFile (const PointCloud& cloud, const Processi
             subsampleMeta.useRandomSubsampling ? "EXPLICIT-RANDOM-SUBSAMPLING" : "IMPLICIT-RANDOM-SUBSAMPLING";
     if (subsampleMeta.useIntraCellAvg)
     {
-        metadata["flags"][2] = "INTRA-CELL-AVERAGING";
+        metadata["flags"][2] = "INTRA-CELL-COLOR-FILTERING";
     }
     if (subsampleMeta.useInterCellAvg)
     {
-        metadata["flags"][2] = "INTER-CELL-AVERAGING";
+        metadata["flags"][2] = "INTER-CELL-COLOR-FILTERING";
     }
 
     metadata["hierarchy"]["firstChunkSize"] = itsExportedNodes * HIERARCHY_NODE_BYTES;

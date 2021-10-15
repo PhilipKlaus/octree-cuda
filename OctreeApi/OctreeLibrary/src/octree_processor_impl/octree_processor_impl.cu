@@ -90,12 +90,11 @@ void OctreeProcessor::OctreeProcessorImpl::calculateVoxelBB (
 
     // 2. Calculate the bounding box for the actual voxel
     // ToDo: Include scale and offset!!!
-    auto& cloudMeta = itsCloud->getMetadata ();
-    double min      = cloudMeta.bbCubic.min.x;
-    double max      = cloudMeta.bbCubic.max.x;
-    double side     = max - min;
-    auto cubicWidth = side / itsOctree->getGridSize (level);
-
+    auto& cloudMeta        = itsCloud->getMetadata ();
+    double min             = cloudMeta.bbCubic.min.x;
+    double max             = cloudMeta.bbCubic.max.x;
+    double side            = max - min;
+    auto cubicWidth        = side / itsOctree->getGridSize (level);
     metadata.bbCubic.min.x = cloudMeta.bbCubic.min.x + coords.x * cubicWidth;
     metadata.bbCubic.min.y = cloudMeta.bbCubic.min.y + coords.y * cubicWidth;
     metadata.bbCubic.min.z = cloudMeta.bbCubic.min.z + coords.z * cubicWidth;
@@ -143,7 +142,7 @@ void OctreeProcessor::OctreeProcessorImpl::setActiveParent (uint32_t parentNode)
     itsLastSubsampleNode = static_cast<int> (parentNode);
 }
 
-int OctreeProcessor::OctreeProcessorImpl::getLastParent ()
+int OctreeProcessor::OctreeProcessorImpl::getLastParent () const
 {
     return itsLastSubsampleNode;
 }
@@ -156,19 +155,23 @@ const OctreeInfo& OctreeProcessor::OctreeProcessorImpl::getOctreeInfo ()
 
 void OctreeProcessor::OctreeProcessorImpl::performSubsampling ()
 {
-    auto h_sparseToDenseLUT = itsSparseToDenseLUT->toHost ();
-
     itsDenseToSparseLUT->memset (-1);
     itsCountingGrid->memset (0);
     itsOctree->updateNodeStatistics ();
 
     if (itsProcessingInfo.useRandomSubsampling)
     {
-        randomSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+        randomSubsampling (
+                itsOctree->getRootIndex (),
+                itsOctree->getNodeStatistics ().depth,
+                itsCloud->getMetadata ().bbCubic.min);
     }
     else
     {
-        firstPointSubsampling (h_sparseToDenseLUT, itsOctree->getRootIndex (), itsOctree->getNodeStatistics ().depth);
+        firstPointSubsampling (
+                itsOctree->getRootIndex (),
+                itsOctree->getNodeStatistics ().depth,
+                itsCloud->getMetadata ().bbCubic.min);
     }
 
     cudaDeviceSynchronize ();

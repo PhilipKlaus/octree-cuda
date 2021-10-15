@@ -25,6 +25,41 @@ __global__ void kernel_point_cloud_cuboid (uint8_t* out, uint32_t n, uint32_t si
 
 namespace tools {
 
+
+void calculateChildMinBB (
+        Vector3<double>& childBBMin, const Vector3<double>& parentBBMin, uint8_t localIdx, double childBBSide)
+{
+    switch (localIdx)
+    {
+    case 0:
+        childBBMin = {parentBBMin.x, parentBBMin.y, parentBBMin.z};
+        break;
+    case 1:
+        childBBMin.z += childBBSide;
+        break;
+    case 2:
+        childBBMin.y += childBBSide;
+        break;
+    case 3:
+        childBBMin = {parentBBMin.x, parentBBMin.y + childBBSide, parentBBMin.z + childBBSide};
+        break;
+    case 4:
+        childBBMin.x += childBBSide;
+        break;
+    case 5:
+        childBBMin = {parentBBMin.x + childBBSide, parentBBMin.y, parentBBMin.z + childBBSide};
+        break;
+    case 6:
+        childBBMin = {parentBBMin.x + childBBSide, parentBBMin.y + childBBSide, parentBBMin.z};
+        break;
+    case 7:
+        childBBMin = {parentBBMin.x + childBBSide, parentBBMin.y + childBBSide, parentBBMin.z + childBBSide};
+        break;
+    default:
+        break;
+    }
+}
+
 uint8_t getOctreeLevel (uint32_t gridSize)
 {
     switch (gridSize)

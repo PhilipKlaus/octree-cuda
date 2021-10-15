@@ -6,18 +6,27 @@
 #include "octree_processor_impl.cuh"
 
 void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
-        const unique_ptr<int[]>& h_sparseToDenseLUT, uint32_t sparseVoxelIndex, uint32_t level)
+        uint32_t sparseVoxelIndex, uint32_t level, Vector3<double> nodeBBMin)
 {
     auto& cloudMetadata = itsCloud->getMetadata ();
     auto& node          = itsOctree->getNode (sparseVoxelIndex);
 
+    // Calculate actual cell (node) side length
+    auto bbDivider = pow (2, itsOctree->getNodeStatistics ().depth - level);
+    double side    = (cloudMetadata.bbCubic.max.x - cloudMetadata.bbCubic.min.x) / bbDivider;
+
     // Depth first traversal
+    uint8_t tmpIndex = 0;
     for (int childIndex : node.childNodes)
     {
         if (childIndex != -1)
         {
-            firstPointSubsampling (h_sparseToDenseLUT, childIndex, level - 1);
+            auto childBBSide           = side / 2.0;
+            Vector3<double> childBBMin = nodeBBMin;
+            tools::calculateChildMinBB (childBBMin, nodeBBMin, tmpIndex, childBBSide);
+            firstPointSubsampling (childIndex, level - 1, childBBMin);
         }
+        ++tmpIndex;
     }
 
     // Now we can assure that all direct children have subsamples
@@ -25,8 +34,12 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
     {
         // Parent bounding box calculation
         PointCloudInfo metadata = cloudMetadata;
-        auto denseVoxelIndex    = h_sparseToDenseLUT[sparseVoxelIndex];
-        calculateVoxelBB (metadata, denseVoxelIndex, level);
+        metadata.bbCubic.min    = nodeBBMin;
+        metadata.bbCubic.max.x  = metadata.bbCubic.min.x + side;
+        metadata.bbCubic.max.y  = metadata.bbCubic.min.y + side;
+        metadata.bbCubic.max.z  = metadata.bbCubic.min.z + side;
+        metadata.cloudOffset    = metadata.bbCubic.min;
+
 
         // ToDo: Find more sprecise amount of threads
         KernelStructs::Cloud cloud = {
