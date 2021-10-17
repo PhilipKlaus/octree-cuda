@@ -117,7 +117,9 @@ __global__ void kernelSubsampleNotAveraged (
         BoundingBox cubic,
         PointLut* lut,
         Node* octree,
-        uint32_t nodeIdx)
+        uint32_t nodeIdx,
+        int lastNode,
+        const uint32_t* leafOffset)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -152,6 +154,8 @@ __global__ void kernelSubsampleNotAveraged (
 
     int sparseIndex = atomicAdd (&(octree[nodeIdx].pointCount), 1);
 
+    // Update writing position for actual subsampled node
+    octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
 
     // Move subsampled averaging and point-LUT data to parent node
     PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;

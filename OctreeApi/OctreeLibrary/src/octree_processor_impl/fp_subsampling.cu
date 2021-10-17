@@ -54,15 +54,6 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
         KernelStructs::Gridding gridding = {
                 itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        Kernel::calcNodeByteOffset (
-                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
-                itsOctree->getDevice (),
-                sparseVoxelIndex,
-                getLastParent (),
-                itsTmpCounting->devicePointer ());
-
-        setActiveParent (sparseVoxelIndex);
-
         // No color averagin is performed -> directly subsample points
         if (!itsProcessingInfo.useIntraCellAvg && !itsProcessingInfo.useInterCellAvg)
         {
@@ -78,7 +69,9 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                     cloudMetadata.bbCubic,
                     itsPointLut->devicePointer (),
                     itsOctree->getDevice (),
-                    sparseVoxelIndex);
+                    sparseVoxelIndex,
+                    getLastParent (),
+                    itsTmpCounting->devicePointer ());
 
             auto gridCellAmount = static_cast<uint32_t> (pow (itsProcessingInfo.subsamplingGrid, 3.f));
 
@@ -106,7 +99,9 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                         itsPointLut->devicePointer (),
                         cloud,
                         gridding,
-                        sparseVoxelIndex);
+                        sparseVoxelIndex,
+                        getLastParent (),
+                        itsTmpCounting->devicePointer ());
             }
             // Inter-cell averaging
             else
@@ -121,7 +116,9 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                         itsPointLut->devicePointer (),
                         cloud,
                         gridding,
-                        sparseVoxelIndex);
+                        sparseVoxelIndex,
+                        getLastParent (),
+                        itsTmpCounting->devicePointer ());
 
                 // Inter-Cell: Accumulate colors from neighbouring cells
                 Kernel::fp::interCellAvg (
@@ -155,5 +152,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                     itsOctree->getDevice (),
                     sparseVoxelIndex);
         }
+
+        setActiveParent (sparseVoxelIndex);
     }
 }

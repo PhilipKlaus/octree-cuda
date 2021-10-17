@@ -28,7 +28,9 @@ __global__ void kernelEvaluateSubsamplesIntra (
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t nodeIdx)
+        uint32_t nodeIdx,
+        int lastNode,
+        const uint32_t* leafOffset)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -66,6 +68,9 @@ __global__ void kernelEvaluateSubsamplesIntra (
         int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
         denseToSparseLUT[denseVoxelIndex] = sparseIndex;
 
+        // Update writing position for actual subsampled node
+        octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
+
         // Store the subsampled point in the parent node
         PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
         *dst          = *src;
@@ -95,7 +100,9 @@ __global__ void kernelEvaluateSubsamplesInter (
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t nodeIdx)
+        uint32_t nodeIdx,
+        int lastNode,
+        const uint32_t* leafOffset)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -128,6 +135,9 @@ __global__ void kernelEvaluateSubsamplesInter (
     {
         int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
         denseToSparseLUT[denseVoxelIndex] = sparseIndex;
+
+        // Update writing position for actual subsampled node
+        octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
 
         // Store the subsampled point in the parent node
         PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;

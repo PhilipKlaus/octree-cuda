@@ -126,8 +126,8 @@ __global__ void kernelEvaluateSubsamplesInter (
     PointLut* src = lut + child->dataIdx + localPointIdx;
 
     // Get the coordinates & colors from the point within the point cloud
-    uint8_t* srcCloudByte   = cloud.raw + (*src) * cloud.dataStride;
-    auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
+    uint8_t* srcCloudByte = cloud.raw + (*src) * cloud.dataStride;
+    auto* point           = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
 
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);

@@ -54,15 +54,6 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
         KernelStructs::Gridding gridding = {
                 itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        Kernel::calcNodeByteOffset (
-                {metadata.cloudType, 1, "kernelCalcNodeByteOffset"},
-                itsOctree->getDevice (),
-                sparseVoxelIndex,
-                getLastParent (),
-                itsTmpCounting->devicePointer ());
-
-        setActiveParent (sparseVoxelIndex);
-
         // Intra-cell color averaging: evaluate subsamples and accumulate colors
         if (itsProcessingInfo.useIntraCellAvg)
         {
@@ -155,7 +146,9 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     itsRandomIndices->devicePointer (),
                     itsPointLut->devicePointer (),
                     itsOctree->getDevice (),
-                    sparseVoxelIndex);
+                    sparseVoxelIndex,
+                    getLastParent (),
+                    itsTmpCounting->devicePointer ());
         }
 
         // Finally subsample the points without any color averaging
@@ -174,7 +167,11 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                     itsRandomIndices->devicePointer (),
                     itsPointLut->devicePointer (),
                     itsOctree->getDevice (),
-                    sparseVoxelIndex);
+                    sparseVoxelIndex,
+                    getLastParent (),
+                    itsTmpCounting->devicePointer ());
         }
+
+        setActiveParent (sparseVoxelIndex);
     }
 }

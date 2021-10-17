@@ -79,7 +79,9 @@ __global__ void kernelSubsampleAveraged (
         uint32_t* randomIndices,
         PointLut* lut,
         Node* octree,
-        uint32_t nodeIdx)
+        uint32_t nodeIdx,
+        int lastNode,
+        const uint32_t* leafOffset)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -110,6 +112,9 @@ __global__ void kernelSubsampleAveraged (
     {
         return;
     }
+
+    // Update writing position for actual subsampled node
+    octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
 
     // Move subsampled averaging and point-LUT data to parent node
     PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
@@ -165,7 +170,9 @@ __global__ void kernelSubsampleNotAveraged (
         uint32_t* randomIndices,
         PointLut* lut,
         Node* octree,
-        uint32_t nodeIdx)
+        uint32_t nodeIdx,
+        int lastNode,
+        const uint32_t* leafOffset)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -197,6 +204,9 @@ __global__ void kernelSubsampleNotAveraged (
     {
         return;
     }
+
+    // Update writing position for actual subsampled node
+    octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
 
     // Move subsampled point-LUT data to parent node
     PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
