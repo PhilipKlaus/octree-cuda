@@ -16,24 +16,26 @@ public:
 
     void start ()
     {
+        cudaDeviceSynchronize ();
         cudaEventRecord (itsStart);
     }
 
     void stop ()
     {
         cudaEventRecord (itsStop);
+        cudaEventSynchronize (itsStop);
+        cudaDeviceSynchronize ();
+        cudaEventElapsedTime (&milliseconds, itsStart, itsStop);
     }
 
-    float getMilliseconds ()
+    float getDuration ()
     {
-        float milliseconds = 0;
-        cudaEventSynchronize (itsStop);
-        cudaEventElapsedTime (&milliseconds, itsStart, itsStop);
         return milliseconds;
     }
 
 private:
     cudaEvent_t itsStart, itsStop;
+    float milliseconds = 0.0;
 };
 
 }; // namespace Timing
