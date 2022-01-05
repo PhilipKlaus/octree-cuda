@@ -36,7 +36,11 @@ def parse_arguments(argv):
     
     potree_path = args.i
     output_path = args.o if args.o is not None else potree_path
-
+    
+    if not potree_path:
+        parser.print_help()
+        exit()
+        
     return potree_path, output_path
     
 

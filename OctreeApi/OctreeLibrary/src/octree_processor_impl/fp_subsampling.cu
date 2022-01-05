@@ -109,7 +109,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                 Kernel::fp::evaluateSubsamplesInter (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                         "kernelEvaluateSubsamplesIntra"},
+                         "kernelEvaluateSubsamplesInter"},
                         itsCountingGrid->devicePointer (),
                         itsOctree->getDevice (),
                         itsDenseToSparseLUT->devicePointer (),

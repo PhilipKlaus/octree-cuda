@@ -123,19 +123,19 @@ __global__ void kernelSubsampleAveraged (
     uint64_t encoded = averagingGrid[denseVoxelIndex];
     auto amount      = static_cast<uint16_t> (encoded & 0x3FF);
 
-    uint64_t decoded[3] = {
-            ((encoded >> 46) & 0xFFFF) / amount,
-            ((encoded >> 28) & 0xFFFF) / amount,
-            ((encoded >> 10) & 0xFFFF) / amount};
+    uint16_t decoded[3] = {
+            static_cast<uint16_t> (((encoded >> 46) & 0xFFFF) / amount),
+            static_cast<uint16_t> (((encoded >> 28) & 0xFFFF) / amount),
+            static_cast<uint16_t> (((encoded >> 10) & 0xFFFF) / amount)};
 
     // Write coordinates and colors to output buffer
     OutputBuffer* out = outputBuffer + octree[nodeIdx].dataIdx + sparseIndex;
     out->x            = static_cast<int32_t> (floor ((point->x - cubic.min.x) * cloud.scaleFactor.x));
     out->y            = static_cast<int32_t> (floor ((point->y - cubic.min.y) * cloud.scaleFactor.y));
     out->z            = static_cast<int32_t> (floor ((point->z - cubic.min.z) * cloud.scaleFactor.z));
-    out->r            = static_cast<uint16_t> (decoded[0]);
-    out->g            = static_cast<uint16_t> (decoded[1]);
-    out->b            = static_cast<uint16_t> (decoded[2]);
+    out->r            = decoded[0];
+    out->g            = decoded[1];
+    out->b            = decoded[2];
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;

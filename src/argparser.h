@@ -28,7 +28,7 @@ cxxopts::Options createOptions ()
             "a,averaging-intra", "Apply intra-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
             "i,averaging-inter", "Apply inter-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
             "r,random",
-            "Perform Random-Subsampling, otherwise First-Point-Subsampling is applied",
+            "Perform Explicit-Random-Subsampling, otherwise Implicit-Random-Subsampling is applied",
             cxxopts::value<bool> ()->default_value ("false")) (
             "o,output", "Output path for the Potree data", cxxopts::value<std::string> ()) (
             "p,points", "Point amount of the cloud", cxxopts::value<uint32_t> ()) (
