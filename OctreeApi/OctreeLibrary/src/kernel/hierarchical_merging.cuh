@@ -36,7 +36,6 @@ __global__ void kernelMergeHierarchical (
         Node* octree,
         const uint32_t* countingGrid,
         const int* denseToSparseLUT,
-        int* sparseToDenseLUT,
         uint32_t* lutOffset,
         uint32_t threshold,
         uint32_t nodeAmount,
@@ -82,7 +81,7 @@ __global__ void kernelMergeHierarchical (
 
     // Update the current node
     node->pointCount = isFinished ? 0 : pointCount;
-    node->isParent   = isFinished;
+    node->isInternal   = isFinished;
     node->isFinished = isFinished;
 
     // Assign children chunks and sum up all point in child nodes
@@ -120,8 +119,5 @@ __global__ void kernelMergeHierarchical (
             }
         }
     }
-
-    // Update sparseToDense LUT
-    sparseToDenseLUT[sparseVoxelIndex] = denseVoxelIndex;
 }
 } // namespace chunking

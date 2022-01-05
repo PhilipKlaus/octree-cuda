@@ -91,17 +91,32 @@ public:
             spdlog::info ("--------------------------------");
             for (auto& timer : kernelTimers)
             {
-                float ms  = std::get<0> (timer).getMilliseconds ();
+                float ms  = std::get<0> (timer).getDuration ();
                 int order = kernelOrder[std::get<1> (timer)];
                 std::get<1> (kernelTimings[order]).duration += ms;
                 std::get<1> (kernelTimings[order]).invocations += 1;
             }
+            float accKernelDur = 0.f;
+            uint32_t accKernelInv = 0;
             for (auto& timing : kernelTimings)
             {
                 float dur    = std::get<1> (timing).duration;
+                accKernelDur += dur;
                 uint32_t inv = std::get<1> (timing).invocations;
+                accKernelInv += inv;
                 spdlog::info ("[kernel] {:<30} invocations: {} took: {} [ms]", std::get<0> (timing), inv, dur);
             }
+            spdlog::info ("--------------------------------");
+            for (auto& timing : kernelTimings)
+            {
+                float dur = std::get<1> (timing).duration;
+                spdlog::info ("[kernel] {:<30} took: {} [%]", std::get<0> (timing), (dur/accKernelDur) * 100.f);
+            }
+            spdlog::info ("--------------------------------");
+            spdlog::info (
+                    "[KERNEL-SUMMARY] invocations: {} accumulated duration: {} [ms]",
+                    accKernelInv,
+                    accKernelDur);
         }
         return kernelTimings;
     }
@@ -132,6 +147,7 @@ public:
         auto finish                           = std::chrono::high_resolution_clock::now ();
         std::chrono::duration<double> elapsed = finish - start;
         double ms                             = elapsed.count () * 1000;
+
         switch (kind)
         {
         case Time::PROCESS:

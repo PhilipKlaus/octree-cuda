@@ -21,6 +21,9 @@ unique_ptr<CudaArray<uint8_t>> generate_point_cloud_cuboid (uint32_t sideLength,
 void printKernelDimensions (dim3 block, dim3 grid);
 void create1DKernel (dim3& block, dim3& grid, uint32_t pointCount);
 
+void calculateChildMinBB (
+        Vector3<double>& childBBMin, const Vector3<double>& parentBBMin, uint8_t localIdx, double childBBSide);
+
 __host__ __device__ void mapFromDenseIdxToDenseCoordinates (
         Vector3<uint32_t>& coordinates, uint32_t denseVoxelIdx, uint32_t level);
 
@@ -44,4 +47,19 @@ __device__ uint32_t
 
     return static_cast<uint32_t> (ix + iy * gridSize + iz * gridSize * gridSize);
 }
+
+
+template <typename DataType>
+__global__ void kernelMemset1D (DataType* data, DataType value, uint32_t threadAmount)
+{
+    unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    if (index >= threadAmount)
+    {
+        return;
+    }
+
+    data[index] = value;
+}
+
 }; // namespace tools

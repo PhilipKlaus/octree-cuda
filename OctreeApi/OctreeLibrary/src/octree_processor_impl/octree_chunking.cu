@@ -53,9 +53,6 @@ void OctreeProcessor::OctreeProcessorImpl::performCellMerging ()
     // Retrieve the actual amount of sparse nodes in the octree and allocate the octree data structure
     uint32_t sparseNodes = itsTmpCounting->toHost ()[0];
     itsOctree->createHierarchy (sparseNodes);
-    // Allocate the conversion LUT from sparse to dense
-    itsSparseToDenseLUT = createGpuI32 (sparseNodes, "sparseToDenseLUT");
-    itsSparseToDenseLUT->memset (-1);
 
     initLowestOctreeHierarchy ();
     mergeHierarchical ();
@@ -70,7 +67,6 @@ void OctreeProcessor::OctreeProcessorImpl::initLowestOctreeHierarchy ()
             itsOctree->getDevice (),
             itsCountingGrid->devicePointer (),
             itsDenseToSparseLUT->devicePointer (),
-            itsSparseToDenseLUT->devicePointer (),
             itsOctree->getNodeAmount (0));
 }
 
@@ -88,7 +84,6 @@ void OctreeProcessor::OctreeProcessorImpl::mergeHierarchical ()
                 itsOctree->getDevice (),
                 itsCountingGrid->devicePointer (),
                 itsDenseToSparseLUT->devicePointer (),
-                itsSparseToDenseLUT->devicePointer (),
                 itsTmpCounting->devicePointer (),
                 itsProcessingInfo.mergingThreshold,
                 itsOctree->getNodeAmount (i + 1),

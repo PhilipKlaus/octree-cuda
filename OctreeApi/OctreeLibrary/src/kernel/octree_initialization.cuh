@@ -25,7 +25,6 @@ __global__ void kernelInitLeafNodes (
         Node* octreeSparse,
         const uint32_t* countingGrid,
         const int* denseToSparseLUT,
-        int* sparseToDenseLUT,
         uint32_t nodeAmount)
 {
     unsigned int index = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
@@ -41,8 +40,6 @@ __global__ void kernelInitLeafNodes (
     {
         return;
     }
-
-    sparseToDenseLUT[sparseVoxelIndex] = index;
 
     Node* node       = octreeSparse + sparseVoxelIndex;
     node->pointCount = countingGrid[index];

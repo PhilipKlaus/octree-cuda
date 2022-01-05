@@ -20,13 +20,22 @@ void export_json_data (
     statistics["chunking"]["grid"]             = subsampleInfo.chunkingGrid;
     statistics["chunking"]["mergingThreshold"] = subsampleInfo.mergingThreshold;
 
-    statistics["subsampling"]["grid"]     = subsampleInfo.subsamplingGrid;
-    statistics["subsampling"]["strategy"] = "RANDOM POINT";
+    statistics["subsampling"]["grid"] = subsampleInfo.subsamplingGrid;
+    statistics["subsampling"]["strategy"] =
+            subsampleInfo.useRandomSubsampling ? "EXPLICIT RANDOM SUBSAMPLING" : "IMPLICIT RANDOM SUBSAMPLING";
+    if (subsampleInfo.useInterCellAvg)
+    {
+        statistics["subsampling"]["averaging"] = "INTER-CELL AVERAGING";
+    }
+    if (subsampleInfo.useIntraCellAvg)
+    {
+        statistics["subsampling"]["averaging"] = "INTRA-CELL AVERAGING";
+    }
 
-    statistics["resultNodes"]["octreeNodes"]      = nodeStatistics.leafNodeAmount + nodeStatistics.parentNodeAmount;
-    statistics["resultNodes"]["leafNodeAmount"]   = nodeStatistics.leafNodeAmount;
-    statistics["resultNodes"]["parentNodeAmount"] = nodeStatistics.parentNodeAmount;
-    statistics["resultNodes"]["maxLeafDepth"]     = nodeStatistics.maxLeafDepth;
+    statistics["resultNodes"]["octreeNodes"]        = nodeStatistics.leafNodeAmount + nodeStatistics.internalNodeAmount;
+    statistics["resultNodes"]["leafNodeAmount"]     = nodeStatistics.leafNodeAmount;
+    statistics["resultNodes"]["internalNodeAmount"] = nodeStatistics.internalNodeAmount;
+    statistics["resultNodes"]["maxLeafDepth"]       = nodeStatistics.maxLeafDepth;
 
     statistics["overallNodes"]["sparseOctreeNodes"] = nodeStatistics.nodeAmountSparse;
     statistics["overallNodes"]["denseOctreeNodes"]  = nodeStatistics.nodeAmountDense;

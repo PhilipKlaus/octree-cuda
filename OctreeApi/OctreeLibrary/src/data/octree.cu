@@ -83,7 +83,7 @@ void OctreeData::updateNodeStatistics ()
     // Reset Octree statistics
     itsNodeStatistics.maxLeafDepth           = 0;
     itsNodeStatistics.leafNodeAmount         = 0;
-    itsNodeStatistics.parentNodeAmount       = 0;
+    itsNodeStatistics.internalNodeAmount       = 0;
     itsNodeStatistics.meanPointsPerLeafNode  = 0.f;
     itsNodeStatistics.stdevPointsPerLeafNode = 0.f;
     itsNodeStatistics.minPointsPerNode       = std::numeric_limits<uint32_t>::max ();
@@ -106,7 +106,7 @@ void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& point
     Node node = itsOctreeHost[nodeIndex];
 
     // Leaf node
-    if (!node.isParent)
+    if (!node.isInternal)
     {
         statistics.maxLeafDepth = max (statistics.maxLeafDepth, level);
         statistics.leafNodeAmount += 1;
@@ -120,7 +120,7 @@ void OctreeData::evaluateNodeProperties (OctreeInfo& statistics, uint32_t& point
     // Parent node
     else
     {
-        statistics.parentNodeAmount += 1;
+        statistics.internalNodeAmount += 1;
         for (int childNode : node.childNodes)
         {
             if (childNode != -1)
@@ -142,7 +142,7 @@ void OctreeData::calculatePointVarianceInLeafNoes (float& sumVariance, uint32_t 
     Node node = itsOctreeHost[nodeIndex];
 
     // Leaf node
-    if (!node.isParent)
+    if (!node.isInternal)
     {
         sumVariance += pow (static_cast<float> (node.pointCount) - itsNodeStatistics.meanPointsPerLeafNode, 2.f);
     }

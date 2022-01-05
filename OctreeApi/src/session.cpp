@@ -36,6 +36,12 @@ void Session::setDevice () const
     gpuErrchk (cudaSetDevice (itsDevice));
     cudaDeviceProp props{};
     gpuErrchk (cudaGetDeviceProperties (&props, itsDevice));
+    unsigned int flags;
+    gpuErrchk (cudaGetDeviceFlags (&flags));
+    flags |= cudaDeviceScheduleBlockingSync;
+    gpuErrchk (cudaSetDeviceFlags (flags));
+    gpuErrchk (cudaGetDeviceFlags (&flags));
+    spdlog::info ("Set cudaDeviceScheduleBlockingSync: {}", (flags & cudaDeviceScheduleBlockingSync) > 0 ? "true" : "false");
     spdlog::info ("Using GPU device: {}", props.name);
 }
 
@@ -97,9 +103,14 @@ void Session::configureChunking (uint32_t chunkingGrid, uint32_t mergingThreshol
 }
 
 void Session::configureSubsampling (
-        uint32_t subsamplingGrid, bool averaging, bool replacementScheme, bool useRandomSubsampling)
+        uint32_t subsamplingGrid,
+        bool intraCellAveraging,
+        bool interCellAveraging,
+        bool replacementScheme,
+        bool useRandomSubsampling)
 {
-    itsProcessingInfo.useAveraging     = averaging;
+    itsProcessingInfo.useIntraCellAvg      = intraCellAveraging;
+    itsProcessingInfo.useInterCellAvg      = interCellAveraging;
     itsProcessingInfo.useReplacementScheme = replacementScheme;
     itsProcessingInfo.subsamplingGrid      = subsamplingGrid;
     itsProcessingInfo.useRandomSubsampling = useRandomSubsampling;

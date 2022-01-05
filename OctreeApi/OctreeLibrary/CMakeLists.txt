@@ -28,15 +28,18 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/point_count_propagation.cuh
         src/kernel/point_counting.cuh
         src/kernel/point_distributing.cuh
-        src/kernel/random_subsampling.cuh
-        src/kernel/subsample_evaluating.cuh
         src/kernel/kernel_helpers.cuh
         src/kernel/random_initialization.cuh
+        src/kernel/fp_subsampling.cuh
+        src/kernel/fp_subsample_evaluation.cuh
+        src/kernel/rp_subsampling.cuh
+        src/kernel/rp_subsample_evaluation.cuh
 
         # OctreeProcessor
         src/octree_processor.cu
         src/include/octree_processor_impl.cuh
-        src/octree_processor_impl/subsampling.cu
+        src/octree_processor_impl/rp_subsampling.cu
+        src/octree_processor_impl/fp_subsampling.cu
         src/octree_processor_impl/histogram.cu
         src/octree_processor_impl/octree_processor_impl.cu
         src/octree_processor_impl/octree_chunking.cu

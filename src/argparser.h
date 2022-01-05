@@ -10,7 +10,8 @@ struct Input
     uint32_t pointAmount;
     uint32_t pointDataStride;
     float scale;
-    bool isAveraging;
+    bool isIntraCellAveraging;
+    bool isInterCellAveraging;
     bool useReplacementScheme;
     bool performRandomSubsampling;
     uint32_t chunkingGrid;
@@ -24,9 +25,10 @@ cxxopts::Options createOptions ()
 {
     cxxopts::Options options ("PotreeConverterGPU", "Generates Potree compatible LOD structures on the GPU");
     options.add_options () ("f,file", "File name point cloud", cxxopts::value<std::string> ()) (
-            "a,averaging", "Apply color averaging", cxxopts::value<bool> ()->default_value ("false")) (
+            "a,averaging-intra", "Apply intra-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
+            "i,averaging-inter", "Apply inter-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
             "r,random",
-            "Perform Random-Subsampling, otherwise First-Point-Subsampling is applied",
+            "Perform Explicit-Random-Subsampling, otherwise Implicit-Random-Subsampling is applied",
             cxxopts::value<bool> ()->default_value ("false")) (
             "o,output", "Output path for the Potree data", cxxopts::value<std::string> ()) (
             "p,points", "Point amount of the cloud", cxxopts::value<uint32_t> ()) (
@@ -88,6 +90,12 @@ void checkForValidParameters (const cxxopts::ParseResult& result)
         exit (-1);
     }
 
+    if (result["averaging-intra"].as<bool> () && result["averaging-inter"].as<bool> ())
+    {
+        spdlog::error (R"(Either intra-cell (-a) or inter-cell (-i) can be applied")");
+        exit (-1);
+    }
+
     std::vector<uint32_t> grids;
     if (result.count ("grids"))
     {
@@ -112,8 +120,9 @@ void printInputConfig (const Input& input)
     spdlog::info ("subsamplingGrid: {}", input.subsamplingGrid);
     spdlog::info ("mergingThreshold: {}", input.mergingThreshold);
     spdlog::info ("outputFactor: {}", input.outputFactor);
-    spdlog::info ("perform Averaging: {}", input.isAveraging);
-    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "random" : "first-point");
+    spdlog::info ("perform intra-cell averaging: {}", input.isIntraCellAveraging);
+    spdlog::info ("perform inter-cell averaging: {}", input.isInterCellAveraging);
+    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "explicit random subsampling" : "implicit random subsampling");
 }
 
 void parseInput (Input& input, const cxxopts::ParseResult& result)
@@ -126,13 +135,15 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     input.pointAmount              = result["points"].as<uint32_t> ();
     input.pointDataStride          = static_cast<uint32_t> (dataInfo[0]);
     input.scale                    = dataInfo[1];
-    input.isAveraging              = result["averaging"].as<bool> ();
+    input.isIntraCellAveraging     = result["averaging-intra"].as<bool> ();
+    input.isInterCellAveraging     = result["averaging-inter"].as<bool> ();
     input.performRandomSubsampling = result["random"].as<bool> ();
     input.chunkingGrid             = grids[0];
     input.subsamplingGrid          = grids[1];
     input.mergingThreshold         = result["merge_threshold"].as<uint32_t> ();
     input.outputFactor             = result["estimated_output"].as<float> ();
     input.cloudType                = result["type"].as<std::string> () == "float" ? 0 : 1;
+    input.useReplacementScheme     = true;
 }
 
 void parseArguments (int argc, char** argv, Input& input)

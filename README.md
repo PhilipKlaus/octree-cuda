@@ -12,16 +12,18 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 # Project Status
 This project is a research project!
 
-| Feature                   | Status    | Comment                                                   |
-|---------------------------|-----------|-----------------------------------------------------------|
-| LOD Generation on GPU     | &#9989;   | Done                                                      |
-| Exporting Potree data     | &#9989;   | Done                                                      |
-| Random point subsampling  | &#9989;   | Done                                                      |
-| First point subsampling   | &#9989;   | Done                                                      |
-| Unit Tests                | &#9745;   | In Progress...                                            |
-| Source code documentation | &#9745;   | In Progress...                                            |
-| Ply Import                | &#10060;  | Only prepared binary files can be imported and processed  |
-| LAZ Import                | &#10060;  | Only prepared binary files can be imported and processed  |
+| Feature							 | Status    | Comment                                                   |
+|------------------------------------|-----------|-----------------------------------------------------------|
+| LOD Generation on GPU				 | &#9989;   | Done                                                      |
+| Exporting Potree data				 | &#9989;   | Done                                                      |
+| Implicit random point subsampling  | &#9989;   | Done                                                      |
+| Explicit random point subsampling	 | &#9989;   | Done                                                      |
+| Intra-Cell color filtering		 | &#9989;   | Done                                                      |
+| Inter-Cell color filtering		 | &#9989;   | Done                                                      |
+| Unit Tests						 | &#9745;   | In Progress...                                            |
+| Source code documentation			 | &#9745;   | In Progress...                                            |
+| Ply Import						 | &#10060;  | Only prepared binary files can be imported and processed  |
+| LAZ Import						 | &#10060;  | Only prepared binary files can be imported and processed  |
 
 
 # Release version
@@ -63,14 +65,14 @@ commands:
 
 * morrowbay.bin
 
-``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f morrobay.bin -o .\output -p 119701547 -d 27,0.01 -t double -g 512,128 -i``
 
 * heidentor.bin
 
-``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f heidentor.bin -o .\output -p 25836417 -d 15,0.001 -t float -g 512,128 -i``
 * coin.bin
 
-``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -a -r``
+``PotreeConverterGPU.exe -f coin.bin -o .\output -p 5138448 -d 15,0.001 -t float -g 512,128 -i``
 
 ### Program Arguments
 ```
@@ -78,7 +80,8 @@ Usage:
   PotreeConverterGPU [OPTION...]
 
   -f, --file arg              File name point cloud
-  -a, --averaging             Apply color averaging
+  -a, --averaging-intra       Apply intra-cell color averaging
+  -i, --averaging-inter       Apply inter-cell color averaging
   -r, --random                Perform Random-Subsampling, otherwise First-Point-Subsampling is applied
   -o, --output arg            Output path for the Potree data
   -p, --points arg            Point amount of the cloud
@@ -109,6 +112,13 @@ The resulting data can be directly rendered using [PotreeDesktop](https://github
 -  [OctreeApi/](OctreeApi/) Exposes the functionality from the OctreeLibrary using an C-API. The API is compiled to a shared library.
 -  [OctreeApi/OctreeLibrary/](OctreeApi/OctreeLibrary) contains the actual LOD generation logic and CUDA kernels. It is compiled to a static library.
 -  [src/](src/) contains the PotreeConverterGPU project. This project builds an executable and links to the OctreeApi.
+
+# Python tools
+The [tools/](tools/) folder contains the following Python tools: 
+-  [potree_to_ply.py](tools/potree_to_ply.py): a tool for converting Potree 2.0 data generated with PotreeConverterGPU into PLY files. A single PLY 
+   file is generate per LOD. An additional PLY file containing the content of all leaf nodes is also created.
+-  [memory_consumption.ply](tools/memory_consumption.ply): a tool for estimating the minimum required GPU memory space to process a point cloud with
+   a specific amount of points.
 
 # External Tools/Libraries
 | Library           | Description               | Link                                      |
