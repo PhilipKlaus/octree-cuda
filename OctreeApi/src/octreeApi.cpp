@@ -100,12 +100,18 @@ int ocpi_configure_subsampling (
         bool intraCellAveraging,
         bool interCellAveraging,
         bool replacementScheme,
-        bool useRandomSubsampling)
+        bool useRandomSubsampling,
+        bool useWeightingFunction)
 {
     return Execute ([&] () {
         auto s = Session::ToSession (session);
         s->configureSubsampling (
-                subsamplingGrid, intraCellAveraging, interCellAveraging, replacementScheme, useRandomSubsampling);
+                subsamplingGrid,
+                intraCellAveraging,
+                interCellAveraging,
+                replacementScheme,
+                useRandomSubsampling,
+                useWeightingFunction);
     });
 }
 

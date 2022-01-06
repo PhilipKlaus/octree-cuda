@@ -39,7 +39,8 @@ public:
             bool intraCellAveraging,
             bool interCellAveraging,
             bool replacementScheme,
-            bool useRandomSubsampling);
+            bool useRandomSubsampling,
+            bool useWeightingFunction);
 
     void exportPotree (const std::string& directory);
     void exportJsonReport (const std::string& filename);

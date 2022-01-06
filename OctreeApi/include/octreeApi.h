@@ -61,7 +61,8 @@ EXPORTED int ocpi_configure_subsampling (
         bool intraCellAveraging,
         bool interCellAveraging,
         bool replacementScheme,
-        bool useRandomSubsampling);
+        bool useRandomSubsampling,
+        bool useWeightingFunction);
 
 EXPORTED int ocpi_export_memory_report (void* session, const char* filename);
 EXPORTED int ocpi_export_distribution_histogram (void* session, const char* filename, uint32_t binWidth);

@@ -14,6 +14,7 @@ struct Input
     bool isInterCellAveraging;
     bool useReplacementScheme;
     bool performRandomSubsampling;
+    bool useWeightingFunction;
     uint32_t chunkingGrid;
     uint32_t subsamplingGrid;
     uint32_t mergingThreshold;
@@ -27,6 +28,9 @@ cxxopts::Options createOptions ()
     options.add_options () ("f,file", "File name point cloud", cxxopts::value<std::string> ()) (
             "a,averaging-intra", "Apply intra-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
             "i,averaging-inter", "Apply inter-cell color averaging", cxxopts::value<bool> ()->default_value ("false")) (
+            "w,weight",
+            "Apply a weighting function during inter-cell color filtering",
+            cxxopts::value<bool> ()->default_value ("false")) (
             "r,random",
             "Perform Explicit-Random-Subsampling, otherwise Implicit-Random-Subsampling is applied",
             cxxopts::value<bool> ()->default_value ("false")) (
@@ -92,7 +96,19 @@ void checkForValidParameters (const cxxopts::ParseResult& result)
 
     if (result["averaging-intra"].as<bool> () && result["averaging-inter"].as<bool> ())
     {
-        spdlog::error (R"(Either intra-cell (-a) or inter-cell (-i) can be applied")");
+        spdlog::error (R"(Either intra-cell (-a) or inter-cell (-i) can be applied)");
+        exit (-1);
+    }
+
+    if (!result["averaging-inter"].as<bool> () && result["weight"].as<bool> ())
+    {
+        spdlog::error (R"(Weighting function can only be applied when performing inter-cell (-i) filtering)");
+        exit (-1);
+    }
+
+    if (!result["random"].as<bool> () && result["weight"].as<bool> ())
+    {
+        spdlog::error (R"(Weighting function can only be applied during explicit random subsampling)");
         exit (-1);
     }
 
@@ -122,7 +138,10 @@ void printInputConfig (const Input& input)
     spdlog::info ("outputFactor: {}", input.outputFactor);
     spdlog::info ("perform intra-cell averaging: {}", input.isIntraCellAveraging);
     spdlog::info ("perform inter-cell averaging: {}", input.isInterCellAveraging);
-    spdlog::info ("Subsampling method: {}", input.performRandomSubsampling ? "explicit random subsampling" : "implicit random subsampling");
+    spdlog::info ("Use weighting function: {}", input.useWeightingFunction);
+    spdlog::info (
+            "Subsampling method: {}",
+            input.performRandomSubsampling ? "explicit random subsampling" : "implicit random subsampling");
 }
 
 void parseInput (Input& input, const cxxopts::ParseResult& result)
@@ -137,6 +156,7 @@ void parseInput (Input& input, const cxxopts::ParseResult& result)
     input.scale                    = dataInfo[1];
     input.isIntraCellAveraging     = result["averaging-intra"].as<bool> ();
     input.isInterCellAveraging     = result["averaging-inter"].as<bool> ();
+    input.useWeightingFunction     = result["weight"].as<bool> ();
     input.performRandomSubsampling = result["random"].as<bool> ();
     input.chunkingGrid             = grids[0];
     input.subsamplingGrid          = grids[1];
