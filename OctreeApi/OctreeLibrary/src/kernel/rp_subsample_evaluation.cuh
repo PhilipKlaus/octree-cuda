@@ -226,7 +226,6 @@ __global__ void kernelInterCellAvg (
         uint32_t* countingGrid,
         Node* octree,
         uint64_t* averagingGrid,
-        int* denseToSparseLUT,
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
@@ -293,6 +292,96 @@ __global__ void kernelInterCellAvg (
         }
     }
 }
+
+/**
+ * Places a 3-dimensional grid over 8 octree children nodes and perform inter-cell averaging.
+ * For this puropose, the color values of a single point are accumulated to the neighbouring
+ * averagingGrid cells.
+
+* @tparam coordinateType The datatype of the 3D coordinates.
+* @tparam colorType The datatype of the point colors.
+* @param outputBuffer The binary output buffer.
+* @param countingGrid A 3-dimensional grid which stores the amount of points per node.
+* @param octree The octree data structure.
+* @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
+* @param denseToSparseLUT Maps dense to sparse indices.
+* @param lut Stores the point indices of all points within a node.
+* @param cloud The point cloud data.
+* @param gridding Contains gridding related data.
+* @param nodeIdx The actual parent (target) node.
+*/
+template <typename coordinateType, typename colorType>
+__global__ void kernelInterCellAvgWeighted (
+        OutputBuffer* outputBuffer,
+        uint32_t* countingGrid,
+        Node* octree,
+        uint32_t* rgb,
+        float* weights,
+        PointLut* lut,
+        KernelStructs::Cloud cloud,
+        KernelStructs::Gridding gridding,
+        uint32_t nodeIdx)
+{
+    unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
+
+    int childIdx = octree[nodeIdx].childNodes[blockIdx.z];
+    auto* child  = octree + childIdx;
+
+    if (childIdx == -1 || localPointIdx >= child->pointCount)
+    {
+        return;
+    }
+
+    // Get pointer to the output data entry
+    PointLut* src = lut + child->dataIdx + localPointIdx;
+
+    // Get the coordinates & colors from the point within the point cloud
+    uint8_t* srcCloudByte   = cloud.raw + (*src) * cloud.dataStride;
+    auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
+    OutputBuffer* srcBuffer = outputBuffer + child->dataIdx + localPointIdx;
+
+    { // apply averages to neighbourhing cells as well
+        double t  = gridding.bbSize / gridding.gridSize;
+        double uX = (point->x - gridding.bbMin.x) / t;
+        double uY = (point->y - gridding.bbMin.y) / t;
+        double uZ = (point->z - gridding.bbMin.z) / t;
+
+        t           = gridding.gridSize - 1.0;
+        uint64_t ix = static_cast<int64_t> (fmin (uX, t));
+        uint64_t iy = static_cast<int64_t> (fmin (uY, t));
+        uint64_t iz = static_cast<int64_t> (fmin (uZ, t));
+
+        bool underflow = false;
+        bool overflow  = false;
+        for (int32_t ox = -1; ox <= 1; ox++)
+        {
+            for (int32_t oy = -1; oy <= 1; oy++)
+            {
+                for (int32_t oz = -1; oz <= 1; oz++)
+                {
+                    int32_t nx = ix + ox;
+                    int32_t ny = iy + oy;
+                    int32_t nz = iz + oz;
+
+                    underflow = nx < 0 || ny < 0 || nz < 0;
+                    overflow  = nx >= gridding.gridSize || ny >= gridding.gridSize || nz >= gridding.gridSize;
+
+                    uint32_t voxelIndex = static_cast<uint32_t> (
+                            nx + ny * gridding.gridSize + nz * gridding.gridSize * gridding.gridSize);
+
+                    if (!underflow && !overflow && countingGrid[voxelIndex] != 0)
+                    {
+                        atomicAdd (&(rgb[voxelIndex * 3]), static_cast<uint32_t> (srcBuffer->r));
+                        atomicAdd (&(rgb[(voxelIndex * 3) + 1]), static_cast<uint32_t> (srcBuffer->g));
+                        atomicAdd (&(rgb[(voxelIndex * 3) + 2]), static_cast<uint32_t> (srcBuffer->b));
+                        atomicAdd (&(weights[voxelIndex]), 1.0f);
+                    }
+                }
+            }
+        }
+    }
+}
+
 } // namespace rp
 } // namespace subsampling
 
@@ -435,6 +524,45 @@ void interCellAvg (const KernelConfig& config, Arguments&&... args)
     else
     {
         subsampling::rp::kernelInterCellAvg<double, uint8_t><<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+
+
+#ifdef KERNEL_TIMINGS
+    timer.stop ();
+    Timing::TimeTracker::getInstance ().trackKernelTime (timer, config.name);
+#endif
+#ifdef ERROR_CHECKS
+    cudaDeviceSynchronize ();
+#endif
+    gpuErrchk (cudaGetLastError ());
+}
+
+template <typename... Arguments>
+void interCellAvgWeighted (const KernelConfig& config, Arguments&&... args)
+{
+    // Calculate kernel dimensions
+    dim3 grid, block;
+
+    auto blocks = ceil (static_cast<double> (config.threadAmount) / 128);
+    auto gridX  = blocks < GRID_SIZE_MAX ? blocks : GRID_SIZE_MAX;
+    auto gridY  = ceil (blocks / GRID_SIZE_MAX);
+
+    block = dim3 (128, 1, 1);
+    grid  = dim3 (static_cast<unsigned int> (gridX), static_cast<unsigned int> (gridY), 8);
+
+#ifdef KERNEL_TIMINGS
+    Timing::KernelTimer timer;
+    timer.start ();
+#endif
+    if (config.cloudType == CLOUD_FLOAT_UINT8_T)
+    {
+        subsampling::rp::kernelInterCellAvgWeighted<float, uint8_t>
+                <<<grid, block>>> (std::forward<Arguments> (args)...);
+    }
+    else
+    {
+        subsampling::rp::kernelInterCellAvgWeighted<double, uint8_t>
+                <<<grid, block>>> (std::forward<Arguments> (args)...);
     }
 
 
