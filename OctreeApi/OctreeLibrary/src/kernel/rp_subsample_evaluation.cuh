@@ -315,8 +315,7 @@ __global__ void kernelInterCellAvgWeighted (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
         Node* octree,
-        uint32_t* rgb,
-        float* weights,
+        float* rgba,
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
@@ -340,23 +339,26 @@ __global__ void kernelInterCellAvgWeighted (
     auto* point             = reinterpret_cast<Vector3<coordinateType>*> (srcCloudByte);
     OutputBuffer* srcBuffer = outputBuffer + child->dataIdx + localPointIdx;
 
-    { // apply averages to neighbourhing cells as well
+    {
+        // Calc current cell coordinates (ix, iy, iz)
         double t  = gridding.bbSize / gridding.gridSize;
         double uX = (point->x - gridding.bbMin.x) / t;
         double uY = (point->y - gridding.bbMin.y) / t;
         double uZ = (point->z - gridding.bbMin.z) / t;
 
-        t           = gridding.gridSize - 1.0;
-        uint64_t ix = static_cast<int64_t> (fmin (uX, t));
-        uint64_t iy = static_cast<int64_t> (fmin (uY, t));
-        uint64_t iz = static_cast<int64_t> (fmin (uZ, t));
+        uint64_t ix = static_cast<int64_t> (fmin (uX, gridding.gridSize - 1.0));
+        uint64_t iy = static_cast<int64_t> (fmin (uY, gridding.gridSize - 1.0));
+        uint64_t iz = static_cast<int64_t> (fmin (uZ, gridding.gridSize - 1.0));
 
         bool underflow = false;
         bool overflow  = false;
+#pragma unroll
         for (int32_t ox = -1; ox <= 1; ox++)
         {
+#pragma unroll
             for (int32_t oy = -1; oy <= 1; oy++)
             {
+#pragma unroll
                 for (int32_t oz = -1; oz <= 1; oz++)
                 {
                     int32_t nx = ix + ox;
@@ -366,15 +368,26 @@ __global__ void kernelInterCellAvgWeighted (
                     underflow = nx < 0 || ny < 0 || nz < 0;
                     overflow  = nx >= gridding.gridSize || ny >= gridding.gridSize || nz >= gridding.gridSize;
 
-                    uint32_t voxelIndex = static_cast<uint32_t> (
+                    auto voxelIndex = static_cast<uint32_t> (
                             nx + ny * gridding.gridSize + nz * gridding.gridSize * gridding.gridSize);
+
+                    // Calc distance components to target cell center
+                    uX = (gridding.bbMin.x + nx * t + (t * 0.5)) - point->x;
+                    uY = (gridding.bbMin.y + ny * t + (t * 0.5)) - point->y;
+                    uZ = (gridding.bbMin.z + nz * t + (t * 0.5)) - point->z;
+
+                    // Calc percentage of dist regarding rMax
+                    auto res = static_cast<float> (sqrt (uX * uX + uY * uY + uZ * uZ) / gridding.diag_3_3);
+
+                    // Calc weight
+                    res = exp (-((res * res) * 10.f));
 
                     if (!underflow && !overflow && countingGrid[voxelIndex] != 0)
                     {
-                        atomicAdd (&(rgb[voxelIndex * 3]), static_cast<uint32_t> (srcBuffer->r));
-                        atomicAdd (&(rgb[(voxelIndex * 3) + 1]), static_cast<uint32_t> (srcBuffer->g));
-                        atomicAdd (&(rgb[(voxelIndex * 3) + 2]), static_cast<uint32_t> (srcBuffer->b));
-                        atomicAdd (&(weights[voxelIndex]), 1.0f);
+                        atomicAdd (&(rgba[voxelIndex * 4]), static_cast<float> (srcBuffer->r) * res);
+                        atomicAdd (&(rgba[voxelIndex * 4 + 1]), static_cast<float> (srcBuffer->g) * res);
+                        atomicAdd (&(rgba[voxelIndex * 4 + 2]), static_cast<float> (srcBuffer->b) * res);
+                        atomicAdd (&(rgba[voxelIndex * 4 + 3]), res);
                     }
                 }
             }

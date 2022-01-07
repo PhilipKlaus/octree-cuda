@@ -51,8 +51,12 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                         1.0 / metadata.scale.y,
                         1.0 / metadata.scale.z,
                 }};
+        double t                         = metadata.cubicSize () / itsProcessingInfo.subsamplingGrid;
         KernelStructs::Gridding gridding = {
-                itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
+                itsProcessingInfo.subsamplingGrid,
+                metadata.cubicSize (),
+                metadata.bbCubic.min,
+                pow ((t * 3) * (t * 3) * 3, 0.5) / 2.0};
 
         // Intra-cell color averaging: evaluate subsamples and accumulate colors
         if (itsProcessingInfo.useIntraCellAvg)
@@ -95,8 +99,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                         itsCloud->getOutputBuffer_d (),
                         itsCountingGrid->devicePointer (),
                         itsOctree->getDevice (),
-                        itsRGB->devicePointer (),
-                        itsWeights->devicePointer (),
+                        itsRGBA->devicePointer (),
                         itsPointLut->devicePointer (),
                         cloud,
                         gridding,
@@ -158,8 +161,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
                          "kernelRandomPointSubsample"},
                         itsCloud->getOutputBuffer_d (),
                         itsCountingGrid->devicePointer (),
-                        itsRGB->devicePointer (),
-                        itsWeights->devicePointer (),
+                        itsRGBA->devicePointer (),
                         itsDenseToSparseLUT->devicePointer (),
                         cloud,
                         gridding,

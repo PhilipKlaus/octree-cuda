@@ -67,6 +67,5 @@ private:
 
     // Datastructures for color filtering
     GpuAveraging itsAveragingGrid;
-    GpuArrayU32 itsRGB;     // For weighted color filtering: store accumulated colors
-    GpuArrayF32 itsWeights; // For weighted color filtering: store weights
+    GpuArrayF32 itsRGBA; // For weighted color filtering: store accumulated colors + weights
 };

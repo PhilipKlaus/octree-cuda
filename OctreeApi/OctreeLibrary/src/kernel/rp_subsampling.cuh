@@ -164,8 +164,7 @@ template <typename coordinateType, typename colorType>
 __global__ void kernelSubsampleAveragedWeighted (
         OutputBuffer* outputBuffer,
         uint32_t* countingGrid,
-        uint32_t* rgb,
-        float* weights,
+        float* rgba,
         int* denseToSparseLUT,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
@@ -219,16 +218,23 @@ __global__ void kernelSubsampleAveragedWeighted (
     out->x            = static_cast<int32_t> (floor ((point->x - cubic.min.x) * cloud.scaleFactor.x));
     out->y            = static_cast<int32_t> (floor ((point->y - cubic.min.y) * cloud.scaleFactor.y));
     out->z            = static_cast<int32_t> (floor ((point->z - cubic.min.z) * cloud.scaleFactor.z));
-    out->r            = static_cast<uint16_t> (rgb[(denseVoxelIndex * 3)] / weights[denseVoxelIndex]);
-    out->g            = static_cast<uint16_t> (rgb[(denseVoxelIndex * 3) + 1] / weights[denseVoxelIndex]);
-    out->b            = static_cast<uint16_t> (rgb[(denseVoxelIndex * 3) + 2] / weights[denseVoxelIndex]);
+
+    float* r = rgba + denseVoxelIndex * 4;
+    float* g = rgba + denseVoxelIndex * 4 + 1;
+    float* b = rgba + denseVoxelIndex * 4 + 2;
+    float* w = rgba + denseVoxelIndex * 4 + 3;
+
+
+    out->r = static_cast<uint16_t> (*r / *w);
+    out->g = static_cast<uint16_t> (*g / *w);
+    out->b = static_cast<uint16_t> (*b / *w);
 
     // Reset all temporary data structures
     denseToSparseLUT[denseVoxelIndex] = -1;
-    rgb[denseVoxelIndex * 3]          = 0;
-    rgb[(denseVoxelIndex * 3) + 1]    = 0;
-    rgb[(denseVoxelIndex * 3) + 2]    = 0;
-    weights[denseVoxelIndex]          = 0.f;
+    *r                                = 0.f;
+    *g                                = 0.f;
+    *b                                = 0.f;
+    *w                                = 0.f;
 }
 
 /**

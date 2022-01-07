@@ -60,10 +60,8 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
     {
         if (itsProcessingInfo.useWeightingFunction)
         {
-            itsRGB = createGpuU32 (gridCellAmount * 3, "rgbSum");
-            itsRGB->memset (0);
-            itsWeights = createGpuF32 (gridCellAmount, "weights");
-            itsWeights->memset (0);
+            itsRGBA = createGpuF32 (gridCellAmount * 4, "rgbaSum");
+            itsRGBA->memset (0);
         }
         else
         {

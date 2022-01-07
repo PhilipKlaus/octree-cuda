@@ -20,6 +20,7 @@ struct Gridding
     uint32_t gridSize;     ///< The size of one grid size (e.g. 128 -> 128 x 128 128)
     double bbSize;         ///< The length of one side of the cubic cloud bounding box
     Vector3<double> bbMin; ///< The bounding box minimum
+    double diag_3_3;       /// The diagonal length of 3x3x3 cells (for subsampling)
 };
 
 /**
