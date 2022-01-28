@@ -12,18 +12,19 @@ in corporation with the [AIT-Austrian Institute of Technology](https://www.ait.a
 # Project Status
 This project is a research project!
 
-| Feature							 | Status    | Comment                                                   |
-|------------------------------------|-----------|-----------------------------------------------------------|
-| LOD Generation on GPU				 | &#9989;   | Done                                                      |
-| Exporting Potree data				 | &#9989;   | Done                                                      |
-| Implicit random point subsampling  | &#9989;   | Done                                                      |
-| Explicit random point subsampling	 | &#9989;   | Done                                                      |
-| Intra-Cell color filtering		 | &#9989;   | Done                                                      |
-| Inter-Cell color filtering		 | &#9989;   | Done                                                      |
-| Unit Tests						 | &#9745;   | In Progress...                                            |
-| Source code documentation			 | &#9745;   | In Progress...                                            |
-| Ply Import						 | &#10060;  | Only prepared binary files can be imported and processed  |
-| LAZ Import						 | &#10060;  | Only prepared binary files can be imported and processed  |
+| Feature							              | Status    | Comment                                                   |
+|-------------------------------------------------|-----------|-----------------------------------------------------------|
+| LOD Generation on GPU				              | &#9989;   | Done                                                      |
+| Exporting Potree data				              | &#9989;   | Done                                                      |
+| Implicit random point subsampling               | &#9989;   | Done                                                      |
+| Explicit random point subsampling	              | &#9989;   | Done                                                      |
+| Intra-Cell color filtering		              | &#9989;   | Done                                                      |
+| Inter-Cell color filtering		              | &#9989;   | Done                                                      |
+| Inter-Cell color filtering + distance weighting | &#9989;   | Done                                                      |
+| Unit Tests						              | &#9745;   | In Progress...                                            |
+| Source code documentation			              | &#9745;   | In Progress...                                            |
+| Ply Import						              | &#10060;  | Only prepared binary files can be imported and processed  |
+| LAZ Import						              | &#10060;  | Only prepared binary files can be imported and processed  |
 
 
 # Release version
@@ -40,7 +41,7 @@ This releases also contain necessary input files (morrowbay.bin, heidentor.bin, 
 | Name                            | Minimum Version   | Link                                                                                        |
 | --------------------------------|-------------------| --------------------------------------------------------------------------------------------|
 | CMAKE                           | 3.10              | [https://cmake.org/](https://cmake.org/)                                                    |
-| CUDA                            | 11.2              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)  |
+| CUDA                            | 11.4              | [https://developer.nvidia.com/cuda-downloads](https://developer.nvidia.com/cuda-downloads)  |
 | Prepared point cloud files      | -                 | [Downloads](http://www.dreamcoder.at/potree/download.html)                                  |
 | c++ 17 compiler                 | -                 | -                                                                                           |
 
@@ -82,7 +83,8 @@ Usage:
   -f, --file arg              File name point cloud
   -a, --averaging-intra       Apply intra-cell color averaging
   -i, --averaging-inter       Apply inter-cell color averaging
-  -r, --random                Perform Random-Subsampling, otherwise First-Point-Subsampling is applied
+  -w, --weight                Apply a weighting function during inter-cell color filtering
+  -r, --random                Perform Explicit-Random-Subsampling, otherwise Implicit-Random-Subsampling is applied
   -o, --output arg            Output path for the Potree data
   -p, --points arg            Point amount of the cloud
   -t, --type arg              The datatype of the cloud coordinates: "float" / "double"

@@ -30,6 +30,7 @@ using GpuArray        = std::unique_ptr<CudaArray<gpuType>>;
 using GpuArrayU8      = GpuArray<uint8_t>;
 using GpuArrayU32     = GpuArray<uint32_t>;
 using GpuArrayI32     = GpuArray<int>;
+using GpuArrayF32     = GpuArray<float>;
 using GpuOctree       = GpuArray<Node>;
 using GpuAveraging    = GpuArray<uint64_t>;
 using GpuRandomState  = GpuArray<curandState_t>;
@@ -52,6 +53,12 @@ template <typename... Args>
 std::unique_ptr<CudaArray<int>> createGpuI32 (Args&&... args)
 {
     return createGpu<int> (std::forward<Args> (args)...);
+}
+
+template <typename... Args>
+std::unique_ptr<CudaArray<float>> createGpuF32 (Args&&... args)
+{
+    return createGpu<float> (std::forward<Args> (args)...);
 }
 
 template <typename... Args>

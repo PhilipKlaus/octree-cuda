@@ -58,8 +58,16 @@ OctreeProcessor::OctreeProcessorImpl::OctreeProcessorImpl (
 
     if (itsProcessingInfo.useIntraCellAvg || itsProcessingInfo.useInterCellAvg)
     {
-        itsAveragingGrid = createGpuAveraging (gridCellAmount, "averagingGrid");
-        itsAveragingGrid->memset (0);
+        if (itsProcessingInfo.useWeightingFunction)
+        {
+            itsRGBA = createGpuF32 (gridCellAmount * 4, "rgbaSum");
+            itsRGBA->memset (0);
+        }
+        else
+        {
+            itsAveragingGrid = createGpuAveraging (gridCellAmount, "averagingGrid");
+            itsAveragingGrid->memset (0);
+        }
     }
 
     if (itsProcessingInfo.useRandomSubsampling)

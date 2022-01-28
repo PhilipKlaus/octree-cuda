@@ -79,7 +79,7 @@ int main (int argc, char** argv)
     spdlog::info ("Reading cloud and calc bounding box took: {} [s]", elapsed.count ());
     spdlog::info ("--------------------------------");
 
-    // Configurate and create octree
+    // Configure and create octree
     ocpi_set_cloud_type (session, input.cloudType);
     ocpi_set_cloud_point_amount (session, input.pointAmount);
     ocpi_set_cloud_data_stride (session, input.pointDataStride);
@@ -95,7 +95,8 @@ int main (int argc, char** argv)
             input.isIntraCellAveraging,
             input.isInterCellAveraging,
             input.useReplacementScheme,
-            input.performRandomSubsampling);
+            input.performRandomSubsampling,
+            input.useWeightingFunction);
 
     ocpi_init_octree (session);
     ocpi_generate_octree (session);

@@ -107,13 +107,15 @@ void Session::configureSubsampling (
         bool intraCellAveraging,
         bool interCellAveraging,
         bool replacementScheme,
-        bool useRandomSubsampling)
+        bool useRandomSubsampling,
+        bool useWeightingFunction)
 {
     itsProcessingInfo.useIntraCellAvg      = intraCellAveraging;
     itsProcessingInfo.useInterCellAvg      = interCellAveraging;
     itsProcessingInfo.useReplacementScheme = replacementScheme;
     itsProcessingInfo.subsamplingGrid      = subsamplingGrid;
     itsProcessingInfo.useRandomSubsampling = useRandomSubsampling;
+    itsProcessingInfo.useWeightingFunction = useWeightingFunction;
 }
 void Session::setCloudType (uint8_t cloudType)
 {

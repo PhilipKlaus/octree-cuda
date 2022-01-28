@@ -61,8 +61,11 @@ private:
     GpuArrayI32 itsDenseToSparseLUT;
     GpuArrayU32 itsTmpCounting;
     GpuPointLut itsPointLut;
-    GpuAveraging itsAveragingGrid;
     GpuRandomState itsRandomStates;
     GpuArrayU32 itsRandomIndices;
     int itsLastSubsampleNode;
+
+    // Datastructures for color filtering
+    GpuAveraging itsAveragingGrid;
+    GpuArrayF32 itsRGBA; // For weighted color filtering: store accumulated colors + weights
 };
