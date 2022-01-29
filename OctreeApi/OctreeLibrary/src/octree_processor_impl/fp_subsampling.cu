@@ -2,6 +2,7 @@
 #include "fp_subsampling.cuh"
 #include "kernel_executor.cuh"
 #include "kernel_helpers.cuh"
+#include "kernel_inter_cell_filtering.cuh"
 #include "kernel_structs.cuh"
 #include "octree_processor_impl.cuh"
 
@@ -54,7 +55,7 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
         KernelStructs::Gridding gridding = {
                 itsProcessingInfo.subsamplingGrid, metadata.cubicSize (), metadata.bbCubic.min};
 
-        // No color averagin is performed -> directly subsample points
+        // No color averaging is performed -> directly subsample points
         if (!itsProcessingInfo.useIntraCellAvg && !itsProcessingInfo.useInterCellAvg)
         {
             Kernel::fp::subsampleNotAveraged (
@@ -120,37 +121,71 @@ void OctreeProcessor::OctreeProcessorImpl::firstPointSubsampling (
                         getLastParent (),
                         itsTmpCounting->devicePointer ());
 
-                // Inter-Cell: Accumulate colors from neighbouring cells
-                Kernel::fp::interCellAvg (
-                        {metadata.cloudType,
-                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                         "kernelInterCellAveraging"},
-                        itsCloud->getOutputBuffer_d (),
-                        itsCountingGrid->devicePointer (),
-                        itsOctree->getDevice (),
-                        itsAveragingGrid->devicePointer (),
-                        itsDenseToSparseLUT->devicePointer (),
-                        itsPointLut->devicePointer (),
-                        cloud,
-                        gridding,
-                        sparseVoxelIndex);
+                if (itsProcessingInfo.useWeightingFunction)
+                {
+                    Kernel::inter::interCellAvgWeighted (
+                            {metadata.cloudType,
+                             itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                             "kernelInterCellAveraging"},
+                            itsCloud->getOutputBuffer_d (),
+                            itsCountingGrid->devicePointer (),
+                            itsOctree->getDevice (),
+                            itsRGBA->devicePointer (),
+                            itsPointLut->devicePointer (),
+                            cloud,
+                            gridding,
+                            sparseVoxelIndex);
+                }
+                else
+                {
+                    Kernel::inter::interCellAvg (
+                            {metadata.cloudType,
+                             itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                             "kernelInterCellAveraging"},
+                            itsCloud->getOutputBuffer_d (),
+                            itsCountingGrid->devicePointer (),
+                            itsOctree->getDevice (),
+                            itsAveragingGrid->devicePointer (),
+                            itsPointLut->devicePointer (),
+                            cloud,
+                            gridding,
+                            sparseVoxelIndex);
+                }
             }
 
-            // Finally subsample the points
-            Kernel::fp::subsampleAveraged (
-                    {metadata.cloudType,
-                     itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
-                     "kernelRandomPointSubsample"},
-                    itsCloud->getOutputBuffer_d (),
-                    itsCountingGrid->devicePointer (),
-                    itsAveragingGrid->devicePointer (),
-                    itsDenseToSparseLUT->devicePointer (),
-                    cloud,
-                    gridding,
-                    cloudMetadata.bbCubic,
-                    itsPointLut->devicePointer (),
-                    itsOctree->getDevice (),
-                    sparseVoxelIndex);
+            if (itsProcessingInfo.useWeightingFunction)
+            {
+                Kernel::fp::subsampleAveragedWeighted (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsRGBA->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
+            else {
+                Kernel::fp::subsampleAveraged (
+                        {metadata.cloudType,
+                         itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
+                         "kernelRandomPointSubsample"},
+                        itsCloud->getOutputBuffer_d (),
+                        itsCountingGrid->devicePointer (),
+                        itsAveragingGrid->devicePointer (),
+                        itsDenseToSparseLUT->devicePointer (),
+                        cloud,
+                        gridding,
+                        cloudMetadata.bbCubic,
+                        itsPointLut->devicePointer (),
+                        itsOctree->getDevice (),
+                        sparseVoxelIndex);
+            }
         }
 
         setActiveParent (sparseVoxelIndex);

@@ -34,6 +34,7 @@ add_library(${PROJECT_NAME} STATIC
         src/kernel/fp_subsample_evaluation.cuh
         src/kernel/rp_subsampling.cuh
         src/kernel/rp_subsample_evaluation.cuh
+        src/kernel/kernel_inter_cell_filtering.cuh
 
         # OctreeProcessor
         src/octree_processor.cu

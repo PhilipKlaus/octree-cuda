@@ -106,12 +106,6 @@ void checkForValidParameters (const cxxopts::ParseResult& result)
         exit (-1);
     }
 
-    if (!result["random"].as<bool> () && result["weight"].as<bool> ())
-    {
-        spdlog::error (R"(Weighting function can only be applied during explicit random subsampling)");
-        exit (-1);
-    }
-
     std::vector<uint32_t> grids;
     if (result.count ("grids"))
     {
