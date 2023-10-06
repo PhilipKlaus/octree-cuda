@@ -11,9 +11,9 @@ namespace fp {
  * @tparam coordinateType The datatype of the 3D coordinates.
  * @tparam colorType The datatype of the point colors.
  * @param outputBuffer The binary output buffer.
+ * @param countingGrid A 3-dimensional grid which stores the amount of points per node.
  * @param octree The octree data structure.
  * @param averagingGrid A 3-dimensional grid which stores averaged color information per node.
- * @param denseToSparseLUT Maps dense to sparse indices.
  * @param lut Stores the point indices of all points within a node.
  * @param cloud The point cloud data.
  * @param gridding Contains gridding related data.
@@ -22,15 +22,13 @@ namespace fp {
 template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamplesIntra (
         OutputBuffer* outputBuffer,
+        uint32_t* countingGrid,
         Node* octree,
         uint64_t* averagingGrid,
-        int* denseToSparseLUT,
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t nodeIdx,
-        int lastNode,
-        const uint32_t* leafOffset)
+        uint32_t nodeIdx)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -57,24 +55,10 @@ __global__ void kernelEvaluateSubsamplesIntra (
     uint64_t encoded = encodeColors (srcBuffer->r, srcBuffer->g, srcBuffer->b);
 
     // Intra-cell: Accumulate the encoded color value
-    auto old = atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
+    atomicAdd (&(averagingGrid[denseVoxelIndex]), encoded);
 
-    // If the thread handles the first point in a cell:
-    // - increase the point count in the parent cell
-    // - Add dense-to-sparse-lut entry
-    // - Store subsampled (first) point to parent node
-    if (old == 0)
-    {
-        int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
-        denseToSparseLUT[denseVoxelIndex] = sparseIndex;
-
-        // Update writing position for actual subsampled node
-        octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
-
-        // Store the subsampled point in the parent node
-        PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
-        *dst          = *src;
-    }
+    // Mark the cell as occupied: necessary for identifying the "first" point afterwards
+    atomicExch ((countingGrid + denseVoxelIndex), 1);
 }
 
 /**
@@ -96,13 +80,10 @@ template <typename coordinateType, typename colorType>
 __global__ void kernelEvaluateSubsamplesInter (
         uint32_t* countingGrid,
         Node* octree,
-        int* denseToSparseLUT,
         PointLut* lut,
         KernelStructs::Cloud cloud,
         KernelStructs::Gridding gridding,
-        uint32_t nodeIdx,
-        int lastNode,
-        const uint32_t* leafOffset)
+        uint32_t nodeIdx)
 {
     unsigned int localPointIdx = (blockIdx.y * gridDim.x * blockDim.x) + (blockIdx.x * blockDim.x + threadIdx.x);
 
@@ -124,25 +105,8 @@ __global__ void kernelEvaluateSubsamplesInter (
     // Calculate cell index
     auto denseVoxelIndex = mapPointToGrid<coordinateType> (point, gridding);
 
-    // Mark cell as occupied: Set the appropriate countingGrid cell to 1 if not already
-    uint32_t old = atomicExch ((countingGrid + denseVoxelIndex), 1);
-
-    // If the thread handles the first point in a cell:
-    // - increase the point count in the parent cell
-    // - Add dense-to-sparse-lut entry
-    // - Store subsampled (first) point to parent node
-    if (old == 0)
-    {
-        int sparseIndex                   = atomicAdd (&(octree[nodeIdx].pointCount), 1);
-        denseToSparseLUT[denseVoxelIndex] = sparseIndex;
-
-        // Update writing position for actual subsampled node
-        octree[nodeIdx].dataIdx = calculateWritingPosition (octree, nodeIdx, lastNode, leafOffset);
-
-        // Store the subsampled point in the parent node
-        PointLut* dst = lut + octree[nodeIdx].dataIdx + sparseIndex;
-        *dst          = *src;
-    }
+    // Mark the cell as occupied: necessary during inter-cell color accumulation
+    atomicExch ((countingGrid + denseVoxelIndex), 1);
 }
 } // namespace fp
 } // namespace subsampling
