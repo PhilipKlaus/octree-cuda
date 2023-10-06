@@ -1,5 +1,3 @@
-[![PhilipKlaus](https://circleci.com/gh/PhilipKlaus/octree-cuda.svg?style=svg&circle-token=80c3b9a5002f85c01d952c8f06abc9cfaaed5106)](https://app.circleci.com/pipelines/github/PhilipKlaus/octree-cuda)
-
 # About
 
 PotreeConverterGPU generates [Potree](https://github.com/potree/potree/) compatible LOD data structures from point clouds entirely on 
@@ -119,7 +117,7 @@ The resulting data can be directly rendered using [PotreeDesktop](https://github
 The [tools/](tools/) folder contains the following Python tools: 
 -  [potree_to_ply.py](tools/potree_to_ply.py): a tool for converting Potree 2.0 data generated with PotreeConverterGPU into PLY files. A single PLY 
    file is generate per LOD. An additional PLY file containing the content of all leaf nodes is also created.
--  [memory_consumption.ply](tools/memory_consumption.ply): a tool for estimating the minimum required GPU memory space to process a point cloud with
+-  [memory_consumption.ply](tools/memory_consumption.py): a tool for estimating the minimum required GPU memory space to process a point cloud with
    a specific amount of points.
 
 # External Tools/Libraries
