@@ -4,6 +4,7 @@
 #include "rp_subsample_evaluation.cuh"
 #include "rp_subsampling.cuh"
 #include "time_tracker.cuh"
+#include "kernel_inter_cell_filtering.cuh"
 
 
 void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
@@ -92,7 +93,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
 
             if (itsProcessingInfo.useWeightingFunction)
             {
-                Kernel::rp::interCellAvgWeighted (
+                Kernel::inter::interCellAvgWeighted (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                          "kernelInterCellAveraging"},
@@ -107,7 +108,7 @@ void OctreeProcessor::OctreeProcessorImpl::randomSubsampling (
             }
             else
             {
-                Kernel::rp::interCellAvg (
+                Kernel::inter::interCellAvg (
                         {metadata.cloudType,
                          itsOctree->getNodeStatistics ().maxPointsPerNode * 8,
                          "kernelInterCellAveraging"},

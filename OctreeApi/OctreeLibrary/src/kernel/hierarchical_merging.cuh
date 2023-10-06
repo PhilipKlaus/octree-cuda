@@ -81,7 +81,7 @@ __global__ void kernelMergeHierarchical (
 
     // Update the current node
     node->pointCount = isFinished ? 0 : pointCount;
-    node->isInternal   = isFinished;
+    node->isInternal = isFinished;
     node->isFinished = isFinished;
 
     // Assign children chunks and sum up all point in child nodes

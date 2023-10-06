@@ -23,7 +23,7 @@ class ProcessingCfg:
 
 @dataclass
 class Gpu:
-    name = "NVIDIA GeForce RTX 3090"
+    name = "NVIDIA TITAN RTX"
     memory_gb = 24576000000 / 1000000000
 
 
@@ -88,10 +88,7 @@ if __name__ == "__main__":
     cfg = ProcessingCfg()
 
     plt.ylabel('minimum memory consumption [GB]')
-    plt.xlabel('maximum amount of points')
-
-
-    #ax.xaxis.set_major_formatter(FormatStrFormatter('%.0fM'))
+    plt.xlabel('maximum amount of points [10^6 points]')
 
     # Estimate for double precision coordinates
     x, y, estimated_double = calculate_memory_function(cfg, gpu, 27 / 1000000000)
@@ -103,10 +100,10 @@ if __name__ == "__main__":
 
     print(f"Summary:\nmax points (double prec.): {estimated_double}\nmax points (single prec.): {estimated_single}")
     plt.legend(['double precision coordinates', 'single precision coordinates'], loc=0)
-    plt.legend(['double precision coordinates', 'single precision coordinates'], loc=0)
+    # plt.legend(['double precision coordinates', 'single precision coordinates'], loc=0)
     plt.annotate(gpu.name, (0, gpu.memory_gb + 1))
 
-    plt.axes().xaxis.set_major_formatter(FormatStrFormatter('%.0fM'))
+    # plt.axes().xaxis.set_major_formatter(FormatStrFormatter('%.0fM'))
 
     # save and show the plot
     plt.savefig("gpu_memory_estimation.pdf")
